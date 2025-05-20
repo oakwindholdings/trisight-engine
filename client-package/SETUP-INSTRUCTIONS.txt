@@ -1,0 +1,48 @@
+==========================================================
+           TRISIGHT EQUITY ANALYST - SETUP GUIDE
+==========================================================
+
+Before you can run the TriSight Equity Analyst application, 
+you'll need to perform a one-time setup of Node.js:
+
+STEP 1: INSTALL NODE.JS
+-----------------------
+1. Download Node.js from https://nodejs.org/
+   - Click the "LTS" (Recommended) download button
+   - Run the installer and follow the default installation options
+   - Click "Finish" when complete
+
+STEP 2: RUN THE APPLICATION
+---------------------------
+1. Double-click the "start-trisight.bat" file in this folder
+2. A command window will appear showing the startup progress
+3. Your web browser will automatically open with the application
+4. The application loads with all your chart data and settings
+
+STEP 3: USING THE APPLICATION
+-----------------------------
+- All chart features work as expected, including:
+  * Pattern detection
+  * Zooming and panning
+  * Channel boundary adjustments
+  * Date selection and time controls
+- Your settings are automatically saved for future sessions
+- The dual-control training interface for pattern boundaries works
+  with both time and price dimensions
+
+STEP 4: SHUTTING DOWN
+---------------------
+When you're done using the application:
+1. Return to the command window that opened with the application
+2. Press any key to properly shut down the application
+3. The window will close automatically
+
+TROUBLESHOOTING
+---------------
+If you encounter any issues:
+- Make sure Node.js was installed successfully
+- Try restarting your computer
+- Check that no other applications are using port 3000
+- Contact your TriSight representative for additional support
+
+==========================================================

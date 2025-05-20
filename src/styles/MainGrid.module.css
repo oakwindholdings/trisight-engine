@@ -1,0 +1,60 @@
+.mainGrid {
+  display: grid;
+  height: 100vh;
+  width: 100vw;
+  grid-template-rows: 60px 1fr 30px; /* Header, Content, Footer */
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "header"
+    "content"
+    "footer";
+}
+
+.chartGrid {
+  display: grid;
+  height: 100%;
+  grid-template-rows: 40px 1fr; /* Chart controls, chart area */
+  grid-template-columns: 1fr 300px; /* Main area, side panel */
+  grid-template-areas:
+    "controls controls"
+    "chart panel";
+}
+
+.header {
+  grid-area: header;
+}
+
+.content {
+  grid-area: content;
+  overflow: hidden;
+}
+
+.footer {
+  grid-area: footer;
+}
+
+.chartControls {
+  grid-area: controls;
+}
+
+.chartArea {
+  grid-area: chart;
+  overflow: hidden;
+  position: relative;
+}
+
+.panel {
+  grid-area: panel;
+}
+
+/* Responsive layouts */
+@media (max-width: 1200px) {
+  .chartGrid {
+    grid-template-rows: 40px 1fr 300px; /* Chart controls, chart area, panel */
+    grid-template-columns: 1fr; /* Full width */
+    grid-template-areas:
+      "controls"
+      "chart"
+      "panel";
+  }
+}
