@@ -35,10 +35,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "lint": "eslint .",
     "eject": "react-scripts eject",
-    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run build && electron-builder build --win --publish never",
-    "electron:package": "electron-builder build --win --publish never"
   },
   "main": "public/electron.js",
   "homepage": "./",
@@ -84,9 +82,6 @@
     "@types/d3": "^7.4.3",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
-    "electron": "^36.2.1",
-    "electron-builder": "^26.0.12",
-    "electron-is-dev": "^3.0.1",
     "wait-on": "^8.0.3"
   }
 }
