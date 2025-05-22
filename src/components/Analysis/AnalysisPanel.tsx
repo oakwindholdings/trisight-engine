@@ -1,3 +1,6 @@
+// src/components/Analysis/AnalysisPanel.tsx
+// Panel showing details of a pattern
+// Provides save and feedback options
 import React from 'react';
 import styled from 'styled-components';
 import PatternDetails from './PatternDetails';

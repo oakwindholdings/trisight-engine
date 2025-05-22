@@ -1,3 +1,6 @@
+// src/components/Modals/PatternDetailsModal.tsx
+// Modal wrapper for pattern details
+// Used in legacy UI
 import React from 'react';
 import styled from 'styled-components';
 import { Pattern, PatternType, BlackjackPattern, EscalatorPattern, PivotPattern } from '../../models/PatternTypes';

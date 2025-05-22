@@ -1,3 +1,6 @@
+// src/components/Dashboard/LearningDashboard.tsx
+// Legacy learning dashboard component
+// Shows metrics in table form
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { PatternType, patternStyles } from '../../models/PatternTypes';

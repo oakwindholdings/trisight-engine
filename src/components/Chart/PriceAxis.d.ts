@@ -1,3 +1,6 @@
+// src/components/Chart/PriceAxis.d.ts
+// Type defs for PriceAxis
+// Matches canvas implementation
 interface ChartDimensions {
   width: number;
   height: number;

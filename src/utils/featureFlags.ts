@@ -1,3 +1,6 @@
+// src/utils/featureFlags.ts
+// Client feature flag utility
+// Toggles experimental features
 type FeatureFlag = {
   id: string;
   enabled: boolean;

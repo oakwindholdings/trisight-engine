@@ -1,3 +1,6 @@
+// src/utils/patternDetection/core/MarketContext.ts
+// Encapsulates market environment info
+// Passed to detectors for thresholds
 import { CandlestickData, Timeframe } from '../../../models/ChartTypes';
 import { PatternType } from '../../../models/PatternTypes';
 

@@ -1,3 +1,6 @@
+// src/utils/patternDetection/helper/BlackjackDetectionUtils.ts
+// Helper utilities for Blackjack detection
+// Shared by detectors
 import { CandlestickData } from '../../../models/ChartTypes';
 
 /**

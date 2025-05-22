@@ -1,3 +1,6 @@
+// src/api/twelveDataApi.ts
+// TwelveData HTTP client
+// Fetches market data and symbols
 import axios from 'axios';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 

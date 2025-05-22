@@ -1,3 +1,6 @@
+// src/models/PatternTypes.ts
+// Pattern enumeration and models
+// Defines domain pattern shapes
 export enum PatternType {
   GOLDMINE_CHANNEL = 'GOLDMINE_CHANNEL',
   GOLDMINE_SHAFT = 'GOLDMINE_SHAFT',

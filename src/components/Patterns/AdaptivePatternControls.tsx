@@ -1,3 +1,6 @@
+// src/components/Patterns/AdaptivePatternControls.tsx
+// Controls for adaptive detectors
+// Enables per-pattern settings
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { PatternDetectionPreferences, EscalatorDetectionOptions } from '../../utils/patternDetection/AdaptivePatternDetectionService';

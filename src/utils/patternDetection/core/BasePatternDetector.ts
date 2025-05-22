@@ -1,3 +1,6 @@
+// src/utils/patternDetection/core/BasePatternDetector.ts
+// Detector for BasePattern pattern
+// Identifies occurrences in price data
 import { CandlestickData } from '../../../models/ChartTypes';
 import { Pattern, PatternType } from '../../../models/PatternTypes';
 import { MarketContext, ThresholdConfig } from './MarketContext';

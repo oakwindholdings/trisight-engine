@@ -1,3 +1,6 @@
+// src/components/Patterns/PatternPanel.tsx
+// Side panel listing patterns
+// Includes adaptive controls
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { ThemeTokens } from '../../styles/theme';

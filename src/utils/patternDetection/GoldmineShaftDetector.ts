@@ -1,3 +1,6 @@
+// src/utils/patternDetection/GoldmineShaftDetector.ts
+// Detector for GoldmineShaft pattern
+// Identifies occurrences in price data
 import { CandlestickData } from '../../models/ChartTypes';
 import { GoldmineShaftPattern, PatternType, ThrustDirection } from '../../models/PatternTypes';
 import { v4 as uuidv4 } from 'uuid';

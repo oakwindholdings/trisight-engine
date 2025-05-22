@@ -1,3 +1,6 @@
+// src/components/Patterns/GoldmineShaftSettingsPanel.tsx
+// Settings for Goldmine Shaft
+// Adjust thrust and retrace options
 import React from 'react';
 import styled from 'styled-components';
 import { PatternType, ThrustDirection } from '../../models/PatternTypes';

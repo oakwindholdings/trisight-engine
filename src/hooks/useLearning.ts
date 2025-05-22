@@ -1,3 +1,6 @@
+// src/hooks/useLearning.ts
+// Hook for pattern learning logic
+// Aggregates feedback and metrics
 import { useState, useCallback, useEffect } from 'react';
 import { PatternFeedback } from '../models/FeedbackTypes';
 import { PatternType } from '../models/PatternTypes';

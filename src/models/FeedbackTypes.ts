@@ -1,3 +1,6 @@
+// src/models/FeedbackTypes.ts
+// Types for user feedback
+// Shared between hooks and API
 import { PatternType } from './PatternTypes';
 
 export interface PatternFeedback {

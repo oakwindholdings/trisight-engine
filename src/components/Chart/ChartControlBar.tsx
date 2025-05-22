@@ -1,3 +1,6 @@
+// src/components/Chart/ChartControlBar.tsx
+// Toolbar with chart controls
+// Timeframe and range selectors
 import React from 'react';
 import styled from 'styled-components';
 import { ThemeTokens } from '../../styles/theme';

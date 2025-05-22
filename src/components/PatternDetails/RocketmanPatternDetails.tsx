@@ -1,3 +1,6 @@
+// src/components/PatternDetails/RocketmanPatternDetails.tsx
+// Details view for Rocketman pattern
+// Shows thrust calculations
 import React from 'react';
 import styled from 'styled-components';
 import { format } from 'd3-format';

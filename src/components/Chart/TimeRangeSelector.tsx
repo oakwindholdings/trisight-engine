@@ -1,3 +1,6 @@
+// src/components/Chart/TimeRangeSelector.tsx
+// Buttons for selecting time range
+// Updates chart viewport
 import React from 'react';
 import styled from 'styled-components';
 

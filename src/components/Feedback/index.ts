@@ -1,3 +1,6 @@
+// src/components/Feedback/index.ts
+// Entry point for feedback components
+// Re-exports implementations
 // Export feedback components through a single entry point
 // This avoids duplicate identifier issues with declaration files
 

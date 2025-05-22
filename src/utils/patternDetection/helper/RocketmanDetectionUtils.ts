@@ -1,3 +1,6 @@
+// src/utils/patternDetection/helper/RocketmanDetectionUtils.ts
+// Helper utilities for Rocketman detection
+// Shared by detectors
 import { CandlestickData } from '../../../models/ChartTypes';
 import { RocketmanSignalStrength, ThrustDirection } from '../../../models/PatternTypes';
 

@@ -1,3 +1,6 @@
+// src/App.tsx
+// Main application component
+// Composes TriSight interface
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import './App.css';

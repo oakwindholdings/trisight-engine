@@ -1,3 +1,6 @@
+// src/augmentations.d.ts
+// TypeScript module augmentations
+// Extends external libraries
 /**
  * This file provides TypeScript module augmentations for external dependencies only
  */

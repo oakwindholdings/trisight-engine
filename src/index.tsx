@@ -1,3 +1,6 @@
+// src/index.tsx
+// React entry point
+// Mounts App into DOM
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';

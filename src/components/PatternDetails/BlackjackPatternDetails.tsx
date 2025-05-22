@@ -1,3 +1,6 @@
+// src/components/PatternDetails/BlackjackPatternDetails.tsx
+// Details view for Blackjack pattern
+// Shows score breakdown
 import React from 'react';
 import styled from 'styled-components';
 import { BlackjackPattern, BlackjackSignalStrength } from '../../models/PatternTypes';

@@ -1,3 +1,6 @@
+// src/components/Visualizations/RocketmanVisualization.tsx
+// Visualization for Rocketman pattern
+// Illustrates thrust stages
 import React from 'react';
 // Add type declarations for react-financial-charts
 // @ts-ignore - Ignore missing type declarations for react-financial-charts

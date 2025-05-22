@@ -1,3 +1,6 @@
+// src/models/LearningTypes.ts
+// Learning system data types
+// Detection parameters and metrics
 import { PatternType } from './PatternTypes';
 import { PatternFeedback, FalsePositiveReason } from './FeedbackTypes';
 

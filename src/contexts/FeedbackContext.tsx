@@ -1,3 +1,6 @@
+// src/contexts/FeedbackContext.tsx
+// Context managing feedback state
+// Uses useFeedback internally
 import React, { createContext, useContext, ReactNode } from 'react';
 import { PatternFeedback } from '../models/FeedbackTypes';
 import useFeedback from '../hooks/useFeedback';

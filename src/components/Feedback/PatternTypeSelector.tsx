@@ -1,3 +1,6 @@
+// src/components/Feedback/PatternTypeSelector.tsx
+// Selector for correct pattern type
+// Supports feedback flow
 import React from 'react';
 import styled from 'styled-components';
 import { PatternType, patternStyles } from '../../models/PatternTypes';

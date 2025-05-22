@@ -1,3 +1,6 @@
+// src/hooks/usePatterns.ts
+// Detects patterns in candle data
+// Uses adaptive detection service
 import { useState, useEffect, useCallback } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType } from '../models/PatternTypes';

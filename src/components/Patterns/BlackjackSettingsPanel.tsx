@@ -1,3 +1,6 @@
+// src/components/Patterns/BlackjackSettingsPanel.tsx
+// Settings for Blackjack detector
+// Edit scoring parameters
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 

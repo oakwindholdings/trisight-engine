@@ -1,3 +1,6 @@
+// src/components/Patterns/GoldmineChannelSettingsPanel.tsx
+// Settings for Goldmine Channel
+// Adjust channel detection options
 import React from 'react';
 import styled from 'styled-components';
 import { PatternType, ChannelDirection } from '../../models/PatternTypes';

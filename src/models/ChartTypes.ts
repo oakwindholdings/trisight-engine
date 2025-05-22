@@ -1,3 +1,6 @@
+// src/models/ChartTypes.ts
+// Chart data type definitions
+// Candlestick and dimension models
 export interface CandlestickData {
   datetime: string;
   timestamp: number;

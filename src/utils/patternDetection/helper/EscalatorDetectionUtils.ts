@@ -1,3 +1,6 @@
+// src/utils/patternDetection/helper/EscalatorDetectionUtils.ts
+// Helper utilities for Escalator detection
+// Shared by detectors
 import { CandlestickData } from '../../../models/ChartTypes';
 import { EscalatorSignalStrength, ThrustDirection } from '../../../models/PatternTypes';
 

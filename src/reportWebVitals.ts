@@ -1,3 +1,6 @@
+// src/reportWebVitals.ts
+// Web vitals reporting helper
+// Optional performance logging
 import { ReportHandler } from 'web-vitals';
 
 const reportWebVitals = (onPerfEntry?: ReportHandler) => {

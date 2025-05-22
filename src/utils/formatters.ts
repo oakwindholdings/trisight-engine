@@ -1,3 +1,6 @@
+// src/utils/formatters.ts
+// Formatting helper functions
+// Used across UI
 /**
  * Utility functions for formatting data
  */

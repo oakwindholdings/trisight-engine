@@ -1,3 +1,6 @@
+// src/components/SymbolSearch.tsx
+// Search box for ticker symbols
+// Queries TwelveData suggestions
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { searchSymbols } from '../api/twelveDataApi';

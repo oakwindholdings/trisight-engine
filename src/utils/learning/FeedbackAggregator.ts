@@ -1,3 +1,6 @@
+// src/utils/learning/FeedbackAggregator.ts
+// Aggregates feedback statistics
+// Supports learning metrics
 import { PatternType } from '../../models/PatternTypes';
 import { PatternFeedback } from '../../models/FeedbackTypes';
 import { AggregatedFeedback } from '../../models/LearningTypes';

@@ -1,3 +1,6 @@
+// src/components/Analysis/PatternDetails.tsx
+// Small component listing pattern meta
+// Used inside AnalysisPanel
 import React from 'react';
 import styled from 'styled-components';
 import { ThemeTokens } from '../../styles/theme';

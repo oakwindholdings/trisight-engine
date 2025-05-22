@@ -1,3 +1,6 @@
+// src/utils/patternDetection/index.ts
+// Pattern detection module exports
+// Registers detector factories
 // Pattern detector factories
 import PivotDetectorFactory from './PivotDetectorFactory';
 import RocketmanDetectorFactory from './RocketmanDetectorFactory';

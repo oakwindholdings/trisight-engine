@@ -1,3 +1,6 @@
+// src/utils/patternDetection/EscalatorDetectorFactory.ts
+// Factory for Escalator detectors
+// Creates configured detector instances
 import { PatternDetectorFactory, PatternDetectorOptions } from './core/PatternDetectorFactory';
 import { BasePatternDetector } from './core/BasePatternDetector';
 import { AdaptiveEscalatorDetector, EscalatorDetectionOptions } from './AdaptiveEscalatorDetector';

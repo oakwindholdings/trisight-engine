@@ -1,3 +1,6 @@
+// src/components/Feedback/FeedbackModal.tsx
+// Modal to submit pattern feedback
+// Allows boundary adjustments
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Pattern, PatternType, GoldmineChannelPattern } from '../../models/PatternTypes';
