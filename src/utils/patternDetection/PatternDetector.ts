@@ -1,3 +1,6 @@
+// src/utils/patternDetection/PatternDetector.ts
+// Detector for Pattern pattern
+// Identifies occurrences in price data
 import { CandlestickData } from '../../models/ChartTypes';
 import { Pattern, PatternType } from '../../models/PatternTypes';
 import { v4 as uuidv4 } from 'uuid';

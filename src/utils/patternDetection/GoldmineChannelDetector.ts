@@ -1,3 +1,6 @@
+// src/utils/patternDetection/GoldmineChannelDetector.ts
+// Detector for GoldmineChannel pattern
+// Identifies occurrences in price data
 import { CandlestickData } from '../../models/ChartTypes';
 import { GoldmineChannelPattern, PatternType, ChannelDirection } from '../../models/PatternTypes';
 import { v4 as uuidv4 } from 'uuid';

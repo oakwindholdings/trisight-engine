@@ -1,3 +1,6 @@
+// src/utils/patternDetection/AdaptiveGoldmineChannelDetector.ts
+// Adaptive detector for GoldmineChannel pattern
+// Uses market context thresholds
 import { CandlestickData } from '../../models/ChartTypes';
 import { GoldmineChannelPattern, PatternType, ChannelDirection } from '../../models/PatternTypes';
 import { v4 as uuidv4 } from 'uuid';

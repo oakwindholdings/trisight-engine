@@ -1,3 +1,6 @@
+// src/components/PatternDetails/EscalatorPatternDetails.tsx
+// Details view for Escalator pattern
+// Shows step analysis
 import React from 'react';
 import styled from 'styled-components';
 import { EscalatorPattern, EscalatorSignalStrength, ThrustDirection } from '../../models/PatternTypes';

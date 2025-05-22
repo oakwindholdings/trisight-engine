@@ -1,3 +1,6 @@
+// src/components/Visualizations/BlackjackVisualization.tsx
+// Visualization for Blackjack pattern
+// Shows scoring and confidence
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { BlackjackPattern, BlackjackSignalStrength } from '../../models/PatternTypes';

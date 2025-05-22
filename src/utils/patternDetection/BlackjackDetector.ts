@@ -1,3 +1,6 @@
+// src/utils/patternDetection/BlackjackDetector.ts
+// Detector for Blackjack pattern
+// Identifies occurrences in price data
 import { CandlestickData } from '../../models/ChartTypes';
 import { BlackjackPattern, PatternType, BlackjackSignalStrength } from '../../models/PatternTypes';
 import { v4 as uuidv4 } from 'uuid';

@@ -1,3 +1,6 @@
+// src/utils/patternDetection/BlackjackDetectorFactory.ts
+// Factory for Blackjack detectors
+// Creates configured detector instances
 import { PatternType } from '../../models/PatternTypes';
 import { BasePatternDetector } from './core/BasePatternDetector';
 import { PatternDetectorFactory, PatternDetectorOptions } from './core/PatternDetectorFactory';

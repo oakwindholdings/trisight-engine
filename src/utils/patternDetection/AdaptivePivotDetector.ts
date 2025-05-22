@@ -1,3 +1,6 @@
+// src/utils/patternDetection/AdaptivePivotDetector.ts
+// Adaptive detector for Pivot pattern
+// Uses market context thresholds
 import { CandlestickData } from '../../models/ChartTypes';
 import { 
   PivotPattern, 

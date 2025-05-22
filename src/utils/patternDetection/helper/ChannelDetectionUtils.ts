@@ -1,3 +1,6 @@
+// src/utils/patternDetection/helper/ChannelDetectionUtils.ts
+// Helper utilities for Channel detection
+// Shared by detectors
 import { CandlestickData } from '../../../models/ChartTypes';
 
 /**

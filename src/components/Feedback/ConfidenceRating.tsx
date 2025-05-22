@@ -1,3 +1,6 @@
+// src/components/Feedback/ConfidenceRating.tsx
+// Star rating component
+// Captures user confidence
 import React from 'react';
 import styled from 'styled-components';
 import type { ConfidenceRatingProps } from './feedback-components';

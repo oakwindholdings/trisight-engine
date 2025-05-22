@@ -1,3 +1,6 @@
+// src/components/Chart/TriSightChart.tsx
+// Main candlestick chart component
+// Handles zoom and pattern overlay
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { CandlestickData, zoomLevels } from '../../models/ChartTypes';

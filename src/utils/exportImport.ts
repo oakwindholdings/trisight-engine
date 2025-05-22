@@ -1,3 +1,6 @@
+// src/utils/exportImport.ts
+// Export and import helper
+// Persists training data to files
 import { STORAGE_KEYS } from '../api/patternApi';
 import { PatternFeedback, LearningModelState } from '../models/FeedbackTypes';
 

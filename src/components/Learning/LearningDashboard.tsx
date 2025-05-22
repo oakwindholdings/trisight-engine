@@ -1,3 +1,6 @@
+// src/components/Learning/LearningDashboard.tsx
+// Dashboard with learning metrics
+// Displays feedback statistics
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { PatternType } from '../../models/PatternTypes';

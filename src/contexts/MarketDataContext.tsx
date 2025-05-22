@@ -1,3 +1,6 @@
+// src/contexts/MarketDataContext.tsx
+// Context providing market data
+// Wraps useMarketData hook
 import React, { createContext, useContext, ReactNode } from 'react';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 import useMarketData from '../hooks/useMarketData';

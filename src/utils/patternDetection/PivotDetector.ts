@@ -1,3 +1,6 @@
+// src/utils/patternDetection/PivotDetector.ts
+// Detector for Pivot pattern
+// Identifies occurrences in price data
 import { CandlestickData } from '../../models/ChartTypes';
 import { PivotPattern, PatternType, PivotType } from '../../models/PatternTypes';
 import { v4 as uuidv4 } from 'uuid';

@@ -1,3 +1,6 @@
+// src/utils/patternDetection/AdaptivePatternDetectionService.ts
+// Adaptive detector for PatternDetectionService pattern
+// Uses market context thresholds
 import { CandlestickData, Timeframe } from '../../models/ChartTypes';
 import { Pattern, PatternType } from '../../models/PatternTypes';
 import { PatternDetectionFactory } from './core/PatternDetectionFactory';

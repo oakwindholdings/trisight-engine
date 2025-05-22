@@ -1,3 +1,6 @@
+// src/utils/patternDetection/core/PatternRelationshipTracker.ts
+// Tracks relationships between patterns
+// Used for advanced analytics
 import { 
   Pattern, 
   PatternType, 

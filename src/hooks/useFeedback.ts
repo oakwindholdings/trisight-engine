@@ -1,3 +1,6 @@
+// src/hooks/useFeedback.ts
+// Hook for submitting pattern feedback
+// Loads history from local storage
 import { useState, useCallback, useEffect } from 'react';
 import { PatternFeedback } from '../models/FeedbackTypes';
 import { Pattern } from '../models/PatternTypes';

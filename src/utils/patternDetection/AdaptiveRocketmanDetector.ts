@@ -1,3 +1,6 @@
+// src/utils/patternDetection/AdaptiveRocketmanDetector.ts
+// Adaptive detector for Rocketman pattern
+// Uses market context thresholds
 import { CandlestickData } from '../../models/ChartTypes';
 import { 
   RocketmanPattern, 

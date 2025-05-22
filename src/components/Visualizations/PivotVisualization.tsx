@@ -1,3 +1,6 @@
+// src/components/Visualizations/PivotVisualization.tsx
+// Visualization for Pivot pattern
+// Highlights pivot points
 import React from 'react';
 import styled from 'styled-components';
 import { PivotPattern, PivotType } from '../../models/PatternTypes';

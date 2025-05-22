@@ -1,3 +1,6 @@
+// src/components/Settings/PivotSettingsPanel.tsx
+// Settings for Pivot detector
+// Adjusts sensitivity values
 import React, { useState, ChangeEvent } from 'react';
 import styled from 'styled-components';
 import { PatternType } from '../../models/PatternTypes';

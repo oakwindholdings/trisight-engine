@@ -1,3 +1,6 @@
+// src/components/Chart/TimeAxis.d.ts
+// Type defs for TimeAxis
+// Matches canvas implementation
 interface ChartDimensions {
   width: number;
   height: number;

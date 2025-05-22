@@ -1,3 +1,6 @@
+// src/components/Settings/DataExportImport.tsx
+// UI for exporting and importing data
+// Handles JSON files
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import { exportTrainingData, importTrainingData } from '../../utils/exportImport';

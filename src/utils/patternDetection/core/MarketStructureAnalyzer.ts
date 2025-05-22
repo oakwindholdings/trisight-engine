@@ -1,3 +1,6 @@
+// src/utils/patternDetection/core/MarketStructureAnalyzer.ts
+// Analyzes market structure
+// Used by complex detectors
 import { CandlestickData, Timeframe } from '../../../models/ChartTypes';
 import { 
   MarketContext, 

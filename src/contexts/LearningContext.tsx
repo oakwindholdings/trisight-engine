@@ -1,3 +1,6 @@
+// src/contexts/LearningContext.tsx
+// Context exposing learning metrics
+// Wraps useLearning hook
 import React, { createContext, useContext, ReactNode } from 'react';
 import { PatternType } from '../models/PatternTypes';
 import { PatternFeedback } from '../models/FeedbackTypes';

@@ -1,3 +1,6 @@
+// src/types/global.d.ts
+// global.d
+// TriSight source file
 import React from 'react';
 import { PatternType } from '../models/PatternTypes';
 

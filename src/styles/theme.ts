@@ -1,3 +1,6 @@
+// src/styles/theme.ts
+// Design tokens for styling
+// Colors and spacing for UI
 export const ThemeTokens = {
   colors: {
     // Primary color palette

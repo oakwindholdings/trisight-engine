@@ -1,3 +1,6 @@
+// src/components/Feedback/BoundaryAdjuster.tsx
+// UI for tweaking pattern boundaries
+// Used within feedback modals
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 // Import our type from the declaration file

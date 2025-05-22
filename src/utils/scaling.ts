@@ -1,3 +1,6 @@
+// src/utils/scaling.ts
+// Chart scale utilities
+// Builds time and price scales
 import * as d3Scale from 'd3-scale';
 import * as d3Array from 'd3-array';
 import * as d3TimeFormat from 'd3-time-format';

@@ -1,3 +1,6 @@
+// src/utils/patternDetection/core/PatternRegistry.ts
+// Registry of available detectors
+// Maps names to factory functions
 /**
  * Registry for pattern detectors
  * Allows registration and retrieval of detector factories by pattern type

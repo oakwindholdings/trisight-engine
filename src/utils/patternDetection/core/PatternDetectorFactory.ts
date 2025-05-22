@@ -1,3 +1,6 @@
+// src/utils/patternDetection/core/PatternDetectorFactory.ts
+// Factory for Pattern detectors
+// Creates configured detector instances
 import { PatternType } from '../../../models/PatternTypes';
 import { BasePatternDetector, DetectionOptions } from './BasePatternDetector';
 

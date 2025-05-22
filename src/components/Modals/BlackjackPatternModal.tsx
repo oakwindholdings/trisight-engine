@@ -1,3 +1,6 @@
+// src/components/Modals/BlackjackPatternModal.tsx
+// Modal displaying Blackjack details
+// Used in analysis panel
 import React from 'react';
 import styled from 'styled-components';
 import { BlackjackPattern } from '../../models/PatternTypes';

@@ -1,3 +1,6 @@
+// src/utils/compressedTimeScale.ts
+// Time scale skipping gaps
+// Compresses non-trading hours
 import { scaleTime } from 'd3-scale';
 import { min, max, extent } from 'd3-array';
 import { CandlestickData } from '../models/ChartTypes';

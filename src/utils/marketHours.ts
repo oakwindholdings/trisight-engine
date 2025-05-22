@@ -1,3 +1,6 @@
+// src/utils/marketHours.ts
+// Trading hours utilities
+// Determines market open/close
 /**
  * Utility functions for handling market trading hours
  */

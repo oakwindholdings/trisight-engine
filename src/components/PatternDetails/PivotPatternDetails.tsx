@@ -1,3 +1,6 @@
+// src/components/PatternDetails/PivotPatternDetails.tsx
+// Details view for Pivot pattern
+// Shows pivot dates and prices
 import React from 'react';
 import styled from 'styled-components';
 import { PivotPattern, PivotType } from '../../models/PatternTypes';
