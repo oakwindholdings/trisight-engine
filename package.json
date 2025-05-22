@@ -38,11 +38,10 @@
     "lint": "eslint .",
     "eject": "react-scripts eject",
   },
-  "main": "public/electron.js",
   "homepage": "./",
   "build": {
-    "appId": "com.trisight.equity-analyst",
-    "productName": "TriSight Equity Analyst",
+    "appId": "...",
+    "productName": "...",
     "files": [
       "build/**/*",
       "node_modules/**/*"
