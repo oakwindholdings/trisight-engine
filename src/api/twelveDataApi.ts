@@ -2,7 +2,8 @@ import axios from 'axios';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 
 // TwelveData API configuration
-const API_KEY = '764fb86962cc46ebbe5e1c89a1761623';
+// Read the API key from environment variable for security
+const API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
 const BASE_URL = 'https://api.twelvedata.com';
 const MAX_REQUESTS_PER_MINUTE = 8;
 const CACHE_EXPIRY = 60 * 1000; // 1 minute in milliseconds

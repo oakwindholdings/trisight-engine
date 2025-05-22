@@ -92,12 +92,14 @@ Open [http://localhost:3000](http://localhost:3000) to view the application in y
 
 ## API Configuration
 
-The application uses the TwelveData API for market data. The API key is already configured in the application code, but you may want to replace it with your own key for production use.
+The application uses the TwelveData API for market data. Create a `.env` file at
+the project root (you can copy `.env.example`) and add your API key:
 
-```typescript
-// Located in src/api/twelveDataApi.ts
-const API_KEY = '764fb86962cc46ebbe5e1c89a1761623';
+```bash
+REACT_APP_TWELVE_DATA_API_KEY=your_api_key_here
 ```
+
+This key is loaded by `src/api/twelveDataApi.ts` at runtime.
 
 ## Pattern Types and Detection
 
