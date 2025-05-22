@@ -17,7 +17,7 @@
 ---
 
 # TECH STACK
-- **Frontend**: React (Vite + TypeScript) — `/src/`
+- **Frontend**: React (Create-React-App + TypeScript) — `/src/`
 - **Backend**: Node.js for local CLI/dev scripts
 - **AI Logic**: Python/TS-based agent logic via Codex/Windsurf
 - **Data Handling**: Static datasets; integrated with TwelveData.com APIs
@@ -94,6 +94,8 @@ Focus work in:
 
 Do NOT touch:
 - `/node_modules/`, `package-lock.json`, `build/`, `dist/`
+- Any backup artifacts (`*.bak`, `*.backup`, `*.broken`, `client-package/build/`)
+- Build artifacts and logs should not be committed
 
 ---
 
@@ -102,6 +104,7 @@ Do NOT touch:
 - Focus on **intent, constraints, and decisions**
 - DO NOT delete comments unless they are obsolete or wrong
 - Annotate the **non-obvious**—reasoning, edge-cases, safety nets
+- Any file over 500 lines MUST include a `// CONSIDER SPLIT` comment
 
 Example:
 ```ts
@@ -129,13 +132,29 @@ All UI should:
 ---
 
 # HEADER COMMENTS IN ALL FILES
-Every file must begin with:
+Every file must begin with the following three-line header:
 ```ts
 // src/hooks/usePatterns.ts
 // Detects pattern candidates in timeseries stream
 // Does NOT perform model scoring or logging
 ```
 This establishes traceability for Codex and co-engineers.
+
+## Automated Header Script
+To check for and add standard headers to files missing them:
+```bash
+#!/bin/bash
+for file in $(find src -name "*.ts" -o -name "*.tsx"); do
+  if ! head -n 3 "$file" | grep -q "// src/"; then
+    echo "// $file" > "$file.tmp"
+    echo "// TODO: Add file description" >> "$file.tmp"
+    echo "// TODO: Add additional context" >> "$file.tmp"
+    cat "$file" >> "$file.tmp"
+    mv "$file.tmp" "$file"
+    echo "Added header to $file"
+  fi
+done
+```
 
 ---
 
@@ -147,9 +166,11 @@ This establishes traceability for Codex and co-engineers.
 
 **Validation Steps**:
 ```bash
-pnpm lint
-pnpm test
-pnpm turbo run build --filter=trisight-equity-analyst
+npm test
+npm run lint    # If a lint script isn't defined yet, use: npx eslint .
+npm run build
+npm start       # For local testing
+npm run electron:package  # For client packaging
 ```
 
 **Before Merge:**
@@ -157,6 +178,8 @@ pnpm turbo run build --filter=trisight-equity-analyst
 - No circular dependencies
 - No dead imports or unused files
 - No TODOs in production files unless tracked
+- All API keys and secrets must use environment variables (.env files)
+- No credentials should be committed to the repository
 
 ---
 
@@ -180,6 +203,30 @@ When working in unknown files:
 - Adding files unless scoped by prompt
 - Naming agents with unclear verbs (e.g. `handler`, `manager`)
 - Silent fails — always log or throw
+- Committing API keys or sensitive information
+- Very large components (consider splitting the following into subcomponents or modules):
+  - `TriSightChart`
+  - `EnhancedFeedbackModal`
+  - `PatternPanel`
+
+---
+
+# REPOSITORY HYGIENE
+- **Do not commit:**
+  - Build artifacts (build/, dist/)
+  - Log files (*.log)
+  - Environment files (.env, .env.local)
+  - Backup files (*.bak, *.backup, *.broken)
+  - client-package/build/ directory
+  
+- **Large files:**
+  - Files exceeding 500 lines should be split into smaller, more focused components
+  - Components with complex logic should be broken down into separate utilities
+  
+- **Security:**
+  - All API keys must be stored in .env files (added to .gitignore)
+  - Use environment variables with appropriate naming (REACT_APP_* prefix)
+  - Never hardcode credentials or tokens in source code
 
 ---
 
