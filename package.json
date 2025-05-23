@@ -37,6 +37,7 @@
     "test": "react-scripts test",
     "lint": "eslint .",
     "eject": "react-scripts eject"
+
   },
   "homepage": "./",
   "eslintConfig": {
