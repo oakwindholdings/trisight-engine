@@ -37,6 +37,9 @@ jobs:
         with:
           node-version: 18
 
+      - name: Make setup script executable
+        run: chmod +x .codex/setup.sh
+
       - name: Run setup script (.codex/setup.sh)
         run: .codex/setup.sh
 
