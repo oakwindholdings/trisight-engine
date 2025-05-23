@@ -31,7 +31,7 @@ echo "::endgroup::"
 
 echo "::group::🏗️ Building project"
 if npm run | grep -q "build"; then
-  npm run build
+  CI=false npm run build
   echo "::notice::✅ Build complete"
 else
   echo "::warning::⚠️ No build script defined"
