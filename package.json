@@ -36,29 +36,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "lint": "eslint .",
-    "eject": "react-scripts eject",
+    "eject": "react-scripts eject"
   },
   "homepage": "./",
-  "build": {
-    "appId": "...",
-    "productName": "...",
-    "files": [
-      "build/**/*",
-      "node_modules/**/*"
-    ],
-    "directories": {
-      "buildResources": "public"
-    },
-    "win": {
-      "target": ["nsis"],
-      "icon": "public/favicon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
-    }
-  },
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -78,6 +58,6 @@
     ]
   },
   "devDependencies": {
-    "@types/d3": "^7.4.3",
+    "@types/d3": "^7.4.3"
   }
 }
