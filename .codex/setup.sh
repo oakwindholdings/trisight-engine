@@ -1,37 +1,39 @@
 #!/bin/bash
 
-set -e  # Exit immediately on any error
-cd "$(dirname "$0")/.." || exit 1  # Move to project root
+set -e  # Exit on error
 
-echo "🔧 Installing dependencies..."
+cd "$(dirname "$0")/.." || exit 1
+
+echo "::group::🔧 Installing dependencies"
 if [ -f package-lock.json ]; then
   npm ci
 else
   npm install
 fi
-echo "✅ Dependencies installed."
+echo "::notice::✅ Dependencies installed"
+echo "::endgroup::"
 
-echo "🧪 Running lint check..."
+echo "::group::🧪 Running lint check"
 if npm run | grep -q "lint"; then
-  npm run lint || echo "⚠️ Lint failed (but continuing)"
+  npm run lint || echo "::warning::⚠️ Lint failed (but continuing)"
 else
-  echo "ℹ️ No lint script defined."
+  echo "::notice::ℹ️ No lint script defined."
 fi
+echo "::endgroup::"
 
-echo "🧪 Running tests..."
+echo "::group::🧪 Running tests"
 if npm run | grep -q "test"; then
-  npm test --silent || echo "⚠️ Tests failed (but continuing)"
+  npm test --silent || echo "::warning::⚠️ Tests failed (but continuing)"
 else
-  echo "ℹ️ No test script defined."
+  echo "::notice::ℹ️ No test script defined."
 fi
+echo "::endgroup::"
 
-echo "🏗️ Building project..."
-npm run build
-echo "✅ Build complete."
-
-echo "🎁 Checking packaging..."
-if npm run | grep -q "electron:package"; then
-  npm run electron:package
+echo "::group::🏗️ Building project"
+if npm run | grep -q "build"; then
+  npm run build
+  echo "::notice::✅ Build complete"
 else
-  echo "ℹ️ No packaging script defined. Skipping."
+  echo "::warning::⚠️ No build script defined"
 fi
+echo "::endgroup::"
