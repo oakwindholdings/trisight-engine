@@ -5,8 +5,14 @@ import axios from 'axios';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 
 // TwelveData API configuration
-// Read the API key from environment variable for security
-const API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
+// Start with API key from environment variable but allow runtime override
+let API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
+
+export const setApiKey = (key: string) => {
+  API_KEY = key;
+};
+
+export const getApiKey = () => API_KEY;
 const BASE_URL = 'https://api.twelvedata.com';
 const MAX_REQUESTS_PER_MINUTE = 8;
 const CACHE_EXPIRY = 60 * 1000; // 1 minute in milliseconds

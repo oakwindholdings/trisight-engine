@@ -4,6 +4,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 import useMarketData from '../hooks/useMarketData';
+import useTwelveDataApiKey from '../hooks/useTwelveDataApiKey';
 
 // Define the context type
 interface MarketDataContextType {
@@ -51,6 +52,8 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
   initialSymbol = 'AAPL',
   initialTimeframe = '5min'
 }) => {
+  // Hydrate TwelveData API key before market data hook triggers requests
+  useTwelveDataApiKey();
   const marketData = useMarketData(initialSymbol, initialTimeframe);
   
   return (
