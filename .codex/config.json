@@ -1,0 +1,27 @@
+{
+  "scripts": {
+    "setup": "./.codex/setup.sh",
+    "lint": "npm run lint",
+    "test": "npm test --silent",
+    "build": "CI=false npm run build"
+  },
+  "entry": "src/App.tsx",
+  "mainComponent": "App",
+  "ignore": [
+    "node_modules/",
+    "build/",
+    "public/",
+    "dist/"
+  ],
+  "mocks": {
+    "d3-scale": true,
+    "d3-array": true,
+    "d3-time-format": true,
+    "axios": true
+  },
+  "features": {
+    "typescript": true,
+    "react": true,
+    "hooks": true
+  }
+}
