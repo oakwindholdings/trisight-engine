@@ -15,7 +15,11 @@ echo "::endgroup::"
 
 echo "::group::🧪 Running lint check"
 if npm run | grep -q "lint"; then
-  npm run lint || echo "::warning::⚠️ Lint failed (but continuing)"
+  if [ -f .eslintrc.json ] || grep -q "eslintConfig" package.json; then
+    npm run lint || echo "::warning::⚠️ Lint failed (but continuing)"
+  else
+    echo "::notice::ℹ️ ESLint not configured, skipping lint"
+  fi
 else
   echo "::notice::ℹ️ No lint script defined."
 fi
