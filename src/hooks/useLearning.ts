@@ -4,16 +4,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { PatternFeedback } from '../models/FeedbackTypes';
 import { PatternType } from '../models/PatternTypes';
-import { 
-  LearningMetrics, 
+import {
+  LearningMetrics,
   PatternDetectionParameters,
-  ProcessingResult,
-  PatternFeedbackHistory,
-  EnhancedPatternFeedback
+  ProcessingResult
 } from '../models/LearningTypes';
 import { LearningProcessor } from '../utils/learning/LearningProcessor';
-import { FeedbackAggregator } from '../utils/learning/FeedbackAggregator';
 import { FeedbackStorage } from '../utils/learning/FeedbackStorage';
+import { generateLearningMetrics } from '../utils/learning/metrics';
 
 /**
  * Hook for managing the pattern learning system
@@ -42,121 +40,8 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
     setError(null);
 
     try {
-      // Calculate metrics for each pattern type
-      const patternTypePerformance: Record<PatternType, {
-        detectionCount: number;
-        falsePositiveRate: number;
-        averageConfidence: number;
-        feedbackIncorporationRate: number;
-        improvementTrend: number[];
-      }> = {} as any;
-
-      // Get all stored feedback
       const allFeedback = FeedbackStorage.getAllFeedback();
-
-      // Process metrics for each pattern type
-      Object.values(PatternType).forEach(patternType => {
-        const aggregated = FeedbackAggregator.aggregateByPatternType(allFeedback, patternType);
-        const improvementMetrics = FeedbackAggregator.calculateImprovementMetrics(allFeedback, patternType);
-
-        patternTypePerformance[patternType] = {
-          detectionCount: aggregated.sampleCount,
-          falsePositiveRate: aggregated.falsePositiveRate,
-          averageConfidence: calculateAverageConfidence(aggregated.confidenceDistribution),
-          feedbackIncorporationRate: calculateIncorporationRate(patternType),
-          improvementTrend: improvementMetrics.map(m => m.accuracy)
-        };
-      });
-
-      // Calculate overall performance metrics
-      const totalFeedback = allFeedback.length;
-      const falsePositives = allFeedback.filter(f => f.falsePositive).length;
-      const accuracy = totalFeedback > 0 ? 1 - (falsePositives / totalFeedback) : 0;
-
-      // Create metrics object
-      const updatedMetrics: LearningMetrics = {
-        patternTypePerformance,
-        // Add accuracy by pattern type for charts
-        accuracyByPatternType: Object.values(PatternType).reduce((acc, type) => {
-          const typeFeedback = allFeedback.filter(f => f.originalPatternType === type);
-          const falsePositives = typeFeedback.filter(f => f.falsePositive).length;
-          acc[type] = typeFeedback.length > 0 ? 1 - (falsePositives / typeFeedback.length) : 0;
-          return acc;
-        }, {} as Record<PatternType, number>),
-        // Add feedback count by pattern type
-        feedbackCountByPatternType: Object.values(PatternType).reduce((acc, type) => {
-          acc[type] = allFeedback.filter(f => f.originalPatternType === type).length;
-          return acc;
-        }, {} as Record<PatternType, number>),
-        // Calculate pattern corrections
-        correctionsByType: (() => {
-          // Get all feedback with pattern type corrections
-          const corrections = allFeedback.filter(f => 
-            f.correctedPatternType !== null && 
-            f.correctedPatternType !== f.originalPatternType
-          );
-          
-          // Group corrections by from -> to pattern type
-          const correctionMap = new Map<string, {
-            from: PatternType;
-            to: PatternType;
-            count: number;
-          }>();
-          
-          corrections.forEach(feedback => {
-            const key = `${feedback.originalPatternType}-${feedback.correctedPatternType}`;
-            if (!correctionMap.has(key)) {
-              correctionMap.set(key, {
-                from: feedback.originalPatternType,
-                to: feedback.correctedPatternType as PatternType,
-                count: 0
-              });
-            }
-            const item = correctionMap.get(key)!;
-            item.count++;
-          });
-          
-          // Convert map to array and sort by count
-          return Array.from(correctionMap.values())
-            .sort((a, b) => b.count - a.count);
-        })(),
-        // Calculate top contributors
-        topContributors: (() => {
-          // Group feedback by userId
-          const userGroups = new Map<string, PatternFeedback[]>();
-          
-          allFeedback.forEach(feedback => {
-            if (!userGroups.has(feedback.userId)) {
-              userGroups.set(feedback.userId, []);
-            }
-            userGroups.get(feedback.userId)!.push(feedback);
-          });
-          
-          // Calculate metrics for each user
-          const contributors = Array.from(userGroups.entries()).map(([userId, feedbacks]) => {
-            const feedbackCount = feedbacks.length;
-            const accurateCount = feedbacks.filter(f => !f.falsePositive).length;
-            const accuracyRate = feedbackCount > 0 ? accurateCount / feedbackCount : 0;
-            
-            return {
-              userId,
-              feedbackCount,
-              accuracyRate
-            };
-          });
-          
-          // Sort by feedback count (most active contributors first)
-          return contributors.sort((a, b) => b.feedbackCount - a.feedbackCount);
-        })(),
-        overallPerformance: {
-          accuracy,
-          precision: calculatePrecision(allFeedback),
-          recall: calculateRecall(allFeedback),
-          f1Score: calculateF1Score(accuracy, calculatePrecision(allFeedback), calculateRecall(allFeedback))
-        },
-        parametersEvolution: getParametersEvolution()
-      };
-
+      const updatedMetrics = generateLearningMetrics(allFeedback, learningProcessor);
       setMetrics(updatedMetrics);
     } catch (error) {
       console.error('Error calculating learning metrics:', error);
@@ -164,62 +49,8 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [learningProcessor]);
 
-  // Helper function to calculate average confidence
-  const calculateAverageConfidence = (distribution: Record<number, number>): number => {
-    const totalRatings = Object.values(distribution).reduce((sum, count) => sum + count, 0);
-    if (totalRatings === 0) return 0;
-
-    const weightedSum = Object.entries(distribution)
-      .reduce((sum, [rating, count]) => sum + (parseInt(rating) * count), 0);
-
-    return weightedSum / totalRatings / 5; // Normalize to 0-1 scale
-  };
-
-  // Helper function to calculate feedback incorporation rate
-  const calculateIncorporationRate = (patternType: PatternType): number => {
-    // This would be calculated based on how many feedback entries resulted in parameter changes
-    // For now, we'll use a placeholder implementation
-    return 0.75; // 75% incorporation rate as placeholder
-  };
-
-  // Helper function to calculate precision
-  const calculatePrecision = (feedback: PatternFeedback[]): number => {
-    if (feedback.length === 0) return 0;
-    const truePositives = feedback.filter(f => !f.falsePositive).length;
-    return truePositives / feedback.length;
-  };
-
-  // Helper function to calculate recall
-  const calculateRecall = (feedback: PatternFeedback[]): number => {
-    // Recall is harder to calculate without knowing about missed patterns
-    // For now, we'll use a placeholder implementation
-    return 0.8; // 80% recall as placeholder
-  };
-
-  // Helper function to calculate F1 score
-  const calculateF1Score = (accuracy: number, precision: number, recall: number): number => {
-    if (precision + recall === 0) return 0;
-    return 2 * (precision * recall) / (precision + recall);
-  };
-
-  // Helper function to get parameters evolution
-  const getParametersEvolution = (): LearningMetrics['parametersEvolution'] => {
-    // This would be extracted from the feedback history
-    // For now, we'll return a placeholder
-    const allParams: Record<PatternType, PatternDetectionParameters> = {} as Record<PatternType, PatternDetectionParameters>;
-    
-    // Get parameters for each pattern type
-    Object.values(PatternType).forEach(patternType => {
-      allParams[patternType] = learningProcessor.getDetectionParameters(patternType);
-    });
-    
-    return [{
-      timestamp: Date.now(),
-      parameters: allParams
-    }];
-  };
 
   // Export the current learning model
   const handleExportModel = useCallback(async () => {
