@@ -1,3 +1,6 @@
+// src/components/Navigation/ContextBar.tsx
+// Top bar with search and date
+// Switches between app tabs
 import React from 'react';
 import styled from 'styled-components';
 import SymbolSearch from '../SymbolSearch';

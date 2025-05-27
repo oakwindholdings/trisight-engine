@@ -1,3 +1,6 @@
+// src/components/Chart/PriceAxis.tsx
+// Canvas price axis renderer
+// Formats price labels
 import { formatPriceForAxis } from '../../utils/scaling';
 
 interface ChartDimensions {

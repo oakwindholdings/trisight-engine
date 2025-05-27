@@ -1,3 +1,6 @@
+// src/components/Feedback/feedback-components.d.ts
+// Type defs for feedback components
+// Shared prop interfaces
 import React from 'react';
 import { PatternType, Pattern } from '../../models/PatternTypes';
 import { PatternFeedback } from '../../models/FeedbackTypes';

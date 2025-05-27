@@ -1,3 +1,6 @@
+// src/utils/learning/LearningProcessor.ts
+// Processes feedback to tune detectors
+// Adjusts detection parameters
 import { PatternType } from '../../models/PatternTypes';
 import { PatternFeedback } from '../../models/FeedbackTypes';
 import { 

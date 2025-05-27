@@ -1,3 +1,6 @@
+// src/components/Patterns/EscalatorSettingsPanel.tsx
+// Settings for Escalator detector
+// Configure step thresholds
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { ThrustDirection } from '../../models/PatternTypes';

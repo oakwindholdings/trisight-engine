@@ -1,3 +1,6 @@
+// src/components/Chart/CandlestickRenderer.d.ts
+// Type defs for CandlestickRenderer
+// Matches canvas implementation
 import { CandlestickData } from '../../models/ChartTypes';
 import React from 'react';
 

@@ -1,3 +1,6 @@
+// src/api/patternApi.ts
+// Local storage API for pattern feedback
+// Simulates server calls
 import { PatternFeedback, LearningMetrics, LearningModelState } from '../models/FeedbackTypes';
 import { PatternType } from '../models/PatternTypes';
 

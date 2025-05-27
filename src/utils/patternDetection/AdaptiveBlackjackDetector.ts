@@ -1,3 +1,6 @@
+// src/utils/patternDetection/AdaptiveBlackjackDetector.ts
+// Adaptive detector for Blackjack pattern
+// Uses market context thresholds
 import { CandlestickData } from '../../models/ChartTypes';
 import { 
   BlackjackPattern, 

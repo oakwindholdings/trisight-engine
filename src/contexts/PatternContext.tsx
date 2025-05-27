@@ -1,3 +1,6 @@
+// src/contexts/PatternContext.tsx
+// Context for detected patterns
+// Exposes detection actions
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType } from '../models/PatternTypes';

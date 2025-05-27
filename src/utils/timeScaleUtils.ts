@@ -1,3 +1,6 @@
+// src/utils/timeScaleUtils.ts
+// Time scale helpers
+// Handles trading hours filtering
 import { scaleTime } from 'd3-scale';
 import { extent } from 'd3-array';
 import { filterTradingHoursData } from './marketHours';

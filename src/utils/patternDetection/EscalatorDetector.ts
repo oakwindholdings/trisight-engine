@@ -1,3 +1,6 @@
+// src/utils/patternDetection/EscalatorDetector.ts
+// Detector for Escalator pattern
+// Identifies occurrences in price data
 import { CandlestickData } from '../../models/ChartTypes';
 import { EscalatorPattern, PatternType, ThrustDirection, EscalatorSignalStrength } from '../../models/PatternTypes';
 import { v4 as uuidv4 } from 'uuid';

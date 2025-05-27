@@ -1,3 +1,6 @@
+// src/components/Chart/ChartWorkspace.tsx
+// Layout wrapper for chart area
+// Combines chart and controls
 import React from 'react';
 import styled from 'styled-components';
 import TriSightChart from './TriSightChart';

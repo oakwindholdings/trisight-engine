@@ -1,0 +1,17 @@
+{
+  "files": [
+    "src/App.tsx",
+    "src/hooks/useChartState.ts",
+    "src/components/Chart/ChartRenderer.tsx"
+  ],
+  "exports": {
+    "src/App.tsx": ["App"],
+    "src/hooks/useChartState.ts": ["useChartState"]
+  },
+  "structure": {
+    "src/hooks/useLearning.ts": {
+      "shouldContain": ["useEffect", "axios", "PatternFeedback"]
+    }
+  },
+  "note": "This is a non-enforced Codex expectations file. Rename to config.json when you want it active."
+}

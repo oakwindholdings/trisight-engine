@@ -1,3 +1,6 @@
+// src/utils/patternDetection/core/PatternDetectionOrchestrator.ts
+// Coordinates detectors and tracks relationships
+// Handles detection workflow
 import { CandlestickData } from '../../../models/ChartTypes';
 import { Pattern, PatternType } from '../../../models/PatternTypes';
 import { MarketContext } from './MarketContext';

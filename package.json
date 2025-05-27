@@ -1,6 +1,6 @@
 {
-  "name": "trisight-equity-analyst",
-  "version": "0.1.0",
+  "name": "trisight",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -12,7 +12,6 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/d3-array": "^3.2.1",
     "@types/d3-scale": "^4.0.9",
-    "@types/jest": "^27.5.2",
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.4",
     "@types/react-datepicker": "^6.2.0",
@@ -31,37 +30,21 @@
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
+"devDependencies": {
+  "@types/d3": "^7.4.3",
+  "eslint": "^8.57.0",
+  "@types/jest": "^29.5.2",
+  "ts-jest": "^29.1.1",
+  "jest": "^29.7.0"
+},
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run build && electron-builder build --win --publish never",
-    "electron:package": "electron-builder build --win --publish never"
+    "test": "react-scripts test --watchAll=false --silent",
+    "lint": "eslint src --ext .ts,.tsx",
+    "eject": "react-scripts eject"
   },
-  "main": "public/electron.js",
   "homepage": "./",
-  "build": {
-    "appId": "com.trisight.equity-analyst",
-    "productName": "TriSight Equity Analyst",
-    "files": [
-      "build/**/*",
-      "node_modules/**/*"
-    ],
-    "directories": {
-      "buildResources": "public"
-    },
-    "win": {
-      "target": ["nsis"],
-      "icon": "public/favicon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
-    }
-  },
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -79,14 +62,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "@types/d3": "^7.4.3",
-    "concurrently": "^9.1.2",
-    "cross-env": "^7.0.3",
-    "electron": "^36.2.1",
-    "electron-builder": "^26.0.12",
-    "electron-is-dev": "^3.0.1",
-    "wait-on": "^8.0.3"
   }
 }

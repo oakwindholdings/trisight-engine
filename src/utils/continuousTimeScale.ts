@@ -1,3 +1,6 @@
+// src/utils/continuousTimeScale.ts
+// Continuous trading time scale
+// Removes overnight gaps
 import * as d3Scale from 'd3-scale';
 import * as d3Array from 'd3-array';
 import { isDuringTradingHours } from './marketHours';

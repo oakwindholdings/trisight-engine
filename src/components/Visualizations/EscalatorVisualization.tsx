@@ -1,3 +1,6 @@
+// src/components/Visualizations/EscalatorVisualization.tsx
+// Visualization for Escalator pattern
+// Shows step structure
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { EscalatorPattern, EscalatorSignalStrength, ThrustDirection } from '../../models/PatternTypes';

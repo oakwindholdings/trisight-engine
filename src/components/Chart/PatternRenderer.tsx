@@ -1,3 +1,6 @@
+// src/components/Chart/PatternRenderer.tsx
+// Renders detected patterns on chart
+// Colors based on confidence
 import { Pattern, PatternType, patternStyles } from '../../models/PatternTypes';
 import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
 

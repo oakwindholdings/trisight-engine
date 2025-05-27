@@ -1,3 +1,6 @@
+// src/components/Chart/TimeAxis.tsx
+// Canvas time axis renderer
+// Formats timestamps for chart
 import { formatDateForAxis } from '../../utils/scaling';
 import { isDuringTradingHours } from '../../utils/marketHours';
 

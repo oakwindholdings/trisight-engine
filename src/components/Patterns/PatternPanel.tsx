@@ -1,3 +1,6 @@
+// src/components/Patterns/PatternPanel.tsx
+// Side panel listing patterns
+// Includes adaptive controls
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { ThemeTokens } from '../../styles/theme';
@@ -10,6 +13,7 @@ import RocketmanSettingsPanel from './RocketmanSettingsPanel';
 import BlackjackSettingsPanel from './BlackjackSettingsPanel';
 import EscalatorSettingsPanel from './EscalatorSettingsPanel';
 import PivotSettingsPanel from '../Settings/PivotSettingsPanel';
+import useTwelveDataApiKey from '../../hooks/useTwelveDataApiKey';
 
 const PanelContainer = styled.div`
   display: flex;
@@ -154,6 +158,8 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     escalatorSettings: false,
     pivotSettings: false
   });
+
+  const { apiKey, setApiKey } = useTwelveDataApiKey();
   
   // State for pattern settings
   const [goldmineChannelSettings, setGoldmineChannelSettings] = useState({
@@ -306,6 +312,27 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
               </div>
               <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
                 Changes are automatically saved to your browser
+              </div>
+            </FilterGroup>
+
+            <FilterGroup>
+              <FilterLabel>TwelveData API Key</FilterLabel>
+              <input
+                type="text"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Enter API key"
+                style={{
+                  width: '100%',
+                  backgroundColor: ThemeTokens.colors.inputBackground,
+                  border: `1px solid ${ThemeTokens.colors.border}`,
+                  borderRadius: ThemeTokens.borderRadius.small,
+                  padding: ThemeTokens.spacing.small,
+                  color: ThemeTokens.colors.textPrimary,
+                }}
+              />
+              <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
+                Stored locally in your browser
               </div>
             </FilterGroup>
           </SectionContent>

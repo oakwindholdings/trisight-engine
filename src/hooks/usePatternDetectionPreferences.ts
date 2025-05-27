@@ -1,3 +1,6 @@
+// src/hooks/usePatternDetectionPreferences.ts
+// Stores detection feature settings
+// Persists user preferences
 import { useState, useEffect } from 'react';
 import { PatternType } from '../models/PatternTypes';
 

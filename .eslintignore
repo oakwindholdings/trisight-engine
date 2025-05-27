@@ -1,0 +1,28 @@
+# Build outputs (never lint compiled artifacts)
+build/
+dist/
+client-package/build/
+
+# Public assets (not source code)
+public/
+
+# Codex and CI artifacts
+.codex/setup.lock
+.codex/lint-summary.txt
+
+# Logs
+*.log
+
+# Backup and broken files (as seen in your Chart folder)
+**/*.bak
+**/*.backup
+**/*.broken
+
+# External packages
+node_modules/
+
+# Package archives
+*.tgz
+
+# VSCode or editor-specific
+.vscode/

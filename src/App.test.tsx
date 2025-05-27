@@ -1,6 +1,14 @@
+// src/App.test.tsx
+// Basic CRA test harness
+// Ensures App renders
+
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
+
+jest.mock('d3-scale'); // 👈 MUST be first, before imports that might trigger the real d3-scale
+jest.mock('d3-array');
+jest.mock('d3-time-format');
 
 test('renders learn react link', () => {
   render(<App />);

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Make setup script executable (safety for Windows devs)
+        run: chmod +x .codex/setup.sh
+
+      - name: Run setup script (install, lint, test, build)
+        run: .codex/setup.sh
+
+      # Optional: You can remove the lines below if .codex/setup.sh already runs lint/test/build
+      # They're shown here in case you want explicit CI steps
+      - name: Run tests
+        run: npm test --silent
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Build the app
+        run: npm run build

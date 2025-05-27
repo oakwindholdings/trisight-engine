@@ -1,3 +1,6 @@
+// src/components/Patterns/PatternSelector.tsx
+// Dropdown to enable patterns
+// Filters detection types
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { PatternType, patternStyles } from '../../models/PatternTypes';

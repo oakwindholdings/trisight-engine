@@ -1,3 +1,6 @@
+// src/components/Patterns/RocketmanSettingsPanel.tsx
+// Settings for Rocketman detector
+// Control thrust phases
 import React from 'react';
 import styled from 'styled-components';
 import { PatternType, ThrustDirection } from '../../models/PatternTypes';

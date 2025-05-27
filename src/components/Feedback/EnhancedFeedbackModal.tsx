@@ -1,3 +1,6 @@
+// src/components/Feedback/EnhancedFeedbackModal.tsx
+// Advanced feedback modal
+// Shows history and rating
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Pattern, PatternType } from '../../models/PatternTypes';

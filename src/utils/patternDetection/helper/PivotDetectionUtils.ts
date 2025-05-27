@@ -1,3 +1,6 @@
+// src/utils/patternDetection/helper/PivotDetectionUtils.ts
+// Helper utilities for Pivot detection
+// Shared by detectors
 import { CandlestickData } from '../../../models/ChartTypes';
 import { PivotType } from '../../../models/PatternTypes';
 

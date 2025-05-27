@@ -1,3 +1,6 @@
+// src/utils/learning/FeedbackStorage.ts
+// Stores feedback in localStorage
+// Also saves learning parameters
 import { PatternFeedback } from '../../models/FeedbackTypes';
 import { PatternType } from '../../models/PatternTypes';
 import { PatternDetectionParameters, PatternFeedbackHistory } from '../../models/LearningTypes';

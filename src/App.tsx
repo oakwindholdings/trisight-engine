@@ -1,3 +1,6 @@
+// src/App.tsx
+// Main application component
+// Composes TriSight interface
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import './App.css';
@@ -8,10 +11,10 @@ import 'react-datepicker/dist/react-datepicker.css';
 import mainGridStyles from './styles/MainGrid.module.css';
 
 // Import components
-import TriSightChart from './components/Chart/TriSightChart';
 import SymbolSearch from './components/SymbolSearch';
 import PatternSelector from './components/Patterns/PatternSelector';
-import FeedbackModal from './components/Feedback/FeedbackModal';
+import ChartWithContext from './components/Chart/ChartWithContext';
+import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithContext';
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
 
@@ -24,10 +27,7 @@ import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
 
 // Import context providers
-import { MarketDataProvider } from './contexts/MarketDataContext';
-import { PatternProvider } from './contexts/PatternContext';
-import { FeedbackProvider } from './contexts/FeedbackContext';
-import { LearningProvider } from './contexts/LearningContext';
+import AppProviders from './components/AppProviders';
 import { useMarketDataContext } from './contexts/MarketDataContext';
 import { usePatternContext } from './contexts/PatternContext';
 import { useFeedbackContext } from './contexts/FeedbackContext';
@@ -107,81 +107,6 @@ const saveChartHeight = (height: number): void => {
   }
 };
 
-// Context wrapper for TriSightChart
-const ChartWithContext: React.FC<{
-  width: number;
-  height: number;
-  onPatternSelect: (pattern: Pattern | null) => void;
-  selectedPattern: Pattern | null;
-  selectedDate: Date;
-  timeframe?: string; 
-  activeTimeRange: TimeRangeOption;
-  onTimeRangeSelect: (range: TimeRangeOption, startDate: Date, endDate: Date) => void;
-}> = ({ 
-  width, 
-  height, 
-  onPatternSelect, 
-  selectedPattern, 
-  selectedDate, 
-  timeframe = '1min',
-  activeTimeRange,
-  onTimeRangeSelect
-}) => {
-  const { data, fetchSpecificDay, loading } = useMarketDataContext();
-  const { patterns } = usePatternContext();
-  
-  // Load data for the selected date when it changes or when component mounts
-  useEffect(() => {
-    // Fetch specific trading day data (9:30 AM - 4:00 PM, 5-minute candles)
-    fetchSpecificDay(selectedDate);
-  }, [selectedDate, fetchSpecificDay]);
-  
-  return (
-    <>
-      {loading && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
-                     backgroundColor: 'rgba(255,255,255,0.7)', zIndex: 10,
-                     display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div>Loading market data for {selectedDate.toLocaleDateString()}...</div>
-        </div>
-      )}
-      <TriSightChart
-        data={data}
-        patterns={patterns}
-        width={width}
-        height={height}
-        onPatternSelect={onPatternSelect}
-        selectedPattern={selectedPattern}
-        timeframe={timeframe}
-      />
-    </>
-  );
-};
-
-// Context wrapper for FeedbackModal
-const FeedbackModalWithContext: React.FC<{
-  pattern: Pattern;
-  onClose: () => void;
-  userId: string;
-}> = ({ pattern, onClose, userId }) => {
-  const { submitFeedback } = useFeedbackContext();
-  
-  // Create a wrapper function that converts the Promise<boolean> to Promise<void>
-  const handleSubmit = async (feedback: PatternFeedback): Promise<void> => {
-    await submitFeedback(feedback);
-    // Close the modal after submission
-    onClose();
-  };
-  
-  return (
-    <FeedbackModal
-      pattern={pattern}
-      onSubmit={handleSubmit}
-      onClose={onClose}
-      userId={userId}
-    />
-  );
-};
 
 
 
@@ -724,15 +649,9 @@ function AppContent() {
 // Main App component with all context providers
 export function App() {
   return (
-    <MarketDataProvider>
-      <PatternProvider>
-        <FeedbackProvider>
-          <LearningProvider>
-            <AppContent />
-          </LearningProvider>
-        </FeedbackProvider>
-      </PatternProvider>
-    </MarketDataProvider>
+    <AppProviders>
+      <AppContent />
+    </AppProviders>
   );
 }
 

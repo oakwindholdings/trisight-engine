@@ -1,3 +1,6 @@
+// src/components/Chart/CandlestickRenderer.tsx
+// Renders candlestick shapes
+// Draws OHLC bars on canvas
 import { CandlestickData } from '../../models/ChartTypes';
 import { createTimeScale, createPriceScale } from '../../utils/scaling';
 

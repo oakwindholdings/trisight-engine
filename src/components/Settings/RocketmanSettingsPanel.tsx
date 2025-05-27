@@ -1,3 +1,6 @@
+// src/components/Settings/RocketmanSettingsPanel.tsx
+// Settings for Rocketman detector
+// Edit thrust thresholds
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { RocketmanThresholdConfig } from '../../utils/patternDetection/AdaptiveRocketmanDetector';

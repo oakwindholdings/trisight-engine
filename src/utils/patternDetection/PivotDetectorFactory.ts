@@ -1,3 +1,6 @@
+// src/utils/patternDetection/PivotDetectorFactory.ts
+// Factory for Pivot detectors
+// Creates configured detector instances
 import { ThresholdConfig } from './core/MarketContext';
 import { DetectionOptions } from './core/BasePatternDetector';
 import AdaptivePivotDetector from './AdaptivePivotDetector';

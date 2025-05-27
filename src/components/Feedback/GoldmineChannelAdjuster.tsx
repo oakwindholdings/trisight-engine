@@ -1,3 +1,6 @@
+// src/components/Feedback/GoldmineChannelAdjuster.tsx
+// Adjusts channel boundaries
+// Specific to Goldmine pattern
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { GoldmineChannelPattern } from '../../models/PatternTypes';

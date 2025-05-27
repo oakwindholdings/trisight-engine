@@ -1,3 +1,6 @@
+// src/components/Chart/PatternRenderer.d.ts
+// Type defs for PatternRenderer
+// Matches canvas implementation
 import { Pattern } from '../../models/PatternTypes';
 
 interface ChartDimensions {
