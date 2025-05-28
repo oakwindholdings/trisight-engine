@@ -325,9 +325,9 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
     // Update visible range
     if (startIndex < filteredData.length && endIndex < filteredData.length) {
       const newVisibleRange = calculateVisibleRange(
-        filteredData.slice(startIndex, endIndex + 1),
-        0.1, // Padding percentage
-        0 // Third parameter as a number instead of boolean
+        filteredData,
+        startIndex,
+        endIndex
       );
       setVisibleRange(newVisibleRange);
     }
