@@ -9,10 +9,15 @@ import { CandlestickData, Timeframe } from '../models/ChartTypes';
 let API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
 
 export const setApiKey = (key: string) => {
+  console.log('[TwelveData API] Setting API key:', key ? `${key.substring(0, 8)}...` : 'empty');
   API_KEY = key;
 };
 
-export const getApiKey = () => API_KEY;
+export const getApiKey = () => {
+  console.log('[TwelveData API] Getting API key:', API_KEY ? `${API_KEY.substring(0, 8)}...` : 'empty');
+  return API_KEY;
+};
+
 const BASE_URL = 'https://api.twelvedata.com';
 const MAX_REQUESTS_PER_MINUTE = 8;
 const CACHE_EXPIRY = 60 * 1000; // 1 minute in milliseconds
@@ -82,45 +87,97 @@ const apiRequest = async <T>(
   endpoint: string,
   params: Record<string, string>,
   cacheKey?: string,
-  retryCount = 3
+  retryCount = 3,
+  signal?: AbortSignal
 ): Promise<T> => {
   // Check cache if cache key provided
-  if (cacheKey) {
-    const cachedData = getFromCache(cacheKey);
-    if (cachedData) {
-      return cachedData as T;
-    }
-  }
-
+  // TEMPORARILY DISABLED FOR DEBUGGING
+  // if (cacheKey) {
+  //   const cachedData = getFromCache(cacheKey);
+  //   if (cachedData) {
+  //     console.log(`Returning cached data for ${cacheKey}`);
+  //     return cachedData as T;
+  //   }
+  // }
+  
   // Check throttling
   if (!checkRequestThrottling()) {
     // Wait a bit and retry if we're being throttled
     await wait(5000);
-    return apiRequest(endpoint, params, cacheKey, retryCount);
+    return apiRequest(endpoint, params, cacheKey, retryCount, signal);
   }
 
   try {
-    const response = await axios.get<T>(`${BASE_URL}${endpoint}`, {
-      params: {
-        ...params,
-        apikey: API_KEY,
-      },
-      timeout: 10000, // 10 second timeout
+    const url = `${BASE_URL}${endpoint}`;
+    const currentApiKey = getApiKey();
+    console.log('[apiRequest] Using API key:', currentApiKey ? `${currentApiKey.substring(0, 8)}...` : 'NOT SET!');
+    
+    const fullParams = {
+      ...params,
+      apikey: currentApiKey,
+    };
+    
+    // Build full URL with params for logging
+    const fullUrl = `${url}?${new URLSearchParams({ ...params, apikey: 'YOUR_API_KEY_HIDDEN' }).toString()}`;
+    console.log(`API Request URL: ${fullUrl}`);
+    
+    console.log('TwelveData API Request:', {
+      url,
+      params: fullParams,
+      fullUrl: `${url}?${new URLSearchParams(fullParams).toString()}`
     });
-
-    // Cache the response if cache key is provided
-    if (cacheKey) {
-      saveToCache(cacheKey, response.data);
+    
+    console.log(`Actual API URL: ${url}?${new URLSearchParams(fullParams).toString()}`);
+    
+    const response = await axios.get<T>(url, {
+      params: fullParams,
+      timeout: 10000, // 10 second timeout
+      signal,
+    });
+    
+    console.log('API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+    
+    const data = response.data;
+    
+    // Log raw response for debugging
+    console.log('API Raw Response (first 500 chars):', JSON.stringify(data).substring(0, 500));
+    
+    // Handle API errors
+    if ((data as any).status === 'error') {
+      const errorMessage = (data as any).message || 'Unknown API error';
+      console.error(`API Error: ${errorMessage}`);
+      throw new Error(`TwelveData API Error: ${errorMessage}`);
+    }
+    
+    // Check if response contains expected data structure
+    // Symbol search endpoint returns {data: [...]} instead of {values: [...], meta: {...}}
+    if (endpoint === '/symbol_search') {
+      if (!(data as any).data) {
+        console.error('Unexpected symbol search response structure:', data);
+        throw new Error('Invalid symbol search response structure');
+      }
+    } else if (!(data as any).values && !(data as any).meta) {
+      console.error('Unexpected API response structure:', data);
+      throw new Error('Invalid API response structure');
+    }
+    
+    // Cache successful responses
+    if (cacheKey && data) {
+      saveToCache(cacheKey, data);
     }
 
-    return response.data;
+    return data as T;
   } catch (error) {
     console.error(`API request failed: ${endpoint}`, error);
     
     if (retryCount > 0) {
       console.log(`Retrying... (${retryCount} attempts left)`);
       await wait(2000);
-      return apiRequest(endpoint, params, cacheKey, retryCount - 1);
+      return apiRequest(endpoint, params, cacheKey, retryCount - 1, signal);
     }
     
     throw error;
@@ -135,6 +192,7 @@ interface TimeSeriesResponse {
     currency: string;
     exchange_timezone: string;
     exchange: string;
+    mic_code?: string;
     type: string;
   };
   values: Array<{
@@ -223,29 +281,117 @@ export const fetchTradingDay = async (
   symbol: string,
   date: Date
 ): Promise<CandlestickData[]> => {
-  // Format as YYYY-MM-DD
-  const dateStr = date.toISOString().split('T')[0];
+  // Create start and end dates for the trading day
+  const startDate = new Date(date);
+  startDate.setHours(9, 30, 0, 0); // 9:30 AM
   
-  // For 5-minute candles, a full trading day (9:30 AM - 4:00 PM = 6.5 hours) has 78 intervals
-  // We'll request more to ensure we have enough data (some might be pre/post market)
-  const outputsize = 200;
+  const endDate = new Date(date);
+  endDate.setHours(16, 0, 0, 0); // 4:00 PM
   
-  // Use 5-minute interval for better overview
-  const interval = '5min';
-  const cacheKey = `tradingday_${symbol}_${dateStr}_${interval}`;
+  // Use fetchCandlestickData with the specific date range
+  const result = await fetchCandlestickData(symbol, '5min', startDate, endDate);
+  
+  return result;
+};
+
+// Fetch candlestick data with a specific interval
+export const fetchCandlestickData = async (
+  symbol: string,
+  interval: string,
+  start: Date,
+  end: Date
+): Promise<CandlestickData[]> => {
+  // Format dates to YYYY-MM-DD HH:mm:ss for the API
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
+  const startStr = formatDate(start);
+  const endStr = formatDate(end);
+  
+  console.log(`[fetchCandlestickData] Called with:`, {
+    symbol,
+    interval,
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    startStr,
+    endStr
+  });
+
+  const cacheKey = `candlestick_${symbol}_${interval}_${start.getTime()}_${end.getTime()}`;
+  
+  const params = {
+    symbol,
+    interval,
+    start_date: startStr,
+    end_date: endStr,
+    format: 'JSON',
+    // Removed outputsize - it might conflict with date range parameters
+    timezone: 'America/New_York' // Add timezone to ensure proper date handling
+  };
+  
+  console.log(`fetchCandlestickData - Requesting ${symbol} ${interval} from ${startStr} to ${endStr}`);
   
   const response = await apiRequest<TimeSeriesResponse>(
     '/time_series',
-    {
-      symbol,
-      interval,
-      outputsize: outputsize.toString(),
-    },
+    params,
     cacheKey
   );
   
-  // Transform and filter to only include data from the requested date during trading hours
-  const allData = response.values.map(item => ({
+  console.log(`fetchCandlestickData - Response metadata:`, {
+    symbol: response.meta?.symbol,
+    interval: response.meta?.interval,
+    currency: response.meta?.currency,
+    exchange_timezone: response.meta?.exchange_timezone,
+    exchange: response.meta?.exchange,
+    mic_code: response.meta?.mic_code,
+    type: response.meta?.type,
+    valuesCount: response.values?.length || 0
+  });
+  
+  // Check if there's a status or message field
+  if ((response as any).status) {
+    console.log(`API Status: ${(response as any).status}`);
+  }
+  if ((response as any).message) {
+    console.log(`API Message: ${(response as any).message}`);
+  }
+  
+  // Log the raw response to see all fields
+  console.log('Full API Response Structure:', Object.keys(response));
+  
+  // Check for any data_available or limitations info
+  if ((response as any).data_available) {
+    console.log(`Data Available: ${(response as any).data_available}`);
+  }
+  if ((response as any).available_from) {
+    console.log(`Available From: ${(response as any).available_from}`);
+  }
+  if ((response as any).available_to) {
+    console.log(`Available To: ${(response as any).available_to}`);
+  }
+  
+  if (response.values && response.values.length > 0) {
+    const firstCandle = response.values[0];
+    const lastCandle = response.values[response.values.length - 1];
+    console.log(`fetchCandlestickData - Date range of returned data: ${firstCandle.datetime} to ${lastCandle.datetime}`);
+    console.log(`fetchCandlestickData - Requested: ${startStr} to ${endStr}`);
+    console.log(`fetchCandlestickData - Got ${response.values.length} candles`);
+  }
+
+  console.log(`fetchCandlestickData response: ${response.values?.length || 0} candles`);
+  
+  if (!response.values || response.values.length === 0) {
+    return [];
+  }
+  
+  const result = response.values.map(item => ({
     datetime: item.datetime,
     timestamp: new Date(item.datetime).getTime(),
     open: parseFloat(item.open),
@@ -255,41 +401,15 @@ export const fetchTradingDay = async (
     volume: parseFloat(item.volume),
   })).reverse();
   
-  // Filter to only include candles from the specified date
-  // and within trading hours (9:30 AM - 4:00 PM ET)
-  return allData.filter(candle => {
-    const candleDate = new Date(candle.timestamp);
-    const candleYear = candleDate.getFullYear();
-    const candleMonth = candleDate.getMonth();
-    const candleDay = candleDate.getDate();
-    
-    // Check if the candle is from the requested date
-    const isRequestedDate = (
-      candleYear === date.getFullYear() &&
-      candleMonth === date.getMonth() &&
-      candleDay === date.getDate()
-    );
-    
-    if (!isRequestedDate) return false;
-    
-    // Check if within trading hours (9:30 AM - 4:00 PM ET)
-    const hours = candleDate.getHours();
-    const minutes = candleDate.getMinutes();
-    
-    // Convert to Eastern Time (rough approximation)
-    const etHours = (hours - 4 + 24) % 24; // Assuming UTC-4 for simplicity
-    
-    // Check if within trading hours (9:30 AM - 4:00 PM ET)
-    return (
-      (etHours === 9 && minutes >= 30) || // 9:30 AM or later
-      (etHours > 9 && etHours < 16) ||     // 10 AM - 3:59 PM
-      (etHours === 16 && minutes === 0)    // 4:00 PM exactly
-    );
-  });
+  if (result.length > 0) {
+    console.log(`fetchCandlestickData date range in response: ${result[0].datetime} to ${result[result.length - 1].datetime}`);
+  }
+  
+  return result;
 };
 
 // Search for symbols
-export const searchSymbols = async (query: string): Promise<Array<{
+export const searchSymbols = async (query: string, signal?: AbortSignal): Promise<Array<{
   symbol: string;
   name: string;
   exchange: string;
@@ -303,7 +423,9 @@ export const searchSymbols = async (query: string): Promise<Array<{
       symbol: query,
       outputsize: '10',
     },
-    cacheKey
+    cacheKey,
+    3,
+    signal
   );
   
   return response.data.map(item => ({

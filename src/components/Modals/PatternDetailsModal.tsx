@@ -20,6 +20,7 @@ const ModalOverlay = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  pointer-events: auto; /* Ensure this is set */
 `;
 
 const ModalContainer = styled.div`
@@ -31,6 +32,7 @@ const ModalContainer = styled.div`
   overflow-y: auto;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   padding: 16px;
+  pointer-events: auto; /* Ensure this is set */
 `;
 
 const PatternPlaceholder = styled.div`
@@ -49,12 +51,22 @@ const PatternDetailsModal: React.FC = () => {
     }
   };
   
+  // Ensure we return null immediately if no pattern
   if (!selectedPattern) {
+    console.log('PatternDetailsModal: No selected pattern, returning null');
     return null;
   }
   
+  // Double-check that we should render
+  const shouldRender = selectedPattern !== null;
+  if (!shouldRender) {
+    return null;
+  }
+  
+  console.log('PatternDetailsModal: Rendering modal for pattern:', selectedPattern);
+  
   return (
-    <ModalOverlay onClick={handleOverlayClick}>
+    <ModalOverlay onClick={handleOverlayClick} className="pattern-details-modal">
       <ModalContainer>
         {selectedPattern.type === PatternType.BLACKJACK ? (
           <BlackjackPatternDetails 

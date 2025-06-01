@@ -146,17 +146,17 @@ const ButtonGroup = styled.div`
   margin-top: 24px;
 `;
 
-const Button = styled.button<{ primary?: boolean }>`
+const Button = styled.button<{ $primary?: boolean }>`
   padding: 8px 16px;
-  border: none;
   border-radius: 4px;
-  cursor: pointer;
+  border: none;
   font-weight: 500;
-  background-color: ${props => props.primary ? '#1976d2' : '#e0e0e0'};
-  color: ${props => props.primary ? 'white' : '#212121'};
+  cursor: pointer;
+  background-color: ${props => props.$primary ? '#1976d2' : '#e0e0e0'};
+  color: ${props => props.$primary ? 'white' : '#212121'};
   
   &:hover {
-    background-color: ${props => props.primary ? '#1565c0' : '#d5d5d5'};
+    background-color: ${props => props.$primary ? '#1565c0' : '#d5d5d5'};
   }
   
   &:disabled {
@@ -345,8 +345,12 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
           <ButtonGroup>
             <Button onClick={togglePreviewMode}>Back to Edit</Button>
             <Button 
-              primary 
-              onClick={handleSubmit}
+              $primary 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSubmit();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
               disabled={!isValid || isSubmitting}
             >
               {isSubmitting ? 'Submitting...' : 'Confirm & Submit'}
@@ -440,8 +444,12 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
           <Button onClick={onClose}>Cancel</Button>
           <Button onClick={togglePreviewMode}>Preview</Button>
           <Button 
-            primary 
-            onClick={handleSubmit}
+            $primary 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSubmit();
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
             disabled={!isValid || isSubmitting}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Feedback'}

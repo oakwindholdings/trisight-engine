@@ -18,7 +18,7 @@ const Timeline = styled.div`
   border-radius: 4px;
 `;
 
-const TimeMarker = styled.div<{ position: number; type: string; active: boolean }>`
+const TimeMarker = styled.div<{ position: number; $active: boolean; type: string }>`
   position: absolute;
   top: 0;
   left: ${props => props.position}%;
@@ -26,8 +26,8 @@ const TimeMarker = styled.div<{ position: number; type: string; active: boolean 
   height: 40px;
   background-color: ${props => 
     props.type === 'start' 
-      ? props.active ? '#4CAF50' : '#81C784' 
-      : props.active ? '#F44336' : '#E57373'};
+      ? props.$active ? '#4CAF50' : '#81C784' 
+      : props.$active ? '#F44336' : '#E57373'};
   cursor: ew-resize;
   border-radius: 2px;
   transform: translateX(-50%);
@@ -66,11 +66,11 @@ const OriginalMarker = styled.div<{ position: number; type: string }>`
   }
 `;
 
-const PatternSection = styled.div<{ startPos: number; endPos: number }>`
+const PatternSection = styled.div<{ $startPos: number; $endPos: number }>`
   position: absolute;
   top: 0;
-  left: ${props => props.startPos}%;
-  width: ${props => props.endPos - props.startPos}%;
+  left: ${props => props.$startPos}%;
+  width: ${props => props.$endPos - props.$startPos}%;
   height: 40px;
   background-color: rgba(33, 150, 243, 0.2);
   border: 1px dashed #2196F3;
@@ -208,19 +208,19 @@ const BoundaryAdjusterComponent: React.FC<BoundaryAdjusterProps> = ({ originalSt
         <OriginalMarker position={75} type="end" />
         
         {/* Pattern section */}
-        <PatternSection startPos={startPos} endPos={endPos} />
+        <PatternSection $startPos={startPos} $endPos={endPos} />
         
         {/* Adjustable markers */}
         <TimeMarker 
           position={startPos} 
+          $active={activeMarker === 'start'}
           type="start"
-          active={activeMarker === 'start'}
           onMouseDown={handleMouseDown('start')}
         />
         <TimeMarker 
           position={endPos} 
+          $active={activeMarker === 'end'}
           type="end"
-          active={activeMarker === 'end'}
           onMouseDown={handleMouseDown('end')}
         />
       </Timeline>

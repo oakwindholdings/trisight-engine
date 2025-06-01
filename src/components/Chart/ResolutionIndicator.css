@@ -1,0 +1,101 @@
+/* src/components/Chart/ResolutionIndicator.css */
+/* Styles for resolution indicator */
+
+.resolution-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(30, 41, 59, 0.95);
+  color: #f9fafb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.resolution-indicator.transitioning {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+}
+
+.resolution-info,
+.zoom-info,
+.candle-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 12px;
+}
+
+.resolution-label,
+.zoom-label,
+.candle-label {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.resolution-value,
+.zoom-value,
+.candle-value {
+  color: #f9fafb;
+  font-weight: 600;
+  font-feature-settings: 'tnum';
+}
+
+.zoom-description {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  color: #10b981;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
+.transition-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(16, 185, 129, 0.2);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.transition-bar {
+  height: 100%;
+  background: #10b981;
+  animation: transition-progress 0.5s ease-out;
+}
+
+@keyframes transition-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .resolution-indicator {
+    top: 5px;
+    right: 5px;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  
+  .zoom-description {
+    font-size: 9px;
+  }
+}

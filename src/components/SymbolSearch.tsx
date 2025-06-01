@@ -81,28 +81,57 @@ const SymbolSearch: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   const { symbol, setSymbol } = useMarketDataContext();
   
   // Search for symbols when query changes
   useEffect(() => {
+    // Cancel any pending requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Clear results immediately if query is too short
+    if (query.length < 2) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+    
+    // Create new abort controller for this search
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    
     const searchTimer = setTimeout(async () => {
-      if (query.length >= 2) {
-        setLoading(true);
-        try {
-          const searchResults = await searchSymbols(query);
+      setLoading(true);
+      try {
+        console.log('Searching for symbols with query:', query);
+        const searchResults = await searchSymbols(query, abortController.signal);
+        
+        // Only update if this request wasn't aborted
+        if (!abortController.signal.aborted) {
+          console.log('Search results:', searchResults);
           setResults(searchResults);
-        } catch (error) {
-          console.error('Error searching symbols:', error);
-        } finally {
           setLoading(false);
         }
-      } else {
-        setResults([]);
+      } catch (error: any) {
+        // Ignore abort errors
+        if (error.name !== 'AbortError' && !abortController.signal.aborted) {
+          console.error('Error searching symbols:', error);
+          setResults([]);
+          setLoading(false);
+        }
       }
     }, 300);
     
-    return () => clearTimeout(searchTimer);
+    return () => {
+      clearTimeout(searchTimer);
+      // Cancel request on cleanup
+      if (abortController) {
+        abortController.abort();
+      }
+    };
   }, [query]);
   
   // Handle clicks outside the search component
@@ -146,7 +175,7 @@ const SymbolSearch: React.FC = () => {
           ) : results.length > 0 ? (
             results.map((result) => (
               <ResultItem 
-                key={result.symbol}
+                key={`${result.symbol}-${result.exchange}`}
                 onClick={() => handleSelectSymbol(result.symbol)}
               >
                 <SymbolName>{result.symbol}</SymbolName>

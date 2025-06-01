@@ -17,11 +17,14 @@ interface MarketDataContextType {
   setTimeframe: (timeframe: Timeframe) => void;
   refresh: () => Promise<void>;
   fetchSpecificDay: (date: Date) => Promise<void>;
+  fetchDateRange: (startDate: Date, endDate: Date, interval?: string) => Promise<void>;
   marketStatus: {
     isOpen: boolean;
     timeToOpen?: string;
     timeToClose?: string;
   };
+  isUsingCustomRange: boolean;
+  setIsUsingCustomRange: (value: boolean) => void;
 }
 
 // Create the context with initial values
@@ -35,7 +38,10 @@ const initialMarketDataContext: MarketDataContextType = {
   setTimeframe: () => {},
   refresh: async () => {},
   fetchSpecificDay: async () => {},
-  marketStatus: { isOpen: false }
+  fetchDateRange: async () => {},
+  marketStatus: { isOpen: false },
+  isUsingCustomRange: false,
+  setIsUsingCustomRange: () => {}
 };
 
 export const MarketDataContext = createContext<MarketDataContextType>(initialMarketDataContext);
