@@ -48,6 +48,17 @@ const TimeAxisImpl = {
       }
     }
     
+    // Determine if we should show dates or times based on the tick range
+    let showDates = false;
+    if (ticks.length >= 2) {
+      const firstTick = ticks[0] as Date;
+      const lastTick = ticks[ticks.length - 1] as Date;
+      const rangeInHours = (lastTick.getTime() - firstTick.getTime()) / (1000 * 60 * 60);
+      
+      // If the range is more than 24 hours, show dates
+      showDates = rangeInHours > 24;
+    }
+    
     // Draw tick marks and labels
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -63,8 +74,15 @@ const TimeAxisImpl = {
       ctx.lineTo(x, height - margin.bottom + 4);
       ctx.stroke();
       
-      // Format the date based on timeframe
-      const formattedDate = formatDateForAxis(tick, timeframe);
+      // Format the date based on the range
+      let formattedDate: string;
+      if (showDates) {
+        // For multi-day ranges, show date
+        formattedDate = formatDateForAxis(tick, '1day');
+      } else {
+        // For intraday, use the timeframe-based formatting
+        formattedDate = formatDateForAxis(tick, timeframe);
+      }
       
       // Draw the label
       ctx.fillText(

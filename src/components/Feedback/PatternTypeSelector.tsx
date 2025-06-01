@@ -13,19 +13,19 @@ const TypeGrid = styled.div`
   margin-bottom: 16px;
 `;
 
-const TypeCard = styled.div<{ selected: boolean; isOriginal: boolean }>`
+const TypeCard = styled.div<{ $selected: boolean; $isOriginal: boolean }>`
   padding: 12px;
   border-radius: 6px;
   border: 2px solid ${props => 
-    props.selected 
+    props.$selected 
       ? '#1976d2' 
-      : props.isOriginal 
+      : props.$isOriginal 
         ? '#ff9800' 
         : '#e0e0e0'};
   background-color: ${props => 
-    props.selected 
+    props.$selected 
       ? 'rgba(25, 118, 210, 0.1)' 
-      : props.isOriginal 
+      : props.$isOriginal 
         ? 'rgba(255, 152, 0, 0.1)' 
         : 'white'};
   cursor: pointer;
@@ -35,11 +35,11 @@ const TypeCard = styled.div<{ selected: boolean; isOriginal: boolean }>`
   align-items: center;
   
   &:hover {
-    border-color: ${props => props.selected ? '#1976d2' : '#757575'};
+    border-color: ${props => props.$selected ? '#1976d2' : '#757575'};
     background-color: ${props => 
-      props.selected 
+      props.$selected 
         ? 'rgba(25, 118, 210, 0.15)' 
-        : props.isOriginal 
+        : props.$isOriginal 
           ? 'rgba(255, 152, 0, 0.15)' 
           : '#f5f5f5'};
   }
@@ -132,8 +132,8 @@ const PatternTypeSelectorComponent: React.FC<PatternTypeSelectorProps> = ({
         {patternTypes.map(type => (
           <TypeCard 
             key={type}
-            selected={selectedType === type}
-            isOriginal={originalType === type && selectedType !== type}
+            $selected={selectedType === type}
+            $isOriginal={originalType === type && selectedType !== type}
             onClick={() => onSelect(type)}
           >
             <TypeIcon color={patternStyles[type].color}>

@@ -40,18 +40,18 @@ const ControlsWrapper = styled.div`
   gap: 16px;
 `;
 
-const ToggleButton = styled.button<{ active: boolean }>`
+const ToggleButton = styled.button<{ $active: boolean }>`
   padding: 8px 16px;
   border-radius: 4px;
   border: none;
-  background-color: ${props => props.active ? '#1976d2' : '#e0e0e0'};
-  color: ${props => props.active ? 'white' : '#333'};
+  background-color: ${props => props.$active ? '#1976d2' : '#e0e0e0'};
+  color: ${props => props.$active ? 'white' : '#333'};
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
   
   &:hover {
-    background-color: ${props => props.active ? '#1565c0' : '#d5d5d5'};
+    background-color: ${props => props.$active ? '#1565c0' : '#d5d5d5'};
   }
 `;
 
@@ -120,17 +120,17 @@ const TabsContainer = styled.div`
   margin-bottom: 24px;
 `;
 
-const Tab = styled.button<{ active: boolean }>`
+const Tab = styled.button<{ $active: boolean }>`
   padding: 12px 16px;
   border: none;
   background-color: transparent;
-  border-bottom: 2px solid ${props => props.active ? '#1976d2' : 'transparent'};
-  color: ${props => props.active ? '#1976d2' : '#757575'};
+  border-bottom: 2px solid ${props => props.$active ? '#1976d2' : 'transparent'};
+  color: ${props => props.$active ? '#1976d2' : '#757575'};
   font-weight: 500;
   cursor: pointer;
   
   &:hover {
-    color: ${props => props.active ? '#1976d2' : '#424242'};
+    color: ${props => props.$active ? '#1976d2' : '#424242'};
   }
 `;
 
@@ -261,7 +261,7 @@ const LearningDashboard: React.FC = () => {
           <Title>Learning Dashboard</Title>
           <ControlsWrapper>
             <ToggleButton
-              active={isLearningEnabled}
+              $active={isLearningEnabled}
               onClick={toggleLearning}
             >
               Learning: {isLearningEnabled ? 'Enabled' : 'Disabled'}
@@ -288,7 +288,7 @@ const LearningDashboard: React.FC = () => {
         <Title>Learning Dashboard</Title>
         <ControlsWrapper>
           <ToggleButton
-            active={isLearningEnabled}
+            $active={isLearningEnabled}
             onClick={toggleLearning}
           >
             Learning: {isLearningEnabled ? 'Enabled' : 'Disabled'}
@@ -356,7 +356,7 @@ const LearningDashboard: React.FC = () => {
           {Object.values(PatternType).map(patternType => (
             <Tab
               key={patternType}
-              active={activePatternType === patternType}
+              $active={activePatternType === patternType}
               onClick={() => setActivePatternType(patternType)}
             >
               {patternType.replace('_', ' ')}
@@ -366,13 +366,13 @@ const LearningDashboard: React.FC = () => {
         
         <TabsContainer>
           <Tab
-            active={activeTab === 'performance'}
+            $active={activeTab === 'performance'}
             onClick={() => setActiveTab('performance')}
           >
             Performance
           </Tab>
           <Tab
-            active={activeTab === 'parameters'}
+            $active={activeTab === 'parameters'}
             onClick={() => setActiveTab('parameters')}
           >
             Parameters

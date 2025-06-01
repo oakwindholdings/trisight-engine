@@ -2,7 +2,7 @@
 // Hook for retrieving market data
 // Wraps TwelveData API calls
 import { useState, useEffect, useCallback } from 'react';
-import { fetchTimeSeries, fetchTradingDay, checkMarketStatus } from '../api/twelveDataApi';
+import { fetchTimeSeries, fetchTradingDay, checkMarketStatus, fetchCandlestickData } from '../api/twelveDataApi';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 
 /**
@@ -19,9 +19,30 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
     timeToOpen?: string;
     timeToClose?: string;
   }>({ isOpen: false });
+  const [isUsingCustomRange, setIsUsingCustomRange] = useState(false);
+
+  // Convert timeframe to interval for API
+  const timeframeToInterval = (tf: Timeframe): string => {
+    const mapping: Record<string, string> = {
+      '1min': '1min',
+      '5min': '5min',
+      '15min': '15min',
+      '30min': '30min',
+      '60min': '1h',
+      '1hour': '1h',
+      'daily': '1day',
+      'weekly': '1week',
+      'monthly': '1month',
+      '1day': '1day',
+      '5day': '5day',
+    };
+    return mapping[tf] || '5min';
+  };
 
   // Fetch market data
   const fetchData = useCallback(async () => {
+    console.log(`useMarketData - fetchData called, isUsingCustomRange: ${isUsingCustomRange}`);
+    
     setLoading(true);
     setError(null);
     
@@ -39,6 +60,31 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
     }
   }, [symbol, timeframe]);
 
+  // Fetch data for a specific date range
+  const fetchDateRange = useCallback(async (startDate: Date, endDate: Date, customInterval?: string) => {
+    console.log(`useMarketData - fetchDateRange called, startDate: ${startDate.toISOString()}, endDate: ${endDate.toISOString()}, customInterval: ${customInterval}`);
+    
+    setLoading(true);
+    setError(null);
+    setIsUsingCustomRange(true);
+    
+    try {
+      const marketStatusData = await checkMarketStatus();
+      setMarketStatus(marketStatusData);
+      
+      // Use custom interval if provided, otherwise use the interval based on current timeframe
+      const interval = customInterval || timeframeToInterval(timeframe);
+      console.log(`fetchDateRange using interval: ${interval} for range ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      const candlestickData = await fetchCandlestickData(symbol, interval, startDate, endDate);
+      setData(candlestickData);
+    } catch (err) {
+      console.error('Error fetching market data for date range:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch market data'));
+    } finally {
+      setLoading(false);
+    }
+  }, [symbol, timeframe]);
+
   // Refresh data
   const refresh = useCallback(async () => {
     return fetchData();
@@ -46,13 +92,17 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
 
   // Fetch data when symbol or timeframe changes
   useEffect(() => {
-    fetchData();
-  }, [symbol, timeframe, fetchData]);
+    console.log(`useMarketData - useEffect triggered, isUsingCustomRange: ${isUsingCustomRange}, symbol: ${symbol}, timeframe: ${timeframe}`);
+    if (!isUsingCustomRange) {
+      fetchData();
+    }
+  }, [symbol, timeframe, fetchData, isUsingCustomRange]);
 
   // Fetch data for a specific trading day (9:30 AM - 4:00 PM, 5-minute candles)
   const fetchSpecificDay = useCallback(async (date: Date) => {
     setLoading(true);
     setError(null);
+    setIsUsingCustomRange(true); // Prevent automatic refetch
     
     try {
       // Force timeframe to 5-minute for better overview
@@ -79,7 +129,10 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
     setTimeframe,
     refresh,
     fetchSpecificDay,
-    marketStatus
+    fetchDateRange,
+    marketStatus,
+    isUsingCustomRange,
+    setIsUsingCustomRange
   };
 };
 

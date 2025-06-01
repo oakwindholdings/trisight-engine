@@ -75,6 +75,10 @@ const TimeRangeSelector: React.FC<TimeRangeSelectorProps> = ({
         // Beginning of current year
         startDate.setMonth(0, 1);
         startDate.setHours(0, 0, 0, 0);
+        console.log('TimeRangeSelector - YTD dates:', { 
+          startDate: startDate.toISOString(), 
+          endDate: endDate.toISOString() 
+        });
         break;
       default:
         // Default to 1D

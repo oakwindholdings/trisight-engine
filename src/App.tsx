@@ -1,7 +1,7 @@
 // src/App.tsx
 // Main application component
 // Composes TriSight interface
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import './App.css';
 import './styles/globals.css';
@@ -14,6 +14,8 @@ import mainGridStyles from './styles/MainGrid.module.css';
 import SymbolSearch from './components/SymbolSearch';
 import PatternSelector from './components/Patterns/PatternSelector';
 import ChartWithContext from './components/Chart/ChartWithContext';
+import InfiniteZoomChartWithContext from './components/Chart/InfiniteZoomChartWithContext';
+import { InfiniteZoomChartRef } from './components/Chart/InfiniteZoomChart';
 import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithContext';
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
@@ -25,6 +27,7 @@ import ChartControlBar from './components/Chart/ChartControlBar';
 import PatternPanel from './components/Patterns/PatternPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
+import { debugClickBlocking } from './utils/debugClickBlocking';
 
 // Import context providers
 import AppProviders from './components/AppProviders';
@@ -38,6 +41,9 @@ import { isFeatureEnabled } from './utils/featureFlags';
 // Import types
 import { Pattern } from './models/PatternTypes';
 import { PatternFeedback } from './models/FeedbackTypes';
+
+// Import hooks
+import useTwelveDataApiKey from './hooks/useTwelveDataApiKey';
 
 // Constants for localStorage keys
 const STORAGE_KEY_DATE = 'trisight_selected_date';
@@ -232,7 +238,10 @@ const Footer = styled.footer`
 `;
 
 function AppContent() {
-  const { data } = useMarketDataContext(); // Removed unused variables: setSymbol, loading
+  // Initialize API key from localStorage
+  const { apiKey } = useTwelveDataApiKey();
+  
+  const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay } = useMarketDataContext(); // Removed unused variables: setSymbol, loading
   const { patterns, patternCounts, selectedPattern, setSelectedPattern, detectPatterns } = usePatternContext();
   // Removed unused variable: submitFeedback
 
@@ -248,6 +257,7 @@ function AppContent() {
   const [chartHeight, setChartHeight] = useState<number>(getSavedChartHeight());
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date>(getSavedDate());
+  const [useInfiniteZoom, setUseInfiniteZoom] = useState<boolean>(false);
   
   // Initialize selectedDate to the last trading day
   useEffect(() => {
@@ -349,6 +359,28 @@ function AppContent() {
     }
   });
   
+  console.log(`AppContent render - activeTimeRange: ${activeTimeRange}, useInfiniteZoom: ${useInfiniteZoom}, activeTab: ${activeTab}`);
+  console.log(`About to check activeTab === 'chart': ${activeTab === 'chart'}`);
+  console.log(`Chart should render: ${activeTab === 'chart' && !useInfiniteZoom}`);
+  
+  // Debug which chart component will render
+  if (activeTab === 'chart') {
+    console.log(`Chart tab is active. Will render ${useInfiniteZoom ? 'InfiniteZoomChartWithContext' : 'ChartWithContext'}`);
+  }
+  
+  // Viewport state for chart controls
+  const [viewportState, setViewportState] = useState({
+    autoScaled: false,
+    resetView: false
+  });
+  
+  // Pattern filters state
+  const [patternFilters, setPatternFilters] = useState({
+    successRate: 0,
+    timeframe: 'all',
+    patternType: 'all'
+  });
+  
   // Handle timeframe change
   const handleTimeframeChange = (newTimeframe: string) => {
     console.log(`Changing timeframe to: ${newTimeframe}`);
@@ -401,6 +433,17 @@ function AppContent() {
   const handleTimeRangeSelect = (range: TimeRangeOption, startDate: Date, endDate: Date) => {
     console.log(`Changing time range to: ${range}`, { startDate, endDate });
     
+    // Adjust end date to last trading day if it's a weekend
+    const adjustedEndDate = new Date(endDate);
+    const dayOfWeek = adjustedEndDate.getDay();
+    if (dayOfWeek === 0) { // Sunday
+      adjustedEndDate.setDate(adjustedEndDate.getDate() - 2); // Go back to Friday
+    } else if (dayOfWeek === 6) { // Saturday
+      adjustedEndDate.setDate(adjustedEndDate.getDate() - 1); // Go back to Friday
+    }
+    
+    console.log('Adjusted dates for fetch:', { startDate, endDate: adjustedEndDate });
+    
     // Save to localStorage for persistence across sessions
     try {
       localStorage.setItem(STORAGE_KEY_TIME_RANGE, range);
@@ -414,12 +457,23 @@ function AppContent() {
     
     // Adjust timeframe based on range for optimal view
     let newTimeframe = timeframe;
+    let intervalForFetch: string = '5min'; // Default value
+    
     if (range === '1D') {
       newTimeframe = '1min';
+      intervalForFetch = '5min';
     } else if (range === '1W') {
       newTimeframe = '15min';
-    } else if (range === '1M' || range === '3M' || range === 'YTD') {
+      intervalForFetch = '30min';
+    } else if (range === '1M') {
       newTimeframe = '60min';
+      intervalForFetch = '1h';
+    } else if (range === '3M') {
+      newTimeframe = '60min';
+      intervalForFetch = '2h';
+    } else if (range === 'YTD') {
+      newTimeframe = '60min';
+      intervalForFetch = '1day';
     }
     
     if (newTimeframe !== timeframe) {
@@ -429,6 +483,20 @@ function AppContent() {
       } catch (e) {
         console.error('Failed to save timeframe to localStorage:', e);
       }
+    }
+    
+    // Fetch data based on the selected time range
+    if (range === '1D') {
+      console.log('App - Fetching data for 1D range');
+      setIsUsingCustomRange(false);
+      fetchSpecificDay(startDate);
+    } else {
+      console.log(`App - Fetching data for ${range} range`, { startDate, endDate: adjustedEndDate, intervalForFetch });
+      // Ensure we fetch date range data for multi-day ranges
+      const fetchDataForRange = async () => {
+        await fetchDateRange(startDate, adjustedEndDate, intervalForFetch);
+      };
+      fetchDataForRange();
     }
   };
   
@@ -444,26 +512,82 @@ function AppContent() {
     console.log('Pattern saved', selectedPattern);
   };
   
-  // Create default pattern filters
-  const [patternFilters, setPatternFilters] = useState({
-    successRate: 0,
-    timeframe: 'all',
-    patternType: 'all'
-  });
-  
   // Handle pattern filter changes
   const handleFilterChange = (newFilters: any) => {
     setPatternFilters(newFilters);
     // Additional logic for filtering patterns
   };
 
-  const [viewportState, setViewportState] = useState({
-    autoScaled: false,
-    resetView: false
-  });
+  // Refs
+  const chartRef = useRef<InfiniteZoomChartRef>(null);
+
+  // Handle zoom to fit
+  const handleZoomToFit = useCallback(() => {
+    if (chartRef.current?.zoomToFit) {
+      chartRef.current.zoomToFit();
+    }
+  }, []);
+
+  // Debug: Check what's causing the click blocking
+  useEffect(() => {
+    console.log('=== DEBUG UI BLOCKING ===');
+    console.log('selectedPattern:', selectedPattern);
+    console.log('showFeedbackModal:', showFeedbackModal);
+    console.log('isFeatureEnabled(NEW_LAYOUT):', isFeatureEnabled('NEW_LAYOUT'));
+    console.log('Modal should render:', !isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal);
+    
+    // Check localStorage for feature flag
+    const features = localStorage.getItem('features');
+    console.log('Features in localStorage:', features);
+    
+    // Auto-clear stale pattern selection
+    if (selectedPattern && !showFeedbackModal) {
+      const patternElement = document.querySelector('.pattern-details-modal');
+      if (!patternElement) {
+        console.warn('Pattern is selected but modal is not visible - clearing selection');
+        setSelectedPattern(null);
+      }
+    }
+    
+    // Add a global click listener to debug
+    const debugClickHandler = (e: MouseEvent) => {
+      console.log('Global click detected:', {
+        target: e.target,
+        currentTarget: e.currentTarget,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        targetElement: (e.target as HTMLElement)?.tagName,
+        targetClass: (e.target as HTMLElement)?.className,
+      });
+    };
+    
+    document.addEventListener('click', debugClickHandler, true);
+    
+    // Run click blocking diagnostic
+    setTimeout(() => {
+      debugClickBlocking();
+    }, 1000);
+    
+    return () => {
+      document.removeEventListener('click', debugClickHandler, true);
+    };
+  }, [selectedPattern, showFeedbackModal]);
+
+  // Initialize state from localStorage or defaults
+  useEffect(() => {
+    const savedHeight = getSavedChartHeight();
+    if (savedHeight !== null) {
+      setChartHeight(savedHeight);
+    }
+    
+    // Clear any stale pattern selection on mount
+    setSelectedPattern(null);
+    setShowFeedbackModal(false);
+    console.log('App mounted - cleared any stale selections');
+  }, []);
 
   return (
-    <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : undefined}>
+    <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}>
       {isFeatureEnabled('NEW_LAYOUT') ? (
         // New UI using wrapper components
         <>
@@ -557,71 +681,100 @@ function AppContent() {
           </TabBar>
           
           <ContentArea>
-            {activeTab === 'chart' && (
-              <>
-                <ControlsContainer>
-                  <ControlGroup>
-                    <Label>Date:</Label>
-                    <DatePicker
-                      selected={selectedDate}
-                      onChange={handleDateChange}
-                      maxDate={new Date()} // Can't select future dates
-                      dateFormat="yyyy-MM-dd"
-                      className="date-picker"
-                    />
-                  </ControlGroup>
-                  
-                  <ControlGroup>
-                    <Label>Chart Height:</Label>
-                    <HeightInput
-                      type="number"
-                      value={chartHeight}
-                      onChange={handleChartHeightChange}
-                      min="200"
-                      max="2000"
-                      step="50"
-                    />
+            <>
+              {activeTab === 'chart' && (
+                <>
+                  <ControlsContainer>
+                    <ControlGroup>
+                      <Label>Date:</Label>
+                      <DatePicker
+                        selected={selectedDate}
+                        onChange={handleDateChange}
+                        maxDate={new Date()} // Can't select future dates
+                        dateFormat="yyyy-MM-dd"
+                        className="date-picker"
+                      />
+                    </ControlGroup>
                     
-                    <RefreshButton
-                      onClick={handleRefreshPatterns}
-                      disabled={isRefreshing || data.length === 0}
-                    >
-                      {isRefreshing ? 'Detecting...' : `Refresh (${totalPatterns})`}
-                    </RefreshButton>
-                  </ControlGroup>
-                </ControlsContainer>
-                
-                <PatternSelector />
-                
-                <ChartContainer $chartHeight={chartHeight}>
-                  {/* Add ChartControlBar component above the chart */}
-                  <ChartControlBar
-                    timeframe={timeframe}
-                    onTimeframeChange={handleTimeframeChange}
-                    showTradingHoursOnly={showTradingHoursOnly}
-                    onTradingHoursToggle={handleTradingHoursToggle}
-                    onAutoScale={handleAutoScale}
-                    onResetView={handleResetView}
-                    activeTimeRange={activeTimeRange}
-                    onTimeRangeSelect={handleTimeRangeSelect}
-                  />
-                  <ChartWithContext 
-                    width={window.innerWidth - 48} 
-                    height={chartHeight}
-                    onPatternSelect={handlePatternSelect}
-                    selectedPattern={selectedPattern}
-                    selectedDate={selectedDate}
-                    timeframe={timeframe}
-                    activeTimeRange={activeTimeRange}
-                    onTimeRangeSelect={handleTimeRangeSelect}
-                  />
-                </ChartContainer>
-              </>
-            )}
-            
-            {activeTab === 'dashboard' && (
-              <LearningDashboard />
-            )}
+                    <ControlGroup>
+                      <Label>Chart Height:</Label>
+                      <HeightInput
+                        type="number"
+                        value={chartHeight}
+                        onChange={handleChartHeightChange}
+                        min="200"
+                        max="2000"
+                        step="50"
+                      />
+                      
+                      <RefreshButton
+                        onClick={handleRefreshPatterns}
+                        disabled={isRefreshing || data.length === 0}
+                      >
+                        {isRefreshing ? 'Detecting...' : `Refresh (${totalPatterns})`}
+                      </RefreshButton>
+                      
+                      <RefreshButton
+                        onClick={() => setUseInfiniteZoom(!useInfiniteZoom)}
+                        style={{ marginLeft: '10px' }}
+                      >
+                        {useInfiniteZoom ? 'Standard Chart' : 'Infinite Zoom'}
+                      </RefreshButton>
+                    </ControlGroup>
+                  </ControlsContainer>
+                  
+                  <PatternSelector />
+                  
+                  <ChartContainer $chartHeight={chartHeight}>
+                    {/* Add ChartControlBar component above the chart */}
+                    <ChartControlBar 
+                      timeframe={timeframe}
+                      onTimeframeChange={handleTimeframeChange}
+                      showTradingHoursOnly={showTradingHoursOnly}
+                      onTradingHoursToggle={handleTradingHoursToggle}
+                      onAutoScale={handleAutoScale}
+                      onResetView={handleResetView}
+                      onZoomToFit={useInfiniteZoom ? handleZoomToFit : undefined}
+                      activeTimeRange={activeTimeRange}
+                      onTimeRangeSelect={handleTimeRangeSelect}
+                    />
+                    {useInfiniteZoom ? (
+                      <>
+                        {console.log('Rendering InfiniteZoomChartWithContext')}
+                        <InfiniteZoomChartWithContext 
+                          ref={chartRef}
+                          width={window.innerWidth - 48} 
+                          height={chartHeight}
+                          onPatternSelect={handlePatternSelect}
+                          selectedPattern={selectedPattern}
+                          selectedDate={selectedDate}
+                          timeframe={timeframe}
+                          activeTimeRange={activeTimeRange}
+                          onTimeRangeSelect={handleTimeRangeSelect}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        {console.log('Rendering ChartWithContext')}
+                        <ChartWithContext 
+                          width={window.innerWidth - 48} 
+                          height={chartHeight}
+                          onPatternSelect={handlePatternSelect}
+                          selectedPattern={selectedPattern}
+                          selectedDate={selectedDate}
+                          timeframe={timeframe}
+                          activeTimeRange={activeTimeRange}
+                          onTimeRangeSelect={handleTimeRangeSelect}
+                        />
+                      </>
+                    )}
+                  </ChartContainer>
+                </>
+              )}
+              {activeTab === 'dashboard' && (
+                <LearningDashboard />
+              )}
+            </>
           </ContentArea>
           
           <Footer>
@@ -641,6 +794,40 @@ function AppContent() {
       {/* Pattern Details Modal - shown only in legacy mode */}
       {!isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal && (
         <PatternDetailsModal />
+      )}
+      
+      {/* Debug overlay to visualize click blocking */}
+      {process.env.NODE_ENV === 'development' && (
+        <div 
+          id="debug-click-test" 
+          style={{
+            position: 'fixed',
+            bottom: 10,
+            right: 10,
+            padding: '10px',
+            background: 'rgba(255, 0, 0, 0.8)',
+            color: 'white',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            zIndex: 9999,
+            pointerEvents: 'auto',
+          }}
+          onClick={() => {
+            console.log('Debug button clicked successfully!');
+            debugClickBlocking();
+            // Force clear any blocking state
+            setSelectedPattern(null);
+            setShowFeedbackModal(false);
+            // Also check for any CSS issues
+            const appDiv = document.querySelector('.App');
+            if (appDiv) {
+              const computedStyle = window.getComputedStyle(appDiv);
+              console.log('App div pointer-events:', computedStyle.pointerEvents);
+            }
+          }}
+        >
+          Debug Click Issues
+        </div>
       )}
     </div>
   );

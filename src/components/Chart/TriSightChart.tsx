@@ -5,9 +5,8 @@ import React, { useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { CandlestickData, zoomLevels } from '../../models/ChartTypes';
 import { Pattern, PatternType, GoldmineChannelPattern, PivotPattern, RocketmanPattern, EscalatorPattern, ChannelDirection, ThrustDirection } from '../../models/PatternTypes';
-import { createTimeScale, createPriceScale, calculateVisibleRange, calculateTradingHoursVisibleRange } from '../../utils/scaling';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { createTimeScaleWithCompression } from '../../utils/compressedTimeScale';
+import { createPriceScale, calculateVisibleRange, calculateTradingHoursVisibleRange } from '../../utils/scaling';
+import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import { applyTradingHoursFilter } from '../../utils/chart/tradingHoursFilter';
 import { useChartState } from '../../hooks/chart/useChartState';
 import { useCanvasManager } from './CanvasManager';
@@ -25,7 +24,7 @@ import TimeAxis from './TimeAxis';
 import PriceAxis from './PriceAxis';
 
 // Type definitions for scales and patterns
-type TimeScaleType = ReturnType<typeof createTimeScale>;
+type TimeScaleType = ReturnType<typeof createSequentialTimeScale>;
 type PriceScaleType = ReturnType<typeof createPriceScale>;
 
 interface TriSightChartProps {
@@ -278,103 +277,83 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
     // Update visible indices
     setVisibleDataIndices({ start: startIndex, end: endIndex });
     
-    // Update visible range
+    // Update visible range with the actual time range of visible data
     if (startIndex < filteredData.length && endIndex < filteredData.length) {
-      const newVisibleRange = calculateVisibleRange(
-        filteredData.slice(startIndex, endIndex + 1),
-        0.1, // Padding percentage
-        0 // Third parameter as a number instead of boolean
-      );
-      setVisibleRange(newVisibleRange);
+      const visibleData = filteredData.slice(startIndex, endIndex + 1);
+      
+      // Calculate the actual time range from the visible data
+      const startTime = new Date(visibleData[0].timestamp);
+      const endTime = new Date(visibleData[visibleData.length - 1].timestamp);
+      
+      // Calculate price range from visible data
+      const prices = visibleData.flatMap(d => [d.high, d.low]);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      
+      // Add padding to price range
+      const priceRange = maxPrice - minPrice;
+      const paddedMinPrice = minPrice - priceRange * 0.1;
+      const paddedMaxPrice = maxPrice + priceRange * 0.1;
+      
+      setVisibleRange({
+        startTime,
+        endTime,
+        minPrice: paddedMinPrice,
+        maxPrice: paddedMaxPrice
+      });
     }
-  }, [filteredData, visibleDataIndices, setVisibleDataIndices, setVisibleRange]);
-
-  // Helper function to find a pattern at a specific position
-  const findPatternAtPosition = useCallback((x: number, y: number, patterns: Pattern[], timeScale: TimeScaleType, priceScale: PriceScaleType) => {
+  }, [filteredData, visibleDataIndices, setVisibleDataIndices, setVisibleRange, width, effectiveCandleCount]);
+  
+  // Helper method to find pattern at click position
+  const findPatternAtPosition = useCallback((x: number, y: number, patterns: Pattern[]): Pattern | null => {
+    console.log('TriSightChart - findPatternAtPosition called with:', { x, y, patternCount: patterns.length });
+    
     // If no patterns, return null
-    if (!patterns || patterns.length === 0) return null;
+    if (!patterns || patterns.length === 0) {
+      console.log('TriSightChart - No patterns to check');
+      return null;
+    }
     
-    // First check for clicks on pattern labels
-    const labelPositions = patterns.map(pattern => {
-      // Calculate pattern midpoint for label positioning
-      // Use let instead of const since we may need to modify this for some patterns
-      let xMid = timeScale.scale(new Date((pattern.startTime.getTime() + pattern.endTime.getTime()) / 2));
-      
-      // Determine the appropriate y-position based on pattern type
-      let yMid;
-      if (pattern.type === PatternType.GOLDMINE_CHANNEL) {
-        // Type assertion to access Goldmine Channel properties
-        const goldminePattern = pattern as GoldmineChannelPattern;
-        yMid = priceScale.scale((goldminePattern.upperBoundary + goldminePattern.lowerBoundary) / 2);
-      } else if (pattern.type === PatternType.PIVOT) {
-        // For Pivot patterns, use the pivot level for accurate label positioning
-        const pivotPattern = pattern as PivotPattern;
-        yMid = priceScale.scale(pivotPattern.pivotLevel);
-      } else if (pattern.type === PatternType.ROCKETMAN) {
-        // For Rocketman patterns, use peak time and acceleration for best label placement
-        const rocketmanPattern = pattern as RocketmanPattern;
-        
-        // Calculate position at peak of the pattern
-        const peakX = timeScale.scale(rocketmanPattern.peakTime);
-        
-        // Use peak of acceleration for y-positioning
-        const peakY = priceScale.scale(
-          Math.max(
-            rocketmanPattern.highPrice - (rocketmanPattern.highPrice - rocketmanPattern.lowPrice) * 0.15,
-            (rocketmanPattern.highPrice + rocketmanPattern.lowPrice) / 2
-          )
-        );
-        
-        // Adjust xMid to use peak time instead of midpoint
-        xMid = peakX;
-        yMid = peakY;
-      } else if (pattern.type === PatternType.ESCALATOR) {
-        // For Escalator patterns, place labels at a logical point along the trend
-        const escalatorPattern = pattern as EscalatorPattern;
-        
-        // Place the label at about 2/3 into the pattern for ascending trends, 1/3 for descending
-        let timeRatio = 0.5; // default midpoint
-        
-        if (escalatorPattern.direction) {
-          if (escalatorPattern.direction === ThrustDirection.BULLISH) {
-            timeRatio = 0.67; // 2/3 into the pattern for bullish trends
-          } else if (escalatorPattern.direction === ThrustDirection.BEARISH) {
-            timeRatio = 0.33; // 1/3 into the pattern for bearish trends
-          }
-        }
-        
-        // Calculate time at the specified ratio
-        const timeAtRatio = new Date(
-          pattern.startTime.getTime() + 
-          (pattern.endTime.getTime() - pattern.startTime.getTime()) * timeRatio
-        );
-        
-        xMid = timeScale.scale(timeAtRatio);
-        
-        // Use the highPrice/lowPrice ratio that mirrors the time ratio for y-positioning
-        const priceRange = pattern.highPrice - pattern.lowPrice;
-        const targetPrice = pattern.lowPrice + priceRange * timeRatio;
-        yMid = priceScale.scale(targetPrice);
-      } else {
-        // Default for other patterns
-        yMid = priceScale.scale((pattern.highPrice + pattern.lowPrice) / 2);
-      }
-      
-      // Estimated label dimensions - these should match what's used in PatternRenderer
-      const labelWidth = 80;
-      const labelHeight = 24;
-      
+    // Use PatternRenderer to get actual label positions after collision resolution
+    const patternRenderer = PatternRenderer;
+    const labelPositions = patternRenderer.placePatternLabels(
+      patterns,
+      {
+        width: width,
+        height: height
+      },
+      [
+        patterns[0].startTime,
+        patterns[patterns.length - 1].endTime
+      ],
+      createSequentialTimeScale(
+        width - CHART_MARGIN.left - CHART_MARGIN.right,
+        filteredData.slice(visibleDataIndices.start, visibleDataIndices.end + 1),
+        [CHART_MARGIN.left, width - CHART_MARGIN.right]
+      ),
+      createPriceScale(
+        height - CHART_MARGIN.top - CHART_MARGIN.bottom,
+        [visibleRange.minPrice, visibleRange.maxPrice],
+        [height - CHART_MARGIN.bottom, CHART_MARGIN.top]
+      )
+    );
+    
+    console.log('TriSightChart - Label positions after collision resolution:', labelPositions.map(l => {
+      const pattern = patterns.find(p => p.id === l.patternId);
       return {
-        pattern,
-        x: xMid - labelWidth / 2,
-        y: yMid - labelHeight / 2,
-        width: labelWidth,
-        height: labelHeight
+        type: pattern?.type,
+        x: l.x,
+        y: l.y,
+        width: l.width,
+        height: l.height
       };
-    });
+    }));
     
-    // Check if we clicked on any label first (they're more important than patterns)
+    // Check if we clicked on any label
     for (const label of labelPositions) {
+      const pattern = patterns.find(p => p.id === label.patternId);
+      if (!pattern) continue;
+      
       const padding = 5; // 5px padding for easier selection
       if (
         x >= label.x - padding &&
@@ -382,47 +361,15 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
         y >= label.y - padding &&
         y <= label.y + label.height + padding
       ) {
-        return label.pattern;
-      }
-    }
-    
-    // Loop through patterns in reverse order (top-most drawn last)
-    for (let i = patterns.length - 1; i >= 0; i--) {
-      const pattern = patterns[i];
-      
-      // Check if the point is within the pattern's bounding box
-      const startX = timeScale.scale(pattern.startTime);
-      const endX = timeScale.scale(pattern.endTime);
-      
-      // For Goldmine Channels, use upperBoundary/lowerBoundary instead of highPrice/lowPrice
-      let topY, bottomY;
-      if (pattern.type === PatternType.GOLDMINE_CHANNEL) {
-        // Type assertion to access Goldmine Channel properties
-        const goldminePattern = pattern as GoldmineChannelPattern;
-        topY = priceScale.scale(goldminePattern.upperBoundary);
-        bottomY = priceScale.scale(goldminePattern.lowerBoundary);
-      } else {
-        topY = priceScale.scale(pattern.highPrice);
-        bottomY = priceScale.scale(pattern.lowPrice);
-      }
-      
-      // Check if point is inside pattern bounds (with some padding)
-      const padding = 5; // 5px padding for easier selection
-      if (
-        x >= startX - padding &&
-        x <= endX + padding &&
-        y >= topY - padding &&
-        y <= bottomY + padding
-      ) {
+        console.log('TriSightChart - Found pattern label click:', pattern.type);
         return pattern;
       }
     }
     
-    // If no pattern was found, return null
+    console.log('TriSightChart - No pattern label found at click position');
     return null;
-  }, []);
+  }, [width, height, filteredData, visibleDataIndices, visibleRange]);
   
-
   // Set visible range whenever filtered data or zoom level changes
   useEffect(() => {
     if (!filteredData || filteredData.length === 0) return;
@@ -463,13 +410,21 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
   const handleZoomChange = useCallback((zoomLevelName: string) => {
     const selectedLevel = zoomLevels.find(level => level.name === zoomLevelName);
     if (selectedLevel) {
+      // Reset pan state when zooming
+      setPanState(prev => ({ 
+        ...prev, 
+        translateX: 0, 
+        previousTranslateX: 0,
+        momentum: 0
+      }));
+      
       setZoomState({
         level: selectedLevel,
         factor: 1.0,
         isCustomZoom: false
       });
     }
-  }, []);
+  }, [setPanState]);
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // Handle pattern selection from clicks
@@ -486,26 +441,13 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Create time scale using visible range
-    const timeScale = createTimeScale(
-      width - CHART_MARGIN.left - CHART_MARGIN.right,
-      [visibleRange.startTime, visibleRange.endTime],
-      [CHART_MARGIN.left, width - CHART_MARGIN.right]
-    );
-    
-    const priceScale = createPriceScale(
-      height - CHART_MARGIN.top - CHART_MARGIN.bottom,
-      [visibleRange.minPrice, visibleRange.maxPrice],
-      [height - CHART_MARGIN.bottom, CHART_MARGIN.top]
-    );
-    
     // Find the pattern at the clicked position
-    const clickedPattern = findPatternAtPosition(x, y, visiblePatterns, timeScale, priceScale);
+    const clickedPattern = findPatternAtPosition(x, y, visiblePatterns);
     // Only call onPatternSelect if we have a pattern (handle null case)
     if (clickedPattern) {
       onPatternSelect(clickedPattern);
     }
-  }, [visiblePatterns, visibleRange, width, height, onPatternSelect, panState, CHART_MARGIN]);
+  }, [visiblePatterns, visibleRange, width, height, onPatternSelect, panState, CHART_MARGIN, filteredData, visibleDataIndices]);
   
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } =
     usePanController(panState, setPanState, updateVisibleRangeFromPan);

@@ -12,10 +12,14 @@ export const useTwelveDataApiKey = () => {
   // Load key from localStorage on mount
   useEffect(() => {
     try {
+      console.log('[useTwelveDataApiKey] Loading API key from localStorage...');
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
+        console.log('[useTwelveDataApiKey] Found API key in localStorage:', stored.substring(0, 8) + '...');
         setApiKeyState(stored);
         setClientApiKey(stored);
+      } else {
+        console.log('[useTwelveDataApiKey] No API key found in localStorage');
       }
     } catch (e) {
       console.error('Failed to load TwelveData API key:', e);

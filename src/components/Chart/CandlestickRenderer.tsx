@@ -2,7 +2,8 @@
 // Renders candlestick shapes
 // Draws OHLC bars on canvas
 import { CandlestickData } from '../../models/ChartTypes';
-import { createTimeScale, createPriceScale } from '../../utils/scaling';
+import { createPriceScale } from '../../utils/scaling';
+import { createSequentialTimeScale } from '../../utils/sequentialScale';
 
 interface ChartDimensions {
   width: number;
@@ -21,7 +22,7 @@ const CandlestickRendererImpl = {
   render(
     ctx: CanvasRenderingContext2D,
     data: CandlestickData[],
-    timeScale: ReturnType<typeof createTimeScale>,
+    timeScale: ReturnType<typeof createSequentialTimeScale>,
     priceScale: ReturnType<typeof createPriceScale>,
     dimensions: ChartDimensions
   ) {
@@ -54,7 +55,7 @@ const CandlestickRendererImpl = {
     this.drawGrid(ctx, timeScale, priceScale, dimensions);
     
     // Draw each candlestick
-    data.forEach(candle => {
+    data.forEach((candle) => {
       const candleX = timeScale.scale(new Date(candle.timestamp));
       const centerX = candleX;
       const left = centerX - (candleWidth / 2);
@@ -112,7 +113,7 @@ const CandlestickRendererImpl = {
   
   drawGrid(
     ctx: CanvasRenderingContext2D,
-    timeScale: ReturnType<typeof createTimeScale>,
+    timeScale: ReturnType<typeof createSequentialTimeScale>,
     priceScale: ReturnType<typeof createPriceScale>,
     dimensions: ChartDimensions
   ) {
@@ -134,8 +135,8 @@ const CandlestickRendererImpl = {
     
     // Draw vertical time grid lines
     const timeTicks = timeScale.ticks(10);
-    timeTicks.forEach(date => {
-      const x = timeScale.scale(date);
+    timeTicks.forEach((tick) => {
+      const x = timeScale.scale(tick);
       
       ctx.beginPath();
       ctx.moveTo(x, margin.top);

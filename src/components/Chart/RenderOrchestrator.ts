@@ -1,12 +1,13 @@
 // src/components/Chart/RenderOrchestrator.ts
-// Coordinates canvas drawing order for the chart
-// Handles double-buffer rendering and axis drawing
+// Orchestrates chart rendering across multiple canvases
+// Ensures all data displays contiguously
 import { RefObject } from 'react';
 import { CandlestickData, VisibleRange } from '../../models/ChartTypes';
 import { Pattern } from '../../models/PatternTypes';
-import { createTimeScale, createPriceScale } from '../../utils/scaling';
 import CandlestickRenderer from './CandlestickRenderer';
 import PatternRenderer from './PatternRenderer';
+import { createPriceScale } from '../../utils/scaling';
+import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import TimeAxis from './TimeAxis';
 import PriceAxis from './PriceAxis';
 
@@ -19,7 +20,7 @@ interface RenderArgs {
   visibleRange: VisibleRange;
   width: number;
   height: number;
-  margin: { left: number; right: number; top: number; bottom: number };
+  margin: { top: number; right: number; bottom: number; left: number };
   visiblePatterns: Pattern[];
   selectedPattern: Pattern | null;
   timeframe: string;
@@ -46,6 +47,7 @@ export function renderChart(args: RenderArgs) {
   const mainCanvas = mainCanvasRef.current;
   const bufferCanvas = bufferCanvasRef.current;
   const patternsCanvas = patternsCanvasRef.current;
+
   if (!mainCanvas || !bufferCanvas || !patternsCanvas || filteredData.length === 0) return;
 
   const mainCtx = mainCanvas.getContext('2d');
@@ -58,7 +60,7 @@ export function renderChart(args: RenderArgs) {
   patternsCtx.clearRect(0, 0, width, height);
 
   const visibleData = filteredData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
-  const timeScale = createTimeScale(width - margin.left - margin.right, [visibleRange.startTime, visibleRange.endTime], [margin.left, width - margin.right]);
+  const timeScale = createSequentialTimeScale(width - margin.left - margin.right, visibleData, [margin.left, width - margin.right]);
   const priceScale = createPriceScale(height - margin.top - margin.bottom, [visibleRange.minPrice, visibleRange.maxPrice], [height - margin.bottom, margin.top]);
 
   CandlestickRenderer.render(bufferCtx, visibleData, timeScale, priceScale, { width, height, margin });

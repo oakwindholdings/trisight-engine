@@ -44,24 +44,32 @@ const ButtonGroup = styled.div`
 `;
 
 interface ActionButtonProps {
-  primary?: boolean;
+  $primary?: boolean;
 }
 
 const ActionButton = styled.button<ActionButtonProps>`
-  background-color: ${props => props.primary ? ThemeTokens.colors.accent : ThemeTokens.colors.surface};
-  color: ${props => props.primary ? ThemeTokens.colors.textOnAccent : ThemeTokens.colors.textPrimary};
-  border: 1px solid ${props => props.primary ? ThemeTokens.colors.accent : ThemeTokens.colors.border};
-  border-radius: ${ThemeTokens.borderRadius.small};
-  padding: ${ThemeTokens.spacing.small} ${ThemeTokens.spacing.medium};
-  font-size: ${ThemeTokens.typography.size.small};
-  font-weight: ${ThemeTokens.typography.weight.medium};
+  background-color: ${props => props.$primary ? ThemeTokens.colors.accent : ThemeTokens.colors.surface};
+  color: ${props => props.$primary ? ThemeTokens.colors.textOnAccent : ThemeTokens.colors.textPrimary};
+  border: 1px solid ${props => props.$primary ? ThemeTokens.colors.accent : ThemeTokens.colors.border};
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  flex: 1;
-  
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
   &:hover {
-    background-color: ${props => props.primary 
+    background-color: ${props => props.$primary 
       ? ThemeTokens.colors.accentHover 
-      : ThemeTokens.colors.surfaceHover};
+      : ThemeTokens.colors.surfaceHover
+    };
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -102,8 +110,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               <ActionButton onClick={onFeedbackClick}>
                 Provide Feedback
               </ActionButton>
-              <ActionButton primary onClick={onSaveClick}>
-                Save Pattern
+              <ActionButton $primary onClick={onSaveClick}>
+                Save Analysis
               </ActionButton>
             </ButtonGroup>
           </>

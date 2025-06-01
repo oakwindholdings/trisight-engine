@@ -59,7 +59,7 @@ const OriginalBoundaryLine = styled.div<{ position: number; isUpper: boolean }>`
   }
 `;
 
-const BoundarySlider = styled.div<{ position: number; isUpper: boolean; active: boolean }>`
+const BoundarySlider = styled.div<{ position: number; isUpper: boolean; $active: boolean }>`
   position: absolute;
   left: 0;
   top: ${props => 100 - props.position}%;
@@ -67,8 +67,8 @@ const BoundarySlider = styled.div<{ position: number; isUpper: boolean; active: 
   height: 12px; /* Increased thickness */
   background-color: ${props => 
     props.isUpper 
-      ? props.active ? '#43A047' : '#81C784' // Green for upper boundary
-      : props.active ? '#E53935' : '#EF5350'}; // Red for lower boundary
+      ? props.$active ? '#43A047' : '#81C784' // Green for upper boundary
+      : props.$active ? '#E53935' : '#EF5350'}; // Red for lower boundary
   cursor: ns-resize;
   z-index: 2;
   border: 1px solid ${props => props.isUpper ? '#2E7D32' : '#C62828'}; /* Added border for definition */
@@ -291,7 +291,7 @@ const GoldmineChannelAdjuster: React.FC<GoldmineChannelAdjusterProps> = ({
         <BoundarySlider 
           position={upperPos} 
           isUpper={true}
-          active={activeSlider === 'upper'}
+          $active={activeSlider === 'upper'}
           onMouseDown={handleMouseDown('upper')}
         >
           <PriceDisplay isUpper={true}>
@@ -303,7 +303,7 @@ const GoldmineChannelAdjuster: React.FC<GoldmineChannelAdjusterProps> = ({
         <BoundarySlider 
           position={lowerPos} 
           isUpper={false}
-          active={activeSlider === 'lower'}
+          $active={activeSlider === 'lower'}
           onMouseDown={handleMouseDown('lower')}
         >
           <PriceDisplay isUpper={false}>

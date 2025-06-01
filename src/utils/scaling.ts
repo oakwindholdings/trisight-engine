@@ -251,7 +251,6 @@ export function formatDateForAxis(date: Date, timeframe: string): string {
     case '1hour':
       return d3TimeFormat.timeFormat('%H:%M')(date);
     case '1day':
-      return d3TimeFormat.timeFormat('%b %d')(date);
     case '5day':
       return d3TimeFormat.timeFormat('%b %d')(date);
     default:

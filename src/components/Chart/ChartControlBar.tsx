@@ -143,6 +143,7 @@ interface ChartControlBarProps {
   onTradingHoursToggle: () => void;
   onAutoScale: () => void;
   onResetView: () => void;
+  onZoomToFit?: () => void;
   // Time Range Selector props
   activeTimeRange: TimeRangeOption;
   onTimeRangeSelect: (range: TimeRangeOption, startDate: Date, endDate: Date) => void;
@@ -155,6 +156,7 @@ const ChartControlBar: React.FC<ChartControlBarProps> = ({
   onTradingHoursToggle,
   onAutoScale,
   onResetView,
+  onZoomToFit,
   activeTimeRange,
   onTimeRangeSelect
 }) => {
@@ -215,6 +217,11 @@ const ChartControlBar: React.FC<ChartControlBarProps> = ({
       
       {/* Viewport Controls */}
       <ControlGroup>
+        {onZoomToFit && (
+          <ViewportControlButton onClick={onZoomToFit}>
+            Zoom to Fit
+          </ViewportControlButton>
+        )}
         <ViewportControlButton onClick={onAutoScale}>
           Auto-Scale
         </ViewportControlButton>

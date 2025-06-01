@@ -2,6 +2,7 @@
 // Encapsulates wheel and keyboard zoom logic
 // Provides reusable handlers for zoom calculations
 import { useEffect, useCallback } from 'react';
+import { unstable_batchedUpdates } from 'react-dom';
 import { calculateVisibleRange, calculateTradingHoursVisibleRange } from '../../../utils/scaling';
 import { zoomLevels, ZoomState, VisibleRange, CandlestickData } from '../../../models/ChartTypes';
 import { PanState } from './PanController';
@@ -52,22 +53,26 @@ export function useZoomController(opts: ZoomOptions) {
     const candleWidth = chartAreaWidth / effectiveCandleCount;
     const candleIndex = Math.floor((mouseX - margin.left) / candleWidth) + visibleDataIndices.start;
     const zoomDirection = e.deltaY > 0 ? 'out' : 'in';
-    const zoomChange = zoomDirection === 'out' ? 1.1 : 0.9;
+    // Increase zoom sensitivity - was 1.1/0.9 (10%), now 1.3/0.7 (30%)
+    const zoomChange = zoomDirection === 'out' ? 1.3 : 0.7;
     const newFactor = Math.max(0.1, Math.min(5.0, zoomState.factor * zoomChange));
 
-    setZoomState((prev: ZoomState) => ({ ...prev, factor: newFactor, isCustomZoom: true }));
-    setPanState((prev: PanState) => ({ ...prev, translateX: 0, previousTranslateX: 0, momentum: 0 }));
+    // Batch all state updates together to prevent flickering
+    unstable_batchedUpdates(() => {
+      setZoomState((prev: ZoomState) => ({ ...prev, factor: newFactor, isCustomZoom: true }));
+      setPanState((prev: PanState) => ({ ...prev, translateX: 0, previousTranslateX: 0, momentum: 0 }));
 
-    if (filteredData.length > 0) {
-      const newCandleCount = Math.round(zoomState.level.candleCount * newFactor);
-      const startIndex = Math.max(0, candleIndex - Math.floor(newCandleCount / 2));
-      const endIndex = Math.min(filteredData.length - 1, startIndex + newCandleCount);
-      setVisibleDataIndices({ start: startIndex, end: endIndex });
-      const newVisibleRange = showOnlyTradingHours
-        ? calculateTradingHoursVisibleRange(filteredData, startIndex, endIndex)
-        : calculateVisibleRange(filteredData, startIndex, endIndex);
-      setVisibleRange(newVisibleRange);
-    }
+      if (filteredData.length > 0) {
+        const newCandleCount = Math.round(zoomState.level.candleCount * newFactor);
+        const startIndex = Math.max(0, candleIndex - Math.floor(newCandleCount / 2));
+        const endIndex = Math.min(filteredData.length - 1, startIndex + newCandleCount);
+        setVisibleDataIndices({ start: startIndex, end: endIndex });
+        const newVisibleRange = showOnlyTradingHours
+          ? calculateTradingHoursVisibleRange(filteredData, startIndex, endIndex)
+          : calculateVisibleRange(filteredData, startIndex, endIndex);
+        setVisibleRange(newVisibleRange);
+      }
+    });
   }, [interactionCanvasRef, filteredData, width, margin, effectiveCandleCount, visibleDataIndices, zoomState, setZoomState, setPanState, showOnlyTradingHours, setVisibleDataIndices, setVisibleRange]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -84,33 +89,43 @@ export function useZoomController(opts: ZoomOptions) {
         return { ...prev, translateX: newTranslateX, previousTranslateX: newTranslateX };
       });
     } else if (e.key === 'ArrowUp' || e.key === '+') {
-      const newFactor = Math.max(0.1, zoomState.factor * 0.9);
-      setZoomState((prev: ZoomState) => ({ ...prev, factor: newFactor, isCustomZoom: true }));
-      if (filteredData.length > 0) {
-        const visibleCandleCount = Math.round(zoomState.level.candleCount * newFactor);
-        const endIndex = filteredData.length - 1;
-        const startIndex = Math.max(0, endIndex - visibleCandleCount);
-        setVisibleDataIndices({ start: startIndex, end: endIndex });
-        setVisibleRange(
-          showOnlyTradingHours
-            ? calculateTradingHoursVisibleRange(filteredData, startIndex, endIndex)
-            : calculateVisibleRange(filteredData, startIndex, endIndex)
-        );
-      }
+      // Match scroll wheel zoom sensitivity
+      const newFactor = Math.max(0.1, zoomState.factor * 0.7);
+      
+      // Batch state updates for zoom in
+      unstable_batchedUpdates(() => {
+        setZoomState((prev: ZoomState) => ({ ...prev, factor: newFactor, isCustomZoom: true }));
+        if (filteredData.length > 0) {
+          const visibleCandleCount = Math.round(zoomState.level.candleCount * newFactor);
+          const endIndex = filteredData.length - 1;
+          const startIndex = Math.max(0, endIndex - visibleCandleCount);
+          setVisibleDataIndices({ start: startIndex, end: endIndex });
+          setVisibleRange(
+            showOnlyTradingHours
+              ? calculateTradingHoursVisibleRange(filteredData, startIndex, endIndex)
+              : calculateVisibleRange(filteredData, startIndex, endIndex)
+          );
+        }
+      });
     } else if (e.key === 'ArrowDown' || e.key === '-') {
-      const newFactor = Math.min(5.0, zoomState.factor * 1.1);
-      setZoomState((prev: ZoomState) => ({ ...prev, factor: newFactor, isCustomZoom: true }));
-      if (filteredData.length > 0) {
-        const visibleCandleCount = Math.round(zoomState.level.candleCount * newFactor);
-        const endIndex = filteredData.length - 1;
-        const startIndex = Math.max(0, endIndex - visibleCandleCount);
-        setVisibleDataIndices({ start: startIndex, end: endIndex });
-        setVisibleRange(
-          showOnlyTradingHours
-            ? calculateTradingHoursVisibleRange(filteredData, startIndex, endIndex)
-            : calculateVisibleRange(filteredData, startIndex, endIndex)
-        );
-      }
+      // Match scroll wheel zoom sensitivity  
+      const newFactor = Math.min(5.0, zoomState.factor * 1.3);
+      
+      // Batch state updates for zoom out
+      unstable_batchedUpdates(() => {
+        setZoomState((prev: ZoomState) => ({ ...prev, factor: newFactor, isCustomZoom: true }));
+        if (filteredData.length > 0) {
+          const visibleCandleCount = Math.round(zoomState.level.candleCount * newFactor);
+          const endIndex = filteredData.length - 1;
+          const startIndex = Math.max(0, endIndex - visibleCandleCount);
+          setVisibleDataIndices({ start: startIndex, end: endIndex });
+          setVisibleRange(
+            showOnlyTradingHours
+              ? calculateTradingHoursVisibleRange(filteredData, startIndex, endIndex)
+              : calculateVisibleRange(filteredData, startIndex, endIndex)
+          );
+        }
+      });
     } else if (e.key === 'Home') {
       setPanState({ isPanning: false, startX: 0, previousTranslateX: 0, translateX: 0, momentum: 0 });
     }

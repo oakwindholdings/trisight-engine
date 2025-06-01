@@ -16,11 +16,11 @@ const StarContainer = styled.div`
   gap: 4px;
 `;
 
-const Star = styled.button<{ filled: boolean }>`
+const Star = styled.button<{ $filled: boolean }>`
   background: none;
   border: none;
   cursor: pointer;
-  color: ${props => props.filled ? '#FFC107' : '#E0E0E0'};
+  color: ${props => props.$filled ? '#FFC107' : '#E0E0E0'};
   font-size: 24px;
   padding: 0;
   transition: color 0.2s ease;
@@ -55,7 +55,7 @@ const ConfidenceRatingComponent: React.FC<ConfidenceRatingProps> = ({ value, onC
         {[1, 2, 3, 4, 5].map(rating => (
           <Star
             key={rating}
-            filled={rating <= value}
+            $filled={rating <= value}
             onClick={() => onChange(rating)}
             aria-label={`Rate ${rating} out of 5`}
           >
