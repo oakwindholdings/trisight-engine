@@ -452,7 +452,7 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } =
     usePanController(panState, setPanState, updateVisibleRangeFromPan);
 
-  useZoomController({
+  const { handleWheel } = useZoomController({
     interactionCanvasRef,
     width,
     height,
@@ -529,6 +529,7 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onWheel={handleWheel}
       />
       
       {/* Timeframe selector and refresh button */}

@@ -58,26 +58,36 @@ const InfiniteZoomChartWithContext = React.forwardRef<InfiniteZoomChartRef, Infi
         result.setDate(result.getDate() - 2);
       }
       
+      console.log(`getLastTradingDay: input ${date.toISOString()}, output ${result.toISOString()}`);
       return result;
     };
     
     switch (activeTimeRange) {
       case '1D':
-        // For 1D, use the last trading day
-        const lastTradingDay = getLastTradingDay(endDate);
-        startDate.setTime(lastTradingDay.getTime());
-        endDate.setTime(lastTradingDay.getTime());
+        // For 1D, try today first, but be prepared to fall back to previous day
+        const now = new Date();
+        const todayTradingDay = getLastTradingDay(now);
+        
+        startDate.setTime(todayTradingDay.getTime());
+        endDate.setTime(todayTradingDay.getTime());
         startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
+        
+        // If it's today and market is still open, cap at current time
+        if (todayTradingDay.toDateString() === now.toDateString()) {
+          endDate.setTime(now.getTime());
+          console.log(`1D: Using today up to current time - ${startDate.toISOString()} to ${endDate.toISOString()}`);
+        } else {
+          endDate.setHours(23, 59, 59, 999);
+          console.log(`1D: Using full trading day - ${startDate.toISOString()} to ${endDate.toISOString()}`);
+        }
         break;
       case '1W':
         // Last 7 days
         startDate.setDate(endDate.getDate() - 7);
         startDate.setHours(0, 0, 0, 0);
         // Ensure end date is not in the future
-        const now = new Date();
-        if (endDate > now) {
-          endDate.setTime(now.getTime());
+        if (endDate > new Date()) {
+          endDate.setTime(new Date().getTime());
         }
         break;
       case '1M':
