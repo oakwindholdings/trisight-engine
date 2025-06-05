@@ -5,8 +5,12 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { CandlestickData } from '../../models/ChartTypes';
 import { Pattern } from '../../models/PatternTypes';
+import { EscalatorRun } from '../../types';
+import { GoldmineSignal } from '../../patternEngine/goldmine';
+import { StopLossEvent } from '../../riskEngine/trailingStop';
 import { useInfiniteZoomController } from '../../hooks/useInfiniteZoomController';
 import { usePanController, PanState } from '../../hooks/usePanController';
+import { usePatternBus } from '../../hooks/usePatternBus';
 import { renderChart } from './RenderOrchestrator';
 import ResolutionIndicator from './ResolutionIndicator';
 import { ResolutionConfig, getOptimalResolution, InfiniteZoomState, VisibleRange } from '../../utils/dataResolution';
@@ -14,6 +18,9 @@ import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import { createPriceScale } from '../../utils/scaling';
 import { AdaptivePatternDetectionService } from '../../utils/patternDetection/AdaptivePatternDetectionService';
 import PatternRenderer from './PatternRenderer';
+import { EscalatorBand } from '../Markers/EscalatorBand';
+import { GoldmineArrow } from '../Markers/GoldmineArrow';
+import { TrailLine } from '../Markers/TrailLine';
 import './InfiniteZoomChart.css';
 
 interface InfiniteZoomChartProps {
@@ -66,6 +73,7 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     maxPrice: 220   // More reasonable default
   });
   const [visibleDataIndices, setVisibleDataIndices] = useState({ start: 0, end: 0 });
+  const [initialVisibleIndices, setInitialVisibleIndices] = useState({ start: 0, end: 0 });
 
   // Pan state
   const [panState, setPanState] = useState<PanState>({
@@ -75,7 +83,9 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     translateX: 0,
     momentum: 0
   });
-  const [initialVisibleIndices, setInitialVisibleIndices] = useState({ start: 0, end: 0 });
+
+  // Chart data state
+  const [error, setError] = useState<Error | null>(null);
 
   // Handle data updates from zoom controller
   const handleDataUpdate = useCallback((data: CandlestickData[], resolution: ResolutionConfig) => {
@@ -133,7 +143,6 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
   const { 
     data: chartData, 
     loading: isLoading, 
-    error,
     zoomLevel,
     targetCandles,
     currentResolution,
@@ -141,7 +150,17 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     zoomToFit: zoomToFitController,
     resetZoom
   } = zoomController;
-  
+
+  // Pattern bus integration
+  const patternEvents = usePatternBus(chartData);
+
+  // Dynamic pattern detection state
+  const [localPatterns, setLocalPatterns] = useState<Pattern[]>([]);
+  const [isDetectingPatterns, setIsDetectingPatterns] = useState(false);
+
+  // Initialize pattern detection service
+  const patternDetectorRef = useRef(new AdaptivePatternDetectionService());
+
   // Create ref for chart data to avoid stale closures
   const chartDataRef = useRef<CandlestickData[]>([]);
   const visibleDataIndicesRef = useRef({ start: 0, end: 0 });
@@ -154,13 +173,6 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
   useEffect(() => {
     visibleDataIndicesRef.current = visibleDataIndices;
   }, [visibleDataIndices]);
-
-  // Local state for visible patterns
-  const [localPatterns, setLocalPatterns] = useState<Pattern[]>([]);
-  const [isDetectingPatterns, setIsDetectingPatterns] = useState(false);
-
-  // Initialize pattern detection service
-  const patternDetectorRef = useRef(new AdaptivePatternDetectionService());
 
   // Detect patterns on visible data after zoom/pan completes
   const detectPatternsForVisibleData = useCallback(async () => {
@@ -259,16 +271,16 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     const candleShift = Math.round(-translateX / candleWidth);
     
     // When panning starts, store the initial indices
-    if (panState.isPanning && initialVisibleIndices.start === 0 && initialVisibleIndices.end === 0) {
-      setInitialVisibleIndices({ 
+    if (panState.isPanning && !visibleDataIndices.start && !visibleDataIndices.end) {
+      setVisibleDataIndices({ 
         start: visibleDataIndicesRef.current.start, 
         end: visibleDataIndicesRef.current.end 
       });
     }
     
     // Use initial indices as base for calculation
-    const baseStart = panState.isPanning ? initialVisibleIndices.start : visibleDataIndicesRef.current.start;
-    const baseEnd = panState.isPanning ? initialVisibleIndices.end : visibleDataIndicesRef.current.end;
+    const baseStart = panState.isPanning ? visibleDataIndices.start : visibleDataIndicesRef.current.start;
+    const baseEnd = panState.isPanning ? visibleDataIndices.end : visibleDataIndicesRef.current.end;
     
     let startIndex = baseStart + candleShift;
     let endIndex = baseEnd + candleShift;
@@ -301,7 +313,7 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
         });
       }
     }
-  }, [width, targetCandles, panState.isPanning, initialVisibleIndices.start, initialVisibleIndices.end]);
+  }, [width, targetCandles, panState.isPanning, visibleDataIndices.start, visibleDataIndices.end]);
 
   // Initialize pan controller
   const panController = usePanController(
@@ -309,13 +321,6 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     setPanState,
     updateVisibleRangeFromPan
   );
-
-  // Reset initial indices when panning ends
-  useEffect(() => {
-    if (!panState.isPanning) {
-      setInitialVisibleIndices({ start: 0, end: 0 });
-    }
-  }, [panState.isPanning]);
 
   // Handle pattern selection
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -336,12 +341,11 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     const timeScale = createSequentialTimeScale(
       width - CHART_MARGIN.left - CHART_MARGIN.right,
       visibleData,
-      [CHART_MARGIN.left, width - CHART_MARGIN.right]
+      [0, visibleData.length - 1]
     );
     const priceScale = createPriceScale(
       height - CHART_MARGIN.top - CHART_MARGIN.bottom,
-      [visibleRange.minPrice, visibleRange.maxPrice],
-      [height - CHART_MARGIN.bottom, CHART_MARGIN.top]
+      [visibleRange.minPrice, visibleRange.maxPrice]
     );
     
     // Find pattern label at click position
@@ -399,10 +403,9 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
   // Render chart when data or view changes
   useEffect(() => {
     console.log('InfiniteZoomChart render effect:', {
-      chartDataLength: chartData.length,
+      dataLength: chartData.length,
       visibleDataIndices,
       isLoading,
-      error,
       currentResolution
     });
     
@@ -515,9 +518,6 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
         translateX: 0,
         momentum: 0
       });
-      
-      // Reset initial indices when date range changes
-      setInitialVisibleIndices({ start: 0, end: 0 });
     }
   }, [startDate, endDate, resetZoom]);
 
@@ -544,6 +544,95 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
           onTouchEnd={panController.handleTouchEnd}
           style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
         />
+        
+        {/* Pattern overlay for pattern bus events */}
+        {chartData.length > 0 && visibleDataIndices.end > 0 && (
+          <svg className="pattern-overlay" width={width} height={height}>
+            {/* Render pattern markers from pattern bus */}
+            {patternEvents.events
+              .filter(event => {
+                // Filter to visible range
+                const eventIndex = 
+                  event.type === 'ESCALATOR' ? (event.data as EscalatorRun).endIndex :
+                  event.type === 'GOLDMINE' ? (event.data as GoldmineSignal).entryIndex :
+                  event.type === 'STOP_EVENT' ? (event.data as StopLossEvent).index : 0;
+                
+                return eventIndex >= visibleDataIndices.start && eventIndex <= visibleDataIndices.end;
+              })
+              .map((event, idx) => {
+                const visibleData = chartData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+                const timeScale = createSequentialTimeScale(
+                  width - CHART_MARGIN.left - CHART_MARGIN.right,
+                  visibleData,
+                  [0, visibleData.length - 1]
+                );
+                const priceScale = createPriceScale(
+                  height - CHART_MARGIN.top - CHART_MARGIN.bottom,
+                  [visibleRange.minPrice, visibleRange.maxPrice]
+                );
+
+                if (event.type === 'ESCALATOR') {
+                  const escalator = event.data as EscalatorRun;
+                  return (
+                    <EscalatorBand
+                      key={`escalator-${idx}`}
+                      escalator={escalator}
+                      candles={chartData}
+                      xScale={(index: number) => {
+                        const candle = chartData[index];
+                        if (!candle) return 0;
+                        return timeScale.scale(new Date(candle.timestamp)) + CHART_MARGIN.left;
+                      }}
+                      yScale={(price: number) => priceScale.scale(price) + CHART_MARGIN.top}
+                      width={width}
+                      height={height}
+                    />
+                  );
+                } else if (event.type === 'GOLDMINE') {
+                  const signal = event.data as GoldmineSignal;
+                  return (
+                    <GoldmineArrow
+                      key={`goldmine-${idx}`}
+                      signal={signal}
+                      xScale={(index: number) => {
+                        const candle = chartData[index];
+                        if (!candle) return 0;
+                        return timeScale.scale(new Date(candle.timestamp)) + CHART_MARGIN.left;
+                      }}
+                      yScale={(price: number) => priceScale.scale(price) + CHART_MARGIN.top}
+                      width={width}
+                      height={height}
+                    />
+                  );
+                } else if (event.type === 'STOP_EVENT') {
+                  const stop = event.data as StopLossEvent;
+                  // For TrailLine, we need to find the active position
+                  // For now, create a position from the stop event
+                  const position = {
+                    side: 'LONG' as const, // Default, should come from pattern bus state
+                    openIndex: Math.max(0, stop.index - 10), // Approximate
+                    step: {} // Not used by TrailLine
+                  };
+                  return (
+                    <TrailLine
+                      key={`stop-${idx}`}
+                      position={position}
+                      candles={chartData}
+                      xScale={(index: number) => {
+                        const candle = chartData[index];
+                        if (!candle) return 0;
+                        return timeScale.scale(new Date(candle.timestamp)) + CHART_MARGIN.left;
+                      }}
+                      yScale={(price: number) => priceScale.scale(price) + CHART_MARGIN.top}
+                      width={width}
+                      height={height}
+                    />
+                  );
+                }
+                return null;
+              })}
+          </svg>
+        )}
         
         {currentResolution && (
           <ResolutionIndicator

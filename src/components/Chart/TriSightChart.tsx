@@ -15,13 +15,19 @@ import { usePanController } from './controllers/PanController';
 import { renderChart as orchestrateRender } from './RenderOrchestrator';
 import { useMarketDataContext } from '../../contexts/MarketDataContext';
 import { usePatternContext } from '../../contexts/PatternContext';
+import { usePatternBus } from '../../hooks/usePatternBus';
 import { isFeatureEnabled } from '../../utils/featureFlags';
+import { EscalatorRun } from '../../types';
+import { GoldmineSignal as PatternEngineGoldmineSignal } from '../../patternEngine/goldmine';
 
 // Import chart components
 import CandlestickRenderer from './CandlestickRenderer';
 import PatternRenderer from './PatternRenderer';
 import TimeAxis from './TimeAxis';
 import PriceAxis from './PriceAxis';
+import { EscalatorBand } from '../Markers/EscalatorBand';
+import { GoldmineArrow } from '../Markers/GoldmineArrow';
+import { TrailLine } from '../Markers/TrailLine';
 
 // Type definitions for scales and patterns
 type TimeScaleType = ReturnType<typeof createSequentialTimeScale>;
@@ -132,6 +138,9 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
   } = useChartState(timeframe);
 
   const { mainCanvasRef, bufferCanvasRef, patternsCanvasRef, interactionCanvasRef } = useCanvasManager(width, height);
+
+  // Use pattern bus to detect patterns
+  const { events, activePosition } = usePatternBus(filteredData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -254,7 +263,7 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
     if (filteredData.length === 0) return;
     
     // Calculate how many candles to shift based on the pan amount
-    const candleWidth = (width - CHART_MARGIN.left - CHART_MARGIN.right) / effectiveCandleCount;
+    const candleWidth = chartWidth / effectiveCandleCount;
     const shiftCandles = Math.round(translateX / candleWidth);
     
     // Calculate base indices
@@ -327,14 +336,14 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
         patterns[patterns.length - 1].endTime
       ],
       createSequentialTimeScale(
-        width - CHART_MARGIN.left - CHART_MARGIN.right,
+        chartWidth,
         filteredData.slice(visibleDataIndices.start, visibleDataIndices.end + 1),
-        [CHART_MARGIN.left, width - CHART_MARGIN.right]
+        [0, chartWidth]
       ),
       createPriceScale(
-        height - CHART_MARGIN.top - CHART_MARGIN.bottom,
+        chartHeight,
         [visibleRange.minPrice, visibleRange.maxPrice],
-        [height - CHART_MARGIN.bottom, CHART_MARGIN.top]
+        [chartHeight, 0]
       )
     );
     
@@ -494,6 +503,29 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
     renderChart();
   }, [renderChart]);
   
+  // Get visible candles for scale creation
+  const visibleCandles = useMemo(() => {
+    return filteredData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+  }, [filteredData, visibleDataIndices]);
+  
+  // Create time and price scales
+  const timeScale = useMemo(() => {
+    if (!visibleCandles.length) return { scale: () => 0 };
+    return createSequentialTimeScale(
+      chartWidth,
+      visibleCandles,
+      [0, chartWidth]
+    );
+  }, [chartWidth, visibleCandles]);
+  
+  const priceScale = useMemo(() => {
+    return createPriceScale(
+      chartHeight,
+      [visibleRange.minPrice, visibleRange.maxPrice],
+      [chartHeight, 0]
+    );
+  }, [chartHeight, visibleRange.minPrice, visibleRange.maxPrice]);
+  
   return (
     <ChartContainer width={width} height={height}>
       {/* Main canvas for price data */}
@@ -531,6 +563,61 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
         onMouseLeave={handleMouseLeave}
         onWheel={handleWheel}
       />
+      
+      {/* Pattern markers SVG layer */}
+      <svg
+        width={width}
+        height={height}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          pointerEvents: 'none'
+        }}
+      >
+        <g transform={`translate(${CHART_MARGIN.left}, ${CHART_MARGIN.top})`}>
+          {/* Render Escalator bands */}
+          {events
+            .filter(e => e.type === 'ESCALATOR')
+            .map((event, index) => (
+              <EscalatorBand
+                key={`escalator-${index}`}
+                escalator={event.data as EscalatorRun}
+                candles={filteredData}
+                xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
+                yScale={(p) => priceScale.scale(p)}
+                width={chartWidth}
+                height={chartHeight}
+              />
+            ))}
+          
+          {/* Render Goldmine arrows */}
+          {events
+            .filter(e => e.type === 'GOLDMINE')
+            .map((event, index) => (
+              <GoldmineArrow
+                key={`goldmine-${index}`}
+                signal={event.data as PatternEngineGoldmineSignal}
+                xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
+                yScale={(p) => priceScale.scale(p)}
+                width={chartWidth}
+                height={chartHeight}
+              />
+            ))}
+          
+          {/* Render trailing stop line */}
+          {activePosition && (
+            <TrailLine
+              position={activePosition}
+              candles={filteredData}
+              xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
+              yScale={(p) => priceScale.scale(p)}
+              width={chartWidth}
+              height={chartHeight}
+            />
+          )}
+        </g>
+      </svg>
       
       {/* Timeframe selector and refresh button */}
       <div
