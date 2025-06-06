@@ -6,6 +6,7 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { usePatternBus } from '../usePatternBus';
 import { Candle } from '../../types';
+import { PatternProvider } from '../../context/PatternContext';
 
 describe('usePatternBus Hook', () => {
   const generateCandles = (count: number, basePrice: number = 100): Candle[] => {
@@ -68,7 +69,9 @@ describe('usePatternBus Hook', () => {
   };
 
   it('initializes with empty events and no position', () => {
-    const { result } = renderHook(() => usePatternBus([]));
+    const { result } = renderHook(() => usePatternBus([]), {
+      wrapper: ({ children }) => <PatternProvider>{children}</PatternProvider>,
+    });
     
     expect(result.current.events).toEqual([]);
     expect(result.current.activePosition).toBeNull();
@@ -78,7 +81,10 @@ describe('usePatternBus Hook', () => {
     const candles = generateEscalatorCandles();
     const { result, rerender } = renderHook(
       ({ data }) => usePatternBus(data),
-      { initialProps: { data: candles.slice(0, 10) } }
+      {
+        initialProps: { data: candles.slice(0, 10) },
+        wrapper: ({ children }) => <PatternProvider>{children}</PatternProvider>,
+      }
     );
 
     // Add more candles to trigger detection
@@ -98,7 +104,9 @@ describe('usePatternBus Hook', () => {
 
   it('detects goldmine signals after escalator', async () => {
     const candles = generateEscalatorCandles();
-    const { result } = renderHook(() => usePatternBus(candles));
+    const { result } = renderHook(() => usePatternBus(candles), {
+      wrapper: ({ children }) => <PatternProvider>{children}</PatternProvider>,
+    });
 
     // Wait for detection
     await act(async () => {
@@ -115,7 +123,9 @@ describe('usePatternBus Hook', () => {
 
   it('creates position and emits stop events on goldmine signal', async () => {
     const candles = generateEscalatorCandles();
-    const { result } = renderHook(() => usePatternBus(candles));
+    const { result } = renderHook(() => usePatternBus(candles), {
+      wrapper: ({ children }) => <PatternProvider>{children}</PatternProvider>,
+    });
 
     // Wait for detection
     await act(async () => {
@@ -168,7 +178,9 @@ describe('usePatternBus Hook', () => {
       }
     }
 
-    const { result } = renderHook(() => usePatternBus(candles));
+    const { result } = renderHook(() => usePatternBus(candles), {
+      wrapper: ({ children }) => <PatternProvider>{children}</PatternProvider>,
+    });
 
     // Wait for detection
     await act(async () => {
@@ -184,7 +196,10 @@ describe('usePatternBus Hook', () => {
     const candles = generateEscalatorCandles();
     const { result, rerender } = renderHook(
       ({ data }) => usePatternBus(data),
-      { initialProps: { data: candles } }
+      {
+        initialProps: { data: candles },
+        wrapper: ({ children }) => <PatternProvider>{children}</PatternProvider>,
+      }
     );
 
     // Wait for initial detection
