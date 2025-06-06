@@ -19,15 +19,14 @@ import { usePatternBus } from '../../hooks/usePatternBus';
 import { isFeatureEnabled } from '../../utils/featureFlags';
 import { EscalatorRun } from '../../types';
 import { GoldmineSignal as PatternEngineGoldmineSignal } from '../../patternEngine/goldmine';
+import { ChartPatternLayer } from './ChartPatternLayer';
+import { PatternProvider } from '../../context/PatternContext';
 
 // Import chart components
 import CandlestickRenderer from './CandlestickRenderer';
 import PatternRenderer from './PatternRenderer';
 import TimeAxis from './TimeAxis';
 import PriceAxis from './PriceAxis';
-import { EscalatorBand } from '../Markers/EscalatorBand';
-import { GoldmineArrow } from '../Markers/GoldmineArrow';
-import { TrailLine } from '../Markers/TrailLine';
 
 // Type definitions for scales and patterns
 type TimeScaleType = ReturnType<typeof createSequentialTimeScale>;
@@ -104,7 +103,8 @@ const calculateCandleWidth = (chartWidth: number, totalCandles: number): number 
   return Math.max(2, chartWidth / totalCandles);
 };
 
-const TriSightChart: React.FC<TriSightChartProps> = ({
+// Inner component that uses pattern context
+const TriSightChartInner: React.FC<TriSightChartProps> = ({
   data,
   patterns: allPatterns, // Rename to avoid confusion with context patterns
   width,
@@ -114,6 +114,16 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
   timeframe = '1min', // Default to 1-minute candles
   autoScale = false // Default to false for auto-scale
 }) => {
+  // Debug logging
+  console.log('[TriSightChart] Component render:', {
+    dataLength: data?.length || 0,
+    width,
+    height,
+    timeframe,
+    firstCandle: data?.[0],
+    lastCandle: data?.[data?.length - 1]
+  });
+
   // Access market data context for refresh functionality
   const { refresh: refreshData, loading: dataLoading } = useMarketDataContext();
   
@@ -246,14 +256,30 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
   
   // Apply data processing based on timeframe and trading hours filter
   useEffect(() => {
+    console.log('[TriSightChart] Data processing effect:', {
+      dataLength: data?.length || 0,
+      showOnlyTradingHours,
+      currentTimeframe,
+      firstDataPoint: data?.[0],
+      lastDataPoint: data?.[data?.length - 1]
+    });
+    
     if (data && data.length > 0) {
       const hoursFilteredData = applyTradingHoursFilter(data, showOnlyTradingHours);
       
       // Then aggregate based on timeframe
       const processedData = aggregateData(hoursFilteredData, currentTimeframe);
       
+      console.log('[TriSightChart] Processed data:', {
+        hoursFilteredDataLength: hoursFilteredData.length,
+        processedDataLength: processedData.length,
+        firstProcessed: processedData[0],
+        lastProcessed: processedData[processedData.length - 1]
+      });
+      
       setFilteredData(processedData);
     } else {
+      console.log('[TriSightChart] No data available, setting filteredData to empty array');
       setFilteredData([]);
     }
   }, [data, showOnlyTradingHours, currentTimeframe, aggregateData]);
@@ -500,6 +526,12 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
 
   // Render on changes to relevant state
   useEffect(() => {
+    console.log('[TriSightChart] Render effect triggered:', {
+      filteredDataLength: filteredData?.length || 0,
+      visibleDataIndices,
+      visibleRange,
+      hasCanvasRefs: !!(mainCanvasRef.current && bufferCanvasRef.current && patternsCanvasRef.current)
+    });
     renderChart();
   }, [renderChart]);
   
@@ -526,8 +558,40 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
     );
   }, [chartHeight, visibleRange.minPrice, visibleRange.maxPrice]);
   
+  useEffect(() => {
+    console.log('[TriSightChart] Canvas refs after mount:', {
+      mainCanvas: mainCanvasRef.current,
+      bufferCanvas: bufferCanvasRef.current,
+      patternsCanvas: patternsCanvasRef.current,
+      mainCanvasSize: mainCanvasRef.current ? { 
+        width: mainCanvasRef.current.width, 
+        height: mainCanvasRef.current.height,
+        clientWidth: mainCanvasRef.current.clientWidth,
+        clientHeight: mainCanvasRef.current.clientHeight
+      } : null
+    });
+  }, [mainCanvasRef, bufferCanvasRef, patternsCanvasRef]);
+
   return (
     <ChartContainer width={width} height={height}>
+      {/* Show loading message if no data */}
+      {(!data || data.length === 0) && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '16px',
+          color: '#666',
+          textAlign: 'center'
+        }}>
+          <div>No data available</div>
+          <div style={{ fontSize: '12px', marginTop: '8px' }}>
+            Check the browser console for debug logs
+          </div>
+        </div>
+      )}
+      
       {/* Main canvas for price data */}
       <Canvas
         ref={mainCanvasRef}
@@ -576,46 +640,13 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
         }}
       >
         <g transform={`translate(${CHART_MARGIN.left}, ${CHART_MARGIN.top})`}>
-          {/* Render Escalator bands */}
-          {events
-            .filter(e => e.type === 'ESCALATOR')
-            .map((event, index) => (
-              <EscalatorBand
-                key={`escalator-${index}`}
-                escalator={event.data as EscalatorRun}
-                candles={filteredData}
-                xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
-                yScale={(p) => priceScale.scale(p)}
-                width={chartWidth}
-                height={chartHeight}
-              />
-            ))}
-          
-          {/* Render Goldmine arrows */}
-          {events
-            .filter(e => e.type === 'GOLDMINE')
-            .map((event, index) => (
-              <GoldmineArrow
-                key={`goldmine-${index}`}
-                signal={event.data as PatternEngineGoldmineSignal}
-                xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
-                yScale={(p) => priceScale.scale(p)}
-                width={chartWidth}
-                height={chartHeight}
-              />
-            ))}
-          
-          {/* Render trailing stop line */}
-          {activePosition && (
-            <TrailLine
-              position={activePosition}
-              candles={filteredData}
-              xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
-              yScale={(p) => priceScale.scale(p)}
-              width={chartWidth}
-              height={chartHeight}
-            />
-          )}
+          <ChartPatternLayer
+            candles={filteredData}
+            xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
+            yScale={(p) => priceScale.scale(p)}
+            width={chartWidth}
+            height={chartHeight}
+          />
         </g>
       </svg>
       
@@ -772,6 +803,15 @@ const TriSightChart: React.FC<TriSightChartProps> = ({
         </div>
       )}
     </ChartContainer>
+  );
+};
+
+// Wrapper component with PatternProvider
+const TriSightChart: React.FC<TriSightChartProps> = (props) => {
+  return (
+    <PatternProvider>
+      <TriSightChartInner {...props} />
+    </PatternProvider>
   );
 };
 

@@ -26,7 +26,16 @@ const CandlestickRendererImpl = {
     priceScale: ReturnType<typeof createPriceScale>,
     dimensions: ChartDimensions
   ) {
-    if (!ctx || data.length === 0) return;
+    console.log('[CandlestickRenderer] Starting render with:', {
+      dataLength: data.length,
+      contextAvailable: !!ctx,
+      dimensions
+    });
+
+    if (!ctx || data.length === 0) {
+      console.warn('[CandlestickRenderer] No context or data, skipping render');
+      return;
+    }
 
     const { width, height, margin } = dimensions;
     
@@ -51,11 +60,20 @@ const CandlestickRendererImpl = {
     // Find max volume for scaling
     const maxVolume = Math.max(...data.map(d => d.volume));
     
+    console.log('[CandlestickRenderer] Drawing grid and candles:', {
+      candleWidth,
+      totalWidth,
+      candleCount,
+      maxVolume
+    });
+
     // Draw grid (light background lines)
     this.drawGrid(ctx, timeScale, priceScale, dimensions);
     
+    let candlesDrawn = 0;
+    
     // Draw each candlestick
-    data.forEach((candle) => {
+    data.forEach((candle, index) => {
       const candleX = timeScale.scale(new Date(candle.timestamp));
       const centerX = candleX;
       const left = centerX - (candleWidth / 2);
@@ -65,6 +83,17 @@ const CandlestickRendererImpl = {
       const closeY = priceScale.scale(candle.close);
       const highY = priceScale.scale(candle.high);
       const lowY = priceScale.scale(candle.low);
+      
+      if (index === 0) {
+        console.log('[CandlestickRenderer] First candle position:', {
+          candleX,
+          openY,
+          closeY,
+          highY,
+          lowY,
+          candle
+        });
+      }
       
       const isUp = candle.close >= candle.open;
       
@@ -108,7 +137,11 @@ const CandlestickRendererImpl = {
       // Fill with the same color as the candle but more transparent
       ctx.fillStyle = isUp ? 'rgba(67, 160, 71, 0.5)' : 'rgba(229, 57, 53, 0.5)';
       ctx.fill();
+      
+      candlesDrawn++;
     });
+    
+    console.log('[CandlestickRenderer] Finished rendering', candlesDrawn, 'candles');
   },
   
   drawGrid(

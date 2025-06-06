@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import './App.css';
 import './styles/globals.css';
+import { getApiKey } from './api/twelveDataApi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 // Removed unused import: mainLayoutStyles
@@ -113,8 +114,11 @@ const saveChartHeight = (height: number): void => {
   }
 };
 
+// Check API key on app load
+console.log('[App] Starting TriSight with API key:', getApiKey() ? 'CONFIGURED' : 'NOT SET');
 
-
+// Mocking state for development
+const useMockPatterns = false;
 
 // Legacy styled components - will be transitioned to CSS modules
 const AppContainer = styled.div`

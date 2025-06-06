@@ -74,7 +74,9 @@ export const usePanController = (
 
     // Calculate velocity for momentum
     if (deltaTime > 0) {
-      velocityRef.current = deltaX / deltaTime * 16; // Normalize to 60fps
+      // Reduced velocity calculation with damping factor
+      const dampingFactor = 0.3; // Reduce sensitivity
+      velocityRef.current = (deltaX / deltaTime * 16) * dampingFactor; // Normalize to 60fps with damping
     }
 
     lastTimeRef.current = currentTime;

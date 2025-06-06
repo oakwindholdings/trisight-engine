@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchTimeSeries, fetchTradingDay, checkMarketStatus, fetchCandlestickData } from '../api/twelveDataApi';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
+import { getMockMarketData } from '../utils/mockData';
 
 /**
  * Hook for fetching and managing market data from TwelveData API
@@ -41,20 +42,35 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
 
   // Fetch market data
   const fetchData = useCallback(async () => {
-    console.log(`useMarketData - fetchData called, isUsingCustomRange: ${isUsingCustomRange}`);
+    console.log(`useMarketData - fetchData called for symbol: ${symbol}, timeframe: ${timeframe}`);
     
     setLoading(true);
     setError(null);
+    setIsUsingCustomRange(false);
     
     try {
       const marketStatusData = await checkMarketStatus();
       setMarketStatus(marketStatusData);
       
       const candlestickData = await fetchTimeSeries(symbol, timeframe);
-      setData(candlestickData);
+      console.log(`[useMarketData] fetchData - received ${candlestickData.length} candles for ${symbol}/${timeframe}`);
+      
+      // If no data received, use mock data for testing
+      if (!candlestickData || candlestickData.length === 0) {
+        console.warn('[useMarketData] No data from API, using mock data for testing');
+        const mockData = getMockMarketData();
+        setData(mockData);
+      } else {
+        setData(candlestickData);
+      }
     } catch (err) {
       console.error('Error fetching market data:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch market data'));
+      
+      // Use mock data on error for testing
+      console.warn('[useMarketData] API error, using mock data for testing');
+      const mockData = getMockMarketData();
+      setData(mockData);
     } finally {
       setLoading(false);
     }
@@ -76,6 +92,7 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
       const interval = customInterval || timeframeToInterval(timeframe);
       console.log(`fetchDateRange using interval: ${interval} for range ${startDate.toISOString()} to ${endDate.toISOString()}`);
       const candlestickData = await fetchCandlestickData(symbol, interval, startDate, endDate);
+      console.log(`[useMarketData] fetchDateRange - received ${candlestickData.length} candles for ${symbol}/${interval} from ${startDate.toISOString()} to ${endDate.toISOString()}`);
       setData(candlestickData);
     } catch (err) {
       console.error('Error fetching market data for date range:', err);
@@ -110,6 +127,7 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
       
       // Fetch data for the specific trading day
       const candlestickData = await fetchTradingDay(symbol, date);
+      console.log(`[useMarketData] fetchSpecificDay - received ${candlestickData.length} candles for ${symbol} on ${date.toISOString()}`);
       setData(candlestickData);
     } catch (err) {
       console.error('Error fetching data for specific day:', err);

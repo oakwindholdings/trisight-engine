@@ -17,10 +17,10 @@ import { ResolutionConfig, getOptimalResolution, InfiniteZoomState, VisibleRange
 import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import { createPriceScale } from '../../utils/scaling';
 import { AdaptivePatternDetectionService } from '../../utils/patternDetection/AdaptivePatternDetectionService';
-import PatternRenderer from './PatternRenderer';
-import { EscalatorBand } from '../Markers/EscalatorBand';
-import { GoldmineArrow } from '../Markers/GoldmineArrow';
-import { TrailLine } from '../Markers/TrailLine';
+import { ChartPatternLayer } from './ChartPatternLayer';
+import { PatternProvider, usePatternContext } from '../../context/PatternContext';
+import { useHoverMetrics } from '../../hooks/useHoverMetrics';
+import { MetricPopover } from './MetricPopover';
 import './InfiniteZoomChart.css';
 
 interface InfiniteZoomChartProps {
@@ -40,7 +40,8 @@ export interface InfiniteZoomChartRef {
 
 const CHART_MARGIN = { top: 20, right: 60, bottom: 40, left: 60 };
 
-const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProps>(({
+// Inner component that uses pattern context
+const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProps>(({
   symbol,
   patterns = [],
   width,
@@ -64,6 +65,10 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
   const bufferCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const patternsCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const interactionCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Use hover metrics hook
+  const { hoverData, HoverMetricsProvider } = useHoverMetrics(containerRef);
 
   // Chart state
   const [visibleRange, setVisibleRange] = useState<VisibleRange>({
@@ -268,7 +273,12 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     
     const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
     const candleWidth = chartWidth / targetCandles;
-    const candleShift = Math.round(-translateX / candleWidth);
+    
+    // Apply damping factor to reduce sensitivity (0.3 = 30% of actual movement)
+    const dampingFactor = 0.3;
+    const dampedTranslateX = translateX * dampingFactor;
+    
+    const candleShift = Math.round(-dampedTranslateX / candleWidth);
     
     // When panning starts, store the initial indices
     if (panState.isPanning && !visibleDataIndices.start && !visibleDataIndices.end) {
@@ -354,41 +364,21 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
     
     console.log('InfiniteZoomChart - Checking patterns:', allPatterns.length, 'patterns');
     
-    // Use PatternRenderer to get actual label positions after collision resolution
-    const patternRenderer = PatternRenderer;
-    const labelPositions = patternRenderer.placePatternLabels(
-      allPatterns,
-      {
-        width: width,
-        height: height
-      },
-      [
-        allPatterns.length > 0 ? allPatterns[0].startTime : new Date(),
-        allPatterns.length > 0 ? allPatterns[allPatterns.length - 1].endTime : new Date()
-      ],
-      timeScale,
-      priceScale
-    );
-    
-    // Check each label position
-    for (const label of labelPositions) {
-      const pattern = allPatterns.find(p => p.id === label.patternId);
-      if (!pattern) continue;
+    // Check each pattern directly
+    for (const pattern of allPatterns) {
+      // Simple bounds check for pattern area (can be enhanced later)
+      const startIndex = chartData.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
+      const endIndex = chartData.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
       
-      console.log(`InfiniteZoomChart - Pattern ${pattern.type} label at:`, { 
-        x: label.x, 
-        y: label.y, 
-        width: label.width,
-        height: label.height
-      });
-      
-      // Check if click is within label bounds (with 5px padding for easier clicking)
-      const padding = 5;
-      if (x >= label.x - padding && x <= label.x + label.width + padding && 
-          y >= label.y - padding && y <= label.y + label.height + padding) {
-        clickedPattern = pattern;
-        console.log('InfiniteZoomChart - Pattern label clicked:', pattern.type);
-        break;
+      if (startIndex >= 0 && endIndex >= 0) {
+        const xStart = timeScale.scale(pattern.startTime);
+        const xEnd = timeScale.scale(pattern.endTime);
+        
+        // Check if click is within pattern horizontal bounds
+        if (x >= xStart && x <= xEnd) {
+          clickedPattern = pattern;
+          break;
+        }
       }
     }
     
@@ -522,179 +512,163 @@ const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProp
   }, [startDate, endDate, resetZoom]);
 
   return (
-    <div className="infinite-zoom-chart-container">
-      <div className="canvas-stack" style={{ width, height }}>
-        <canvas ref={mainCanvasRef} className="main-canvas" />
-        <canvas ref={bufferCanvasRef} className="buffer-canvas" style={{ display: 'none' }} />
-        <canvas ref={patternsCanvasRef} className="patterns-canvas" />
-        <canvas 
-          ref={interactionCanvasRef} 
-          className="interaction-canvas"
-          onClick={handleCanvasClick}
-          onMouseDown={panController.handleMouseDown}
-          onMouseMove={panController.handleMouseMove}
-          onMouseUp={panController.handleMouseUp}
-          onMouseLeave={panController.handleMouseLeave}
-          onWheel={zoomController.handleWheel}
-          onTouchStart={panController.handleTouchStart}
-          onTouchMove={(e) => {
-            panController.handleTouchMove(e);
-            zoomController.handlePinch(e);
-          }}
-          onTouchEnd={panController.handleTouchEnd}
-          style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
-        />
-        
-        {/* Pattern overlay for pattern bus events */}
-        {chartData.length > 0 && visibleDataIndices.end > 0 && (
-          <svg className="pattern-overlay" width={width} height={height}>
-            {/* Render pattern markers from pattern bus */}
-            {patternEvents.events
-              .filter(event => {
-                // Filter to visible range
-                const eventIndex = 
-                  event.type === 'ESCALATOR' ? (event.data as EscalatorRun).endIndex :
-                  event.type === 'GOLDMINE' ? (event.data as GoldmineSignal).entryIndex :
-                  event.type === 'STOP_EVENT' ? (event.data as StopLossEvent).index : 0;
-                
-                return eventIndex >= visibleDataIndices.start && eventIndex <= visibleDataIndices.end;
-              })
-              .map((event, idx) => {
-                const visibleData = chartData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
-                const timeScale = createSequentialTimeScale(
-                  width - CHART_MARGIN.left - CHART_MARGIN.right,
-                  visibleData,
-                  [0, visibleData.length - 1]
-                );
-                const priceScale = createPriceScale(
-                  height - CHART_MARGIN.top - CHART_MARGIN.bottom,
-                  [visibleRange.minPrice, visibleRange.maxPrice]
-                );
-
-                if (event.type === 'ESCALATOR') {
-                  const escalator = event.data as EscalatorRun;
-                  return (
-                    <EscalatorBand
-                      key={`escalator-${idx}`}
-                      escalator={escalator}
-                      candles={chartData}
-                      xScale={(index: number) => {
-                        const candle = chartData[index];
-                        if (!candle) return 0;
-                        return timeScale.scale(new Date(candle.timestamp)) + CHART_MARGIN.left;
-                      }}
-                      yScale={(price: number) => priceScale.scale(price) + CHART_MARGIN.top}
-                      width={width}
-                      height={height}
-                    />
-                  );
-                } else if (event.type === 'GOLDMINE') {
-                  const signal = event.data as GoldmineSignal;
-                  return (
-                    <GoldmineArrow
-                      key={`goldmine-${idx}`}
-                      signal={signal}
-                      xScale={(index: number) => {
-                        const candle = chartData[index];
-                        if (!candle) return 0;
-                        return timeScale.scale(new Date(candle.timestamp)) + CHART_MARGIN.left;
-                      }}
-                      yScale={(price: number) => priceScale.scale(price) + CHART_MARGIN.top}
-                      width={width}
-                      height={height}
-                    />
-                  );
-                } else if (event.type === 'STOP_EVENT') {
-                  const stop = event.data as StopLossEvent;
-                  // For TrailLine, we need to find the active position
-                  // For now, create a position from the stop event
-                  const position = {
-                    side: 'LONG' as const, // Default, should come from pattern bus state
-                    openIndex: Math.max(0, stop.index - 10), // Approximate
-                    step: {} // Not used by TrailLine
-                  };
-                  return (
-                    <TrailLine
-                      key={`stop-${idx}`}
-                      position={position}
-                      candles={chartData}
-                      xScale={(index: number) => {
-                        const candle = chartData[index];
-                        if (!candle) return 0;
-                        return timeScale.scale(new Date(candle.timestamp)) + CHART_MARGIN.left;
-                      }}
-                      yScale={(price: number) => priceScale.scale(price) + CHART_MARGIN.top}
-                      width={width}
-                      height={height}
-                    />
-                  );
-                }
-                return null;
-              })}
-          </svg>
-        )}
-        
-        {currentResolution && (
-          <ResolutionIndicator
-            resolution={currentResolution}
-            zoomLevel={zoomLevel}
-            candleCount={targetCandles}
-            isTransitioning={isTransitioning}
+    <HoverMetricsProvider value={hoverData}>
+      <div className="infinite-zoom-chart-container" ref={containerRef}>
+        <MetricPopover />
+        <div className="canvas-stack" style={{ width, height }}>
+          <canvas ref={mainCanvasRef} className="main-canvas" />
+          <canvas ref={bufferCanvasRef} className="buffer-canvas" style={{ display: 'none' }} />
+          <canvas ref={patternsCanvasRef} className="patterns-canvas" />
+          <canvas 
+            ref={interactionCanvasRef} 
+            className="interaction-canvas"
+            onClick={handleCanvasClick}
+            onMouseDown={panController.handleMouseDown}
+            onMouseMove={panController.handleMouseMove}
+            onMouseUp={panController.handleMouseUp}
+            onMouseLeave={panController.handleMouseLeave}
+            onWheel={zoomController.handleWheel}
+            onTouchStart={panController.handleTouchStart}
+            onTouchMove={(e) => {
+              panController.handleTouchMove(e);
+              zoomController.handlePinch(e);
+            }}
+            onTouchEnd={panController.handleTouchEnd}
+            style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
           />
-        )}
+          
+          {/* Pattern overlay */}
+          <svg className="pattern-overlay">
+            <g transform={`translate(${CHART_MARGIN.left}, ${CHART_MARGIN.top})`}>
+              <ChartPatternLayer
+                candles={chartData}
+                xScale={(index: number) => {
+                  const visibleData = chartData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+                  const timeScale = createSequentialTimeScale(
+                    width - CHART_MARGIN.left - CHART_MARGIN.right,
+                    visibleData,
+                    [0, visibleData.length - 1]
+                  );
+                  const candle = chartData[index];
+                  if (!candle) return 0;
+                  return timeScale.scale(new Date(candle.timestamp));
+                }}
+                yScale={(price: number) => {
+                  const priceScale = createPriceScale(
+                    height - CHART_MARGIN.top - CHART_MARGIN.bottom,
+                    [visibleRange.minPrice, visibleRange.maxPrice]
+                  );
+                  return priceScale.scale(price);
+                }}
+                width={width - CHART_MARGIN.left - CHART_MARGIN.right}
+                height={height - CHART_MARGIN.top - CHART_MARGIN.bottom}
+              />
+            </g>
+          </svg>
+          
+          {currentResolution && (
+            <ResolutionIndicator
+              resolution={currentResolution}
+              zoomLevel={zoomLevel}
+              candleCount={targetCandles}
+              isTransitioning={isTransitioning}
+            />
+          )}
+          
+          {isLoading && (
+            <div className="loading-overlay">
+              <div className="loading-spinner" />
+              <div className="loading-text">Loading {currentResolution?.label} data...</div>
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-overlay">
+              <div className="error-message">{error.message}</div>
+            </div>
+          )}
+          
+          {!isLoading && !error && chartData.length === 0 && (
+            <div className="error-overlay">
+              <div className="error-message">No data available. Please check symbol and date range.</div>
+            </div>
+          )}
+        </div>
         
-        {isLoading && (
-          <div className="loading-overlay">
-            <div className="loading-spinner" />
-            <div className="loading-text">Loading {currentResolution?.label} data...</div>
-          </div>
-        )}
-        
-        {error && (
-          <div className="error-overlay">
-            <div className="error-message">{error.message}</div>
-          </div>
-        )}
-        
-        {!isLoading && !error && chartData.length === 0 && (
-          <div className="error-overlay">
-            <div className="error-message">No data available. Please check symbol and date range.</div>
-          </div>
-        )}
+        <div className="zoom-controls">
+          <button 
+            className="zoom-button"
+            onClick={() => zoomController.zoomTo(zoomLevel * 1.5)}
+            title="Zoom Out"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5 9a1 1 0 100 2h10a1 1 0 100-2H5z" />
+            </svg>
+          </button>
+          
+          <button 
+            className="zoom-button"
+            onClick={() => zoomController.resetZoom()}
+            title="Reset Zoom"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9 3a6 6 0 11-4.84 9.5 1 1 0 011.68-1.09A4 4 0 109 5a1 1 0 100-2zm-2 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+            </svg>
+          </button>
+          
+          <button 
+            className="zoom-button"
+            onClick={() => zoomController.zoomTo(zoomLevel * 0.67)}
+            title="Zoom In"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
+            </svg>
+          </button>
+        </div>
       </div>
-      
-      <div className="zoom-controls">
-        <button 
-          className="zoom-button"
-          onClick={() => zoomController.zoomTo(zoomLevel * 1.5)}
-          title="Zoom Out"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M5 9a1 1 0 100 2h10a1 1 0 100-2H5z" />
-          </svg>
-        </button>
-        
-        <button 
-          className="zoom-button"
-          onClick={() => zoomController.resetZoom()}
-          title="Reset Zoom"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9 3a6 6 0 11-4.84 9.5 1 1 0 011.68-1.09A4 4 0 109 5a1 1 0 100-2zm-2 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
-          </svg>
-        </button>
-        
-        <button 
-          className="zoom-button"
-          onClick={() => zoomController.zoomTo(zoomLevel * 0.67)}
-          title="Zoom In"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
-          </svg>
-        </button>
-      </div>
-    </div>
+    </HoverMetricsProvider>
+  );
+});
+
+InfiniteZoomChartInner.displayName = 'InfiniteZoomChartInner';
+
+// Component to update pattern context with dummy data
+function PatternContextUpdater({ data }: { data: number[] }) {
+  const { 
+    setBjCounts,
+    setTrailStop,
+    setDistToStopPct
+  } = usePatternContext();
+  
+  React.useEffect(() => {
+    const length = 400;
+    
+    // Original BJ counts (every 4th is 1) - kept for backward compatibility
+    setBjCounts(data);
+    
+    // Generate stub data only for metrics not set by usePatternBus
+    // (bjIntrinsic, bjCumulative, stepIndex, escalatorDir, escalatorLength, goldmineQual are now set by usePatternBus)
+    const trailStop = Array.from({ length }, (_, i) => 180 + Math.sin(i / 10) * 2);
+    const distToStopPct = Array.from({ length }, (_, i) => 2.5 + Math.sin(i / 10) * 0.5);
+    
+    setTrailStop(trailStop);
+    setDistToStopPct(distToStopPct);
+  }, [data, setBjCounts, setTrailStop, setDistToStopPct]);
+  
+  return null;
+}
+
+// Main component wrapped with PatternProvider
+const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProps>((props, ref) => {
+  // Dummy BJ data injection for now
+  const dummy = Array.from({ length: 400 }, (_, i) => (i % 4 === 0 ? 1 : 0));
+
+  return (
+    <PatternProvider>
+      <PatternContextUpdater data={dummy} />
+      <InfiniteZoomChartInner {...props} ref={ref} />
+    </PatternProvider>
   );
 });
 

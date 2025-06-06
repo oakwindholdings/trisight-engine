@@ -39,8 +39,8 @@ export const EscalatorBand: React.FC<EscalatorBandProps> = ({
   
   // Choose color based on direction
   const fillColor = escalator.direction === ThrustDirection.BULLISH 
-    ? 'rgba(80, 200, 120, 0.12)'  // Green
-    : 'rgba(200, 80, 80, 0.12)';  // Red
+    ? 'rgba(80, 200, 120, 0.12)'  // Green for RISING
+    : 'rgba(200, 80, 80, 0.12)';  // Red for FALLING
   
   // Don't render if out of view
   if (endX < 0 || startX > width) {

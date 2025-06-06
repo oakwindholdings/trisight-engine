@@ -31,11 +31,12 @@ export const ChartWithContext: React.FC<ChartWithContextProps> = ({
 }) => {
   console.log(`ChartWithContext rendering with activeTimeRange: ${activeTimeRange}`);
   
-  const { data, fetchSpecificDay, fetchDateRange, loading, setIsUsingCustomRange } = useMarketDataContext();
+  const { data, fetchSpecificDay, fetchDateRange, loading, error, setIsUsingCustomRange } = useMarketDataContext();
   const { patterns } = usePatternContext();
 
   // Debug prop changes
   console.log(`ChartWithContext render - activeTimeRange prop: ${activeTimeRange}`);
+  console.log(`ChartWithContext render - data length: ${data?.length || 0}, loading: ${loading}, error: ${error?.message || 'none'}`);
 
   // Fetch data based on the active time range
   useEffect(() => {
@@ -131,6 +132,24 @@ export const ChartWithContext: React.FC<ChartWithContextProps> = ({
           }}
         >
           <div>Loading market data...</div>
+        </div>
+      )}
+      {error && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div>Error loading market data: {error.message}</div>
         </div>
       )}
       <TriSightChart

@@ -48,18 +48,40 @@ export function renderChart(args: RenderArgs) {
   const bufferCanvas = bufferCanvasRef.current;
   const patternsCanvas = patternsCanvasRef.current;
 
-  if (!mainCanvas || !bufferCanvas || !patternsCanvas || filteredData.length === 0) return;
+  // Debug logging
+  console.log('[RenderOrchestrator] Starting render with:', {
+    dataLength: filteredData.length,
+    visibleDataIndices,
+    visibleRange,
+    width,
+    height,
+    hasCanvases: !!mainCanvas && !!bufferCanvas && !!patternsCanvas
+  });
+
+  if (!mainCanvas || !bufferCanvas || !patternsCanvas || filteredData.length === 0) {
+    console.warn('[RenderOrchestrator] Missing canvas or data, skipping render');
+    return;
+  }
 
   const mainCtx = mainCanvas.getContext('2d');
   const bufferCtx = bufferCanvas.getContext('2d');
   const patternsCtx = patternsCanvas.getContext('2d');
-  if (!mainCtx || !bufferCtx || !patternsCtx) return;
+  if (!mainCtx || !bufferCtx || !patternsCtx) {
+    console.error('[RenderOrchestrator] Failed to get canvas contexts');
+    return;
+  }
 
   mainCtx.clearRect(0, 0, width, height);
   bufferCtx.clearRect(0, 0, width, height);
   patternsCtx.clearRect(0, 0, width, height);
 
   const visibleData = filteredData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+  console.log('[RenderOrchestrator] Rendering visible data:', {
+    visibleDataLength: visibleData.length,
+    firstCandle: visibleData[0],
+    lastCandle: visibleData[visibleData.length - 1]
+  });
+
   const timeScale = createSequentialTimeScale(width - margin.left - margin.right, visibleData, [margin.left, width - margin.right]);
   const priceScale = createPriceScale(height - margin.top - margin.bottom, [visibleRange.minPrice, visibleRange.maxPrice], [height - margin.bottom, margin.top]);
 
