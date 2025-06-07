@@ -42,6 +42,18 @@ export const usePatterns = (data: CandlestickData[]) => {
   
   // Detect patterns in the provided data
   const detectPatterns = useCallback(async (candleData: CandlestickData[]) => {
+    console.log('[usePatterns] detectPatterns called with', candleData.length, 'candles');
+    if (candleData.length > 0) {
+      const firstTime = new Date(candleData[0].datetime);
+      const lastTime = new Date(candleData[candleData.length - 1].datetime);
+      console.log('[usePatterns] Data time range:', {
+        first: firstTime.toLocaleString(),
+        last: lastTime.toLocaleString(),
+        firstTimestamp: candleData[0].timestamp,
+        lastTimestamp: candleData[candleData.length - 1].timestamp
+      });
+    }
+    
     if (candleData.length === 0) {
       setPatterns([]);
       setVisiblePatterns([]);

@@ -42,5 +42,5 @@ export const usePatternBus = (): PatternBusState => {
     }
   ];
 
-  return { events, activePosition: undefined };
+  return { events, activePosition: undefined, isPatternDetectionComplete: true, processedDataHash: 'mock_hash' };
 };

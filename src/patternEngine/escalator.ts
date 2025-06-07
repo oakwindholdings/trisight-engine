@@ -21,25 +21,61 @@ export function detectEscalators(
   maxStepBars = MAX_STEP_DURATION
 ): EscalatorRun[] {
   if (!candles || candles.length < minLength) {
+    console.log('[EscalatorDetector] Not enough candles:', candles?.length, 'min required:', minLength);
     return [];
   }
 
+  console.log('[EscalatorDetector] Starting detection on', candles.length, 'candles');
+  console.log('[EscalatorDetector] First candle:', {
+    datetime: candles[0].datetime,
+    open: candles[0].open,
+    close: candles[0].close,
+    bodyHigh: Math.max(candles[0].open, candles[0].close),
+    bodyLow: Math.min(candles[0].open, candles[0].close)
+  });
+  console.log('[EscalatorDetector] Last candle:', {
+    datetime: candles[candles.length-1].datetime,
+    open: candles[candles.length-1].open,
+    close: candles[candles.length-1].close,
+    bodyHigh: Math.max(candles[candles.length-1].open, candles[candles.length-1].close),
+    bodyLow: Math.min(candles[candles.length-1].open, candles[candles.length-1].close)
+  });
+
   const runs: EscalatorRun[] = [];
   let i = 0;
+  let attemptCount = 0;
+  let failureReasons: Record<string, number> = {};
 
   while (i < candles.length - 1) {
     // Try to start a run from current position
+    attemptCount++;
     const run = detectRunFromIndex(candles, i, minLength, maxStepBars);
     
     if (run) {
       runs.push(run);
+      console.log('[EscalatorDetector] Found run at index', i, 'direction:', run.direction, 'length:', run.endIndex - run.startIndex + 1);
       // Move past this run
       i = run.endIndex + 1;
     } else {
+      // Track why we failed to find a run
+      if (i < candles.length - 1) {
+        const dir = determineInitialDirection(candles[i], candles[i + 1]);
+        if (!dir) {
+          failureReasons['no_initial_direction'] = (failureReasons['no_initial_direction'] || 0) + 1;
+        } else {
+          failureReasons['run_too_short'] = (failureReasons['run_too_short'] || 0) + 1;
+        }
+      }
       // Move to next candle
       i++;
     }
   }
+  
+  console.log('[EscalatorDetector] Detection complete:', {
+    runsFound: runs.length,
+    attemptsMade: attemptCount,
+    failureReasons
+  });
 
   return runs;
 }
@@ -128,8 +164,14 @@ function determineInitialDirection(candle1: Candle, candle2: Candle): ThrustDire
   const body2Low = getBodyLow(candle2);
 
   if (body2High > body1High && body2Low > body1Low) {
+    console.log(`Initial direction: BULLISH (body2High=${body2High} > body1High=${body1High}, body2Low=${body2Low} > body1Low=${body1Low})`);
+    console.log(`  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
+    console.log(`  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
     return ThrustDirection.BULLISH;
   } else if (body2High < body1High && body2Low < body1Low) {
+    console.log(`Initial direction: BEARISH (body2High=${body2High} < body1High=${body1High}, body2Low=${body2Low} < body1Low=${body1Low})`);
+    console.log(`  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
+    console.log(`  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
     return ThrustDirection.BEARISH;
   }
 

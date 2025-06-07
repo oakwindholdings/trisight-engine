@@ -27,7 +27,11 @@ export const MetricRegistry: Record<string, MetricDefinition> = {
   escalatorDir: {
     id: 'escalatorDir',
     label: 'Esc Dir',
-    calc: (idx, ctx) => ctx.escalatorDir?.[idx] ?? '-'
+    calc: (idx, ctx) => {
+      const dir = ctx.escalatorDir?.[idx];
+      console.log(`[MetricRegistry] escalatorDir calc for idx ${idx}: raw value = ${dir}, returning = ${dir ?? '-'}`);
+      return dir ?? '-';
+    }
   },
   escalatorLength: {
     id: 'escalatorLength',

@@ -97,6 +97,14 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
   // Initialize pattern detection hooks
   const patternHook = usePatterns(data);
   
+  // Log when provider renders
+  console.log('[PatternProvider] Rendering with:', {
+    dataLength: data.length,
+    bjCountsLength: patternHook.bjCounts?.length,
+    escalatorDirLength: patternHook.escalatorDir?.length,
+    patterns: patternHook.patterns?.length
+  });
+  
   // Re-detect patterns when data changes
   useEffect(() => {
     if (data.length > 0) {

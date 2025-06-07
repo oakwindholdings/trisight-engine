@@ -7,7 +7,6 @@ import { CandlestickData } from '../../models/ChartTypes';
 import { Pattern } from '../../models/PatternTypes';
 import { useInfiniteZoomController } from '../../hooks/useInfiniteZoomController';
 import { usePanController, PanState } from '../../hooks/usePanController';
-import { usePatternBus } from '../../hooks/usePatternBus';
 import { renderChart } from './RenderOrchestrator';
 import ResolutionIndicator from './ResolutionIndicator';
 import { ResolutionConfig, getOptimalResolution } from '../../utils/dataResolution';
@@ -17,6 +16,7 @@ import { ChartPatternLayer } from './ChartPatternLayer';
 import { PatternProvider, usePatternContext } from '../../contexts/PatternContext';
 import { useHoverMetrics } from '../../hooks/useHoverMetrics';
 import { MetricPopover } from './MetricPopover';
+import { usePatternBus } from '../../hooks/usePatternBus';
 import './InfiniteZoomChart.css';
 
 interface InfiniteZoomChartProps {
@@ -48,14 +48,14 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
   endDate
 }, ref) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('InfiniteZoomChart Component Render:', {
-      symbol,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      width,
-      height,
-      patternsCount: patterns.length
-    });
+    // console.log('InfiniteZoomChart Component Render:', {
+    //   symbol,
+    //   startDate: startDate?.toISOString(),
+    //   endDate: endDate?.toISOString(),
+    //   width,
+    //   height,
+    //   patternsCount: patterns.length
+    // });
   }
   
   // Canvas refs
@@ -64,9 +64,6 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
   const patternsCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const interactionCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Use hover metrics hook - now inside PatternProvider context
-  const { hoverData, HoverMetricsProvider } = useHoverMetrics(containerRef);
 
   // Chart state
   const [visibleRange, setVisibleRange] = useState({
@@ -89,13 +86,43 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
 
   // Chart data state
   const [error, setError] = useState<Error | null>(null);
+  const dataGenerationRef = useRef(0);
+  const [currentDataHash, setCurrentDataHash] = useState<string>('');
+
+  // Get pattern context to trigger detection
+  const patternContext = usePatternContext();
 
   // Handle data updates from zoom controller
   const handleDataUpdate = useCallback((data: CandlestickData[], resolution: ResolutionConfig) => {
+    dataGenerationRef.current += 1;
+    const generation = dataGenerationRef.current;
+    
+    // Create a hash to identify this specific dataset
+    const dataHash = data.length > 0 ? 
+      `${data[0].datetime}_${data[data.length - 1].datetime}_${data.length}` : 
+      'no_data';
+    setCurrentDataHash(dataHash);
+    
+    console.log('[InfiniteZoomChart] handleDataUpdate called:', {
+      generation,
+      dataHash,
+      dataLength: data.length,
+      resolution: resolution.interval,
+      firstCandle: data[0] ? { time: data[0].datetime, close: data[0].close } : null,
+      lastCandle: data[data.length - 1] ? { time: data[data.length - 1].datetime, close: data[data.length - 1].close } : null
+    });
+    
     // Update visible indices
     if (data.length > 0) {
       const endIndex = data.length - 1;
       const startIndex = Math.max(0, endIndex - 100);
+      
+      console.log('[InfiniteZoomChart] Updating visible indices:', {
+        start: startIndex,
+        end: endIndex,
+        dataLength: data.length
+      });
+      
       setVisibleDataIndices(prev => {
         // Only update if indices actually changed
         if (prev.start !== startIndex || prev.end !== endIndex) {
@@ -112,18 +139,24 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
         return prev;
       });
     }
-    console.log('[InfiniteZoomChart] Data updated:', {
-      dataLength: data.length,
-      resolution,
-      firstCandle: data[0],
-      lastCandle: data[data.length - 1]
-    });
-  }, []);
+    // console.log('[InfiniteZoomChart] Data updated:', {
+    //   dataLength: data.length,
+    //   resolution,
+    //   firstCandle: data[0],
+    //   lastCandle: data[data.length - 1]
+    // });
+    
+    // Trigger pattern detection on the new data
+    if (patternContext.detectPatterns && data.length > 0) {
+      // console.log('[InfiniteZoomChart] Triggering pattern detection on new data');
+      patternContext.detectPatterns(data);
+    }
+  }, [patternContext]);
 
   // Handle zoom state changes
   const handleZoomChange = useCallback((state: any) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart - handleZoomChange called with state:', state);
+      // console.log('InfiniteZoomChart - handleZoomChange called with state:', state);
     }
     // Reset pan when zooming
     setPanState(prev => ({ 
@@ -159,8 +192,35 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     resetZoom
   } = zoomController;
 
-  // Pattern bus integration
-  const patternEvents = usePatternBus(chartData);
+  // Use pattern bus to populate arrays with the chart data
+  const { isPatternDetectionComplete, processedDataHash } = usePatternBus(chartData);
+  
+  // Check if pattern data is synchronized with chart data
+  const isPatternDataSynchronized = isPatternDetectionComplete && processedDataHash === currentDataHash;
+  
+  // Calculate candle width based on chart dimensions and target candles
+  const candleWidth = useMemo(() => {
+    const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
+    return chartWidth / targetCandles;
+  }, [width, targetCandles]);
+
+  // Use hover metrics hook - now inside PatternProvider context
+  const { hoverData, HoverMetricsProvider } = useHoverMetrics(
+    containerRef, 
+    candleWidth, 
+    visibleDataIndices.start
+  );
+  
+  // Log when pattern detection state changes
+  useEffect(() => {
+    console.log('[InfiniteZoomChart] Pattern synchronization:', {
+      isPatternDetectionComplete,
+      isPatternDataSynchronized,
+      currentDataHash,
+      processedDataHash,
+      matches: processedDataHash === currentDataHash
+    });
+  }, [isPatternDetectionComplete, isPatternDataSynchronized, currentDataHash, processedDataHash]);
 
   // Dynamic pattern detection state
   const [localPatterns, setLocalPatterns] = useState<Pattern[]>([]);
@@ -199,10 +259,10 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     }
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart - Detecting patterns for visible data:', {
-        visibleDataLength: visibleData.length,
-        visibleIndices: visibleDataIndices
-      });
+      // console.log('InfiniteZoomChart - Detecting patterns for visible data:', {
+      //   visibleDataLength: visibleData.length,
+      //   visibleIndices: visibleDataIndices
+      // });
     }
     
     setIsDetectingPatterns(true);
@@ -211,12 +271,12 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
       // Run pattern detection on visible data
       const detectedPatterns: Pattern[] = [];
       if (process.env.NODE_ENV === 'development') {
-        console.log('InfiniteZoomChart - Patterns detected:', detectedPatterns.length);
+        // console.log('InfiniteZoomChart - Patterns detected:', detectedPatterns.length);
       }
       setLocalPatterns(detectedPatterns);
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('InfiniteZoomChart - Pattern detection error:', error);
+        // console.error('InfiniteZoomChart - Pattern detection error:', error);
       }
       setLocalPatterns([]);
     } finally {
@@ -251,12 +311,12 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     const startIndex = Math.max(0, endIndex - targetCandles + 1);
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('Zoom changed - updating visible indices:', {
-        targetCandles,
-        startIndex,
-        endIndex,
-        dataLength: chartData.length
-      });
+      // console.log('Zoom changed - updating visible indices:', {
+      //   targetCandles,
+      //   startIndex,
+      //   endIndex,
+      //   dataLength: chartData.length
+      // });
     }
     
     setVisibleDataIndices({ start: startIndex, end: endIndex });
@@ -374,12 +434,12 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     const y = event.clientY - rect.top;
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart - Canvas clicked at:', { x, y });
+      // console.log('InfiniteZoomChart - Canvas clicked at:', { x, y });
     }
     
     if (chartData.length === 0) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('InfiniteZoomChart - No chart data available');
+        // console.log('InfiniteZoomChart - No chart data available');
       }
       return;
     }
@@ -401,7 +461,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     const allPatterns = [...patterns, ...localPatterns];
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart - Checking patterns:', allPatterns.length, 'patterns');
+      // console.log('InfiniteZoomChart - Checking patterns:', allPatterns.length, 'patterns');
     }
     
     // Check each pattern directly
@@ -423,12 +483,12 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     }
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart - Click result:', clickedPattern ? 'Pattern found' : 'No pattern found');
+      // console.log('InfiniteZoomChart - Click result:', clickedPattern ? 'Pattern found' : 'No pattern found');
     }
     
     if (clickedPattern && onPatternSelect) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('InfiniteZoomChart - Calling onPatternSelect with pattern:', clickedPattern.type);
+        // console.log('InfiniteZoomChart - Calling onPatternSelect with pattern:', clickedPattern.type);
       }
       onPatternSelect(clickedPattern);
     }
@@ -437,17 +497,17 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
   // Render chart when data or view changes
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart render effect:', {
-        dataLength: chartData.length,
-        visibleDataIndices,
-        isLoading,
-        currentResolution
-      });
+      // console.log('InfiniteZoomChart render effect:', {
+      //   dataLength: chartData.length,
+      //   visibleDataIndices,
+      //   isLoading,
+      //   currentResolution
+      // });
     }
     
     if (chartData.length === 0) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('InfiniteZoomChart - No data to render');
+        // console.log('InfiniteZoomChart - No data to render');
       }
       // Clear the canvases when there's no data
       const canvases = [mainCanvasRef, patternsCanvasRef];
@@ -472,11 +532,11 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     });
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart - Rendering with data:', {
-        dataLength: chartData.length,
-        visibleIndices: visibleDataIndices,
-        visiblePatternsCount: visiblePatterns.length
-      });
+      // console.log('InfiniteZoomChart - Rendering with data:', {
+      //   dataLength: chartData.length,
+      //   visibleIndices: visibleDataIndices,
+      //   visiblePatternsCount: visiblePatterns.length
+      // });
     }
     
     renderChart({
@@ -499,7 +559,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
   // Setup canvas dimensions
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('InfiniteZoomChart - Setting up canvas dimensions:', { width, height });
+      // console.log('InfiniteZoomChart - Setting up canvas dimensions:', { width, height });
     }
     const canvases = [mainCanvasRef, bufferCanvasRef, patternsCanvasRef, interactionCanvasRef];
     canvases.forEach(ref => {
