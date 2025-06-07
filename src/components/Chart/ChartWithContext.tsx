@@ -1,7 +1,7 @@
 // src/components/Chart/ChartWithContext.tsx
 // Wrapper around TriSightChart with context
 // Handles data fetching and loading overlay
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import TriSightChart from './TriSightChart';
 import { useMarketDataContext } from '../../contexts/MarketDataContext';
 import { usePatternContext } from '../../contexts/PatternContext';
@@ -16,7 +16,6 @@ interface ChartWithContextProps {
   selectedDate: Date;
   timeframe?: string;
   activeTimeRange: TimeRangeOption;
-  onTimeRangeSelect: (range: TimeRangeOption, startDate: Date, endDate: Date) => void;
 }
 
 export const ChartWithContext: React.FC<ChartWithContextProps> = ({
@@ -26,30 +25,39 @@ export const ChartWithContext: React.FC<ChartWithContextProps> = ({
   selectedPattern,
   selectedDate,
   timeframe,
-  activeTimeRange = '1D',
-  onTimeRangeSelect
+  activeTimeRange = '1D'
 }) => {
-  console.log(`ChartWithContext rendering with activeTimeRange: ${activeTimeRange}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`ChartWithContext rendering with activeTimeRange: ${activeTimeRange}`);
+  }
   
   const { data, fetchSpecificDay, fetchDateRange, loading, error, setIsUsingCustomRange } = useMarketDataContext();
   const { patterns } = usePatternContext();
 
   // Debug prop changes
-  console.log(`ChartWithContext render - activeTimeRange prop: ${activeTimeRange}`);
-  console.log(`ChartWithContext render - data length: ${data?.length || 0}, loading: ${loading}, error: ${error?.message || 'none'}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`ChartWithContext render - activeTimeRange prop: ${activeTimeRange}`);
+    console.log(`ChartWithContext render - data length: ${data?.length || 0}, loading: ${loading}, error: ${error?.message || 'none'}`);
+  }
 
   // Fetch data based on the active time range
   useEffect(() => {
-    console.log('ChartWithContext useEffect - Running');
-    console.log(`ChartWithContext useEffect triggered - activeTimeRange: ${activeTimeRange}, selectedDate: ${selectedDate.toISOString()}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ChartWithContext useEffect - Running');
+      console.log(`ChartWithContext useEffect triggered - activeTimeRange: ${activeTimeRange}, selectedDate: ${selectedDate.toISOString()}`);
+    }
     
     if (!activeTimeRange) {
-      console.log('ChartWithContext useEffect - No activeTimeRange, skipping');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('ChartWithContext useEffect - No activeTimeRange, skipping');
+      }
       return;
     }
     
     const fetchDataForRange = async () => {
-      console.log(`ChartWithContext - fetchDataForRange called for ${activeTimeRange}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`ChartWithContext - fetchDataForRange called for ${activeTimeRange}`);
+      }
       
       let endDate = new Date();
       
@@ -70,7 +78,9 @@ export const ChartWithContext: React.FC<ChartWithContextProps> = ({
       switch (activeTimeRange) {
         case '1D':
           // For 1D, use fetchSpecificDay for the selected date
-          console.log(`Fetching 1D data for selected date: ${selectedDate.toISOString()}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Fetching 1D data for selected date: ${selectedDate.toISOString()}`);
+          }
           setIsUsingCustomRange(false);
           await fetchSpecificDay(selectedDate);
           return;
@@ -106,7 +116,9 @@ export const ChartWithContext: React.FC<ChartWithContextProps> = ({
       }
       
       // Fetch data for the calculated date range
-      console.log(`Fetching ${activeTimeRange} data from ${startDate.toISOString()} to ${endDate.toISOString()} with interval ${interval}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Fetching ${activeTimeRange} data from ${startDate.toISOString()} to ${endDate.toISOString()} with interval ${interval}`);
+      }
       setIsUsingCustomRange(true); // Prevent automatic refetch
       await fetchDateRange(startDate, endDate, interval!);
     };

@@ -8,7 +8,7 @@ import { detectEscalators } from '../patternEngine/escalator';
 import { detectGoldmine, GoldmineSignal } from '../patternEngine/goldmine';
 import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop';
 import { getIntrinsicScore } from '../patternEngine/blackjack';
-import { usePatternContext } from '../context/PatternContext';
+import { usePatternContext } from '../contexts/PatternContext';
 
 export interface Position {
   side: 'LONG' | 'SHORT';

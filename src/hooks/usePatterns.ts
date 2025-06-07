@@ -22,6 +22,17 @@ export const usePatterns = (data: CandlestickData[]) => {
   // Create service instance first so we can access its stored preferences
   const [adaptiveService] = useState(() => new AdaptivePatternDetectionService());
   
+  // Pattern bus metrics states
+  const [bjCounts, setBjCounts] = useState<number[]>([]);
+  const [stepIndex, setStepIndex] = useState<number[]>([]);
+  const [bjIntrinsic, setBjIntrinsic] = useState<number[]>([]);
+  const [bjCumulative, setBjCumulative] = useState<number[]>([]);
+  const [escalatorDir, setEscalatorDir] = useState<('RISING' | 'FALLING' | null)[]>([]);
+  const [escalatorLength, setEscalatorLength] = useState<number[]>([]);
+  const [goldmineQual, setGoldmineQual] = useState<boolean[]>([]);
+  const [trailStop, setTrailStop] = useState<number[]>([]);
+  const [distToStopPct, setDistToStopPct] = useState<number[]>([]);
+  
   // Initialize preferences from service (which loads from localStorage)
   const [preferences, setPreferences] = useState<Partial<PatternDetectionPreferences>>(() => {
     // Get current preferences from service (already loaded from localStorage in constructor)
@@ -167,7 +178,26 @@ export const usePatterns = (data: CandlestickData[]) => {
     preferences,
     // Expose service statistics
     getDetectionStatistics: useCallback(() => adaptiveService.getDetectionStatistics(), [adaptiveService]),
-    getMarketContext: useCallback(() => adaptiveService.getMarketContext(), [adaptiveService])
+    getMarketContext: useCallback(() => adaptiveService.getMarketContext(), [adaptiveService]),
+    // Pattern bus metrics
+    bjCounts,
+    setBjCounts,
+    stepIndex,
+    setStepIndex,
+    bjIntrinsic,
+    setBjIntrinsic,
+    bjCumulative,
+    setBjCumulative,
+    escalatorDir,
+    setEscalatorDir,
+    escalatorLength,
+    setEscalatorLength,
+    goldmineQual,
+    setGoldmineQual,
+    trailStop,
+    setTrailStop,
+    distToStopPct,
+    setDistToStopPct
   };
 };
 

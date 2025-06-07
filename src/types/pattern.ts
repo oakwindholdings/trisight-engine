@@ -8,6 +8,9 @@ import { PatternType, ThrustDirection } from '../models/PatternTypes';
 // Re-export CandlestickData as Candle for convenience
 export type Candle = CandlestickData;
 
+// Re-export PatternType and ThrustDirection for convenience
+export { PatternType, ThrustDirection };
+
 // Escalator pattern structures
 export interface EscalatorRun {
   startIndex: number;

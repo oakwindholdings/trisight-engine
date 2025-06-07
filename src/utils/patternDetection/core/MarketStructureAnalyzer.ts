@@ -9,10 +9,8 @@ import {
   MarketTrend,
   Channel,
   PriceLevel,
-  VolumeProfile,
-  ThresholdConfig
+  VolumeProfile
 } from './MarketContext';
-import { PatternType } from '../../../models/PatternTypes';
 
 /**
  * Configuration options for market structure analysis
@@ -87,7 +85,7 @@ export class MarketStructureAnalyzer {
       
       phase: this.currentStructure.currentPhase,
       
-      detectedPatternDensity: new Map<PatternType, number>(),
+      detectedPatternDensity: new Map(),
       recentPatterns: [],
       
       // Implement the getVolatilityFactor method for adaptive thresholds
@@ -223,7 +221,6 @@ export class MarketStructureAnalyzer {
   private mergeOverlappingChannels(channels: Channel[]): Channel[] {
     if (channels.length <= 1) return channels;
     
-    const result: Channel[] = [];
     // Implementation of channel merging logic
     // For now, just return the input channels as placeholder
     

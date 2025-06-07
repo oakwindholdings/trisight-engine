@@ -4,7 +4,7 @@
 import React, { useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { CandlestickData, zoomLevels } from '../../models/ChartTypes';
-import { Pattern, PatternType, GoldmineChannelPattern, PivotPattern, RocketmanPattern, EscalatorPattern, ChannelDirection, ThrustDirection } from '../../models/PatternTypes';
+import { Pattern } from '../../models/PatternTypes';
 import { createPriceScale, calculateVisibleRange, calculateTradingHoursVisibleRange } from '../../utils/scaling';
 import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import { applyTradingHoursFilter } from '../../utils/chart/tradingHoursFilter';
@@ -17,16 +17,8 @@ import { useMarketDataContext } from '../../contexts/MarketDataContext';
 import { usePatternContext } from '../../contexts/PatternContext';
 import { usePatternBus } from '../../hooks/usePatternBus';
 import { isFeatureEnabled } from '../../utils/featureFlags';
-import { EscalatorRun } from '../../types';
-import { GoldmineSignal as PatternEngineGoldmineSignal } from '../../patternEngine/goldmine';
-import { ChartPatternLayer } from './ChartPatternLayer';
-import { PatternProvider } from '../../context/PatternContext';
-
-// Import chart components
-import CandlestickRenderer from './CandlestickRenderer';
 import PatternRenderer from './PatternRenderer';
-import TimeAxis from './TimeAxis';
-import PriceAxis from './PriceAxis';
+import { ChartPatternLayer } from './ChartPatternLayer';
 
 // Type definitions for scales and patterns
 type TimeScaleType = ReturnType<typeof createSequentialTimeScale>;
@@ -104,7 +96,7 @@ const calculateCandleWidth = (chartWidth: number, totalCandles: number): number 
 };
 
 // Inner component that uses pattern context
-const TriSightChartInner: React.FC<TriSightChartProps> = ({
+const TriSightChart: React.FC<TriSightChartProps> = ({
   data,
   patterns: allPatterns, // Rename to avoid confusion with context patterns
   width,
@@ -115,14 +107,16 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
   autoScale = false // Default to false for auto-scale
 }) => {
   // Debug logging
-  console.log('[TriSightChart] Component render:', {
-    dataLength: data?.length || 0,
-    width,
-    height,
-    timeframe,
-    firstCandle: data?.[0],
-    lastCandle: data?.[data?.length - 1]
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[TriSightChart] Component render:', {
+      dataLength: data?.length || 0,
+      width,
+      height,
+      timeframe,
+      firstCandle: data?.[0],
+      lastCandle: data?.[data?.length - 1]
+    });
+  }
 
   // Access market data context for refresh functionality
   const { refresh: refreshData, loading: dataLoading } = useMarketDataContext();
@@ -256,13 +250,15 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
   
   // Apply data processing based on timeframe and trading hours filter
   useEffect(() => {
-    console.log('[TriSightChart] Data processing effect:', {
-      dataLength: data?.length || 0,
-      showOnlyTradingHours,
-      currentTimeframe,
-      firstDataPoint: data?.[0],
-      lastDataPoint: data?.[data?.length - 1]
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[TriSightChart] Data processing effect:', {
+        dataLength: data?.length || 0,
+        showOnlyTradingHours,
+        currentTimeframe,
+        firstDataPoint: data?.[0],
+        lastDataPoint: data?.[data?.length - 1]
+      });
+    }
     
     if (data && data.length > 0) {
       const hoursFilteredData = applyTradingHoursFilter(data, showOnlyTradingHours);
@@ -270,16 +266,20 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
       // Then aggregate based on timeframe
       const processedData = aggregateData(hoursFilteredData, currentTimeframe);
       
-      console.log('[TriSightChart] Processed data:', {
-        hoursFilteredDataLength: hoursFilteredData.length,
-        processedDataLength: processedData.length,
-        firstProcessed: processedData[0],
-        lastProcessed: processedData[processedData.length - 1]
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[TriSightChart] Processed data:', {
+          hoursFilteredDataLength: hoursFilteredData.length,
+          processedDataLength: processedData.length,
+          firstProcessed: processedData[0],
+          lastProcessed: processedData[processedData.length - 1]
+        });
+      }
       
       setFilteredData(processedData);
     } else {
-      console.log('[TriSightChart] No data available, setting filteredData to empty array');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[TriSightChart] No data available, setting filteredData to empty array');
+      }
       setFilteredData([]);
     }
   }, [data, showOnlyTradingHours, currentTimeframe, aggregateData]);
@@ -341,11 +341,15 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
   
   // Helper method to find pattern at click position
   const findPatternAtPosition = useCallback((x: number, y: number, patterns: Pattern[]): Pattern | null => {
-    console.log('TriSightChart - findPatternAtPosition called with:', { x, y, patternCount: patterns.length });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('TriSightChart - findPatternAtPosition called with:', { x, y, patternCount: patterns.length });
+    }
     
     // If no patterns, return null
     if (!patterns || patterns.length === 0) {
-      console.log('TriSightChart - No patterns to check');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('TriSightChart - No patterns to check');
+      }
       return null;
     }
     
@@ -373,16 +377,18 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
       )
     );
     
-    console.log('TriSightChart - Label positions after collision resolution:', labelPositions.map(l => {
-      const pattern = patterns.find(p => p.id === l.patternId);
-      return {
-        type: pattern?.type,
-        x: l.x,
-        y: l.y,
-        width: l.width,
-        height: l.height
-      };
-    }));
+    if (process.env.NODE_ENV === 'development') {
+      console.log('TriSightChart - Label positions after collision resolution:', labelPositions.map((l: { patternId: string; x: number; y: number; width: number; height: number }) => {
+        const pattern = patterns.find(p => p.id === l.patternId);
+        return {
+          type: pattern?.type,
+          x: l.x,
+          y: l.y,
+          width: l.width,
+          height: l.height
+        };
+      }));
+    }
     
     // Check if we clicked on any label
     for (const label of labelPositions) {
@@ -396,12 +402,16 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
         y >= label.y - padding &&
         y <= label.y + label.height + padding
       ) {
-        console.log('TriSightChart - Found pattern label click:', pattern.type);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('TriSightChart - Found pattern label click:', pattern.type);
+        }
         return pattern;
       }
     }
     
-    console.log('TriSightChart - No pattern label found at click position');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('TriSightChart - No pattern label found at click position');
+    }
     return null;
   }, [width, height, filteredData, visibleDataIndices, visibleRange]);
   
@@ -526,12 +536,14 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
 
   // Render on changes to relevant state
   useEffect(() => {
-    console.log('[TriSightChart] Render effect triggered:', {
-      filteredDataLength: filteredData?.length || 0,
-      visibleDataIndices,
-      visibleRange,
-      hasCanvasRefs: !!(mainCanvasRef.current && bufferCanvasRef.current && patternsCanvasRef.current)
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[TriSightChart] Render effect triggered:', {
+        filteredDataLength: filteredData?.length || 0,
+        visibleDataIndices,
+        visibleRange,
+        hasCanvasRefs: !!(mainCanvasRef.current && bufferCanvasRef.current && patternsCanvasRef.current)
+      });
+    }
     renderChart();
   }, [renderChart]);
   
@@ -559,17 +571,19 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
   }, [chartHeight, visibleRange.minPrice, visibleRange.maxPrice]);
   
   useEffect(() => {
-    console.log('[TriSightChart] Canvas refs after mount:', {
-      mainCanvas: mainCanvasRef.current,
-      bufferCanvas: bufferCanvasRef.current,
-      patternsCanvas: patternsCanvasRef.current,
-      mainCanvasSize: mainCanvasRef.current ? { 
-        width: mainCanvasRef.current.width, 
-        height: mainCanvasRef.current.height,
-        clientWidth: mainCanvasRef.current.clientWidth,
-        clientHeight: mainCanvasRef.current.clientHeight
-      } : null
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[TriSightChart] Canvas refs after mount:', {
+        mainCanvas: mainCanvasRef.current,
+        bufferCanvas: bufferCanvasRef.current,
+        patternsCanvas: patternsCanvasRef.current,
+        mainCanvasSize: mainCanvasRef.current ? { 
+          width: mainCanvasRef.current.width, 
+          height: mainCanvasRef.current.height,
+          clientWidth: mainCanvasRef.current.clientWidth,
+          clientHeight: mainCanvasRef.current.clientHeight
+        } : null
+      });
+    }
   }, [mainCanvasRef, bufferCanvasRef, patternsCanvasRef]);
 
   return (
@@ -642,8 +656,8 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
         <g transform={`translate(${CHART_MARGIN.left}, ${CHART_MARGIN.top})`}>
           <ChartPatternLayer
             candles={filteredData}
-            xScale={(i) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
-            yScale={(p) => priceScale.scale(p)}
+            xScale={(i: number) => timeScale.scale(new Date(filteredData[i]?.timestamp || 0))}
+            yScale={(p: number) => priceScale.scale(p)}
             width={chartWidth}
             height={chartHeight}
           />
@@ -803,15 +817,6 @@ const TriSightChartInner: React.FC<TriSightChartProps> = ({
         </div>
       )}
     </ChartContainer>
-  );
-};
-
-// Wrapper component with PatternProvider
-const TriSightChart: React.FC<TriSightChartProps> = (props) => {
-  return (
-    <PatternProvider>
-      <TriSightChartInner {...props} />
-    </PatternProvider>
   );
 };
 

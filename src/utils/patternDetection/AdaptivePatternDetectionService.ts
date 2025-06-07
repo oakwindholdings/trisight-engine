@@ -1,7 +1,7 @@
 // src/utils/patternDetection/AdaptivePatternDetectionService.ts
 // Adaptive detector for PatternDetectionService pattern
 // Uses market context thresholds
-import { CandlestickData, Timeframe } from '../../models/ChartTypes';
+import { CandlestickData } from '../../models/ChartTypes';
 import { Pattern, PatternType } from '../../models/PatternTypes';
 import { PatternDetectionFactory } from './core/PatternDetectionFactory';
 import { PatternDetectionOrchestrator, PatternDetectionResult } from './core/PatternDetectionOrchestrator';
@@ -11,7 +11,6 @@ import { filterTradingHoursData } from '../marketHours';
 
 // Storage keys for pattern detection preferences
 const STORAGE_KEY_DETECTION_SETTINGS = 'trisight_detection_settings';
-const STORAGE_KEY_PATTERN_FILTERS = 'trisight_pattern_filters';
 
 /**
  * BlackJack pattern detection options

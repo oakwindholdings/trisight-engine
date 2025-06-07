@@ -25,6 +25,25 @@ interface PatternContextType {
   preferences: Partial<PatternDetectionPreferences>;
   getDetectionStatistics: () => any;
   getMarketContext: () => any;
+  // Pattern bus metrics for hover and visualization
+  bjCounts: number[];
+  setBjCounts: (counts: number[]) => void;
+  stepIndex: number[];
+  setStepIndex: (indices: number[]) => void;
+  bjIntrinsic: number[];
+  setBjIntrinsic: (values: number[]) => void;
+  bjCumulative: number[];
+  setBjCumulative: (values: number[]) => void;
+  escalatorDir: ('RISING' | 'FALLING' | null)[];
+  setEscalatorDir: (values: ('RISING' | 'FALLING' | null)[]) => void;
+  escalatorLength: number[];
+  setEscalatorLength: (values: number[]) => void;
+  goldmineQual: boolean[];
+  setGoldmineQual: (values: boolean[]) => void;
+  trailStop: number[];
+  setTrailStop: (values: number[]) => void;
+  distToStopPct: number[];
+  setDistToStopPct: (values: number[]) => void;
 }
 
 // Create the context with initial values
@@ -43,7 +62,25 @@ const initialPatternContext: PatternContextType = {
   updatePreferences: () => {},
   preferences: { minimumConfidence: 0.4, adaptiveThresholds: true },
   getDetectionStatistics: () => ({}),
-  getMarketContext: () => ({})
+  getMarketContext: () => ({}),
+  bjCounts: [],
+  setBjCounts: () => {},
+  stepIndex: [],
+  setStepIndex: () => {},
+  bjIntrinsic: [],
+  setBjIntrinsic: () => {},
+  bjCumulative: [],
+  setBjCumulative: () => {},
+  escalatorDir: [],
+  setEscalatorDir: () => {},
+  escalatorLength: [],
+  setEscalatorLength: () => {},
+  goldmineQual: [],
+  setGoldmineQual: () => {},
+  trailStop: [],
+  setTrailStop: () => {},
+  distToStopPct: [],
+  setDistToStopPct: () => {}
 };
 
 export const PatternContext = createContext<PatternContextType>(initialPatternContext);

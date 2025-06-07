@@ -8,13 +8,22 @@ import { CandlestickData, Timeframe } from '../models/ChartTypes';
 // Start with API key from environment variable but allow runtime override
 let API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
 
+// Log initial API key state - only in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('[TwelveData API] Initial API key from env:', API_KEY ? `${API_KEY.substring(0, 8)}...` : 'empty');
+}
+
 export const setApiKey = (key: string) => {
-  console.log('[TwelveData API] Setting API key:', key ? `${key.substring(0, 8)}...` : 'empty');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[TwelveData API] Setting API key:', key ? `${key.substring(0, 8)}...` : 'empty');
+  }
   API_KEY = key;
 };
 
 export const getApiKey = () => {
-  console.log('[TwelveData API] Getting API key:', API_KEY ? `${API_KEY.substring(0, 8)}...` : 'empty');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[TwelveData API] Getting API key:', API_KEY ? `${API_KEY.substring(0, 8)}...` : 'empty');
+  }
   return API_KEY;
 };
 
@@ -26,26 +35,6 @@ const CACHE_EXPIRY = 60 * 1000; // 1 minute in milliseconds
 let requestTimestamps: number[] = [];
 
 // Simple localStorage cache implementation
-const getFromCache = (key: string): any | null => {
-  try {
-    const item = localStorage.getItem(key);
-    if (!item) return null;
-
-    const parsedItem = JSON.parse(item);
-    const now = new Date().getTime();
-
-    if (now > parsedItem.expiry) {
-      localStorage.removeItem(key);
-      return null;
-    }
-
-    return parsedItem.value;
-  } catch (error) {
-    console.error('Error reading from cache:', error);
-    return null;
-  }
-};
-
 const saveToCache = (key: string, value: any, ttl = CACHE_EXPIRY): void => {
   try {
     const now = new Date().getTime();
@@ -90,16 +79,6 @@ const apiRequest = async <T>(
   retryCount = 3,
   signal?: AbortSignal
 ): Promise<T> => {
-  // Check cache if cache key provided
-  // TEMPORARILY DISABLED FOR DEBUGGING
-  // if (cacheKey) {
-  //   const cachedData = getFromCache(cacheKey);
-  //   if (cachedData) {
-  //     console.log(`Returning cached data for ${cacheKey}`);
-  //     return cachedData as T;
-  //   }
-  // }
-  
   // Check throttling
   if (!checkRequestThrottling()) {
     // Wait a bit and retry if we're being throttled

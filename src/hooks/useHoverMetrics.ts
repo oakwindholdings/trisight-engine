@@ -3,7 +3,7 @@
 // Returns hover data including index, coordinates, and blackjack count
 
 import { useEffect, useState, createContext, useContext } from 'react';
-import { usePatternContext } from '../context/PatternContext';
+import { usePatternContext } from '../contexts/PatternContext';
 
 interface HoverMetrics {
   idx: number;

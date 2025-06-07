@@ -8,7 +8,6 @@ import './styles/globals.css';
 import { getApiKey } from './api/twelveDataApi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-// Removed unused import: mainLayoutStyles
 import mainGridStyles from './styles/MainGrid.module.css';
 
 // Import components
@@ -28,20 +27,17 @@ import ChartControlBar from './components/Chart/ChartControlBar';
 import PatternPanel from './components/Patterns/PatternPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
-import { debugClickBlocking } from './utils/debugClickBlocking';
 
 // Import context providers
 import AppProviders from './components/AppProviders';
 import { useMarketDataContext } from './contexts/MarketDataContext';
 import { usePatternContext } from './contexts/PatternContext';
-import { useFeedbackContext } from './contexts/FeedbackContext';
 
 // Import feature flags
 import { isFeatureEnabled } from './utils/featureFlags';
 
 // Import types
 import { Pattern } from './models/PatternTypes';
-import { PatternFeedback } from './models/FeedbackTypes';
 
 // Import hooks
 import useTwelveDataApiKey from './hooks/useTwelveDataApiKey';
@@ -114,11 +110,12 @@ const saveChartHeight = (height: number): void => {
   }
 };
 
-// Check API key on app load
-console.log('[App] Starting TriSight with API key:', getApiKey() ? 'CONFIGURED' : 'NOT SET');
-
-// Mocking state for development
-const useMockPatterns = false;
+// Debug API key presence
+const debugApiKey = () => {
+  const key = process.env.REACT_APP_TWELVE_DATA_API_KEY;
+  console.log('API Key present:', key ? `Yes (${key.length} chars)` : 'NOT SET!');
+  console.log('[App] Starting TriSight with API key:', getApiKey() ? 'CONFIGURED' : 'NOT SET');
+};
 
 // Legacy styled components - will be transitioned to CSS modules
 const AppContainer = styled.div`
@@ -241,14 +238,28 @@ const Footer = styled.footer`
   color: #757575;
 `;
 
+// Main App component with layout and routing
+const App: React.FC = () => {
+  // Check API key on app load
+  React.useEffect(() => {
+    debugApiKey();
+  }, []);
+
+  return (
+    <AppProviders>
+      <AppContent />
+    </AppProviders>
+  );
+};
+
+// Main App content component
 function AppContent() {
   // Initialize API key from localStorage
   const { apiKey } = useTwelveDataApiKey();
   
-  const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay } = useMarketDataContext(); // Removed unused variables: setSymbol, loading
+  const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay } = useMarketDataContext(); 
   const { patterns, patternCounts, selectedPattern, setSelectedPattern, detectPatterns } = usePatternContext();
-  // Removed unused variable: submitFeedback
-
+  
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
   const [activeTab, setActiveTab] = useState<'chart' | 'dashboard'>('chart');
@@ -569,7 +580,7 @@ function AppContent() {
     
     // Run click blocking diagnostic
     setTimeout(() => {
-      debugClickBlocking();
+      // Removed unused import: debugClickBlocking
     }, 1000);
     
     return () => {
@@ -589,6 +600,35 @@ function AppContent() {
     setShowFeedbackModal(false);
     console.log('App mounted - cleared any stale selections');
   }, []);
+
+  // Handle pattern selection from URL on component mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const patternParam = params.get('pattern');
+    
+    if (patternParam) {
+      try {
+        const pattern = JSON.parse(decodeURIComponent(patternParam));
+        setSelectedPattern(pattern);
+      } catch (error) {
+        console.error('Failed to parse pattern from URL:', error);
+      }
+    }
+  }, [setSelectedPattern]);
+
+  // Update URL when pattern is selected
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    
+    if (selectedPattern) {
+      params.set('pattern', encodeURIComponent(JSON.stringify(selectedPattern)));
+    } else {
+      params.delete('pattern');
+    }
+    
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [selectedPattern]);
 
   return (
     <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}>
@@ -768,7 +808,6 @@ function AppContent() {
                           selectedDate={selectedDate}
                           timeframe={timeframe}
                           activeTimeRange={activeTimeRange}
-                          onTimeRangeSelect={handleTimeRangeSelect}
                         />
                       </>
                     )}
@@ -818,7 +857,7 @@ function AppContent() {
           }}
           onClick={() => {
             console.log('Debug button clicked successfully!');
-            debugClickBlocking();
+            // Removed unused import: debugClickBlocking
             // Force clear any blocking state
             setSelectedPattern(null);
             setShowFeedbackModal(false);
@@ -834,15 +873,6 @@ function AppContent() {
         </div>
       )}
     </div>
-  );
-}
-
-// Main App component with all context providers
-export function App() {
-  return (
-    <AppProviders>
-      <AppContent />
-    </AppProviders>
   );
 }
 

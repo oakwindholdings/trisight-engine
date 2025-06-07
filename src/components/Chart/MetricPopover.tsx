@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useHoverMetricsContext } from '../../hooks/useHoverMetrics';
-import { usePatternContext } from '../../context/PatternContext';
+import { usePatternContext } from '../../contexts/PatternContext';
 import { MetricRegistry } from '../../metrics/registry';
 
 export function MetricPopover() {

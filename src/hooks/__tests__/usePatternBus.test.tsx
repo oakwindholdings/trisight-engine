@@ -6,7 +6,7 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { usePatternBus } from '../usePatternBus';
 import { Candle } from '../../types';
-import { PatternProvider } from '../../context/PatternContext';
+import { PatternProvider } from '../../contexts/PatternContext';
 
 describe('usePatternBus Hook', () => {
   const generateCandles = (count: number, basePrice: number = 100): Candle[] => {
