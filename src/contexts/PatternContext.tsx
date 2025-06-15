@@ -107,29 +107,13 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
   // Initialize pattern detection hooks
   const patternHook = usePatterns(data);
   
-  // Use pattern bus to populate arrays and get events
-  const { events } = usePatternBus(data);
-  
-  // Update pattern hook with events
-  useEffect(() => {
-    patternHook.setEvents(events);
-  }, [events, patternHook.setEvents]);
-  
   // Log when provider renders
   console.log('[PatternProvider] Rendering with:', {
     dataLength: data.length,
     bjCountsLength: patternHook.bjCounts?.length,
     escalatorDirLength: patternHook.escalatorDir?.length,
     patterns: patternHook.patterns?.length,
-    eventsLength: events?.length
   });
-  
-  // Re-detect patterns when data changes
-  useEffect(() => {
-    if (data.length > 0) {
-      patternHook.detectPatterns(data);
-    }
-  }, [data, patternHook.detectPatterns]);
   
   return (
     <PatternContext.Provider value={patternHook}>

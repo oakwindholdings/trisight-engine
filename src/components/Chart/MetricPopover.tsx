@@ -18,11 +18,48 @@ export function MetricPopover() {
   // Hide popover when date picker is open or no hover data
   if (!pop || isDatePickerOpen) return null;
   
+  // Debug: Log what data we're using for metrics
+  console.log('[MetricPopover] Debug:', {
+    hoverIndex: pop.idx,
+    hoverCandle: pop.candle ? {
+      datetime: pop.candle.datetime,
+      open: pop.candle.open,
+      high: pop.candle.high,
+      low: pop.candle.low,
+      close: pop.candle.close
+    } : null,
+    contextCandle: candles?.[pop.idx] ? {
+      datetime: candles[pop.idx].datetime,
+      open: candles[pop.idx].open,
+      high: candles[pop.idx].high,
+      low: candles[pop.idx].low,
+      close: candles[pop.idx].close
+    } : null,
+    candlesLength: candles?.length,
+    patternArrays: {
+      bjIntrinsic: patternContext.bjIntrinsic ? `Array(${patternContext.bjIntrinsic.length})` : 'undefined',
+      bjCumulative: patternContext.bjCumulative ? `Array(${patternContext.bjCumulative.length})` : 'undefined',
+      stepIndex: patternContext.stepIndex ? `Array(${patternContext.stepIndex.length})` : 'undefined',
+      escalatorDir: patternContext.escalatorDir ? `Array(${patternContext.escalatorDir.length})` : 'undefined',
+      escalatorLength: patternContext.escalatorLength ? `Array(${patternContext.escalatorLength.length})` : 'undefined',
+      goldmineQual: patternContext.goldmineQual ? `Array(${patternContext.goldmineQual.length})` : 'undefined',
+      trailStop: patternContext.trailStop ? `Array(${patternContext.trailStop.length})` : 'undefined',
+      distToStopPct: patternContext.distToStopPct ? `Array(${patternContext.distToStopPct.length})` : 'undefined'
+    },
+    sampleValues: {
+      bjIntrinsic: patternContext.bjIntrinsic?.[pop.idx],
+      bjCumulative: patternContext.bjCumulative?.[pop.idx],
+      stepIndex: patternContext.stepIndex?.[pop.idx],
+      escalatorDir: patternContext.escalatorDir?.[pop.idx],
+      escalatorLength: patternContext.escalatorLength?.[pop.idx]
+    }
+  });
+  
   // Create combined context for metric calculations
-  // Use the candle from hover context to ensure alignment
+  // Use the full candles array for pattern metrics to work
   const combinedContext = {
     ...patternContext,
-    candles: pop.candle ? { [pop.idx]: pop.candle } : candles || []
+    candles: candles || []
   };
   
   // The hover index (pop.idx) is absolute
@@ -32,11 +69,14 @@ export function MetricPopover() {
   const metrics = Object.values(MetricRegistry).map(metric => {
     // For OHLC metrics, use the candle from hover context if available
     if (['open', 'high', 'low', 'close', 'volume'].includes(metric.id) && pop.candle) {
-      const value = metric.calc(candleIndex, { candles: { [candleIndex]: pop.candle } });
+      const value = metric.calc(candleIndex, { 
+        ...combinedContext,
+        candles: { [candleIndex]: pop.candle } 
+      });
       return { label: metric.label, value };
     }
     
-    // For other metrics, use the combined context
+    // For other metrics, use the combined context with full candles array
     const value = metric.calc(candleIndex, combinedContext);
     
     return {

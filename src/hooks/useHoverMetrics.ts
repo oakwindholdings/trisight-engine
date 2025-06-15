@@ -11,6 +11,7 @@ interface HoverMetrics {
   y: number;
   bj: number | string;
   candle?: any;
+  visibleIndex: number; 
 }
 
 const HoverMetricsContext = createContext<HoverMetrics | null>(null);
@@ -33,67 +34,79 @@ export function useHoverMetrics(
     const node = ref.current;
     if (!node || !timeScale || !data) return;
     
-    const handler = (ev: MouseEvent) => {
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!node || !timeScale || !data?.length || !visibleDataIndices) return;
+      
       const rect = node.getBoundingClientRect();
-      const offsetX = ev.clientX - rect.left - (margin?.left || 0);
+      const x = ev.clientX - rect.left;
       
-      // Check if mouse is within the plot area (excluding margins)
-      const mouseX = ev.clientX - rect.left;
-      const mouseY = ev.clientY - rect.top;
-      const plotLeft = margin?.left || 0;
-      const plotTop = margin?.top || 0;
-      const plotRight = rect.width - (margin?.right || 0);
-      const plotBottom = rect.height - (margin?.bottom || 0);
+      const chartLeft = margin?.left || 0;
+      const chartRight = rect.width - (margin?.right || 0);
+      const chartWidth = chartRight - chartLeft;
       
-      if (mouseX < plotLeft || mouseX > plotRight || mouseY < plotTop || mouseY > plotBottom) {
+      console.log('[useHoverMetrics] Mouse position:', {
+        x,
+        chartLeft,
+        chartRight,
+        chartWidth,
+        visibleDataIndices
+      });
+      
+      // If outside chart area, clear hover
+      if (x < chartLeft || x > chartRight) {
+        console.log('[useHoverMetrics] Mouse outside chart area, clearing hover');
         setHoverData(null);
         return;
       }
       
-      if (!timeScale || !data || data.length === 0) {
-        return;
-      }
+      // Get the pixel position relative to the chart area
+      const relativeX = x - chartLeft;
       
-      // Use timeScale.invert to get the date at this pixel position
-      const date = timeScale.invert(offsetX);
+      // Use the timeScale to get the index directly
+      // Since timeScale is created from visible data, invert will give us a date
+      // But we need the index within the visible range
+      const visibleDataLength = visibleDataIndices.end - visibleDataIndices.start + 1;
+      const visibleIndex = Math.round((relativeX / chartWidth) * (visibleDataLength - 1));
       
-      // Find the closest candle to this date
-      let closestIndex = 0;
-      let minDiff = Infinity;
+      // Clamp to valid range
+      const clampedVisibleIndex = Math.max(0, Math.min(visibleDataLength - 1, visibleIndex));
       
-      // If we have visible indices, search within the visible slice
-      const searchStart = visibleDataIndices?.start || 0;
-      const searchEnd = visibleDataIndices?.end || data.length - 1;
+      // Convert to absolute index in the full dataset
+      const absoluteIndex = visibleDataIndices.start + clampedVisibleIndex;
       
-      for (let i = searchStart; i <= searchEnd; i++) {
-        const diff = Math.abs(data[i].timestamp - date.getTime());
-        if (diff < minDiff) {
-          minDiff = diff;
-          closestIndex = i;
-        }
-      }
-      
-      // Safety check: Don't access pattern arrays if they seem out of sync
-      const isPatternDataValid = escalatorDir && escalatorDir.length > 0 && closestIndex < escalatorDir.length;
-      
-      const bj = bjCounts[closestIndex] ?? 'n/a';
-      setHoverData({
-        idx: closestIndex,
-        x: ev.clientX,
-        y: ev.clientY,
-        bj,
-        candle: data[closestIndex] // Include the actual candle data for accurate OHLC display
+      console.log('[useHoverMetrics] Calculated indices:', {
+        x,
+        relativeX,
+        visibleIndex,
+        clampedVisibleIndex,
+        absoluteIndex,
+        visibleDataLength,
+        candle: data[absoluteIndex]
       });
+      
+      if (absoluteIndex >= 0 && absoluteIndex < data.length) {
+        const bj = bjCounts[absoluteIndex] ?? 'n/a';
+        setHoverData({
+          idx: absoluteIndex,
+          x: ev.clientX,
+          y: ev.clientY,
+          bj,
+          visibleIndex: clampedVisibleIndex, 
+          candle: data[absoluteIndex] 
+        });
+      } else {
+        setHoverData(null);
+      }
     };
     
     const handleMouseLeave = () => {
       setHoverData(null);
     };
     
-    node.addEventListener('mousemove', handler);
+    node.addEventListener('mousemove', handleMouseMove);
     node.addEventListener('mouseleave', handleMouseLeave);
     return () => {
-      node.removeEventListener('mousemove', handler);
+      node.removeEventListener('mousemove', handleMouseMove);
       node.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [ref, bjCounts, timeScale, data, margin, escalatorDir, visibleDataIndices]);

@@ -1,17 +1,19 @@
 // src/hooks/usePatterns.ts
-// Detects patterns in candle data
-// Uses adaptive detection service
+// Pattern detection integration with adaptive services
+// Manages both pattern entities and candle-aligned metric arrays
+
 import { useState, useEffect, useCallback } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType } from '../models/PatternTypes';
 import { PatternEvent } from './usePatternBus';
-// Import the new adaptive pattern detection service instead of the old PatternDetector
 import { AdaptivePatternDetectionService, PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
+import { getIntrinsicScore } from '../patternEngine/blackjack';
+import { detectEscalators } from '../patternEngine/escalator';
 
 /**
- * Hook for detecting and managing patterns in market data
+ * Hook for detecting and managing chart patterns
  */
-export const usePatterns = (data: CandlestickData[]) => {
+export function usePatterns(data: CandlestickData[]) {
   // All detected patterns
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   // Patterns after type filtering - what's shown to the user in the UI
@@ -42,6 +44,96 @@ export const usePatterns = (data: CandlestickData[]) => {
     const servicePrefs = adaptiveService.getPreferences();
     return servicePrefs;
   });
+  
+  // Method to populate pattern arrays based on detected patterns
+  const populatePatternArrays = useCallback((candles: CandlestickData[], detectedPatterns: Pattern[]) => {
+    console.log('[usePatterns] Populating pattern arrays for', candles.length, 'candles');
+    
+    // Use detectEscalators from patternEngine to get proper escalator data
+    const escalatorRuns = detectEscalators(candles);
+    console.log('[usePatterns] Detected', escalatorRuns.length, 'escalator runs');
+    
+    // Compute Blackjack intrinsic scores
+    const bjIntrinsic = candles.map((candle, i) => {
+      if (i === 0) return 0;
+      const prevCandle = candles[i - 1];
+      const prevBodyHigh = Math.max(prevCandle.open, prevCandle.close);
+      const prevBodyLow = Math.min(prevCandle.open, prevCandle.close);
+      return getIntrinsicScore(candle, prevBodyHigh, prevBodyLow);
+    });
+    
+    // Compute cumulative Blackjack scores
+    const bjCumulative = bjIntrinsic.reduce<number[]>(
+      (arr, val) => {
+        arr.push((arr[arr.length - 1] ?? 0) + val);
+        return arr;
+      }, 
+      []
+    );
+    
+    // Compute step indices from detected escalator steps
+    const stepIndex = new Array(candles.length).fill(null);
+    escalatorRuns.forEach(escalator => {
+      escalator.steps.forEach(step => {
+        for (let i = step.startIndex; i <= step.endIndex; i++) {
+          if (i < candles.length) {
+            stepIndex[i] = i - step.startIndex + 1;
+          }
+        }
+      });
+    });
+    
+    // Create per-candle escalator direction array
+    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(candles.length).fill(null);
+    
+    escalatorRuns.forEach(escalator => {
+      // Fill in the direction for all candles in this escalator run
+      escalator.steps.forEach((step) => {
+        for (let i = step.startIndex; i <= step.endIndex; i++) {
+          if (i < candles.length) {
+            const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
+            escalatorDirArray[i] = dir;
+          }
+        }
+      });
+    });
+    
+    // Build escalator length array
+    const escalatorLength = new Array<number>(candles.length).fill(0);
+    
+    escalatorRuns.forEach(escalator => {
+      for (let i = escalator.startIndex; i <= escalator.endIndex; i++) {
+        if (i < candles.length) {
+          escalatorLength[i] = i - escalator.startIndex + 1;
+        }
+      }
+    });
+    
+    // Build goldmine qualifier array
+    const goldmineQual = new Array<boolean>(candles.length).fill(false);
+    
+    // Build trailing stop arrays (use 0 as default for no stop)
+    const trailStop = new Array<number>(candles.length).fill(0);
+    const distToStopPct = new Array<number>(candles.length).fill(0);
+    
+    // TODO: Populate goldmine and trailing stop arrays based on actual positions
+    
+    // Set all the arrays into context
+    setBjIntrinsic(bjIntrinsic);
+    setBjCumulative(bjCumulative);
+    setStepIndex(stepIndex);
+    setEscalatorDir(escalatorDirArray);
+    setEscalatorLength(escalatorLength);
+    setGoldmineQual(goldmineQual);
+    setTrailStop(trailStop);
+    setDistToStopPct(distToStopPct);
+    
+    console.log('[usePatterns] Pattern arrays populated:', {
+      bjIntrinsicLength: bjIntrinsic.length,
+      escalatorDirNonNull: escalatorDirArray.filter(d => d !== null).length,
+      escalatorLengthNonZero: escalatorLength.filter(l => l > 0).length
+    });
+  }, [setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct]);
   
   // Detect patterns in the provided data
   const detectPatterns = useCallback(async (candleData: CandlestickData[]) => {
@@ -113,20 +205,17 @@ export const usePatterns = (data: CandlestickData[]) => {
           setVisiblePatterns(filteredPatterns);
         }
         setPatternCounts(counts);
+        
+        // After detecting patterns, populate the pattern arrays
+        populatePatternArrays(candleData, detectedPatterns);
+        
         setIsDetecting(false);
       }, 0);
     } catch (error) {
       console.error('Error detecting patterns:', error);
       setIsDetecting(false);
     }
-  }, [activeFilter, adaptiveService, isDetecting, preferences.enabledPatternTypes]);
-  
-  // Detect patterns when data changes
-  useEffect(() => {
-    if (data.length > 0) {
-      detectPatterns(data);
-    }
-  }, [data, detectPatterns]);
+  }, [activeFilter, adaptiveService, isDetecting, preferences.enabledPatternTypes, populatePatternArrays]);
   
   // Update a pattern (e.g., after receiving feedback)
   const updatePattern = useCallback((updatedPattern: Pattern) => {
