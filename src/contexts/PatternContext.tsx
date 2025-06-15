@@ -4,8 +4,10 @@
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType } from '../models/PatternTypes';
+import { PatternEvent } from '../hooks/usePatternBus';
 import usePatterns from '../hooks/usePatterns';
 import { useMarketDataContext } from './MarketDataContext';
+import { usePatternBus } from '../hooks/usePatternBus';
 import { PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
 
 // Define the context type
@@ -44,6 +46,10 @@ interface PatternContextType {
   setTrailStop: (values: number[]) => void;
   distToStopPct: number[];
   setDistToStopPct: (values: number[]) => void;
+  escalatorSteps: PatternEvent[];
+  setEscalatorSteps: (events: PatternEvent[]) => void;
+  events: PatternEvent[];  // All pattern events for visualization
+  setEvents: (events: PatternEvent[]) => void;
 }
 
 // Create the context with initial values
@@ -80,7 +86,11 @@ const initialPatternContext: PatternContextType = {
   trailStop: [],
   setTrailStop: () => {},
   distToStopPct: [],
-  setDistToStopPct: () => {}
+  setDistToStopPct: () => {},
+  escalatorSteps: [],
+  setEscalatorSteps: () => {},
+  events: [],  // All pattern events for visualization
+  setEvents: () => {}
 };
 
 export const PatternContext = createContext<PatternContextType>(initialPatternContext);
@@ -97,12 +107,21 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
   // Initialize pattern detection hooks
   const patternHook = usePatterns(data);
   
+  // Use pattern bus to populate arrays and get events
+  const { events } = usePatternBus(data);
+  
+  // Update pattern hook with events
+  useEffect(() => {
+    patternHook.setEvents(events);
+  }, [events, patternHook.setEvents]);
+  
   // Log when provider renders
   console.log('[PatternProvider] Rendering with:', {
     dataLength: data.length,
     bjCountsLength: patternHook.bjCounts?.length,
     escalatorDirLength: patternHook.escalatorDir?.length,
-    patterns: patternHook.patterns?.length
+    patterns: patternHook.patterns?.length,
+    eventsLength: events?.length
   });
   
   // Re-detect patterns when data changes

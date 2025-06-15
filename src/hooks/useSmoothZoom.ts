@@ -30,11 +30,15 @@ export const useSmoothZoom = (
   const animationFrameRef = useRef<number | null>(null);
   const lastWheelTimeRef = useRef(0);
   const accumulatedDeltaRef = useRef(0);
+  const isInitializedRef = useRef(false);
 
-  // Update refs when zoom changes externally
+  // Initialize refs only once
   useEffect(() => {
-    targetZoomRef.current = currentZoom;
-    animatedZoomRef.current = currentZoom;
+    if (!isInitializedRef.current) {
+      targetZoomRef.current = currentZoom;
+      animatedZoomRef.current = currentZoom;
+      isInitializedRef.current = true;
+    }
   }, [currentZoom]);
 
   // Smooth animation function

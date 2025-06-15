@@ -16,7 +16,6 @@ import { ChartPatternLayer } from './ChartPatternLayer';
 import { PatternProvider, usePatternContext } from '../../contexts/PatternContext';
 import { useHoverMetrics } from '../../hooks/useHoverMetrics';
 import { MetricPopover } from './MetricPopover';
-import { usePatternBus } from '../../hooks/usePatternBus';
 import './InfiniteZoomChart.css';
 
 interface InfiniteZoomChartProps {
@@ -28,6 +27,7 @@ interface InfiniteZoomChartProps {
   selectedPattern?: Pattern | null;
   startDate?: Date;
   endDate?: Date;
+  data?: CandlestickData[];  // Add data prop to receive candles from parent
 }
 
 export interface InfiniteZoomChartRef {
@@ -37,16 +37,20 @@ export interface InfiniteZoomChartRef {
 const CHART_MARGIN = { top: 20, right: 60, bottom: 40, left: 60 };
 
 // Inner component that uses pattern context
-const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProps>(({
-  symbol,
-  patterns = [],
-  width,
-  height,
-  onPatternSelect,
-  selectedPattern: selectedPatternProp,
-  startDate,
-  endDate
-}, ref) => {
+const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRef, InfiniteZoomChartProps> = (
+  {
+    symbol,
+    patterns = [],
+    width,
+    height,
+    onPatternSelect,
+    selectedPattern: selectedPatternProp,
+    startDate,
+    endDate,
+    data: dataProp
+  },
+  ref
+) => {
   if (process.env.NODE_ENV === 'development') {
     // console.log('InfiniteZoomChart Component Render:', {
     //   symbol,
@@ -75,6 +79,17 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
   const [visibleDataIndices, setVisibleDataIndices] = useState({ start: 0, end: 0 });
   const [initialVisibleIndices, setInitialVisibleIndices] = useState({ start: 0, end: 0 });
 
+  // Track if indices have been initialized
+  const indicesInitializedRef = useRef(false);
+
+  // Track previous date range to detect actual changes
+  const previousDateRangeRef = useRef<{ start?: Date; end?: Date }>({});
+
+  // Reset initialization flag when symbol changes
+  useEffect(() => {
+    indicesInitializedRef.current = false;
+  }, [symbol]);
+
   // Pan state
   const [panState, setPanState] = useState<PanState>({
     isPanning: false,
@@ -97,75 +112,20 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     dataGenerationRef.current += 1;
     const generation = dataGenerationRef.current;
     
-    // Create a hash to identify this specific dataset
-    const dataHash = data.length > 0 ? 
-      `${data[0].datetime}_${data[data.length - 1].datetime}_${data.length}` : 
-      'no_data';
-    setCurrentDataHash(dataHash);
-    
-    console.log('[InfiniteZoomChart] handleDataUpdate called:', {
-      generation,
-      dataHash,
-      dataLength: data.length,
-      resolution: resolution.interval,
-      firstCandle: data[0] ? { time: data[0].datetime, close: data[0].close } : null,
-      lastCandle: data[data.length - 1] ? { time: data[data.length - 1].datetime, close: data[data.length - 1].close } : null
-    });
-    
-    // Update visible indices
-    if (data.length > 0) {
-      const endIndex = data.length - 1;
-      const startIndex = Math.max(0, endIndex - 100);
+    // Store data hash to detect changes
+    const newHash = `${data.length}_${data[0]?.timestamp}_${data[data.length - 1]?.timestamp}`;
+    if (newHash !== currentDataHash) {
+      setCurrentDataHash(newHash);
       
-      console.log('[InfiniteZoomChart] Updating visible indices:', {
-        start: startIndex,
-        end: endIndex,
-        dataLength: data.length
-      });
-      
-      setVisibleDataIndices(prev => {
-        // Only update if indices actually changed
-        if (prev.start !== startIndex || prev.end !== endIndex) {
-          return { start: startIndex, end: endIndex };
-        }
-        return prev;
-      });
-      
-      // Also update initial indices if not set
-      setInitialVisibleIndices(prev => {
-        if (prev.start === 0 && prev.end === 0) {
-          return { start: startIndex, end: endIndex };
-        }
-        return prev;
-      });
+      // Trigger pattern detection on the new data
+      // This ensures pattern arrays are synchronized with the displayed data
+      if (patternContext && typeof patternContext.detectPatterns === 'function') {
+        patternContext.detectPatterns(data);
+      }
     }
-    // console.log('[InfiniteZoomChart] Data updated:', {
-    //   dataLength: data.length,
-    //   resolution,
-    //   firstCandle: data[0],
-    //   lastCandle: data[data.length - 1]
-    // });
     
-    // Trigger pattern detection on the new data
-    if (patternContext.detectPatterns && data.length > 0) {
-      // console.log('[InfiniteZoomChart] Triggering pattern detection on new data');
-      patternContext.detectPatterns(data);
-    }
-  }, [patternContext]);
-
-  // Handle zoom state changes
-  const handleZoomChange = useCallback((state: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      // console.log('InfiniteZoomChart - handleZoomChange called with state:', state);
-    }
-    // Reset pan when zooming
-    setPanState(prev => ({ 
-      ...prev,
-      translateX: 0, 
-      momentum: 0,
-      isPanning: false
-    }));
-  }, []);
+    // Don't update indices here - let them be updated by the effect
+  }, [currentDataHash, patternContext]);
 
   // Initialize zoom controller
   const zoomController = useInfiniteZoomController({
@@ -175,7 +135,9 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     margin: CHART_MARGIN,
     symbol,
     onDataUpdate: handleDataUpdate,
-    onZoomChange: handleZoomChange,
+    onZoomChange: (state) => {
+      // Zoom state changes are now handled by the controller
+    },
     setPanState,
     startDate,
     endDate
@@ -189,38 +151,22 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     currentResolution,
     isTransitioning,
     zoomToFit: zoomToFitController,
-    resetZoom
+    resetZoom: resetZoomController
   } = zoomController;
 
-  // Use pattern bus to populate arrays with the chart data
-  const { isPatternDetectionComplete, processedDataHash } = usePatternBus(chartData);
-  
-  // Check if pattern data is synchronized with chart data
-  const isPatternDataSynchronized = isPatternDetectionComplete && processedDataHash === currentDataHash;
-  
-  // Calculate candle width based on chart dimensions and target candles
-  const candleWidth = useMemo(() => {
-    const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
-    return chartWidth / targetCandles;
-  }, [width, targetCandles]);
+  // Combine the data source - prefer dataProp from parent over chartData
+  const dataToUse = dataProp || chartData;
 
-  // Use hover metrics hook - now inside PatternProvider context
-  const { hoverData, HoverMetricsProvider } = useHoverMetrics(
-    containerRef, 
-    candleWidth, 
-    visibleDataIndices.start
-  );
-  
   // Log when pattern detection state changes
   useEffect(() => {
-    console.log('[InfiniteZoomChart] Pattern synchronization:', {
-      isPatternDetectionComplete,
-      isPatternDataSynchronized,
-      currentDataHash,
-      processedDataHash,
-      matches: processedDataHash === currentDataHash
-    });
-  }, [isPatternDetectionComplete, isPatternDataSynchronized, currentDataHash, processedDataHash]);
+    // console.log('[InfiniteZoomChart] Pattern synchronization:', {
+    //   isPatternDetectionComplete,
+    //   isPatternDataSynchronized,
+    //   currentDataHash,
+    //   processedDataHash,
+    //   matches: processedDataHash === currentDataHash
+    // });
+  }, [currentDataHash]);
 
   // Dynamic pattern detection state
   const [localPatterns, setLocalPatterns] = useState<Pattern[]>([]);
@@ -235,8 +181,8 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
 
   // Update refs when values change
   useEffect(() => {
-    chartDataRef.current = chartData;
-  }, [chartData]);
+    chartDataRef.current = dataToUse;
+  }, [dataToUse]);
 
   useEffect(() => {
     visibleDataIndicesRef.current = visibleDataIndices;
@@ -244,10 +190,10 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
 
   // Detect patterns on visible data after zoom/pan completes
   const detectPatternsForVisibleData = useCallback(async () => {
-    if (!chartData.length || isDetectingPatterns) return;
+    if (!dataToUse.length || isDetectingPatterns) return;
     
     // Get the visible data slice
-    const visibleData = chartData.slice(
+    const visibleData = dataToUse.slice(
       visibleDataIndices.start,
       visibleDataIndices.end + 1
     );
@@ -282,7 +228,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     } finally {
       setIsDetectingPatterns(false);
     }
-  }, [chartData, visibleDataIndices, isDetectingPatterns]);
+  }, [dataToUse, visibleDataIndices, isDetectingPatterns]);
 
   // Debounce pattern detection to avoid too many calls during rapid zoom/pan
   const debouncedPatternDetection = useMemo(() => {
@@ -297,53 +243,18 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
 
   // Trigger pattern detection when visible data changes
   useEffect(() => {
-    if (chartData.length > 0 && !isLoading) {
+    if (dataToUse.length > 0 && !isLoading) {
       debouncedPatternDetection();
     }
-  }, [visibleDataIndices, chartData.length, isLoading, debouncedPatternDetection]);
+  }, [visibleDataIndices, dataToUse.length, isLoading, debouncedPatternDetection]);
 
-  // Update visible indices when zoom level changes
+  // Update visible range when visible data indices change
   useEffect(() => {
-    if (chartData.length === 0) return;
-    
-    // Calculate new visible indices based on targetCandles
-    const endIndex = chartData.length - 1;
-    const startIndex = Math.max(0, endIndex - targetCandles + 1);
-    
-    if (process.env.NODE_ENV === 'development') {
-      // console.log('Zoom changed - updating visible indices:', {
-      //   targetCandles,
-      //   startIndex,
-      //   endIndex,
-      //   dataLength: chartData.length
-      // });
-    }
-    
-    setVisibleDataIndices({ start: startIndex, end: endIndex });
-    
-    // Update visible range for price scaling
-    const visibleData = chartData.slice(startIndex, endIndex + 1);
-    if (visibleData.length > 0) {
-      const prices = visibleData.flatMap(d => [d.high, d.low]);
-      const minPrice = Math.min(...prices) * 0.99;
-      const maxPrice = Math.max(...prices) * 1.01;
-      
-      setVisibleRange({
-        startTime: new Date(visibleData[0].timestamp),
-        endTime: new Date(visibleData[visibleData.length - 1].timestamp),
-        minPrice,
-        maxPrice
-      });
-    }
-  }, [targetCandles, chartData]);
-
-  // Update visible range and data indices when data or zoom changes
-  useEffect(() => {
-    const hasData = chartData.length > 0;
+    const hasData = dataToUse.length > 0;
     if (!hasData) return;
 
     // For infinite zoom, we use the visible indices from the zoom controller
-    const visibleData = chartData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = dataToUse.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     
     if (visibleData.length > 0) {
       // Get first and last candle times
@@ -352,13 +263,65 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
       const startTime = new Date(firstCandle.timestamp);
       const endTime = new Date(lastCandle.timestamp);
       
-      setVisibleRange(prev => ({
-        ...prev,
-        startTime,
-        endTime
-      }));
+      // Calculate price range with some padding
+      let minPrice = Number.MAX_VALUE;
+      let maxPrice = Number.MIN_VALUE;
+      
+      for (const candle of visibleData) {
+        minPrice = Math.min(minPrice, candle.low);
+        maxPrice = Math.max(maxPrice, candle.high);
+      }
+      
+      // Add 5% padding to price range
+      const pricePadding = (maxPrice - minPrice) * 0.05;
+      minPrice -= pricePadding;
+      maxPrice += pricePadding;
+      
+      setVisibleRange(prev => {
+        // Only update if values actually changed
+        if (prev.startTime?.getTime() === startTime.getTime() &&
+            prev.endTime?.getTime() === endTime.getTime() &&
+            prev.minPrice === minPrice &&
+            prev.maxPrice === maxPrice) {
+          return prev;
+        }
+        return {
+          startTime,
+          endTime,
+          minPrice,
+          maxPrice
+        };
+      });
     }
-  }, [chartData, visibleDataIndices]);
+  }, [dataToUse.length, visibleDataIndices.start, visibleDataIndices.end]);
+
+  // Update visible indices when zoom level changes (targetCandles changes)
+  useEffect(() => {
+    if (dataToUse.length > 0 && targetCandles > 0) {
+      // Calculate new visible indices based on targetCandles
+      // Keep the center of the current view
+      const currentStart = visibleDataIndicesRef.current.start;
+      const currentEnd = visibleDataIndicesRef.current.end;
+      const currentCenter = Math.floor((currentStart + currentEnd) / 2);
+      
+      // Calculate new range centered on current center
+      const halfRange = Math.floor(targetCandles / 2);
+      let newStart = currentCenter - halfRange;
+      let newEnd = currentCenter + halfRange;
+      
+      // Adjust for data bounds
+      if (newEnd >= dataToUse.length) {
+        newEnd = dataToUse.length - 1;
+        newStart = Math.max(0, newEnd - targetCandles);
+      }
+      if (newStart < 0) {
+        newStart = 0;
+        newEnd = Math.min(dataToUse.length - 1, newStart + targetCandles);
+      }
+      
+      setVisibleDataIndices({ start: newStart, end: newEnd });
+    }
+  }, [targetCandles, dataToUse.length]);
 
   // Update visible range from pan
   const updateVisibleRangeFromPan = useCallback((translateX: number) => {
@@ -368,10 +331,11 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
     const candleWidth = chartWidth / targetCandles;
     
-    // Apply damping factor to reduce sensitivity (0.3 = 30% of actual movement)
-    const dampingFactor = 0.3;
+    // Apply damping based on zoom level
+    const baseDamping = 0.3;
+    const zoomDamping = Math.min(100 / targetCandles, 2);
+    const dampingFactor = baseDamping / zoomDamping;
     const dampedTranslateX = translateX * dampingFactor;
-    
     const candleShift = Math.round(-dampedTranslateX / candleWidth);
     
     // When panning starts, store the initial indices
@@ -417,13 +381,14 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
         });
       }
     }
-  }, [width, targetCandles, panState.isPanning, visibleDataIndices.start, visibleDataIndices.end]);
+  }, [width, targetCandles, visibleDataIndices.start, visibleDataIndices.end]);
 
   // Initialize pan controller
   const panController = usePanController(
     panState,
     setPanState,
-    updateVisibleRangeFromPan
+    updateVisibleRangeFromPan,
+    targetCandles
   );
 
   // Handle pattern selection
@@ -437,7 +402,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
       // console.log('InfiniteZoomChart - Canvas clicked at:', { x, y });
     }
     
-    if (chartData.length === 0) {
+    if (dataToUse.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         // console.log('InfiniteZoomChart - No chart data available');
       }
@@ -445,7 +410,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     }
     
     // Create scales for pattern detection
-    const visibleData = chartData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = dataToUse.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     const timeScale = createSequentialTimeScale(
       width - CHART_MARGIN.left - CHART_MARGIN.right,
       visibleData,
@@ -467,8 +432,8 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     // Check each pattern directly
     for (const pattern of allPatterns) {
       // Simple bounds check for pattern area (can be enhanced later)
-      const startIndex = chartData.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
-      const endIndex = chartData.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
+      const startIndex = dataToUse.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
+      const endIndex = dataToUse.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
       
       if (startIndex >= 0 && endIndex >= 0) {
         const xStart = timeScale.scale(pattern.startTime);
@@ -492,20 +457,20 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
       }
       onPatternSelect(clickedPattern);
     }
-  }, [patterns, localPatterns, chartData, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
+  }, [patterns, localPatterns, dataToUse, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
 
   // Render chart when data or view changes
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       // console.log('InfiniteZoomChart render effect:', {
-      //   dataLength: chartData.length,
+      //   dataLength: dataToUse.length,
       //   visibleDataIndices,
       //   isLoading,
       //   currentResolution
       // });
     }
     
-    if (chartData.length === 0) {
+    if (dataToUse.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         // console.log('InfiniteZoomChart - No data to render');
       }
@@ -525,15 +490,15 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
     const visiblePatterns = [...patterns, ...localPatterns].filter(pattern => {
       const patternStart = pattern.startTime.getTime();
       const patternEnd = pattern.endTime.getTime();
-      const visibleStart = chartData[visibleDataIndices.start]?.timestamp || 0;
-      const visibleEnd = chartData[visibleDataIndices.end]?.timestamp || 0;
+      const visibleStart = dataToUse[visibleDataIndices.start]?.timestamp || 0;
+      const visibleEnd = dataToUse[visibleDataIndices.end]?.timestamp || 0;
       
       return patternStart <= visibleEnd && patternEnd >= visibleStart;
     });
     
     if (process.env.NODE_ENV === 'development') {
       // console.log('InfiniteZoomChart - Rendering with data:', {
-      //   dataLength: chartData.length,
+      //   dataLength: dataToUse.length,
       //   visibleIndices: visibleDataIndices,
       //   visiblePatternsCount: visiblePatterns.length
       // });
@@ -543,7 +508,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
       mainCanvasRef,
       bufferCanvasRef,
       patternsCanvasRef,
-      filteredData: chartData,
+      filteredData: dataToUse,
       visibleDataIndices,
       visibleRange,
       width,
@@ -554,7 +519,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
       timeframe: currentResolution?.timeframe || '1min',
       showOnlyTradingHours: false
     });
-  }, [chartData, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, localPatterns, isLoading]);
+  }, [dataToUse, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, localPatterns, isLoading]);
 
   // Setup canvas dimensions
   useEffect(() => {
@@ -590,7 +555,7 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
 
   // Auto-scale when data is first loaded or changes significantly
   useEffect(() => {
-    if (chartData.length > 0 && zoomToFitController) {
+    if (dataToUse.length > 0 && zoomToFitController && !indicesInitializedRef.current) {
       // Small delay to ensure chart is rendered
       const timer = setTimeout(() => {
         zoomToFitController();
@@ -598,156 +563,172 @@ const InfiniteZoomChartInner = forwardRef<InfiniteZoomChartRef, InfiniteZoomChar
       
       return () => clearTimeout(timer);
     }
-  }, [chartData.length > 0, zoomToFitController, startDate, endDate]);
+  }, [dataToUse.length, zoomToFitController]);
 
   // Update visible range when date props change
   useEffect(() => {
     if (startDate && endDate) {
-      setVisibleRange(prev => ({
-        ...prev,
-        startTime: startDate,
-        endTime: endDate
-      }));
+      // Check if dates actually changed
+      const prevStart = previousDateRangeRef.current.start;
+      const prevEnd = previousDateRangeRef.current.end;
       
-      // Reset zoom and pan when date range changes
-      if (resetZoom) {
-        resetZoom();
+      const datesChanged = !prevStart || !prevEnd || 
+        prevStart.getTime() !== startDate.getTime() || 
+        prevEnd.getTime() !== endDate.getTime();
+      
+      if (datesChanged) {
+        previousDateRangeRef.current = { start: startDate, end: endDate };
+        
+        setVisibleRange(prev => ({
+          ...prev,
+          startTime: startDate,
+          endTime: endDate
+        }));
+        
+        // Reset zoom and pan when date range changes
+        if (resetZoomController) {
+          resetZoomController();
+        }
+        setPanState({
+          isPanning: false,
+          startX: 0,
+          previousTranslateX: 0,
+          translateX: 0,
+          momentum: 0
+        });
       }
-      setPanState({
-        isPanning: false,
-        startX: 0,
-        previousTranslateX: 0,
-        translateX: 0,
-        momentum: 0
-      });
     }
-  }, [startDate, endDate, resetZoom]);
+  }, [startDate, endDate, resetZoomController, setPanState]);
 
   return (
-    <HoverMetricsProvider value={hoverData}>
-      <div className="infinite-zoom-chart-container" ref={containerRef}>
-        <MetricPopover />
-        <div className="canvas-stack" style={{ width, height }}>
-          <canvas ref={mainCanvasRef} className="main-canvas" />
-          <canvas ref={bufferCanvasRef} className="buffer-canvas" style={{ display: 'none' }} />
-          <canvas ref={patternsCanvasRef} className="patterns-canvas" />
-          <canvas 
-            ref={interactionCanvasRef} 
-            className="interaction-canvas"
-            onClick={handleCanvasClick}
-            onMouseDown={panController.handleMouseDown}
-            onMouseMove={panController.handleMouseMove}
-            onMouseUp={panController.handleMouseUp}
-            onMouseLeave={panController.handleMouseLeave}
-            onWheel={zoomController.handleWheel}
-            onTouchStart={panController.handleTouchStart}
-            onTouchMove={(e) => {
-              panController.handleTouchMove(e);
-              zoomController.handlePinch(e);
-            }}
-            onTouchEnd={panController.handleTouchEnd}
-            style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
-          />
-          
-          {/* Pattern overlay */}
-          <svg className="pattern-overlay">
-            <g transform={`translate(${CHART_MARGIN.left}, ${CHART_MARGIN.top})`}>
-              <ChartPatternLayer
-                candles={chartData}
-                xScale={(index: number) => {
-                  const visibleData = chartData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
-                  const timeScale = createSequentialTimeScale(
-                    width - CHART_MARGIN.left - CHART_MARGIN.right,
-                    visibleData,
-                    [0, visibleData.length - 1]
-                  );
-                  const candle = chartData[index];
-                  if (!candle) return 0;
-                  return timeScale.scale(new Date(candle.timestamp));
-                }}
-                yScale={(price: number) => {
-                  const priceScale = createPriceScale(
-                    height - CHART_MARGIN.top - CHART_MARGIN.bottom,
-                    [visibleRange.minPrice, visibleRange.maxPrice]
-                  );
-                  return priceScale.scale(price);
-                }}
-                width={width - CHART_MARGIN.left - CHART_MARGIN.right}
-                height={height - CHART_MARGIN.top - CHART_MARGIN.bottom}
-              />
-            </g>
-          </svg>
-          
-          {currentResolution && (
-            <ResolutionIndicator
-              resolution={currentResolution}
-              zoomLevel={zoomLevel}
-              candleCount={targetCandles}
-              isTransitioning={isTransitioning}
-            />
-          )}
-          
-          {isLoading && (
-            <div className="loading-overlay">
-              <div className="loading-spinner" />
-              <div className="loading-text">Loading {currentResolution?.label} data...</div>
-            </div>
-          )}
-          
-          {error && (
-            <div className="error-overlay">
-              <div className="error-message">{error.message}</div>
-            </div>
-          )}
-          
-          {!isLoading && !error && chartData.length === 0 && (
-            <div className="error-overlay">
-              <div className="error-message">No data available. Please check symbol and date range.</div>
-            </div>
-          )}
-        </div>
+    <div className="infinite-zoom-chart-container" ref={containerRef}>
+      <div className="canvas-stack" style={{ width, height }}>
+        <canvas ref={mainCanvasRef} className="main-canvas" />
+        <canvas ref={bufferCanvasRef} className="buffer-canvas" style={{ display: 'none' }} />
+        <canvas ref={patternsCanvasRef} className="patterns-canvas" />
+        <canvas 
+          ref={interactionCanvasRef} 
+          className="interaction-canvas"
+          onClick={handleCanvasClick}
+          onMouseDown={panController.handleMouseDown}
+          onMouseMove={panController.handleMouseMove}
+          onMouseUp={panController.handleMouseUp}
+          onMouseLeave={panController.handleMouseLeave}
+          onWheel={zoomController.handleWheel}
+          onTouchStart={panController.handleTouchStart}
+          onTouchMove={(e) => {
+            panController.handleTouchMove(e);
+            zoomController.handlePinch(e);
+          }}
+          onTouchEnd={panController.handleTouchEnd}
+          style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
+        />
         
-        <div className="zoom-controls">
-          <button 
-            className="zoom-button"
-            onClick={() => zoomController.zoomTo(zoomLevel * 1.5)}
-            title="Zoom Out"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M5 9a1 1 0 100 2h10a1 1 0 100-2H5z" />
-            </svg>
-          </button>
-          
-          <button 
-            className="zoom-button"
-            onClick={() => zoomController.resetZoom()}
-            title="Reset Zoom"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9 3a6 6 0 11-4.84 9.5 1 1 0 011.68-1.09A4 4 0 109 5a1 1 0 100-2zm-2 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
-            </svg>
-          </button>
-          
-          <button 
-            className="zoom-button"
-            onClick={() => zoomController.zoomTo(zoomLevel * 0.67)}
-            title="Zoom In"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
-            </svg>
-          </button>
-        </div>
+        {/* Pattern overlay */}
+        <svg className="pattern-overlay">
+          <g transform={`translate(${CHART_MARGIN.left}, ${CHART_MARGIN.top})`}>
+            <ChartPatternLayer
+              candles={dataToUse}
+              xScale={(index: number) => {
+                const visibleData = dataToUse.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+                const timeScale = createSequentialTimeScale(
+                  width - CHART_MARGIN.left - CHART_MARGIN.right,
+                  visibleData,
+                  [0, visibleData.length - 1]
+                );
+                const candle = dataToUse[index];
+                if (!candle) return 0;
+                return timeScale.scale(new Date(candle.timestamp));
+              }}
+              yScale={(price: number) => {
+                const priceScale = createPriceScale(
+                  height - CHART_MARGIN.top - CHART_MARGIN.bottom,
+                  [visibleRange.minPrice, visibleRange.maxPrice]
+                );
+                return priceScale.scale(price);
+              }}
+              width={width - CHART_MARGIN.left - CHART_MARGIN.right}
+              height={height - CHART_MARGIN.top - CHART_MARGIN.bottom}
+            />
+          </g>
+        </svg>
+        
+        {currentResolution && (
+          <ResolutionIndicator
+            resolution={currentResolution}
+            zoomLevel={zoomLevel}
+            candleCount={targetCandles}
+            isTransitioning={isTransitioning}
+          />
+        )}
+        
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner" />
+            <div className="loading-text">Loading {currentResolution?.label} data...</div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="error-overlay">
+            <div className="error-message">{error.message}</div>
+          </div>
+        )}
+        
+        {!isLoading && !error && dataToUse.length === 0 && (
+          <div className="error-overlay">
+            <div className="error-message">No data available. Please check symbol and date range.</div>
+          </div>
+        )}
       </div>
-    </HoverMetricsProvider>
+      
+      <div className="zoom-controls">
+        <button 
+          className="zoom-button"
+          onClick={() => {
+            zoomController.zoomTo(zoomLevel * 1.5);
+          }}
+          title="Zoom Out"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M5 9a1 1 0 100 2h10a1 1 0 100-2H5z" />
+          </svg>
+        </button>
+        
+        <button 
+          className="zoom-button"
+          onClick={() => {
+            resetZoomController();
+          }}
+          title="Reset Zoom"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9 3a6 6 0 11-4.84 9.5 1 1 0 011.68-1.09A4 4 0 109 5a1 1 0 100-2zm-2 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+          </svg>
+        </button>
+        
+        <button 
+          className="zoom-button"
+          onClick={() => {
+            zoomController.zoomTo(zoomLevel * 0.67);
+          }}
+          title="Zoom In"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
+          </svg>
+        </button>
+      </div>
+    </div>
   );
-});
+};
 
-InfiniteZoomChartInner.displayName = 'InfiniteZoomChartInner';
+const InfiniteZoomChartInnerWithRef = forwardRef(InfiniteZoomChartInner);
+InfiniteZoomChartInnerWithRef.displayName = 'InfiniteZoomChartInner';
 
 // Main component - no need for PatternProvider wrapper since it's already in AppProviders
 const InfiniteZoomChart = forwardRef<InfiniteZoomChartRef, InfiniteZoomChartProps>((props, ref) => {
-  return <InfiniteZoomChartInner {...props} ref={ref} />;
+  return <InfiniteZoomChartInnerWithRef {...props} ref={ref} />;
 });
 
 InfiniteZoomChart.displayName = 'InfiniteZoomChart';

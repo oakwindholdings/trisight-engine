@@ -1,8 +1,9 @@
 // src/components/Chart/ChartWithContext.tsx
-// Wrapper around TriSightChart with context
+// Wrapper around InfiniteZoomChart with context
 // Handles data fetching and loading overlay
-import React, { useEffect } from 'react';
-import TriSightChart from './TriSightChart';
+import React, { useEffect, useMemo, forwardRef } from 'react';
+import InfiniteZoomChart from './InfiniteZoomChart';
+import { InfiniteZoomChartRef } from './InfiniteZoomChart';
 import { useMarketDataContext } from '../../contexts/MarketDataContext';
 import { usePatternContext } from '../../contexts/PatternContext';
 import { Pattern } from '../../models/PatternTypes';
@@ -16,19 +17,22 @@ interface ChartWithContextProps {
   selectedDate: Date;
   timeframe?: string;
   activeTimeRange: TimeRangeOption;
+  selectedSymbol?: string;
 }
 
-export const ChartWithContext: React.FC<ChartWithContextProps> = ({
+export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContextProps>(({
   width,
   height,
   onPatternSelect,
   selectedPattern,
   selectedDate,
   timeframe,
-  activeTimeRange = '1D'
-}) => {
+  activeTimeRange = '1D',
+  selectedSymbol = 'AAPL'
+}, ref) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`ChartWithContext rendering with activeTimeRange: ${activeTimeRange}`);
+    console.log(`ChartWithContext selectedSymbol: ${selectedSymbol}`);
   }
   
   const { data, fetchSpecificDay, fetchDateRange, loading, error, setIsUsingCustomRange } = useMarketDataContext();
@@ -126,56 +130,133 @@ export const ChartWithContext: React.FC<ChartWithContextProps> = ({
     fetchDataForRange();
   }, [activeTimeRange, selectedDate, fetchSpecificDay, fetchDateRange, setIsUsingCustomRange]);
 
+  // Calculate date range from activeTimeRange
+  const [startDate, endDate] = useMemo(() => {
+    // Get the most recent trading day (skip weekends)
+    const getLastTradingDay = (date: Date): Date => {
+      const d = new Date(date);
+      const day = d.getDay();
+      
+      // If it's Monday morning, use last Friday
+      if (day === 1 && d.getHours() < 10) {
+        d.setDate(d.getDate() - 3);
+      } else if (day === 0) { // Sunday
+        d.setDate(d.getDate() - 2);
+      } else if (day === 6) { // Saturday
+        d.setDate(d.getDate() - 1);
+      }
+      
+      // Always go back one more day to ensure data availability
+      d.setDate(d.getDate() - 1);
+      
+      // Skip weekend again if we landed on one
+      const adjustedDay = d.getDay();
+      if (adjustedDay === 0) { // Sunday
+        d.setDate(d.getDate() - 2);
+      } else if (adjustedDay === 6) { // Saturday
+        d.setDate(d.getDate() - 1);
+      }
+      
+      // Set to market close time (4 PM EST)
+      d.setHours(16, 0, 0, 0);
+      return d;
+    };
+    
+    const endDate = getLastTradingDay(new Date());
+    let startDate: Date;
+    
+    switch (activeTimeRange) {
+      case '1D':
+        // For 1 day, show the last trading day
+        startDate = new Date(endDate);
+        startDate.setHours(9, 30, 0, 0); // Market open
+        break;
+      case '1W':
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 7);
+        startDate = getLastTradingDay(startDate);
+        startDate.setHours(9, 30, 0, 0);
+        break;
+      case '1M':
+        startDate = new Date(endDate);
+        startDate.setMonth(startDate.getMonth() - 1);
+        startDate = getLastTradingDay(startDate);
+        startDate.setHours(9, 30, 0, 0);
+        break;
+      case '3M':
+        startDate = new Date(endDate);
+        startDate.setMonth(startDate.getMonth() - 3);
+        startDate = getLastTradingDay(startDate);
+        startDate.setHours(9, 30, 0, 0);
+        break;
+      case 'YTD':
+        startDate = new Date(endDate.getFullYear(), 0, 2); // Jan 2 to avoid New Year's Day
+        startDate = getLastTradingDay(startDate);
+        startDate.setHours(9, 30, 0, 0);
+        break;
+      case 'Custom':
+        // For custom, use selected date
+        const customEnd = getLastTradingDay(selectedDate);
+        startDate = new Date(customEnd);
+        startDate.setHours(9, 30, 0, 0);
+        return [startDate, customEnd];
+      default:
+        startDate = new Date(endDate);
+        startDate.setHours(9, 30, 0, 0);
+    }
+    
+    return [startDate, endDate];
+  }, [activeTimeRange, selectedDate]);
+
   return (
     <>
       {loading && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255,255,255,0.7)',
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div>Loading market data...</div>
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 10,
+          background: 'rgba(255, 255, 255, 0.9)',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        }}>
+          Loading data...
         </div>
       )}
       {error && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255,255,255,0.7)',
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div>Error loading market data: {error.message}</div>
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          color: 'red',
+          zIndex: 10,
+          background: 'rgba(255, 255, 255, 0.9)',
+          padding: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        }}>
+          Error: {error.message}
         </div>
       )}
-      <TriSightChart
-        data={data}
+      <InfiniteZoomChart
+        ref={ref}
+        symbol={selectedSymbol}
+        startDate={startDate}
+        endDate={endDate}
         patterns={patterns}
         width={width}
         height={height}
         onPatternSelect={onPatternSelect}
         selectedPattern={selectedPattern}
-        timeframe={timeframe || '1min'}
-        autoScale={true} /* Enable auto-scale for better visibility */
+        data={data}
       />
     </>
   );
-};
+});
+
+ChartWithContext.displayName = 'ChartWithContext';
 
 export default ChartWithContext;

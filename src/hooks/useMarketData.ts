@@ -52,7 +52,7 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
       const marketStatusData = await checkMarketStatus();
       setMarketStatus(marketStatusData);
       
-      const candlestickData = await fetchTimeSeries(symbol, timeframe);
+      const candlestickData = await fetchTimeSeries(symbol, timeframe, 500);
       console.log(`[useMarketData] fetchData - received ${candlestickData.length} candles for ${symbol}/${timeframe}`);
       
       // If no data received, use mock data for testing

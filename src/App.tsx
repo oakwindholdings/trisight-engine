@@ -14,11 +14,11 @@ import mainGridStyles from './styles/MainGrid.module.css';
 import SymbolSearch from './components/SymbolSearch';
 import PatternSelector from './components/Patterns/PatternSelector';
 import ChartWithContext from './components/Chart/ChartWithContext';
-import InfiniteZoomChartWithContext from './components/Chart/InfiniteZoomChartWithContext';
 import { InfiniteZoomChartRef } from './components/Chart/InfiniteZoomChart';
 import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithContext';
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
+import { SymbolRankingTable } from './components/SymbolRankingTable';
 
 // Import components
 import ContextBar from './components/Navigation/ContextBar';
@@ -42,12 +42,23 @@ import { Pattern } from './models/PatternTypes';
 // Import hooks
 import useTwelveDataApiKey from './hooks/useTwelveDataApiKey';
 
+// Import mock data
+import { mockSymbolRankings } from './utils/mockData/symbolRankings';
+import { SymbolRanking } from './types/SymbolRanking';
+
+// Styled components
+const SymbolRankingContainer = styled.div`
+  margin-top: 16px;
+  width: 100%;
+`;
+
 // Constants for localStorage keys
 const STORAGE_KEY_DATE = 'trisight_selected_date';
 const STORAGE_KEY_CHART_HEIGHT = 'trisight_chart_height';
 const STORAGE_KEY_TRADING_HOURS = 'trisight_trading_hours_only';
 const STORAGE_KEY_TIMEFRAME = 'selectedTimeframe';
 const STORAGE_KEY_TIME_RANGE = 'selectedTimeRange';
+const STORAGE_KEY_SYMBOL = 'selectedSymbol';
 
 // Helper function to get saved date from localStorage
 const getSavedDate = (): Date => {
@@ -264,39 +275,85 @@ function AppContent() {
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
   const [activeTab, setActiveTab] = useState<'chart' | 'dashboard'>('chart');
   
+  // Symbol selection state
+  const [selectedSymbol, setSelectedSymbol] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_SYMBOL);
+    return saved || 'AAPL';
+  });
+  
+  // State for symbol rankings - initialize with mock data
+  const [symbolRankings, setSymbolRankings] = useState<SymbolRanking[]>(mockSymbolRankings);
+  
+  const handleSymbolSelect = useCallback((symbol: string) => {
+    console.log('[App] handleSymbolSelect called with:', symbol);
+    setSelectedSymbol(symbol);
+    localStorage.setItem(STORAGE_KEY_SYMBOL, symbol);
+    
+    // Check if symbol already exists in rankings
+    const symbolExists = symbolRankings.some(ranking => ranking.symbol === symbol);
+    
+    if (!symbolExists) {
+      console.log('[App] Adding new symbol to rankings:', symbol);
+      // Create a new ranking entry for the symbol with default values
+      const newRanking: SymbolRanking = {
+        symbol: symbol,
+        riskRating: Math.floor(Math.random() * 60) + 20, // Random between 20-80
+        tractionRating: Math.floor(Math.random() * 60) + 20,
+        strengthRating: Math.floor(Math.random() * 60) + 20,
+        timingRating: Math.floor(Math.random() * 60) + 20,
+        businessModelRatio: Math.round((Math.random() * 2 + 1) * 10) / 10, // 1.0-3.0
+        acceleration: Math.round((Math.random() * 5 + 1) * 10) / 10, // 1.0-6.0
+        sectorRating: Math.floor(Math.random() * 60) + 20,
+        currentPrice: Math.round(Math.random() * 900 * 100) / 100 + 10 // 10-910
+      };
+      
+      setSymbolRankings(prevRankings => [...prevRankings, newRanking]);
+    }
+  }, [symbolRankings]);
+  
   // Type-safe tab change handler
   const handleTabChange = (tab: 'chart' | 'dashboard') => {
     setActiveTab(tab);
   };
-  const [showFeedbackModal, setShowFeedbackModal] = useState<boolean>(false);
-  const [chartHeight, setChartHeight] = useState<number>(getSavedChartHeight());
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(getSavedDate());
-  const [useInfiniteZoom, setUseInfiniteZoom] = useState<boolean>(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [chartHeight, setChartHeight] = useState(getSavedChartHeight());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(getSavedDate());
   
   // Initialize selectedDate to the last trading day
   useEffect(() => {
     const today = new Date();
     
-    // If today is Sunday, go back to Friday
-    if (today.getDay() === 0) {
-      const friday = new Date(today);
-      friday.setDate(today.getDate() - 2);
-      setSelectedDate(friday);
+    // Clear any lingering selected pattern on mount
+    console.log('[App] Clearing selectedPattern on mount');
+    setSelectedPattern(null);
+    setShowFeedbackModal(false);
+    
+    // Check if today is Saturday or Sunday
+    const dayOfWeek = today.getDay();
+    if (dayOfWeek === 0) { // Sunday
+      // Go back to Friday
+      today.setDate(today.getDate() - 2);
+    } else if (dayOfWeek === 6) { // Saturday
+      // Go back to Friday
+      today.setDate(today.getDate() - 1);
     }
     
-    // If today is Saturday, go back to Friday
-    if (today.getDay() === 6) {
-      const friday = new Date(today);
-      friday.setDate(today.getDate() - 1);
-      setSelectedDate(friday);
+    // Set time to 4 PM ET (end of trading day)
+    today.setHours(16, 0, 0, 0);
+    
+    // Only update if different from current selectedDate
+    if (selectedDate.getTime() !== today.getTime()) {
+      setSelectedDate(today);
     }
-  }, []);
+  }, []); // Empty dependency array - run only on mount
   
   // Handle pattern selection
   const handlePatternSelect = (pattern: Pattern | null) => {
+    console.log('[App] handlePatternSelect called with pattern:', pattern);
     setSelectedPattern(pattern);
     if (pattern) {
+      console.log('[App] Setting showFeedbackModal to true');
       setShowFeedbackModal(true);
     }
   };
@@ -321,7 +378,9 @@ function AppContent() {
   
   // Handle feedback modal close
   const handleFeedbackModalClose = () => {
+    console.log('[App] Closing feedback modal and clearing selectedPattern');
     setShowFeedbackModal(false);
+    setSelectedPattern(null); // Clear selected pattern when closing modal
   };
   
   // Refresh pattern detection
@@ -343,7 +402,7 @@ function AppContent() {
   );
   
   // State for UI interactions specific to new components
-  const [showTradingHoursOnly, setShowTradingHoursOnly] = useState<boolean>(() => {
+  const [showTradingHoursOnly, setShowTradingHoursOnly] = useState(() => {
     try {
       const savedSetting = localStorage.getItem(STORAGE_KEY_TRADING_HOURS);
       return savedSetting === null ? true : savedSetting === 'true';
@@ -353,7 +412,7 @@ function AppContent() {
     }
   });
   // Initialize timeframe from localStorage or default to 1min
-  const [timeframe, setTimeframe] = useState<string>(() => {
+  const [timeframe, setTimeframe] = useState(() => {
     try {
       const savedTimeframe = localStorage.getItem(STORAGE_KEY_TIMEFRAME);
       return savedTimeframe || '1min';
@@ -374,13 +433,13 @@ function AppContent() {
     }
   });
   
-  console.log(`AppContent render - activeTimeRange: ${activeTimeRange}, useInfiniteZoom: ${useInfiniteZoom}, activeTab: ${activeTab}`);
+  console.log(`AppContent render - activeTimeRange: ${activeTimeRange}, activeTab: ${activeTab}`);
   console.log(`About to check activeTab === 'chart': ${activeTab === 'chart'}`);
-  console.log(`Chart should render: ${activeTab === 'chart' && !useInfiniteZoom}`);
+  console.log(`Chart should render: ${activeTab === 'chart'}`);
   
   // Debug which chart component will render
   if (activeTab === 'chart') {
-    console.log(`Chart tab is active. Will render ${useInfiniteZoom ? 'InfiniteZoomChartWithContext' : 'ChartWithContext'}`);
+    console.log(`Chart tab is active. Will render ChartWithContext`);
   }
   
   // Viewport state for chart controls
@@ -642,61 +701,69 @@ function AppContent() {
               activeTab={activeTab}
               onTabChange={handleTabChange}
               onSettingsToggle={handleSettingsToggle}
+              onSymbolSelect={handleSymbolSelect}
             />
           </div>
-          
           <div className={mainGridStyles.content}>
             {activeTab === 'chart' ? (
-              <div className={mainGridStyles.chartGrid}>
-                
-                <div className={mainGridStyles.chartArea}>
-                  <ChartWorkspace
-                    data={data}
-                    patterns={patterns}
-                    width={window.innerWidth - 284} // Adjusting for PatternPanel width 
-                    height={chartHeight}
-                    onPatternSelect={handlePatternSelect}
-                    selectedPattern={selectedPattern}
-                    timeframe={timeframe}
-                    onTimeframeChange={handleTimeframeChange}
-                    showTradingHoursOnly={showTradingHoursOnly}
-                    onTradingHoursToggle={handleTradingHoursToggle}
-                    onAutoScale={handleAutoScale}
-                    onResetView={handleResetView}
-                    autoScale={viewportState.autoScaled}
-                    activeTimeRange={activeTimeRange}
-                    onTimeRangeSelect={handleTimeRangeSelect}
-                  />
-                </div>
-                
-                <div className={mainGridStyles.panel}>
-                  {selectedPattern ? (
-                    <AnalysisPanel
-                      selectedPattern={selectedPattern}
-                      onFeedbackClick={() => setShowFeedbackModal(true)}
-                      onSaveClick={handleSavePattern}
-                    />
-                  ) : (
-                    <PatternPanel
+              <>
+                <div className={mainGridStyles.chartGrid}>
+                  <div className={mainGridStyles.chartArea}>
+                    <ChartWorkspace
+                      data={data}
                       patterns={patterns}
-                      selectedPattern={selectedPattern}
+                      width={window.innerWidth - 284} // Adjusting for PatternPanel width 
+                      height={chartHeight}
                       onPatternSelect={handlePatternSelect}
-                      patternFilters={patternFilters}
-                      onFilterChange={handleFilterChange}
-                      chartHeight={chartHeight}
-                      onChartHeightChange={(newHeight) => {
-                        setChartHeight(newHeight);
-                        saveChartHeight(newHeight); // Save to localStorage
-                      }}
+                      selectedPattern={selectedPattern}
+                      timeframe={timeframe}
+                      onTimeframeChange={handleTimeframeChange}
+                      showTradingHoursOnly={showTradingHoursOnly}
+                      onTradingHoursToggle={handleTradingHoursToggle}
+                      onAutoScale={handleAutoScale}
+                      onResetView={handleResetView}
+                      autoScale={viewportState.autoScaled}
+                      activeTimeRange={activeTimeRange}
+                      onTimeRangeSelect={handleTimeRangeSelect}
+                      selectedSymbol={selectedSymbol}
                     />
-                  )}
+                  </div>
+                  <div className={mainGridStyles.panel}>
+                    {selectedPattern ? (
+                      <AnalysisPanel
+                        selectedPattern={selectedPattern}
+                        onFeedbackClick={() => setShowFeedbackModal(true)}
+                        onSaveClick={handleSavePattern}
+                      />
+                    ) : (
+                      <PatternPanel
+                        patterns={patterns}
+                        selectedPattern={selectedPattern}
+                        onPatternSelect={handlePatternSelect}
+                        patternFilters={patternFilters}
+                        onFilterChange={handleFilterChange}
+                        chartHeight={chartHeight}
+                        onChartHeightChange={(newHeight) => {
+                          setChartHeight(newHeight);
+                          saveChartHeight(newHeight); // Save to localStorage
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
+                <SymbolRankingContainer>
+                  <SymbolRankingTable
+                    rankings={symbolRankings}
+                    selectedSymbol={selectedSymbol}
+                    onSymbolSelect={handleSymbolSelect}
+                    loading={false}
+                  />
+                </SymbolRankingContainer>
+              </>
             ) : (
               <LearningDashboard />
             )}
           </div>
-          
           <div className={mainGridStyles.footer}>
             TriSight Pattern Training Interface &copy; {new Date().getFullYear()}
           </div>
@@ -708,7 +775,6 @@ function AppContent() {
             <Title>TriSight Pattern Training Interface</Title>
             <SymbolSearch />
           </Header>
-          
           <TabBar>
             <Tab 
               $active={activeTab === 'chart'} 
@@ -723,7 +789,6 @@ function AppContent() {
               Learning Dashboard
             </Tab>
           </TabBar>
-          
           <ContentArea>
             <>
               {activeTab === 'chart' && (
@@ -739,7 +804,6 @@ function AppContent() {
                         className="date-picker"
                       />
                     </ControlGroup>
-                    
                     <ControlGroup>
                       <Label>Chart Height:</Label>
                       <HeightInput
@@ -750,25 +814,15 @@ function AppContent() {
                         max="2000"
                         step="50"
                       />
-                      
                       <RefreshButton
                         onClick={handleRefreshPatterns}
                         disabled={isRefreshing || data.length === 0}
                       >
                         {isRefreshing ? 'Detecting...' : `Refresh (${totalPatterns})`}
                       </RefreshButton>
-                      
-                      <RefreshButton
-                        onClick={() => setUseInfiniteZoom(!useInfiniteZoom)}
-                        style={{ marginLeft: '10px' }}
-                      >
-                        {useInfiniteZoom ? 'Standard Chart' : 'Infinite Zoom'}
-                      </RefreshButton>
                     </ControlGroup>
                   </ControlsContainer>
-                  
                   <PatternSelector />
-                  
                   <ChartContainer $chartHeight={chartHeight}>
                     {/* Add ChartControlBar component above the chart */}
                     <ChartControlBar 
@@ -778,39 +832,21 @@ function AppContent() {
                       onTradingHoursToggle={handleTradingHoursToggle}
                       onAutoScale={handleAutoScale}
                       onResetView={handleResetView}
-                      onZoomToFit={useInfiniteZoom ? handleZoomToFit : undefined}
+                      onZoomToFit={handleZoomToFit}
                       activeTimeRange={activeTimeRange}
                       onTimeRangeSelect={handleTimeRangeSelect}
                     />
-                    {useInfiniteZoom ? (
-                      <>
-                        {console.log('Rendering InfiniteZoomChartWithContext')}
-                        <InfiniteZoomChartWithContext 
-                          ref={chartRef}
-                          width={window.innerWidth - 48} 
-                          height={chartHeight}
-                          onPatternSelect={handlePatternSelect}
-                          selectedPattern={selectedPattern}
-                          selectedDate={selectedDate}
-                          timeframe={timeframe}
-                          activeTimeRange={activeTimeRange}
-                          onTimeRangeSelect={handleTimeRangeSelect}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        {console.log('Rendering ChartWithContext')}
-                        <ChartWithContext 
-                          width={window.innerWidth - 48} 
-                          height={chartHeight}
-                          onPatternSelect={handlePatternSelect}
-                          selectedPattern={selectedPattern}
-                          selectedDate={selectedDate}
-                          timeframe={timeframe}
-                          activeTimeRange={activeTimeRange}
-                        />
-                      </>
-                    )}
+                    <ChartWithContext 
+                      ref={chartRef}
+                      width={window.innerWidth - 48} 
+                      height={chartHeight}
+                      onPatternSelect={handlePatternSelect}
+                      selectedPattern={selectedPattern}
+                      selectedDate={selectedDate}
+                      timeframe={timeframe}
+                      activeTimeRange={activeTimeRange}
+                      selectedSymbol={selectedSymbol}
+                    />
                   </ChartContainer>
                 </>
               )}
@@ -819,59 +855,57 @@ function AppContent() {
               )}
             </>
           </ContentArea>
-          
           <Footer>
             TriSight Pattern Training Interface &copy; {new Date().getFullYear()}
           </Footer>
         </AppContainer>
       )}
-      
-      {showFeedbackModal && selectedPattern && (
-        <FeedbackModalWithContext 
-          pattern={selectedPattern}
-          onClose={handleFeedbackModalClose}
-          userId={userId}
-        />
-      )}
-      
-      {/* Pattern Details Modal - shown only in legacy mode */}
-      {!isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal && (
-        <PatternDetailsModal />
-      )}
-      
-      {/* Debug overlay to visualize click blocking */}
-      {process.env.NODE_ENV === 'development' && (
-        <div 
-          id="debug-click-test" 
-          style={{
-            position: 'fixed',
-            bottom: 10,
-            right: 10,
-            padding: '10px',
-            background: 'rgba(255, 0, 0, 0.8)',
-            color: 'white',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            zIndex: 9999,
-            pointerEvents: 'auto',
-          }}
-          onClick={() => {
-            console.log('Debug button clicked successfully!');
-            // Removed unused import: debugClickBlocking
-            // Force clear any blocking state
-            setSelectedPattern(null);
-            setShowFeedbackModal(false);
-            // Also check for any CSS issues
-            const appDiv = document.querySelector('.App');
-            if (appDiv) {
-              const computedStyle = window.getComputedStyle(appDiv);
-              console.log('App div pointer-events:', computedStyle.pointerEvents);
-            }
-          }}
-        >
-          Debug Click Issues
-        </div>
-      )}
+      <div>
+        {showFeedbackModal && selectedPattern && (
+          <FeedbackModalWithContext 
+            pattern={selectedPattern}
+            onClose={handleFeedbackModalClose}
+            userId={userId}
+          />
+        )}
+        {/* Pattern Details Modal - shown only in legacy mode */}
+        {!isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal && (
+          <PatternDetailsModal />
+        )}
+        {/* Debug overlay to visualize click blocking */}
+        {process.env.NODE_ENV === 'development' && (
+          <div 
+            id="debug-click-test" 
+            style={{
+              position: 'fixed',
+              bottom: 10,
+              right: 10,
+              padding: '10px',
+              background: 'rgba(255, 0, 0, 0.8)',
+              color: 'white',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              zIndex: 9999,
+              pointerEvents: 'auto',
+            }}
+            onClick={() => {
+              console.log('Debug button clicked successfully!');
+              // Removed unused import: debugClickBlocking
+              // Force clear any blocking state
+              setSelectedPattern(null);
+              setShowFeedbackModal(false);
+              // Also check for any CSS issues
+              const appDiv = document.querySelector('.App');
+              if (appDiv) {
+                const computedStyle = window.getComputedStyle(appDiv);
+                console.log('App div pointer-events:', computedStyle.pointerEvents);
+              }
+            }}
+          >
+            Debug Click Issues
+          </div>
+        )}
+      </div>
     </div>
   );
 }

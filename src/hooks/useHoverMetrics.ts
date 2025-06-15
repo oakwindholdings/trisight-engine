@@ -10,6 +10,7 @@ interface HoverMetrics {
   x: number;
   y: number;
   bj: number | string;
+  candle?: any;
 }
 
 const HoverMetricsContext = createContext<HoverMetrics | null>(null);
@@ -20,60 +21,69 @@ export function useHoverMetricsContext() {
 
 export function useHoverMetrics(
   ref: React.RefObject<HTMLDivElement | null>, 
-  candleWidth: number = 10,
-  visibleStartIndex: number = 0
+  timeScale?: { invert: (pixel: number) => Date },
+  data?: any[],
+  margin?: { left: number; top: number; right?: number; bottom?: number },
+  visibleDataIndices?: { start: number; end: number }
 ) {
   const { bjCounts, escalatorDir } = usePatternContext();
   const [hoverData, setHoverData] = useState<HoverMetrics | null>(null);
   
-  console.log('[useHoverMetrics] Hook called with:', {
-    candleWidth,
-    visibleStartIndex,
-    escalatorDirLength: escalatorDir?.length,
-    bjCountsLength: bjCounts?.length,
-    patternDataHash: escalatorDir && escalatorDir.length > 0 ? 
-      `${escalatorDir.length}_${escalatorDir[0]}_${escalatorDir[escalatorDir.length - 1]}` : 
-      'no_data'
-  });
-  
   useEffect(() => {
     const node = ref.current;
-    if (!node) return;
+    if (!node || !timeScale || !data) return;
     
     const handler = (ev: MouseEvent) => {
-      const relativeIdx = Math.floor(ev.offsetX / candleWidth);
-      const absoluteIdx = relativeIdx + visibleStartIndex;
+      const rect = node.getBoundingClientRect();
+      const offsetX = ev.clientX - rect.left - (margin?.left || 0);
+      
+      // Check if mouse is within the plot area (excluding margins)
+      const mouseX = ev.clientX - rect.left;
+      const mouseY = ev.clientY - rect.top;
+      const plotLeft = margin?.left || 0;
+      const plotTop = margin?.top || 0;
+      const plotRight = rect.width - (margin?.right || 0);
+      const plotBottom = rect.height - (margin?.bottom || 0);
+      
+      if (mouseX < plotLeft || mouseX > plotRight || mouseY < plotTop || mouseY > plotBottom) {
+        setHoverData(null);
+        return;
+      }
+      
+      if (!timeScale || !data || data.length === 0) {
+        return;
+      }
+      
+      // Use timeScale.invert to get the date at this pixel position
+      const date = timeScale.invert(offsetX);
+      
+      // Find the closest candle to this date
+      let closestIndex = 0;
+      let minDiff = Infinity;
+      
+      // If we have visible indices, search within the visible slice
+      const searchStart = visibleDataIndices?.start || 0;
+      const searchEnd = visibleDataIndices?.end || data.length - 1;
+      
+      for (let i = searchStart; i <= searchEnd; i++) {
+        const diff = Math.abs(data[i].timestamp - date.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIndex = i;
+        }
+      }
       
       // Safety check: Don't access pattern arrays if they seem out of sync
-      const isPatternDataValid = escalatorDir && escalatorDir.length > 0 && absoluteIdx < escalatorDir.length;
+      const isPatternDataValid = escalatorDir && escalatorDir.length > 0 && closestIndex < escalatorDir.length;
       
-      console.log('[useHoverMetrics] Mouse event:', {
-        offsetX: ev.offsetX,
-        candleWidth,
-        relativeIdx,
-        visibleStartIndex,
-        absoluteIdx,
-        bjCountsLength: bjCounts?.length || 0,
-        escalatorDirLength: escalatorDir?.length || 0,
-        escalatorAtAbsIdx: isPatternDataValid ? escalatorDir[absoluteIdx] : 'OUT_OF_BOUNDS',
-        escalatorAroundIdx: isPatternDataValid ? escalatorDir.slice(Math.max(0, absoluteIdx - 2), absoluteIdx + 3) : [],
-        isPatternDataValid
-      });
-      
-      console.log('[useHoverMetrics] Calculated index:', {
-        relativeIdx,
-        visibleStartIndex,
-        absoluteIdx
-      });
-      
-      const bj = bjCounts[absoluteIdx] ?? 'n/a';
+      const bj = bjCounts[closestIndex] ?? 'n/a';
       setHoverData({
-        idx: absoluteIdx,  // Use absolute index
+        idx: closestIndex,
         x: ev.clientX,
         y: ev.clientY,
-        bj
+        bj,
+        candle: data[closestIndex] // Include the actual candle data for accurate OHLC display
       });
-      console.log('[Hover]', 'relative:', relativeIdx, 'absolute:', absoluteIdx, 'BJ', bj, 'offsetX', ev.offsetX, 'candleWidth', candleWidth, 'visibleStart:', visibleStartIndex);
     };
     
     const handleMouseLeave = () => {
@@ -86,7 +96,7 @@ export function useHoverMetrics(
       node.removeEventListener('mousemove', handler);
       node.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [ref, bjCounts, candleWidth, visibleStartIndex, escalatorDir]);
+  }, [ref, bjCounts, timeScale, data, margin, escalatorDir, visibleDataIndices]);
   
   return { hoverData, HoverMetricsProvider: HoverMetricsContext.Provider };
 }

@@ -85,8 +85,30 @@ export function renderChart(args: RenderArgs) {
   const timeScale = createSequentialTimeScale(width - margin.left - margin.right, visibleData, [margin.left, width - margin.right]);
   const priceScale = createPriceScale(height - margin.top - margin.bottom, [visibleRange.minPrice, visibleRange.maxPrice], [height - margin.bottom, margin.top]);
 
+  // Debug price scale
+  console.log('[RenderOrchestrator] Price scale info:', {
+    domain: [visibleRange.minPrice, visibleRange.maxPrice],
+    range: [height - margin.bottom, margin.top],
+    testLowPrice: priceScale.scale(visibleRange.minPrice),
+    testHighPrice: priceScale.scale(visibleRange.maxPrice)
+  });
+
   CandlestickRenderer.render(bufferCtx, visibleData, timeScale, priceScale, { width, height, margin });
   mainCtx.drawImage(bufferCanvas, 0, 0);
+  
+  // Debug pattern rendering
+  console.log('[RenderOrchestrator] Rendering patterns:', {
+    patternCount: visiblePatterns.length,
+    patterns: visiblePatterns.map(p => ({
+      id: p.id,
+      type: p.type,
+      highPrice: p.highPrice,
+      lowPrice: p.lowPrice,
+      scaledHighY: priceScale.scale(p.highPrice),
+      scaledLowY: priceScale.scale(p.lowPrice)
+    }))
+  });
+  
   PatternRenderer.render(patternsCtx, visiblePatterns, timeScale, priceScale, { width, height, margin }, selectedPattern || null);
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });

@@ -70,7 +70,11 @@ const LoadingIndicator = styled.div`
   text-align: center;
 `;
 
-const SymbolSearch: React.FC = () => {
+interface SymbolSearchProps {
+  onSymbolSelect?: (symbol: string) => void;
+}
+
+const SymbolSearch: React.FC<SymbolSearchProps> = ({ onSymbolSelect }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Array<{
     symbol: string;
@@ -153,9 +157,18 @@ const SymbolSearch: React.FC = () => {
   
   // Handle symbol selection
   const handleSelectSymbol = (selectedSymbol: string) => {
+    console.log('[SymbolSearch] handleSelectSymbol called with:', selectedSymbol);
+    console.log('[SymbolSearch] onSymbolSelect prop exists:', !!onSymbolSelect);
+    
     setSymbol(selectedSymbol);
     setQuery(selectedSymbol);
     setShowResults(false);
+    
+    // Call the optional callback
+    if (onSymbolSelect) {
+      console.log('[SymbolSearch] Calling onSymbolSelect callback');
+      onSymbolSelect(selectedSymbol);
+    }
   };
   
   return (

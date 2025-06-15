@@ -2,12 +2,10 @@
 // Container for chart and its controls
 // Manages chart workspace layout
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import styled from 'styled-components';
-import TriSightChart from './TriSightChart';
+import InfiniteZoomChart, { InfiniteZoomChartRef } from './InfiniteZoomChart';
 import ChartControlBar from './ChartControlBar';
-import InfiniteZoomChartWithContext from './InfiniteZoomChartWithContext';
-import { InfiniteZoomChartRef } from './InfiniteZoomChart';
 import { ThemeTokens } from '../../styles/theme';
 import { TimeRangeOption } from './TimeRangeSelector';
 
@@ -26,46 +24,23 @@ const ChartContainer = styled.div`
   /* Maintain original chart sizing behavior while adding new container */
 `;
 
-const ToggleButton = styled.button`
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 1000;
-  padding: 8px 16px;
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  pointer-events: auto;
-  
-  &:hover {
-    background-color: #1976d2;
-  }
-  
-  &:active {
-    background-color: #1565c0;
-  }
-`;
-
 interface ChartWorkspaceProps {
-  data: any;
+  data: any[];
   patterns: any[];
   width: number;
   height: number;
   onPatternSelect: (pattern: any) => void;
-  selectedPattern: any | null;
+  selectedPattern?: any;
   timeframe: string;
   onTimeframeChange: (timeframe: string) => void;
   showTradingHoursOnly: boolean;
   onTradingHoursToggle: () => void;
   onAutoScale: () => void;
   onResetView: () => void;
-  autoScale?: boolean; // Add autoScale prop
-  // Add time range selector props
+  autoScale?: boolean;
   activeTimeRange: TimeRangeOption;
   onTimeRangeSelect: (range: TimeRangeOption, startDate: Date, endDate: Date) => void;
+  selectedSymbol: string;
 }
 
 const ChartWorkspace: React.FC<ChartWorkspaceProps> = ({
@@ -83,9 +58,9 @@ const ChartWorkspace: React.FC<ChartWorkspaceProps> = ({
   onResetView,
   autoScale = false,
   activeTimeRange,
-  onTimeRangeSelect
+  onTimeRangeSelect,
+  selectedSymbol
 }) => {
-  const [useInfiniteZoom, setUseInfiniteZoom] = useState(false);
   const chartRef = useRef<InfiniteZoomChartRef>(null);
   const [selectedDate] = useState(() => new Date());
 
@@ -95,55 +70,70 @@ const ChartWorkspace: React.FC<ChartWorkspaceProps> = ({
     }
   };
 
-  const handleToggleChart = () => {
-    console.log('Toggle button clicked! Current state:', useInfiniteZoom, '-> New state:', !useInfiniteZoom);
-    setUseInfiniteZoom(!useInfiniteZoom);
-  };
+  // Calculate date range from activeTimeRange
+  const [startDate, endDate] = useMemo(() => {
+    const endDate = new Date();
+    let startDate: Date;
+    
+    switch (activeTimeRange) {
+      case '1D':
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 1);
+        break;
+      case '1W':
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case '1M':
+        startDate = new Date(endDate);
+        startDate.setMonth(startDate.getMonth() - 1);
+        break;
+      case '3M':
+        startDate = new Date(endDate);
+        startDate.setMonth(startDate.getMonth() - 3);
+        break;
+      case 'YTD':
+        startDate = new Date(endDate.getFullYear(), 0, 1);
+        break;
+      case 'Custom':
+        // For custom, default to last day
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 1);
+        break;
+      default:
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 1);
+    }
+    
+    return [startDate, endDate];
+  }, [activeTimeRange]);
 
   return (
     <WorkspaceContainer>
       {/* Chart Controls - top area */}
-      <ChartControlBar 
+      <ChartControlBar
         timeframe={timeframe}
         onTimeframeChange={onTimeframeChange}
         showTradingHoursOnly={showTradingHoursOnly}
         onTradingHoursToggle={onTradingHoursToggle}
         onAutoScale={onAutoScale}
         onResetView={onResetView}
-        onZoomToFit={useInfiniteZoom ? handleZoomToFit : undefined}
+        onZoomToFit={handleZoomToFit}
         activeTimeRange={activeTimeRange}
         onTimeRangeSelect={onTimeRangeSelect}
       />
-      
       {/* Main Chart Area */}
       <ChartContainer>
-        <ToggleButton onClick={handleToggleChart}>
-          {useInfiniteZoom ? 'Standard Chart' : 'Infinite Zoom'}
-        </ToggleButton>
-        {useInfiniteZoom ? (
-          <InfiniteZoomChartWithContext
-            ref={chartRef}
-            width={width}
-            height={height}
-            onPatternSelect={onPatternSelect}
-            selectedPattern={selectedPattern}
-            selectedDate={selectedDate}
-            timeframe={timeframe}
-            activeTimeRange={activeTimeRange}
-            onTimeRangeSelect={onTimeRangeSelect}
-          />
-        ) : (
-          <TriSightChart
-            data={data}
-            patterns={patterns}
-            width={width}
-            height={height}
-            onPatternSelect={onPatternSelect}
-            selectedPattern={selectedPattern}
-            timeframe={timeframe} /* Pass timeframe prop to chart */
-            autoScale={autoScale} /* Pass autoScale prop to chart */
-          />
-        )}
+        <InfiniteZoomChart
+          ref={chartRef}
+          symbol={selectedSymbol || 'AAPL'}
+          startDate={startDate}
+          endDate={endDate}
+          width={width}
+          height={height}
+          patterns={patterns}
+          onPatternSelect={onPatternSelect}
+        />
       </ChartContainer>
     </WorkspaceContainer>
   );

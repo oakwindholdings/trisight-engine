@@ -7,6 +7,7 @@ import SymbolSearch from '../SymbolSearch';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ThemeTokens } from '../../styles/theme';
+import { useUIState } from '../../contexts/UIStateContext';
 
 // Container for the entire context bar
 const ContextBarContainer = styled.div`
@@ -55,6 +56,7 @@ interface ContextBarProps {
   activeTab: 'chart' | 'dashboard';
   onTabChange: (tab: 'chart' | 'dashboard') => void;
   onSettingsToggle: () => void;
+  onSymbolSelect?: (symbol: string) => void;
 }
 
 const ContextBar: React.FC<ContextBarProps> = ({
@@ -63,12 +65,15 @@ const ContextBar: React.FC<ContextBarProps> = ({
   activeTab,
   onTabChange,
   onSettingsToggle,
+  onSymbolSelect,
 }) => {
+  const { setIsDatePickerOpen } = useUIState();
+  
   return (
     <ContextBarContainer>
       <LeftGroup>
         {/* Search Control */}
-        <SymbolSearch />
+        <SymbolSearch onSymbolSelect={onSymbolSelect} />
         
         {/* Date Control */}
         <DatePickerWrapper>
@@ -76,6 +81,8 @@ const ContextBar: React.FC<ContextBarProps> = ({
             selected={selectedDate}
             onChange={onDateChange}
             dateFormat="MM/dd/yyyy"
+            onCalendarOpen={() => setIsDatePickerOpen(true)}
+            onCalendarClose={() => setIsDatePickerOpen(false)}
           />
         </DatePickerWrapper>
       </LeftGroup>

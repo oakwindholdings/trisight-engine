@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Candle, EscalatorRun } from '../types';
 import { detectEscalators } from '../patternEngine/escalator';
+import { detectEscalatorSteps } from '../patternEngine/escalatorStep';
 import { detectGoldmine, GoldmineSignal } from '../patternEngine/goldmine';
 import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop';
 import { getIntrinsicScore } from '../patternEngine/blackjack';
@@ -17,8 +18,8 @@ export interface Position {
 }
 
 export interface PatternEvent {
-  type: 'ESCALATOR' | 'GOLDMINE' | 'STOP_EVENT';
-  data: EscalatorRun | GoldmineSignal | StopLossEvent;
+  type: 'ESCALATOR' | 'ESCALATOR_STEP' | 'GOLDMINE' | 'STOP_EVENT';
+  data: EscalatorRun | GoldmineSignal | StopLossEvent | any; // 'any' for StepBox data
   timestamp: number;
 }
 
@@ -30,6 +31,15 @@ export interface PatternBusState {
 }
 
 export function usePatternBus(candles: Candle[]): PatternBusState {
+  // Debug: Log what we receive
+  console.log('[usePatternBus] Hook called with:', {
+    candlesLength: candles?.length || 0,
+    candlesType: typeof candles,
+    isArray: Array.isArray(candles),
+    firstCandle: candles?.[0]?.datetime,
+    caller: new Error().stack?.split('\n')[2]?.trim() // Track which component called us
+  });
+
   const [events, setEvents] = useState<PatternEvent[]>([]);
   const [activePosition, setActivePosition] = useState<Position | undefined>();
   const [isPatternDetectionComplete, setIsPatternDetectionComplete] = useState(false);
@@ -47,7 +57,8 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setEscalatorLength,
     setGoldmineQual,
     setTrailStop,
-    setDistToStopPct
+    setDistToStopPct,
+    setEscalatorSteps
   } = usePatternContext();
   
   console.log('[usePatternBus] Got context setters:', {
@@ -70,9 +81,10 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setGoldmineQual([]);
     setTrailStop([]);
     setDistToStopPct([]);
+    setEscalatorSteps([]);
   }, [candles.length, candles[0]?.datetime, candles[candles.length - 1]?.datetime,
       setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, 
-      setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct]);
+      setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps]);
 
   // Run pattern detection
   useEffect(() => {
@@ -126,6 +138,39 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     // 1. Detect Escalator patterns
     const escalators = detectEscalators(candles);
     console.log('[PatternBus] Detected escalators:', escalators.length);
+    console.log('[PatternBus] Escalator details:', escalators.map(e => ({
+      startIndex: e.startIndex,
+      endIndex: e.endIndex,
+      direction: e.direction,
+      stepsCount: e.steps.length
+    })));
+    
+    // 1b. Detect Escalator Steps
+    const escalatorSteps = detectEscalatorSteps(candles);
+    console.log('[PatternBus] Detected escalator steps:', escalatorSteps.length);
+    
+    // Emit events for each detected step
+    const escalatorStepEvents: PatternEvent[] = [];
+    escalatorSteps.forEach(step => {
+      const direction = escalators.find(esc => 
+        esc.steps.some(s => s.startIndex <= step.startIndex && s.endIndex >= step.startIndex)
+      )?.direction === 'BULLISH' ? 'RISING' : 'FALLING';
+      
+      const stepEvent: PatternEvent = {
+        type: 'ESCALATOR_STEP',
+        data: {
+          stepRef: `${step.startIndex}-${step.endIndex}`,
+          direction,
+          floor: step.floor,
+          ceiling: step.ceiling,
+          height: step.height
+        },
+        timestamp: candles[step.endIndex].timestamp
+      };
+      
+      newEvents.push(stepEvent);
+      escalatorStepEvents.push(stepEvent);
+    });
     
     // Debug: Log sample of candles to verify data
     console.log('[PatternBus] Sample candles for pattern detection:', {
@@ -184,6 +229,12 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     // Create per-candle escalator direction array
     const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(candles.length).fill(null);
     
+    console.log('[PatternBus] Before populating escalatorDir:', {
+      escalatorsCount: escalators.length,
+      arrayLength: escalatorDirArray.length,
+      candlesLength: candles.length
+    });
+    
     escalators.forEach(escalator => {
       console.log('[PatternBus] Processing escalator:', {
         startIndex: escalator.startIndex,
@@ -192,14 +243,23 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
         startCandle: candles[escalator.startIndex]?.close,
         endCandle: candles[escalator.endIndex]?.close,
         startDate: candles[escalator.startIndex]?.datetime,
-        endDate: candles[escalator.endIndex]?.datetime
+        endDate: candles[escalator.endIndex]?.datetime,
+        stepsCount: escalator.steps.length
       });
       
       // Fill in the direction for all candles in this escalator run
-      escalator.steps.forEach(step => {
+      escalator.steps.forEach((step, stepIndex) => {
+        console.log(`[PatternBus] Processing step ${stepIndex}:`, {
+          startIndex: step.startIndex,
+          endIndex: step.endIndex,
+          willFill: `indices ${step.startIndex} to ${step.endIndex}`
+        });
+        
         for (let i = step.startIndex; i <= step.endIndex; i++) {
           if (i < candles.length) {
-            escalatorDirArray[i] = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
+            const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
+            escalatorDirArray[i] = dir;
+            console.log(`[PatternBus] Set escalatorDir[${i}] = ${dir}`);
           }
         }
       });
@@ -219,6 +279,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       totalFalling: escalatorDirArray.filter(d => d === 'FALLING').length
     });
     
+    // NOW set the escalator direction array after it's been populated
     setEscalatorDir(escalatorDirArray);
     
     // Build escalator length array
@@ -264,6 +325,35 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     const trailStop = new Array<number>(candles.length).fill(0);
     const distToStopPct = new Array<number>(candles.length).fill(0);
     
+    // Populate goldmine qualifier array based on goldmine events
+    events.forEach(event => {
+      if (event.type === 'GOLDMINE' && event.data) {
+        const goldmine = event.data as any;
+        if (goldmine.entryIndex < candles.length) {
+          goldmineQual[goldmine.entryIndex] = true;
+        }
+      }
+    });
+    
+    // Calculate trailing stops for all candles where escalators exist
+    escalators.forEach(escalator => {
+      // For each escalator, calculate trailing stops using the i-2 method
+      escalator.steps.forEach(step => {
+        // Start calculating stops from the step end + 1
+        for (let i = step.endIndex + 1; i < candles.length; i++) {
+          if (i >= 2) {
+            // Use the low of candle i-2 as the trailing stop
+            const stopPrice = candles[i - 2].low;
+            trailStop[i] = stopPrice;
+            
+            // Calculate distance to stop as percentage
+            const closePrice = candles[i].close;
+            distToStopPct[i] = ((closePrice - stopPrice) / closePrice) * 100;
+          }
+        }
+      });
+    });
+    
     // Push arrays into context
     setBjIntrinsic(bjIntrinsic);
     setBjCumulative(bjCumulative);
@@ -272,6 +362,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setGoldmineQual(goldmineQual);
     setTrailStop(trailStop);
     setDistToStopPct(distToStopPct);
+    setEscalatorSteps(escalatorStepEvents);
 
     // Emit new escalator events (only for the latest patterns to avoid duplicates)
     const latestEscalators = escalators.slice(-5); // Keep last 5 escalators active
@@ -312,18 +403,6 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
             type: 'GOLDMINE',
             data: goldmine,
             timestamp: Date.now()
-          });
-          
-          // Mark goldmine entry in the goldmineQual array
-          if (goldmine.entryIndex < candles.length) {
-            goldmineQual[goldmine.entryIndex] = true;
-          }
-          
-          // Create position for trailing stop
-          setActivePosition({
-            side: goldmine.side,
-            openIndex: latestStep.endIndex + 1 + goldmine.entryIndex,
-            step: latestStep
           });
         }
       }

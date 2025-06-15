@@ -12,7 +12,8 @@
 
 .chartGrid {
   display: grid;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   grid-template-rows: 40px 1fr; /* Chart controls, chart area */
   grid-template-columns: 1fr 300px; /* Main area, side panel */
   grid-template-areas:
@@ -26,7 +27,10 @@
 
 .content {
   grid-area: content;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .footer {

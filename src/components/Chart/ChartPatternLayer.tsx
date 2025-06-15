@@ -1,13 +1,14 @@
 // src/components/Chart/ChartPatternLayer.tsx
 // Chart-agnostic pattern layer that renders pattern markers
-// Uses pattern bus to receive and visualize pattern events
+// Uses pattern context to receive and visualize pattern events
 
 import React from 'react';
 import { Candle } from '../../types';
-import { usePatternBus } from '../../hooks/usePatternBus';
+import { usePatternContext } from '../../contexts/PatternContext';
 import { EscalatorBand } from '../Markers/EscalatorBand';
 import { GoldmineArrow } from '../Markers/GoldmineArrow';
 import { TrailLine } from '../Markers/TrailLine';
+import { StepBox } from '../Markers/StepBox';
 import { EscalatorRun } from '../../types';
 import { GoldmineSignal } from '../../patternEngine/goldmine';
 import { StopLossEvent } from '../../riskEngine/trailingStop';
@@ -27,8 +28,15 @@ export const ChartPatternLayer: React.FC<ChartPatternLayerProps> = ({
   xScale = (index: number) => index * 10,
   yScale = (price: number) => height - price
 }) => {
-  // Use the pattern bus to get pattern events
-  const { events } = usePatternBus(candles);
+  // Debug logging
+  console.log('[ChartPatternLayer] Rendering with candles:', {
+    candleCount: candles?.length || 0,
+    firstCandle: candles?.[0]?.datetime,
+    lastCandle: candles?.[candles.length - 1]?.datetime
+  });
+
+  // Get pattern events from context
+  const { events } = usePatternContext();
 
   if (!candles.length || !events.length) {
     return null;
@@ -53,6 +61,31 @@ export const ChartPatternLayer: React.FC<ChartPatternLayerProps> = ({
             <EscalatorBand
               key={`escalator-${idx}`}
               escalator={escalator}
+              candles={candles}
+              xScale={xScale}
+              yScale={yScale}
+              width={width}
+              height={height}
+            />
+          );
+        } else if (event.type === 'ESCALATOR_STEP') {
+          const stepData = event.data as {
+            stepRef: string;
+            direction: 'RISING' | 'FALLING';
+            floor: number;
+            ceiling: number;
+            height: number;
+          };
+          
+          // Parse stepRef to get start and end indices
+          const [startIndex, endIndex] = stepData.stepRef.split('-').map(Number);
+          
+          return (
+            <StepBox
+              key={`step-${stepData.stepRef}`}
+              step={stepData}
+              startIndex={startIndex}
+              endIndex={endIndex}
               candles={candles}
               xScale={xScale}
               yScale={yScale}

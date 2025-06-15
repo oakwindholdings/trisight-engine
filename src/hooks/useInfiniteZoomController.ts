@@ -80,33 +80,23 @@ export const useInfiniteZoomController = (
 
   // Clear lastFetchParams when symbol changes or on mount
   useEffect(() => {
-    console.log('useInfiniteZoomController - Clearing lastFetchParams due to symbol change or mount');
     lastFetchParams.current = '';
   }, [symbol]);
 
   // Clear lastFetchParams when date range changes
   useEffect(() => {
-    console.log('useInfiniteZoomController - Clearing lastFetchParams due to date range change');
     lastFetchParams.current = '';
   }, [startDate, endDate]);
 
   // Helper function to get resolution that's appropriate for the date range
   const getAppropriateResolution = useCallback((targetCandles: number, dateRange?: { start: Date; end: Date }) => {
     if (!dateRange || !dateRange.start || !dateRange.end) {
-      console.log('getAppropriateResolution - No date range provided, using default resolution selection');
       return getOptimalResolution(targetCandles);
     }
 
     // Calculate the date range in days
     const rangeInMs = dateRange.end.getTime() - dateRange.start.getTime();
     const rangeInDays = rangeInMs / (1000 * 60 * 60 * 24);
-    
-    console.log('getAppropriateResolution - Date range:', {
-      start: dateRange.start.toISOString(),
-      end: dateRange.end.toISOString(),
-      rangeInDays,
-      targetCandles
-    });
     
     // Don't use intervals that are larger than the date range
     // For example, don't use monthly intervals for a 1-week range
@@ -120,19 +110,15 @@ export const useInfiniteZoomController = (
       return true;
     });
 
-    console.log('getAppropriateResolution - Appropriate configs:', appropriateConfigs.map(c => c.interval));
-
     // Find the best resolution from the appropriate ones
     for (const config of appropriateConfigs) {
       if (targetCandles <= config.maxCandles) {
-        console.log('getAppropriateResolution - Selected resolution:', config.interval);
         return config;
       }
     }
     
     // Default to the finest appropriate resolution
     const defaultResolution = appropriateConfigs[0] || RESOLUTION_CONFIGS[0];
-    console.log('getAppropriateResolution - Using default resolution:', defaultResolution.interval);
     return defaultResolution;
   }, []);
 
@@ -153,18 +139,7 @@ export const useInfiniteZoomController = (
 
   // Fetch data at the appropriate resolution
   const fetchDataAtResolution = useCallback(async (resolution: ResolutionConfig) => {
-    console.log('fetchDataAtResolution called with:', {
-      resolution: resolution.interval,
-      symbol,
-      isLoadingData: isLoadingData.current,
-      currentDataLength: data.length
-    });
-    
     if (isLoadingData.current || !symbol) {
-      console.log('fetchDataAtResolution - Skipping:', {
-        isLoadingData: isLoadingData.current,
-        hasSymbol: !!symbol
-      });
       return;
     }
     
@@ -174,28 +149,21 @@ export const useInfiniteZoomController = (
       : '_default';
     const cacheKey = `${symbol}_${resolution.interval}${dateRangeKey}`;
     
-    console.log('fetchDataAtResolution - Cache key:', cacheKey);
-    console.log('fetchDataAtResolution - Last fetch params:', lastFetchParams.current);
-    
     // Check if we're trying to fetch the same data
     if (lastFetchParams.current === cacheKey) {
-      console.log('fetchDataAtResolution - Skipping: same params as last fetch');
       return;
     }
     
     const cached = dataCache.current[cacheKey];
-    console.log('fetchDataAtResolution - Cached data:', cached ? 'found' : 'not found');
     
     // Use cache if data is less than 1 minute old
     if (cached && Date.now() - cached.timestamp < 60000) {
-      console.log('fetchDataAtResolution - Using cached data');
       onDataUpdate(cached.data, resolution);
       setData(cached.data);
       lastFetchParams.current = cacheKey;
       return;
     }
     
-    console.log('fetchDataAtResolution - Proceeding with API fetch');
     isLoadingData.current = true;
     setIsTransitioning(true);
     setLoading(true);
@@ -208,18 +176,13 @@ export const useInfiniteZoomController = (
         // Use the exact date range provided
         fetchStartDate = new Date(startDate);
         fetchEndDate = new Date(endDate);
-        console.log(`useInfiniteZoomController - Using provided date range: ${fetchStartDate.toISOString()} to ${fetchEndDate.toISOString()}`);
       } else {
         // Calculate date range based on resolution if not provided
         fetchEndDate = new Date();
         fetchStartDate = new Date();
         const daysToFetch = resolution.daysPerCandle * 200; // 200 candles worth
         fetchStartDate.setDate(fetchStartDate.getDate() - Math.max(7, daysToFetch));
-        console.log(`useInfiniteZoomController - Using calculated date range: ${fetchStartDate.toISOString()} to ${fetchEndDate.toISOString()}`);
       }
-      
-      console.log(`useInfiniteZoomController - Fetching ${symbol} data with interval ${resolution.interval}`);
-      console.log(`Fetching data from ${fetchStartDate.toISOString()} to ${fetchEndDate.toISOString()}`);
       
       let fetchedData: CandlestickData[] = [];
       let retryWithPreviousDay = false;
@@ -231,10 +194,7 @@ export const useInfiniteZoomController = (
           fetchStartDate,
           fetchEndDate
         );
-        console.log(`useInfiniteZoomController - Fetched ${fetchedData.length} data points`);
       } catch (error) {
-        console.warn('Initial fetch failed:', error);
-        
         // Check if this is a "no data available" error for today's data
         const errorMessage = error instanceof Error ? error.message : String(error);
         const isNoDataError = errorMessage.includes('No data is available') || 
@@ -242,7 +202,6 @@ export const useInfiniteZoomController = (
         const isToday = fetchEndDate.toDateString() === new Date().toDateString();
         
         if (isNoDataError && isToday && startDate && endDate) {
-          console.log('No data available for today, trying previous trading day...');
           retryWithPreviousDay = true;
           
           // Get previous trading day
@@ -263,8 +222,6 @@ export const useInfiniteZoomController = (
           fetchStartDate.setHours(0, 0, 0, 0);
           fetchEndDate.setHours(23, 59, 59, 999);
           
-          console.log(`Retrying with previous trading day: ${fetchStartDate.toISOString()} to ${fetchEndDate.toISOString()}`);
-          
           try {
             fetchedData = await fetchCandlestickData(
               symbol,
@@ -272,9 +229,7 @@ export const useInfiniteZoomController = (
               fetchStartDate,
               fetchEndDate
             );
-            console.log(`Successfully fetched ${fetchedData.length} data points from previous day`);
           } catch (retryError) {
-            console.error('Retry also failed:', retryError);
             throw retryError;
           }
         } else {
@@ -292,21 +247,13 @@ export const useInfiniteZoomController = (
       setData(fetchedData);
       lastFetchParams.current = cacheKey;
     } catch (error) {
-      console.error('Failed to fetch data:', error);
-      console.error('Error details:', {
-        symbol,
-        interval: resolution.interval,
-        startDate: fetchStartDate.toISOString(),
-        endDate: fetchEndDate.toISOString(),
-        error: error instanceof Error ? error.message : String(error)
-      });
       setError(error instanceof Error ? error : new Error(String(error)));
     } finally {
       isLoadingData.current = false;
       setIsTransitioning(false);
       setLoading(false);
     }
-  }, [symbol, onDataUpdate, startDate, endDate, data.length]);
+  }, [symbol, onDataUpdate, startDate, endDate]);
 
   // Handle zoom changes
   const handleZoomChange = useCallback((newZoom: number, originX?: number) => {
@@ -314,20 +261,40 @@ export const useInfiniteZoomController = (
     const dateRange = startDate && endDate ? { start: startDate, end: endDate } : undefined;
     const newResolution = getAppropriateResolution(newTargetCandles, dateRange);
     
-    console.log('useInfiniteZoomController - handleZoomChange:', {
-      newZoom,
-      newTargetCandles,
-      currentResolution: currentResolution.interval,
-      newResolution: newResolution.interval,
-      willChangeResolution: newResolution.interval !== currentResolution.interval
-    });
+    // Calculate pan offset to keep cursor position stable
+    let panOffset = 0;
+    let debugInfo: any = { originX, panOffset: 0 };
     
-    // Store zoom origin for maintaining focus
-    if (originX !== undefined) {
+    if (originX !== undefined && width > 0) {
       const chartWidth = width - margin.left - margin.right;
+      const cursorX = originX - margin.left;
+      const cursorRatio = cursorX / chartWidth;
+      
+      // Calculate how many candles we're zooming in/out by
+      const oldCandles = targetCandles;
+      const newCandles = newTargetCandles;
+      const candleDiff = oldCandles - newCandles;
+      
+      // Calculate pan offset in pixels to keep cursor position stable
+      // When zooming in (fewer candles), we need to pan to keep the cursor position
+      const candleWidth = chartWidth / newCandles;
+      panOffset = candleDiff * candleWidth * (cursorRatio - 0.5);
+      
+      debugInfo = {
+        originX,
+        panOffset,
+        candleDiff,
+        candleWidth,
+        cursorRatio,
+        oldCandles,
+        newCandles,
+        chartWidth
+      };
+      
+      // Store zoom origin for maintaining focus
       zoomOrigin.current = {
-        x: originX - margin.left,
-        ratio: (originX - margin.left) / chartWidth
+        x: cursorX,
+        ratio: cursorRatio
       };
     }
     
@@ -348,13 +315,17 @@ export const useInfiniteZoomController = (
       targetCandles: newTargetCandles
     });
     
-    // Reset pan when zooming
-    setPanState((prev: PanState) => ({ 
-      ...prev,
-      translateX: 0, 
-      momentum: 0,
-      isPanning: false
-    }));
+    // Apply pan offset to keep cursor position stable
+    setPanState((prev: PanState) => { 
+      const newState = {
+        ...prev,
+        translateX: panOffset, 
+        momentum: 0,
+        isPanning: false,
+        previousTranslateX: panOffset
+      };
+      return newState;
+    });
   }, [
     calculateTargetCandles,
     width,
@@ -366,8 +337,8 @@ export const useInfiniteZoomController = (
     isTransitioning,
     startDate,
     endDate,
-    data.length,
-    getAppropriateResolution
+    getAppropriateResolution,
+    targetCandles
   ]);
 
   // Initialize smooth zoom
@@ -436,65 +407,39 @@ export const useInfiniteZoomController = (
       
       // Only update if resolution actually changed
       if (newResolution.interval !== currentResolution.interval) {
-        console.log('Date range changed, updating resolution from', currentResolution.interval, 'to', newResolution.interval);
         setCurrentResolution(newResolution);
       }
     }
-  }, [startDate, endDate, targetCandles, currentResolution.interval, getAppropriateResolution, data.length]);
+  }, [startDate, endDate, targetCandles, currentResolution.interval, getAppropriateResolution]);
 
   // Fetch data when resolution or date range changes
   useEffect(() => {
-    console.log('useInfiniteZoomController - Data fetch useEffect triggered');
-    console.log('Params:', {
-      symbol,
-      interval: currentResolution.interval,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      isLoadingData: isLoadingData.current
-    });
-    
     // Skip if we're already loading
     if (isLoadingData.current) {
-      console.log('useInfiniteZoomController - Skipping fetch, already loading');
       return;
     }
     
     // Create a key to check if params actually changed
     const paramsKey = `${symbol}_${currentResolution.interval}_${startDate?.getTime() || 'none'}_${endDate?.getTime() || 'none'}`;
     
-    console.log('useInfiniteZoomController - Current params key:', paramsKey);
-    console.log('useInfiniteZoomController - Last params key:', lastFetchParams.current);
-    
     // Skip if nothing changed
     if (lastFetchParams.current === paramsKey) {
-      console.log('useInfiniteZoomController - Skipping fetch, params unchanged');
       return;
     }
     
-    console.log('useInfiniteZoomController - Calling fetchDataAtResolution');
     fetchDataAtResolution(currentResolution);
-  }, [symbol, currentResolution.interval, startDate, endDate, fetchDataAtResolution, data.length]);
+  }, [symbol, currentResolution.interval, startDate, endDate, fetchDataAtResolution]);
 
   // Public methods
   const [transition, setTransition] = useState(false);
 
-  const zoomTo = useCallback((targetLevel: number) => {
-    const newLevel = Math.max(0.1, Math.min(10, targetLevel));
-    
-    // Use smooth zoom for animated transition
-    smoothZoomTo(newLevel);
-    
-    setTransition(true);
-    setTimeout(() => setTransition(false), 300);
-  }, [smoothZoomTo]);
-
   const zoomIn = useCallback(() => {
-    zoomTo(zoomLevel * 0.67);
-  }, [zoomLevel, zoomTo]);
+    smoothZoomTo(zoomLevel * 0.67);
+  }, [zoomLevel, smoothZoomTo]);
 
   const zoomOut = useCallback(() => {
-    zoomTo(zoomLevel * 1.5);
-  }, [zoomLevel, zoomTo]);
+    smoothZoomTo(zoomLevel * 1.5);
+  }, [zoomLevel, smoothZoomTo]);
 
   const resetZoom = useCallback(() => {
     // Use smooth zoom to animate back to 1
@@ -521,10 +466,13 @@ export const useInfiniteZoomController = (
     // targetCandles = 100 / zoomLevel, so zoomLevel = 100 / targetCandles
     const optimalZoomLevel = Math.max(0.1, Math.min(10, 100 / idealTotalCandles));
     
-    console.log(`Zoom to fit: data length=${data.length}, chart width=${chartWidth}, optimal zoom=${optimalZoomLevel}`);
-    
-    zoomTo(optimalZoomLevel);
-  }, [data.length, width, margin, zoomTo]);
+    smoothZoomTo(optimalZoomLevel);
+  }, [data.length, width, margin, smoothZoomTo]);
+  
+  // Create zoomTo wrapper function
+  const zoomTo = useCallback((targetLevel: number) => {
+    smoothZoomTo(targetLevel);
+  }, [smoothZoomTo]);
 
   return {
     data,

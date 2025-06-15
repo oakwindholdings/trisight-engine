@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType } from '../models/PatternTypes';
+import { PatternEvent } from './usePatternBus';
 // Import the new adaptive pattern detection service instead of the old PatternDetector
 import { AdaptivePatternDetectionService, PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
 
@@ -32,6 +33,8 @@ export const usePatterns = (data: CandlestickData[]) => {
   const [goldmineQual, setGoldmineQual] = useState<boolean[]>([]);
   const [trailStop, setTrailStop] = useState<number[]>([]);
   const [distToStopPct, setDistToStopPct] = useState<number[]>([]);
+  const [escalatorSteps, setEscalatorSteps] = useState<PatternEvent[]>([]);
+  const [events, setEvents] = useState<PatternEvent[]>([]);  // All pattern events
   
   // Initialize preferences from service (which loads from localStorage)
   const [preferences, setPreferences] = useState<Partial<PatternDetectionPreferences>>(() => {
@@ -209,7 +212,11 @@ export const usePatterns = (data: CandlestickData[]) => {
     trailStop,
     setTrailStop,
     distToStopPct,
-    setDistToStopPct
+    setDistToStopPct,
+    escalatorSteps,
+    setEscalatorSteps,
+    events,
+    setEvents
   };
 };
 

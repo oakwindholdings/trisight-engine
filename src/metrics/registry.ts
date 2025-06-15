@@ -9,6 +9,47 @@ export interface MetricDefinition {
 }
 
 export const MetricRegistry: Record<string, MetricDefinition> = {
+  // Candle data metrics
+  open: {
+    id: 'open',
+    label: 'Open',
+    calc: (idx, ctx) => {
+      const candle = ctx.candles?.[idx];
+      return candle ? candle.open.toFixed(2) : '-';
+    }
+  },
+  high: {
+    id: 'high', 
+    label: 'High',
+    calc: (idx, ctx) => {
+      const candle = ctx.candles?.[idx];
+      return candle ? candle.high.toFixed(2) : '-';
+    }
+  },
+  low: {
+    id: 'low',
+    label: 'Low',
+    calc: (idx, ctx) => {
+      const candle = ctx.candles?.[idx];
+      return candle ? candle.low.toFixed(2) : '-';
+    }
+  },
+  close: {
+    id: 'close',
+    label: 'Close',
+    calc: (idx, ctx) => {
+      const candle = ctx.candles?.[idx];
+      return candle ? candle.close.toFixed(2) : '-';
+    }
+  },
+  volume: {
+    id: 'volume',
+    label: 'Volume',
+    calc: (idx, ctx) => {
+      const candle = ctx.candles?.[idx];
+      return candle ? (candle.volume / 1000000).toFixed(1) + 'M' : '-';
+    }
+  },
   bjIntrinsic: {
     id: 'bjIntrinsic',
     label: 'BJ Int',
@@ -27,11 +68,7 @@ export const MetricRegistry: Record<string, MetricDefinition> = {
   escalatorDir: {
     id: 'escalatorDir',
     label: 'Esc Dir',
-    calc: (idx, ctx) => {
-      const dir = ctx.escalatorDir?.[idx];
-      console.log(`[MetricRegistry] escalatorDir calc for idx ${idx}: raw value = ${dir}, returning = ${dir ?? '-'}`);
-      return dir ?? '-';
-    }
+    calc: (idx, ctx) => ctx.escalatorDir?.[idx] ?? '-'
   },
   escalatorLength: {
     id: 'escalatorLength',

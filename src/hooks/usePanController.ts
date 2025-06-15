@@ -15,7 +15,8 @@ export interface PanState {
 export const usePanController = (
   panState: PanState,
   setPanState: React.Dispatch<React.SetStateAction<PanState>>,
-  onPanUpdate: (translateX: number) => void
+  onPanUpdate: (translateX: number) => void,
+  targetCandles: number = 100
 ) => {
   const animationRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -74,8 +75,10 @@ export const usePanController = (
 
     // Calculate velocity for momentum
     if (deltaTime > 0) {
-      // Reduced velocity calculation with damping factor
-      const dampingFactor = 0.3; // Reduce sensitivity
+      // Reduced velocity calculation with zoom-aware damping
+      const baseDamping = 0.3;
+      const zoomDamping = Math.min(100 / targetCandles, 2); // More damping when fewer candles visible
+      const dampingFactor = baseDamping / zoomDamping;
       velocityRef.current = (deltaX / deltaTime * 16) * dampingFactor; // Normalize to 60fps with damping
     }
 
@@ -87,7 +90,7 @@ export const usePanController = (
     }));
 
     onPanUpdate(newTranslateX);
-  }, [panState.isPanning, panState.startX, panState.previousTranslateX, setPanState, onPanUpdate]);
+  }, [panState.isPanning, panState.startX, panState.previousTranslateX, setPanState, onPanUpdate, targetCandles]);
 
   // End panning
   const endPan = useCallback(() => {

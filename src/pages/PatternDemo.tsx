@@ -4,7 +4,7 @@
 
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
-import TriSightChart from '../components/Chart/TriSightChart';
+import InfiniteZoomChart from '../components/Chart/InfiniteZoomChart';
 import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType, ThrustDirection } from '../models/PatternTypes';
 
@@ -32,22 +32,25 @@ const ChartWrapper = styled.div`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
-const InfoBox = styled.div`
+const PatternInfo = styled.div`
   margin-top: 20px;
   padding: 15px;
   background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  border-left: 4px solid #2196f3;
   border-radius: 4px;
   
   h3 {
-    margin: 0 0 10px 0;
-    color: #0c4a6e;
+    margin-top: 0;
+    color: #1976d2;
   }
   
   ul {
-    margin: 0;
+    margin: 10px 0;
     padding-left: 20px;
-    color: #0c4a6e;
+  }
+  
+  li {
+    margin: 5px 0;
   }
 `;
 
@@ -123,34 +126,47 @@ const PatternDemo: React.FC = () => {
     } as any,
   ], []);
 
+  const startDate = new Date('2025-01-15T09:30:00');
+  const endDate = new Date('2025-01-15T11:30:00');
+
   return (
     <Container>
-      <Header>Pattern Visualization Demo</Header>
+      <Header>Pattern Detection Demo</Header>
       <Description>
-        This demonstration shows the integrated pattern detection and visualization system.
-        The chart displays an escalator pattern (green band), a Goldmine SHORT signal (gold arrow),
-        and a trailing stop line (red dashed line).
+        This demo showcases the pattern detection capabilities including escalator patterns,
+        goldmine opportunities, and trailing stop mechanisms.
       </Description>
       
       <ChartWrapper>
-        <TriSightChart
-          data={demoData}
+        <InfiniteZoomChart
+          symbol="DEMO"
+          startDate={startDate}
+          endDate={endDate}
+          width={window.innerWidth - 80}
+          height={600}
           patterns={patterns}
-          width={1000}
-          height={500}
-          timeframe="1min"
+          onPatternSelect={(pattern) => {
+            console.log('Pattern selected:', pattern);
+          }}
         />
       </ChartWrapper>
       
-      <InfoBox>
-        <h3>Pattern Detection Flow</h3>
+      <PatternInfo>
+        <h3>Detected Patterns:</h3>
         <ul>
-          <li><strong>Escalator Detection:</strong> The system identifies rising or falling step patterns in the price action</li>
-          <li><strong>Goldmine Signal:</strong> When price breaks through the escalator floor (SHORT) or ceiling (LONG), a trading signal is generated</li>
-          <li><strong>Trailing Stop:</strong> A dynamic stop-loss line is created and updated with each new candle</li>
-          <li><strong>One-and-Done Rule:</strong> Only one Goldmine signal can be active at a time</li>
+          {patterns.map((pattern, index) => (
+            <li key={index}>
+              <strong>{pattern.type}</strong>
+              {pattern.type === PatternType.ESCALATOR && 'direction' in pattern && (
+                <span> - Direction: {pattern.direction}</span>
+              )}
+              {pattern.type === PatternType.GOLDMINE_CHANNEL && 'profitAmount' in pattern && (
+                <span> - Profit: ${typeof pattern.profitAmount === 'number' ? pattern.profitAmount.toFixed(2) : '0.00'}</span>
+              )}
+            </li>
+          ))}
         </ul>
-      </InfoBox>
+      </PatternInfo>
     </Container>
   );
 };
