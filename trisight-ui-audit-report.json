@@ -1,0 +1,445 @@
+{
+  "audit_timestamp": "2024-12-19T12:00:00Z",
+  "audit_type": "UI_PANEL_AND_TABLE_AUDIT",
+  "audit_scope": {
+    "components": ["Right Panel (PatternPanel)", "Bottom Table (SymbolRankingTable)"],
+    "aspects": ["interactivity", "state_wiring", "terminology", "persistence"]
+  },
+  "findings": {
+    "right_panel": {
+      "component": "PatternPanel",
+      "file": "src/components/Patterns/PatternPanel.tsx",
+      "controls": [
+        {
+          "control_type": "checkbox",
+          "label": "Goldmine Channel",
+          "state_binding": "preferences.enabledPatternTypes",
+          "interactive": true,
+          "line_reference": "lines 302-319",
+          "state_persistence": {
+            "method": "localStorage",
+            "key": "patternDetectionPreferences",
+            "persisted": true
+          }
+        },
+        {
+          "control_type": "checkbox",
+          "label": "Goldmine Shaft",
+          "state_binding": "preferences.enabledPatternTypes",
+          "interactive": true,
+          "line_reference": "lines 334-351",
+          "state_persistence": {
+            "method": "localStorage",
+            "key": "patternDetectionPreferences",
+            "persisted": true
+          }
+        },
+        {
+          "control_type": "checkbox",
+          "label": "Rocketman",
+          "state_binding": "preferences.enabledPatternTypes",
+          "interactive": true,
+          "line_reference": "lines 366-383",
+          "state_persistence": {
+            "method": "localStorage",
+            "key": "patternDetectionPreferences",
+            "persisted": true
+          }
+        },
+        {
+          "control_type": "checkbox",
+          "label": "BlackJack",
+          "state_binding": "preferences.enabledPatternTypes",
+          "interactive": true,
+          "line_reference": "lines 398-415",
+          "state_persistence": {
+            "method": "localStorage",
+            "key": "patternDetectionPreferences",
+            "persisted": true
+          }
+        },
+        {
+          "control_type": "checkbox",
+          "label": "Escalator",
+          "state_binding": "preferences.enabledPatternTypes",
+          "interactive": true,
+          "line_reference": "lines 430-463",
+          "state_persistence": {
+            "method": "localStorage",
+            "key": "escalatorSettings",
+            "persisted": true
+          }
+        },
+        {
+          "control_type": "checkbox",
+          "label": "Pivot",
+          "state_binding": "preferences.enabledPatternTypes",
+          "interactive": true,
+          "line_reference": "lines 478-495",
+          "state_persistence": {
+            "method": "localStorage",
+            "key": "patternDetectionPreferences",
+            "persisted": true
+          }
+        }
+      ],
+      "settings_panels": [
+        {
+          "panel": "EscalatorSettingsPanel",
+          "file": "src/components/Patterns/EscalatorSettingsPanel.tsx",
+          "controls": [
+            {
+              "control_type": "checkbox",
+              "label": "Enable Pattern",
+              "state_binding": "settings.enabled",
+              "interactive": true,
+              "handler": "handleEnableChange",
+              "line_reference": "lines 89-91"
+            },
+            {
+              "control_type": "checkbox",
+              "label": "Show Step Labels",
+              "state_binding": "settings.showLabels",
+              "interactive": true,
+              "handler": "handleShowLabelsChange",
+              "line_reference": "lines 93-95"
+            },
+            {
+              "control_type": "select",
+              "label": "Preferred Direction",
+              "state_binding": "settings.preferredDirection",
+              "interactive": true,
+              "handler": "handleDirectionChange",
+              "line_reference": "lines 129-134",
+              "options": ["BOTH", "BULLISH", "BEARISH"]
+            },
+            {
+              "control_type": "range_slider",
+              "label": "Minimum Steps",
+              "state_binding": "settings.minSteps",
+              "interactive": true,
+              "handler": "handleMinStepsChange",
+              "line_reference": "lines 97-99",
+              "range": {"min": 2, "max": 10, "step": 1}
+            },
+            {
+              "control_type": "range_slider",
+              "label": "Min Step Size (%)",
+              "state_binding": "settings.minStepSize",
+              "interactive": true,
+              "handler": "handleMinStepSizeChange",
+              "line_reference": "lines 101-103",
+              "range": {"min": 0.1, "max": 2.0, "step": 0.1}
+            },
+            {
+              "control_type": "range_slider",
+              "label": "Max Consolidation Vol (%)",
+              "state_binding": "settings.maxConsolidationVolatility",
+              "interactive": true,
+              "handler": "handleMaxVolatilityChange",
+              "line_reference": "lines 105-107",
+              "range": {"min": 0.2, "max": 3.0, "step": 0.2}
+            },
+            {
+              "control_type": "range_slider",
+              "label": "Price Change Threshold (%)",
+              "state_binding": "settings.basePriceChangeThreshold",
+              "interactive": true,
+              "handler": "handleBasePriceThresholdChange",
+              "line_reference": "lines 109-111",
+              "range": {"min": 0.01, "max": 0.5, "step": 0.01}
+            },
+            {
+              "control_type": "range_slider",
+              "label": "Volume Change Threshold (%)",
+              "state_binding": "settings.baseVolumeChangeThreshold",
+              "interactive": true,
+              "handler": "handleBaseVolumeThresholdChange",
+              "line_reference": "lines 113-115",
+              "range": {"min": 0.1, "max": 2.0, "step": 0.1}
+            },
+            {
+              "control_type": "checkbox",
+              "label": "Use Context Timeframe",
+              "state_binding": "settings.useContextTimeframe",
+              "interactive": true,
+              "handler": "handleUseContextChange",
+              "line_reference": "lines 117-119"
+            },
+            {
+              "control_type": "range_slider",
+              "label": "Context Multiplier",
+              "state_binding": "settings.contextTimeframeMultiplier",
+              "interactive": true,
+              "handler": "handleContextMultiplierChange",
+              "line_reference": "lines 121-123",
+              "range": {"min": 2, "max": 10, "step": 1},
+              "conditional_display": "settings.useContextTimeframe === true"
+            },
+            {
+              "control_type": "range_slider",
+              "label": "Minimum Score",
+              "state_binding": "settings.minScore",
+              "interactive": true,
+              "handler": "handleMinScoreChange",
+              "line_reference": "lines 125-127",
+              "range": {"min": 1, "max": 7, "step": 1}
+            }
+          ],
+          "state_persistence": {
+            "method": "localStorage",
+            "key": "escalatorSettings",
+            "persisted": true,
+            "line_reference": "lines 80-87"
+          }
+        }
+      ]
+    },
+    "bottom_table": {
+      "component": "SymbolRankingTable",
+      "file": "src/components/SymbolRankingTable/SymbolRankingTable.tsx",
+      "controls": [
+        {
+          "control_type": "table_header",
+          "label": "Symbol",
+          "sortable": false,
+          "interactive": false,
+          "line_reference": "line 213"
+        },
+        {
+          "control_type": "table_header",
+          "label": "Risk Rating",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 214-217"
+        },
+        {
+          "control_type": "table_header",
+          "label": "Traction",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 218-221"
+        },
+        {
+          "control_type": "table_header",
+          "label": "Strength",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 222-225"
+        },
+        {
+          "control_type": "table_header",
+          "label": "Timing",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 226-229"
+        },
+        {
+          "control_type": "table_header",
+          "label": "TOM Ratio",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 230-233",
+          "terminology_note": "TOM = Trading Opportunity Model"
+        },
+        {
+          "control_type": "table_header",
+          "label": "Acceleration",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 234-237"
+        },
+        {
+          "control_type": "table_header",
+          "label": "Sector",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 238-241"
+        },
+        {
+          "control_type": "table_header",
+          "label": "Price",
+          "sortable": true,
+          "interactive": true,
+          "handler": "handleSort",
+          "state_binding": "sortField/sortDirection",
+          "line_reference": "lines 242-245"
+        },
+        {
+          "control_type": "table_row",
+          "interactive": true,
+          "handler": "onSymbolSelect",
+          "state_binding": "selectedSymbol",
+          "line_reference": "lines 249-254",
+          "visual_feedback": "row highlights on selection (background: #e0f2fe)"
+        }
+      ],
+      "data_bindings": {
+        "props": ["rankings", "selectedSymbol", "onSymbolSelect", "loading"],
+        "state": ["sortField", "sortDirection"],
+        "computed": ["sortedRankings"],
+        "line_reference": "lines 141-147"
+      },
+      "state_persistence": {
+        "method": "none",
+        "persisted": false,
+        "recommendation": "Consider persisting sort preferences to localStorage"
+      }
+    },
+    "global_ui_toggles": {
+      "right_panel_toggle": {
+        "state": "showRightPanel",
+        "handler": "handleToggleRightPanel",
+        "persistence": {
+          "method": "localStorage",
+          "key": "STORAGE_KEY_SHOW_RIGHT_PANEL",
+          "persisted": true
+        },
+        "file": "src/App.tsx",
+        "line_reference": "lines 326-341"
+      },
+      "bottom_table_toggle": {
+        "state": "showBottomTable",
+        "handler": "handleToggleBottomTable",
+        "persistence": {
+          "method": "localStorage",
+          "key": "STORAGE_KEY_SHOW_BOTTOM_TABLE",
+          "persisted": true
+        },
+        "file": "src/App.tsx",
+        "line_reference": "lines 326-341"
+      }
+    }
+  },
+  "terminology_alignment": {
+    "status": "MOSTLY_ALIGNED",
+    "findings": [
+      {
+        "term": "TOM Ratio",
+        "location": "SymbolRankingTable",
+        "assessment": "Domain-specific acronym, should expand to 'Trading Opportunity Model Ratio' in tooltip",
+        "recommendation": "Add tooltip with full expansion"
+      },
+      {
+        "term": "Risk Rating",
+        "location": "SymbolRankingTable",
+        "assessment": "Clear, aligned with financial domain",
+        "recommendation": "None"
+      },
+      {
+        "term": "Traction",
+        "location": "SymbolRankingTable",
+        "assessment": "Clear in trading context (momentum/volume)",
+        "recommendation": "None"
+      },
+      {
+        "term": "Escalator Pattern",
+        "location": "PatternPanel",
+        "assessment": "Domain-specific pattern name, clear in context",
+        "recommendation": "None"
+      }
+    ]
+  },
+  "state_persistence_summary": {
+    "persisted_elements": [
+      {
+        "element": "Right panel visibility",
+        "key": "STORAGE_KEY_SHOW_RIGHT_PANEL",
+        "type": "boolean"
+      },
+      {
+        "element": "Bottom table visibility",
+        "key": "STORAGE_KEY_SHOW_BOTTOM_TABLE",
+        "type": "boolean"
+      },
+      {
+        "element": "Pattern detection preferences",
+        "key": "patternDetectionPreferences",
+        "type": "object"
+      },
+      {
+        "element": "Escalator settings",
+        "key": "escalatorSettings",
+        "type": "object"
+      },
+      {
+        "element": "BlackJack settings",
+        "key": "blackjackSettings",
+        "type": "object"
+      },
+      {
+        "element": "Trading hours filter",
+        "key": "showOnlyTradingHours",
+        "type": "boolean"
+      },
+      {
+        "element": "TwelveData API key",
+        "key": "STORAGE_KEY_TWELVE_DATA_API_KEY",
+        "type": "string"
+      }
+    ],
+    "non_persisted_elements": [
+      {
+        "element": "Table sort preferences",
+        "component": "SymbolRankingTable",
+        "recommendation": "Add persistence for better UX"
+      },
+      {
+        "element": "Selected symbol",
+        "component": "SymbolRankingTable",
+        "recommendation": "Consider persisting for session continuity"
+      },
+      {
+        "element": "Panel section expand/collapse state",
+        "component": "PatternPanel",
+        "recommendation": "Add persistence for UI state continuity"
+      }
+    ]
+  },
+  "issues_and_recommendations": {
+    "critical": [],
+    "warnings": [
+      {
+        "issue": "No tooltip/help text for domain-specific terms",
+        "components": ["SymbolRankingTable"],
+        "recommendation": "Add tooltips for TOM Ratio, Risk Rating methodology",
+        "priority": "MEDIUM"
+      },
+      {
+        "issue": "Sort preferences not persisted",
+        "component": "SymbolRankingTable",
+        "recommendation": "Store sortField and sortDirection in localStorage",
+        "priority": "LOW"
+      }
+    ],
+    "improvements": [
+      {
+        "issue": "Panel section states not persisted",
+        "component": "PatternPanel",
+        "recommendation": "Store openSections state in localStorage",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "compliance_status": {
+    "ui_controls_wired": true,
+    "state_management_consistent": true,
+    "terminology_aligned": true,
+    "persistence_implemented": true,
+    "overall_status": "PASS"
+  }
+}

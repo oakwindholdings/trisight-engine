@@ -1,8 +1,10 @@
 // src/patternEngine/escalatorStep.ts
 // Detects Escalator Step patterns (stalling ranges)
 // Based on TriSight logic confirmed with Dick O'Leary
+// NOTE: Debug channel support - DEBUG_PATTERN_DETECT
 
 import { Candle, StepBox } from '../types/pattern';
+import { logDebug } from '../utils/debug';
 
 /**
  * Options for detecting escalator steps
@@ -11,6 +13,7 @@ interface DetectEscalatorStepsOptions {
   minStepSize?: number;      // Minimum number of candles in a step (default: 2)
   maxLookback?: number;      // Maximum candles to look back for ceiling (default: 10)
   minEscalatorLength?: number; // Minimum escalator length before step (default: 3)
+  maxStepSize?: number;      // Maximum step size (default: 20)
 }
 
 /**
@@ -22,6 +25,8 @@ function detectEscalatorDirection(candles: Candle[], startIdx: number, endIdx: n
   
   let isRising = true;
   let isFalling = true;
+  let risingFailures = 0;
+  let fallingFailures = 0;
   
   for (let i = startIdx + 1; i <= endIdx; i++) {
     const curr = candles[i];
@@ -35,12 +40,28 @@ function detectEscalatorDirection(candles: Candle[], startIdx: number, endIdx: n
     // Check for higher high and higher low (rising)
     if (!(currBodyHigh > prevBodyHigh && currBodyLow > prevBodyLow)) {
       isRising = false;
+      risingFailures++;
     }
     
     // Check for lower high and lower low (falling)
     if (!(currBodyHigh < prevBodyHigh && currBodyLow < prevBodyLow)) {
       isFalling = false;
+      fallingFailures++;
     }
+  }
+  
+  // Debug only first few attempts to avoid spam
+  if (startIdx < 10) {
+    logDebug('DEBUG_PATTERN_DETECT', '[detectEscalatorDirection] Debug:', {
+      range: `${startIdx}-${endIdx}`,
+      candles: endIdx - startIdx + 1,
+      isRising,
+      isFalling,
+      risingFailures,
+      fallingFailures,
+      firstCandle: { open: candles[startIdx].open, close: candles[startIdx].close },
+      lastCandle: { open: candles[endIdx].open, close: candles[endIdx].close }
+    });
   }
   
   if (isRising) return 'rising';
@@ -110,7 +131,8 @@ export function detectEscalatorSteps(
   const {
     minStepSize = 2,
     maxLookback = 10,
-    minEscalatorLength = 3
+    minEscalatorLength = 3,
+    maxStepSize = 20
   } = options;
   
   if (!candles || candles.length < minEscalatorLength + minStepSize) {
@@ -149,13 +171,30 @@ export function detectEscalatorSteps(
         let endIdx = floorIdx;
         
         // Continue forward while candles are still stalling
-        while (endIdx + 1 < candles.length) {
+        while (endIdx + 1 < candles.length && endIdx - ceilingIdx < maxStepSize - 1) {
           const nextCandle = candles[endIdx + 1];
           const stepHigh = candles[ceilingIdx].high;
           const stepLow = candles[floorIdx].low;
           
-          // Check if next candle is within the step range
-          if (nextCandle.high <= stepHigh * 1.02 && nextCandle.low >= stepLow * 0.98) {
+          // Use tighter tolerance (0.5% instead of 2%) and check body containment
+          const nextBodyHigh = Math.max(nextCandle.open, nextCandle.close);
+          const nextBodyLow = Math.min(nextCandle.open, nextCandle.close);
+          
+          // Check if next candle body is within the step range with tighter tolerance
+          if (nextBodyHigh <= stepHigh * 1.005 && nextBodyLow >= stepLow * 0.995) {
+            // Additional check: ensure we're not trending strongly
+            if (endIdx >= floorIdx + 2) {
+              const recentCandle = candles[endIdx];
+              const recentBodyMid = (Math.max(recentCandle.open, recentCandle.close) + 
+                                   Math.min(recentCandle.open, recentCandle.close)) / 2;
+              const nextBodyMid = (nextBodyHigh + nextBodyLow) / 2;
+              
+              // If price is trending more than 0.2% per candle, stop extending
+              const trendPercent = Math.abs(nextBodyMid - recentBodyMid) / recentBodyMid;
+              if (trendPercent > 0.002) {
+                break;
+              }
+            }
             endIdx++;
           } else {
             break;
@@ -186,15 +225,25 @@ export function detectEscalatorSteps(
           steps.push({
             startIndex: ceilingIdx,
             endIndex: endIdx,
-            startTime: new Date(candles[ceilingIdx].datetime),
-            endTime: new Date(candles[endIdx].datetime),
+            startTime: new Date(candles[ceilingIdx].timestamp),
+            endTime: new Date(candles[endIdx].timestamp),
             level: level,
             height: bodyHigh - bodyLow,
             duration: endIdx - ceilingIdx + 1,
             isConsolidation: true, // Escalator steps are consolidation phases
             volumeProfile: avgVolume,
             floor: lowestLow,  // Maps to bodyLow concept
-            ceiling: highestHigh  // Maps to bodyHigh concept
+            ceiling: highestHigh,  // Maps to bodyHigh concept
+            direction: escalatorDir === 'rising' ? 'UP' : 'DOWN', // Add direction based on escalator
+            isCompleted: false // Active step
+          });
+          
+          // Debug log the detected step
+          logDebug('DEBUG_PATTERN_DETECT', '[detectEscalatorSteps] Found step:', {
+            direction: escalatorDir === 'rising' ? 'UP' : 'DOWN',
+            escalatorDir,
+            indices: { start: ceilingIdx, end: endIdx },
+            price: { floor: lowestLow, ceiling: highestHigh }
           });
           
           // Skip past this step

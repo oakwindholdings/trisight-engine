@@ -432,6 +432,12 @@ export class LearningProcessor {
         minConfidence: 0.6,
         boundaryPadding: 0.05,
         typeSpecificParameters: this.getDefaultBlackjackParameters()
+      },
+      [PatternType.BREAKOUTBOX]: {
+        sensitivity: 0.5,
+        minConfidence: 0.6,
+        boundaryPadding: 0.05,
+        typeSpecificParameters: {}
       }
     };
   }
@@ -505,6 +511,15 @@ export class LearningProcessor {
       priceVolumeCorrelationThreshold: 0.7,
       minConsecutiveMatches: 3,
       patternCorrelationWeight: 0.5
+    };
+  }
+  
+  /**
+   * Get default BreakoutBox parameters
+   */
+  private getDefaultBreakoutBoxParameters(): {} {
+    return {
+      // Add default BreakoutBox parameters here
     };
   }
 }

@@ -1,6 +1,12 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows a 5-stage lifecycle: detect → emit → context → render → score.
 // src/components/Chart/RenderOrchestrator.ts
 // Orchestrates chart rendering across multiple canvases
 // Ensures all data displays contiguously
+
+// NOTE: This component controls all drawing flows across chart and pattern overlays.
+// CRITICAL: We use CANVAS for all rendering, NEVER SVG or other technologies.
+// BreakoutBoxes must be drawn using Canvas 2D context methods in PatternRenderer.
+
 import { RefObject } from 'react';
 import { CandlestickData, VisibleRange } from '../../models/ChartTypes';
 import { Pattern } from '../../models/PatternTypes';
@@ -25,6 +31,9 @@ interface RenderArgs {
   selectedPattern: Pattern | null;
   timeframe: string;
   showOnlyTradingHours: boolean;
+  escalatorSteps?: any[];
+  escalatorSettings?: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean };
+  breakoutBoxes?: any[];
 }
 
 export function renderChart(args: RenderArgs) {
@@ -41,7 +50,10 @@ export function renderChart(args: RenderArgs) {
     visiblePatterns,
     selectedPattern,
     timeframe,
-    showOnlyTradingHours
+    showOnlyTradingHours,
+    escalatorSteps = [],
+    escalatorSettings = { enabled: true, showLabels: true, showBreakoutBoxes: true },
+    breakoutBoxes = []
   } = args;
 
   const mainCanvas = mainCanvasRef.current;
@@ -55,7 +67,8 @@ export function renderChart(args: RenderArgs) {
     visibleRange,
     width,
     height,
-    hasCanvases: !!mainCanvas && !!bufferCanvas && !!patternsCanvas
+    hasCanvases: !!mainCanvas && !!bufferCanvas && !!patternsCanvas,
+    breakoutBoxCount: breakoutBoxes.length
   });
 
   if (!mainCanvas || !bufferCanvas || !patternsCanvas || filteredData.length === 0) {
@@ -99,6 +112,8 @@ export function renderChart(args: RenderArgs) {
   // Debug pattern rendering
   console.log('[RenderOrchestrator] Rendering patterns:', {
     patternCount: visiblePatterns.length,
+    escalatorStepCount: escalatorSteps.length,
+    breakoutBoxCount: breakoutBoxes.length,
     patterns: visiblePatterns.map(p => ({
       id: p.id,
       type: p.type,
@@ -109,7 +124,7 @@ export function renderChart(args: RenderArgs) {
     }))
   });
   
-  PatternRenderer.render(patternsCtx, visiblePatterns, timeScale, priceScale, { width, height, margin }, selectedPattern || null);
+  PatternRenderer.render(patternsCtx, visiblePatterns, timeScale, priceScale, { width, height, margin }, selectedPattern || null, escalatorSteps, escalatorSettings, breakoutBoxes, filteredData);
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });
 }

@@ -1,7 +1,8 @@
 // src/components/Patterns/PatternPanel.tsx
 // Side panel listing patterns
 // Includes adaptive controls
-import React, { useState } from 'react';
+// NOTE: supports DEBUG_UI channel
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { ThemeTokens } from '../../styles/theme';
 import { Pattern, PatternType, ThrustDirection, ChannelDirection } from '../../models/PatternTypes';
@@ -13,15 +14,18 @@ import RocketmanSettingsPanel from './RocketmanSettingsPanel';
 import BlackjackSettingsPanel from './BlackjackSettingsPanel';
 import EscalatorSettingsPanel from './EscalatorSettingsPanel';
 import PivotSettingsPanel from '../Settings/PivotSettingsPanel';
+import DebugSettingsPanel from '../Settings/DebugSettingsPanel';
 import useTwelveDataApiKey from '../../hooks/useTwelveDataApiKey';
+import { logDebug } from '../../utils/debug';
 
 const PanelContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 280px;
-  height: 100%;
   background-color: ${ThemeTokens.colors.surface};
   border-left: 1px solid ${ThemeTokens.colors.border};
+  height: 100%;
+  overflow-y: auto;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
 `;
 
 const PanelHeader = styled.div`
@@ -72,6 +76,8 @@ const SectionContent = styled.div<{ $isOpen: boolean }>`
   transition: max-height 0.3s ease-in-out;
   padding-top: ${props => props.$isOpen ? ThemeTokens.spacing.small : '0'};
   padding-bottom: ${props => props.$isOpen ? ThemeTokens.spacing.small : '0'};
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 const ChevronIcon = styled.span<{ $isOpen: boolean }>`
@@ -146,7 +152,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   // Define section names as a type for type safety
   type SectionName = 'globalSettings' |
                   'goldmineChannelSettings' | 'goldmineShaftSettings' | 'rocketmanSettings' | 
-                  'blackjackSettings' | 'escalatorSettings' | 'pivotSettings';
+                  'blackjackSettings' | 'escalatorSettings' | 'pivotSettings' | 'debugSettings';
   
   // State to track which sections are open
   const [openSections, setOpenSections] = useState<Record<SectionName, boolean>>({
@@ -156,7 +162,8 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     rocketmanSettings: false,
     blackjackSettings: false,
     escalatorSettings: false,
-    pivotSettings: false
+    pivotSettings: false,
+    debugSettings: false
   });
 
   const { apiKey, setApiKey } = useTwelveDataApiKey();
@@ -202,18 +209,33 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     baseVolumeChangeThreshold: 0.5
   });
   
-  const [escalatorSettings, setEscalatorSettings] = useState({
-    enabled: true,
-    minSteps: 3,
-    minStepSize: 0.5,
-    maxConsolidationVolatility: 1.0,
-    basePriceChangeThreshold: 0.01,
-    baseVolumeChangeThreshold: 0.05,
-    useContextTimeframe: true,
-    contextTimeframeMultiplier: 3,
-    minScore: 2.0,
-    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection
-  });
+  // Initialize escalator settings from localStorage
+  const getInitialEscalatorSettings = () => {
+    try {
+      const saved = localStorage.getItem('escalatorSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading escalator settings:', error);
+    }
+    return {
+      enabled: true,
+      showLabels: false,  // Changed from true to false
+      showBreakoutBoxes: true,  // Add missing field for breakout box visibility
+      minSteps: 3,
+      minStepSize: 0.5,
+      maxConsolidationVolatility: 1.0,
+      basePriceChangeThreshold: 0.01,
+      baseVolumeChangeThreshold: 0.05,
+      useContextTimeframe: true,
+      contextTimeframeMultiplier: 3,
+      minScore: 2.0,
+      preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection
+    };
+  };
+  
+  const [escalatorSettings, setEscalatorSettings] = useState(getInitialEscalatorSettings());
   
   const [pivotSettings, setPivotSettings] = useState({
     touchPointThreshold: 3,
@@ -225,12 +247,57 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     detectResistance: true
   });
   
+  // Get pattern context to sync escalator settings
+  const patternContext = usePatternContext();
+  
+  // Sync escalator settings with preferences on mount and when preferences change
+  useEffect(() => {
+    const isEscalatorEnabled = preferences?.enabledPatternTypes?.includes(PatternType.ESCALATOR) || false;
+    
+    // Only update if there's a mismatch
+    if (escalatorSettings.enabled !== isEscalatorEnabled) {
+      const newSettings = {
+        ...escalatorSettings,
+        enabled: isEscalatorEnabled
+      };
+      handleEscalatorSettingsChange(newSettings);
+    }
+  }, [preferences?.enabledPatternTypes]); // Only depend on enabledPatternTypes to avoid infinite loops
+  
+  const handleEscalatorSettingsChange = (newSettings: typeof escalatorSettings) => {
+    logDebug('DEBUG_CONTEXT_UPDATE', '[PatternPanel] Escalator settings changed:', newSettings);
+    setEscalatorSettings(newSettings);
+    // Update pattern context with the full settings object
+    if (patternContext.setEscalatorSettings) {
+      patternContext.setEscalatorSettings(newSettings);
+    }
+  };
+  
+  const handleAnalysisComplete = () => {
+  };
+  
   const toggleSection = (section: SectionName) => {
     setOpenSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
+    
+    // Trigger multiple resize events to ensure chart redraws properly
+    // First one immediately to catch any instant layout changes
+    window.dispatchEvent(new Event('resize'));
+    
+    // Second one after transition completes
+    setTimeout(() => {
+      logDebug('DEBUG_UI', '[PatternPanel] Dispatching resize event after section toggle');
+      window.dispatchEvent(new Event('resize'));
+    }, 350); // 300ms transition + 50ms buffer
+    
+    // Third one as a failsafe
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 500);
   };
+  
   return (
     <PanelContainer>
       <PanelHeader>
@@ -245,6 +312,27 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
             <ChevronIcon $isOpen={openSections.globalSettings}>›</ChevronIcon>
           </SectionHeader>
           <SectionContent $isOpen={openSections.globalSettings}>
+            <FilterGroup>
+              <FilterLabel>TwelveData API Key</FilterLabel>
+              <input
+                type="text"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Enter API key"
+                style={{
+                  width: '100%',
+                  backgroundColor: ThemeTokens.colors.inputBackground,
+                  border: `1px solid ${ThemeTokens.colors.border}`,
+                  borderRadius: ThemeTokens.borderRadius.small,
+                  padding: ThemeTokens.spacing.small,
+                  color: ThemeTokens.colors.textPrimary,
+                }}
+              />
+              <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
+                Stored locally in your browser
+              </div>
+            </FilterGroup>
+
             <AdaptivePatternControls 
               preferences={preferences}
               updatePreferences={updatePreferences}
@@ -312,27 +400,6 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
               </div>
               <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
                 Changes are automatically saved to your browser
-              </div>
-            </FilterGroup>
-
-            <FilterGroup>
-              <FilterLabel>TwelveData API Key</FilterLabel>
-              <input
-                type="text"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Enter API key"
-                style={{
-                  width: '100%',
-                  backgroundColor: ThemeTokens.colors.inputBackground,
-                  border: `1px solid ${ThemeTokens.colors.border}`,
-                  borderRadius: ThemeTokens.borderRadius.small,
-                  padding: ThemeTokens.spacing.small,
-                  color: ThemeTokens.colors.textPrimary,
-                }}
-              />
-              <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
-                Stored locally in your browser
               </div>
             </FilterGroup>
           </SectionContent>
@@ -496,6 +563,13 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
                       ...preferences,
                       enabledPatternTypes: updatedTypes
                     });
+                    
+                    // Also update escalator settings to sync enabled state
+                    const newEscalatorSettings = {
+                      ...escalatorSettings,
+                      enabled: e.target.checked
+                    };
+                    handleEscalatorSettingsChange(newEscalatorSettings);
                   }}
                   onClick={(e) => e.stopPropagation()}
                   style={{ marginRight: '8px' }}
@@ -508,7 +582,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
           <SectionContent $isOpen={openSections.escalatorSettings}>
             <EscalatorSettingsPanel 
               settings={escalatorSettings}
-              onSettingsChange={setEscalatorSettings}
+              onSettingsChange={handleEscalatorSettingsChange}
             />
           </SectionContent>
         </Section>
@@ -547,6 +621,17 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
                 setPivotSettings(newSettings);
               }}
             />
+          </SectionContent>
+        </Section>
+        
+        {/* Debug Settings */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('debugSettings')}>
+            <SectionTitle>Debug Settings</SectionTitle>
+            <ChevronIcon $isOpen={openSections.debugSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.debugSettings}>
+            <DebugSettingsPanel />
           </SectionContent>
         </Section>
         

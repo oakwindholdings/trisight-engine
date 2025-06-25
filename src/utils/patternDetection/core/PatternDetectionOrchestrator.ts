@@ -1,12 +1,14 @@
 // src/utils/patternDetection/core/PatternDetectionOrchestrator.ts
-// Coordinates detectors and tracks relationships
-// Handles detection workflow
+// Orchestrates pattern detection across multiple detectors
+// NOTE: TriSight uses Canvas, not SVG. Supports DEBUG_PATTERN_DETECT channel via logDebug.
+
 import { CandlestickData } from '../../../models/ChartTypes';
 import { Pattern, PatternType } from '../../../models/PatternTypes';
 import { MarketContext } from './MarketContext';
 import { MarketStructureAnalyzer } from './MarketStructureAnalyzer';
 import { BasePatternDetector, DetectionOptions, DetectionStats } from './BasePatternDetector';
 import { PatternRelationshipTracker } from './PatternRelationshipTracker';
+import { logDebug } from '../../debug';
 
 /**
  * Options for pattern detection orchestration
@@ -74,7 +76,7 @@ export class PatternDetectionOrchestrator {
     const context = this.marketStructureAnalyzer.analyzeContext(data);
     
     if (this.options.logPerformance) {
-      console.log(`Market structure analysis completed in ${performance.now() - startTime}ms`);
+      logDebug('DEBUG_PATTERN_DETECT', `Market structure analysis completed in ${performance.now() - startTime}ms`);
     }
     
     // Step 2: Detect patterns using individual detectors
@@ -100,7 +102,7 @@ export class PatternDetectionOrchestrator {
       statistics[type] = detector.getDetectionStats();
       
       if (this.options.logPerformance) {
-        console.log(`Detected ${patterns.length} ${type} patterns in ${performance.now() - typeStartTime}ms`);
+        logDebug('DEBUG_PATTERN_DETECT', `Detected ${patterns.length} ${type} patterns in ${performance.now() - typeStartTime}ms`);
       }
     }
     
@@ -114,14 +116,14 @@ export class PatternDetectionOrchestrator {
       );
       
       if (this.options.logPerformance) {
-        console.log(`Pattern relationship processing completed in ${performance.now() - startTime}ms`);
+        logDebug('DEBUG_PATTERN_DETECT', `Pattern relationship processing completed in ${performance.now() - startTime}ms`);
       }
     }
     
     const totalTime = performance.now() - startTime;
     
     if (this.options.logPerformance) {
-      console.log(`Total detection time: ${totalTime}ms for ${allPatterns.length} patterns`);
+      logDebug('DEBUG_PATTERN_DETECT', `Total detection time: ${totalTime}ms for ${allPatterns.length} patterns`);
     }
     
     return {

@@ -50,7 +50,14 @@ const TimeAxisImpl = {
     
     // Determine if we should show dates or times based on the tick range
     let showDates = false;
-    if (ticks.length >= 2) {
+    
+    // Always show dates for daily/weekly/monthly timeframes
+    if (timeframe === 'daily' || timeframe === '1day' || 
+        timeframe === 'weekly' || timeframe === '1week' || 
+        timeframe === 'monthly' || timeframe === '1month') {
+      showDates = true;
+    } else if (ticks.length >= 2) {
+      // For other timeframes, check the tick range
       const firstTick = ticks[0] as Date;
       const lastTick = ticks[ticks.length - 1] as Date;
       const rangeInHours = (lastTick.getTime() - firstTick.getTime()) / (1000 * 60 * 60);

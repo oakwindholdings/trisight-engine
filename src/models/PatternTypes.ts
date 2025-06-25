@@ -7,7 +7,8 @@ export enum PatternType {
   PIVOT = 'PIVOT',
   ROCKETMAN = 'ROCKETMAN',
   ESCALATOR = 'ESCALATOR',
-  BLACKJACK = 'BLACKJACK'
+  BLACKJACK = 'BLACKJACK',
+  BREAKOUTBOX = 'BREAKOUTBOX'
 }
 
 export enum BlackjackSignalStrength {
@@ -162,7 +163,7 @@ export interface PatternStyle {
 
 export const patternStyles: Record<PatternType, PatternStyle> = {
   [PatternType.GOLDMINE_CHANNEL]: {
-    color: '#1E88E5', // Blue
+    color: '#1E88E5', // Deep Blue
     lineWidth: 2,
     opacity: 0.8
   },
@@ -173,13 +174,13 @@ export const patternStyles: Record<PatternType, PatternStyle> = {
     opacity: 0.8
   },
   [PatternType.PIVOT]: {
-    color: '#43A047', // Green
+    color: '#FB8C00', // Orange
     secondaryColor: '#E53935', // Red
     lineWidth: 1,
     opacity: 0.8
   },
   [PatternType.ROCKETMAN]: {
-    color: '#FB8C00', // Orange
+    color: '#D81B60', // Magenta
     lineWidth: 2,
     opacity: 0.8
   },
@@ -191,6 +192,11 @@ export const patternStyles: Record<PatternType, PatternStyle> = {
   [PatternType.BLACKJACK]: {
     color: '#3949AB', // Indigo
     lineWidth: 1,
+    opacity: 0.8
+  },
+  [PatternType.BREAKOUTBOX]: {
+    color: '#2196F3', // Blue
+    lineWidth: 2,
     opacity: 0.8
   }
 };

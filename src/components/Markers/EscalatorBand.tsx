@@ -9,7 +9,7 @@ import { ThrustDirection } from '../../models/PatternTypes';
 interface EscalatorBandProps {
   escalator: EscalatorRun;
   candles: Candle[];
-  xScale: (index: number) => number;
+  xScale: (timestamp: number) => number;
   yScale: (price: number) => number;
   width: number;
   height: number;
@@ -23,9 +23,15 @@ export const EscalatorBand: React.FC<EscalatorBandProps> = ({
   width,
   height
 }) => {
-  // Calculate band boundaries
-  const startX = xScale(escalator.startIndex);
-  const endX = xScale(escalator.endIndex);
+  // Get the candles at start and end indices to extract timestamps
+  const startCandle = candles[escalator.startIndex];
+  const endCandle = candles[escalator.endIndex];
+  
+  if (!startCandle || !endCandle) return null;
+  
+  // Calculate band boundaries using timestamps
+  const startX = xScale(startCandle.timestamp);
+  const endX = xScale(endCandle.timestamp);
   
   // Get min/max prices within the escalator range
   const escalatorCandles = candles.slice(escalator.startIndex, escalator.endIndex + 1);

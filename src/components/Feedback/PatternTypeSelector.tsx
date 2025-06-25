@@ -101,7 +101,8 @@ const patternDescriptions: Record<PatternType, string> = {
   [PatternType.PIVOT]: 'Horizontal line at pivot level with triangle markers',
   [PatternType.ROCKETMAN]: 'Curved acceleration line with gradient fill',
   [PatternType.ESCALATOR]: 'Horizontal lines marking step levels with transitions',
-  [PatternType.BLACKJACK]: 'Card suit symbols showing price/volume correlation'
+  [PatternType.BLACKJACK]: 'Card suit symbols showing price/volume correlation',
+  [PatternType.BREAKOUTBOX]: 'Horizontal range breakout following consolidation'
 };
 
 // First letter icons for pattern types
@@ -111,7 +112,8 @@ const patternIcons: Record<PatternType, string> = {
   [PatternType.PIVOT]: 'P',
   [PatternType.ROCKETMAN]: 'R',
   [PatternType.ESCALATOR]: 'E',
-  [PatternType.BLACKJACK]: 'BJ'
+  [PatternType.BLACKJACK]: 'BJ',
+  [PatternType.BREAKOUTBOX]: 'B'
 };
 
 /**

@@ -1,17 +1,23 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows a 5-stage lifecycle: detect → emit → context → render → score.
 // src/contexts/PatternContext.tsx
 // Context for detected patterns
 // Exposes detection actions
-import React, { createContext, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
-import { Pattern, PatternType } from '../models/PatternTypes';
-import { PatternEvent } from '../hooks/usePatternBus';
-import usePatterns from '../hooks/usePatterns';
+import { Pattern, PatternType, ThrustDirection } from '../models/PatternTypes';
+import { usePatterns } from '../hooks/usePatterns';
 import { useMarketDataContext } from './MarketDataContext';
-import { usePatternBus } from '../hooks/usePatternBus';
+import { usePatternBus, PatternEvent } from '../hooks/usePatternBus';
 import { PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
 
 // Define the context type
 interface PatternContextType {
+  // Rolling Blackjack scores (per candle)
+  bjRollingScores: { timestamp: number; score: number }[];
+  setBjRollingScores: (scores: { timestamp: number; score: number }[]) => void;
+  // Target Blackjack scores (per breakout box)
+  bjTargetScores: { stepRef: string; score: number; qualifiesForGoldmine?: boolean }[];
+  setBjTargetScores: (scores: { stepRef: string; score: number; qualifiesForGoldmine?: boolean }[]) => void;
   patterns: Pattern[];
   visiblePatterns: Pattern[];
   selectedPattern: Pattern | null;
@@ -50,6 +56,38 @@ interface PatternContextType {
   setEscalatorSteps: (events: PatternEvent[]) => void;
   events: PatternEvent[];  // All pattern events for visualization
   setEvents: (events: PatternEvent[]) => void;
+  // NOTE: Context field breakoutBoxes stores pattern metadata and scores
+  breakoutBoxes: PatternEvent[];
+  setBreakoutBoxes: (boxes: PatternEvent[]) => void;
+  // Display settings for patterns
+  escalatorSettings: {
+    enabled: boolean;
+    showLabels: boolean;
+    showBreakoutBoxes: boolean;
+    minSteps: number;
+    minStepSize: number;
+    maxConsolidationVolatility: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+    useContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    minScore: number;
+    preferredDirection: ThrustDirection | 'BOTH';
+  };
+  setEscalatorSettings: (settings: {
+    enabled: boolean;
+    showLabels: boolean;
+    showBreakoutBoxes: boolean;
+    minSteps: number;
+    minStepSize: number;
+    maxConsolidationVolatility: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+    useContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    minScore: number;
+    preferredDirection: ThrustDirection | 'BOTH';
+  }) => void;
 }
 
 // Create the context with initial values
@@ -74,7 +112,13 @@ const initialPatternContext: PatternContextType = {
   stepIndex: [],
   setStepIndex: () => {},
   bjIntrinsic: [],
+  // Rolling Blackjack scores per candle { timestamp, score }
+  bjRollingScores: [],
+  // Target Blackjack scores per breakout box { stepRef, score }
+  bjTargetScores: [],
   setBjIntrinsic: () => {},
+  setBjRollingScores: () => {},
+  setBjTargetScores: () => {},
   bjCumulative: [],
   setBjCumulative: () => {},
   escalatorDir: [],
@@ -90,7 +134,24 @@ const initialPatternContext: PatternContextType = {
   escalatorSteps: [],
   setEscalatorSteps: () => {},
   events: [],  // All pattern events for visualization
-  setEvents: () => {}
+  setEvents: () => {},
+  breakoutBoxes: [],
+  setBreakoutBoxes: () => {},
+  escalatorSettings: {
+    enabled: true,
+    showLabels: true,
+    showBreakoutBoxes: true,
+    minSteps: 0,
+    minStepSize: 0,
+    maxConsolidationVolatility: 0,
+    basePriceChangeThreshold: 0,
+    baseVolumeChangeThreshold: 0,
+    useContextTimeframe: false,
+    contextTimeframeMultiplier: 1,
+    minScore: 0,
+    preferredDirection: 'BOTH'
+  },
+  setEscalatorSettings: () => {}
 };
 
 export const PatternContext = createContext<PatternContextType>(initialPatternContext);
@@ -107,16 +168,53 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
   // Initialize pattern detection hooks
   const patternHook = usePatterns(data);
   
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => patternHook, [
+    patternHook.patterns,
+    patternHook.visiblePatterns,
+    patternHook.selectedPattern,
+    patternHook.setSelectedPattern,
+    patternHook.bjCounts,
+    patternHook.setBjCounts,
+    patternHook.stepIndex,
+    patternHook.setStepIndex,
+    patternHook.bjIntrinsic,
+    patternHook.setBjIntrinsic,
+    patternHook.bjCumulative,
+    patternHook.setBjCumulative,
+    patternHook.bjTargetScores,
+    patternHook.setBjTargetScores,
+    patternHook.escalatorDir,
+    patternHook.setEscalatorDir,
+    patternHook.escalatorLength,
+    patternHook.setEscalatorLength,
+    patternHook.goldmineQual,
+    patternHook.setGoldmineQual,
+    patternHook.trailStop,
+    patternHook.setTrailStop,
+    patternHook.distToStopPct,
+    patternHook.setDistToStopPct,
+    patternHook.escalatorSteps,
+    patternHook.setEscalatorSteps,
+    patternHook.events,
+    patternHook.setEvents,
+    patternHook.breakoutBoxes,
+    patternHook.setBreakoutBoxes,
+    patternHook.escalatorSettings,
+    patternHook.setEscalatorSettings
+  ]);
+  
   // Log when provider renders
   console.log('[PatternProvider] Rendering with:', {
     dataLength: data.length,
     bjCountsLength: patternHook.bjCounts?.length,
     escalatorDirLength: patternHook.escalatorDir?.length,
     patterns: patternHook.patterns?.length,
+    escalatorSettings: patternHook.escalatorSettings
   });
   
   return (
-    <PatternContext.Provider value={patternHook}>
+    <PatternContext.Provider value={contextValue}>
       {children}
     </PatternContext.Provider>
   );

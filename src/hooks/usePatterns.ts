@@ -4,11 +4,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
-import { Pattern, PatternType } from '../models/PatternTypes';
+import { Pattern, PatternType, ThrustDirection } from '../models/PatternTypes';
 import { PatternEvent } from './usePatternBus';
 import { AdaptivePatternDetectionService, PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
 import { getIntrinsicScore } from '../patternEngine/blackjack';
 import { detectEscalators } from '../patternEngine/escalator';
+import { Candle } from '../types';
 
 /**
  * Hook for detecting and managing chart patterns
@@ -27,6 +28,10 @@ export function usePatterns(data: CandlestickData[]) {
   
   // Pattern bus metrics states
   const [bjCounts, setBjCounts] = useState<number[]>([]);
+  // Rolling blackjack scores per candle { timestamp, score }
+  const [bjRollingScores, setBjRollingScores] = useState<{ timestamp: number; score: number }[]>([]);
+  // Target Blackjack scores per breakout box { stepRef, score }
+  const [bjTargetScores, setBjTargetScores] = useState<{ stepRef: string; score: number; qualifiesForGoldmine?: boolean }[]>([]);
   const [stepIndex, setStepIndex] = useState<number[]>([]);
   const [bjIntrinsic, setBjIntrinsic] = useState<number[]>([]);
   const [bjCumulative, setBjCumulative] = useState<number[]>([]);
@@ -37,6 +42,51 @@ export function usePatterns(data: CandlestickData[]) {
   const [distToStopPct, setDistToStopPct] = useState<number[]>([]);
   const [escalatorSteps, setEscalatorSteps] = useState<PatternEvent[]>([]);
   const [events, setEvents] = useState<PatternEvent[]>([]);  // All pattern events
+  const [breakoutBoxes, setBreakoutBoxes] = useState<PatternEvent[]>([]);
+  
+  // Display settings for patterns
+  const [escalatorSettings, setEscalatorSettings] = useState<{ 
+    enabled: boolean; 
+    showLabels: boolean;
+    showBreakoutBoxes: boolean;
+    minSteps: number;
+    minStepSize: number;
+    maxConsolidationVolatility: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+    useContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    minScore: number;
+    preferredDirection: ThrustDirection | 'BOTH';
+  }>(() => {
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem('escalatorSettings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('[usePatterns] Loaded escalator settings from localStorage:', parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading escalator settings:', error);
+    }
+    
+    // Default values
+    return {
+      enabled: true,
+      showLabels: false,
+      showBreakoutBoxes: true,
+      minSteps: 3,
+      minStepSize: 0.5,
+      maxConsolidationVolatility: 1.0,
+      basePriceChangeThreshold: 0.01,
+      baseVolumeChangeThreshold: 0.05,
+      useContextTimeframe: true,
+      contextTimeframeMultiplier: 3,
+      minScore: 2.0,
+      preferredDirection: 'BOTH'
+    };
+  });
   
   // Initialize preferences from service (which loads from localStorage)
   const [preferences, setPreferences] = useState<Partial<PatternDetectionPreferences>>(() => {
@@ -45,13 +95,21 @@ export function usePatterns(data: CandlestickData[]) {
     return servicePrefs;
   });
   
+  // Convert CandlestickData to Candle format for usePatternBus
+  const candles: Candle[] = data.map(d => ({
+    datetime: new Date(d.timestamp).toISOString(),  // Convert timestamp to ISO string
+    open: d.open,
+    high: d.high,
+    low: d.low,
+    close: d.close,
+    volume: d.volume || 0,
+    timestamp: d.timestamp
+  }));
+  
   // Method to populate pattern arrays based on detected patterns
   const populatePatternArrays = useCallback((candles: CandlestickData[], detectedPatterns: Pattern[]) => {
-    console.log('[usePatterns] Populating pattern arrays for', candles.length, 'candles');
-    
     // Use detectEscalators from patternEngine to get proper escalator data
     const escalatorRuns = detectEscalators(candles);
-    console.log('[usePatterns] Detected', escalatorRuns.length, 'escalator runs');
     
     // Compute Blackjack intrinsic scores
     const bjIntrinsic = candles.map((candle, i) => {
@@ -127,26 +185,13 @@ export function usePatterns(data: CandlestickData[]) {
     setGoldmineQual(goldmineQual);
     setTrailStop(trailStop);
     setDistToStopPct(distToStopPct);
-    
-    console.log('[usePatterns] Pattern arrays populated:', {
-      bjIntrinsicLength: bjIntrinsic.length,
-      escalatorDirNonNull: escalatorDirArray.filter(d => d !== null).length,
-      escalatorLengthNonZero: escalatorLength.filter(l => l > 0).length
-    });
-  }, [setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct]);
+  }, []);
   
   // Detect patterns in the provided data
   const detectPatterns = useCallback(async (candleData: CandlestickData[]) => {
-    console.log('[usePatterns] detectPatterns called with', candleData.length, 'candles');
     if (candleData.length > 0) {
       const firstTime = new Date(candleData[0].datetime);
       const lastTime = new Date(candleData[candleData.length - 1].datetime);
-      console.log('[usePatterns] Data time range:', {
-        first: firstTime.toLocaleString(),
-        last: lastTime.toLocaleString(),
-        firstTimestamp: candleData[0].timestamp,
-        lastTimestamp: candleData[candleData.length - 1].timestamp
-      });
     }
     
     if (candleData.length === 0) {
@@ -158,12 +203,10 @@ export function usePatterns(data: CandlestickData[]) {
     
     // Prevent multiple concurrent detections
     if (isDetecting) {
-      console.log('Pattern detection already in progress, skipping request');
       return;
     }
     
     setIsDetecting(true);
-    console.log('Detecting patterns with adaptive service...');
     
     // Safely handle timer - check if there's already a timer running
     try {
@@ -183,8 +226,6 @@ export function usePatterns(data: CandlestickData[]) {
           acc[type] = detectedPatterns.filter(p => p.type === type).length;
           return acc;
         }, {} as Record<PatternType, number>);
-        
-        console.log(`Detected ${detectedPatterns.length} patterns with adaptive service`);
         
         // Safely end timer - check if timer exists
         try {
@@ -212,7 +253,6 @@ export function usePatterns(data: CandlestickData[]) {
         setIsDetecting(false);
       }, 0);
     } catch (error) {
-      console.error('Error detecting patterns:', error);
       setIsDetecting(false);
     }
   }, [activeFilter, adaptiveService, isDetecting, preferences.enabledPatternTypes, populatePatternArrays]);
@@ -264,7 +304,45 @@ export function usePatterns(data: CandlestickData[]) {
   useEffect(() => {
     adaptiveService.updatePreferences(preferences);
   }, [adaptiveService, preferences]);
-
+  
+  // Clear patterns when data changes significantly (e.g., symbol change)
+  useEffect(() => {
+    console.log('[usePatterns] Data changed, length:', data.length);
+    
+    // If we have no data, clear all patterns
+    if (data.length === 0) {
+      console.log('[usePatterns] Clearing patterns due to empty data');
+      setPatterns([]);
+      setVisiblePatterns([]);
+      setSelectedPattern(null);
+      setPatternCounts({} as Record<PatternType, number>);
+      
+      // Clear all pattern arrays
+      setBjCounts([]);
+      setBjRollingScores([]);
+      setBjTargetScores([]);
+      setStepIndex([]);
+      setBjIntrinsic([]);
+      setBjCumulative([]);
+      setEscalatorDir([]);
+      setEscalatorLength([]);
+      setGoldmineQual([]);
+      setTrailStop([]);
+      setDistToStopPct([]);
+      setBjTargetScores([]);
+      setEscalatorSteps([]);
+      setIsDetecting(false);
+    }
+  }, [data]); // Only re-run when data changes
+  
+  // Detect patterns when data changes and is available
+  useEffect(() => {
+    if (data.length > 0 && !isDetecting) {
+      console.log('[usePatterns] Auto-detecting patterns for new data');
+      detectPatterns(data);
+    }
+  }, [data, detectPatterns, isDetecting]);
+  
   return {
     // Return the main patterns array for chart rendering to ensure chart functionality works correctly
     patterns,
@@ -286,6 +364,10 @@ export function usePatterns(data: CandlestickData[]) {
     // Pattern bus metrics
     bjCounts,
     setBjCounts,
+    bjRollingScores,
+    setBjRollingScores,
+    bjTargetScores,
+    setBjTargetScores,
     stepIndex,
     setStepIndex,
     bjIntrinsic,
@@ -305,7 +387,11 @@ export function usePatterns(data: CandlestickData[]) {
     escalatorSteps,
     setEscalatorSteps,
     events,
-    setEvents
+    setEvents,
+    breakoutBoxes,
+    setBreakoutBoxes,
+    escalatorSettings,
+    setEscalatorSettings
   };
 };
 

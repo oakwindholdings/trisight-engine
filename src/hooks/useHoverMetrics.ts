@@ -44,17 +44,8 @@ export function useHoverMetrics(
       const chartRight = rect.width - (margin?.right || 0);
       const chartWidth = chartRight - chartLeft;
       
-      console.log('[useHoverMetrics] Mouse position:', {
-        x,
-        chartLeft,
-        chartRight,
-        chartWidth,
-        visibleDataIndices
-      });
-      
       // If outside chart area, clear hover
       if (x < chartLeft || x > chartRight) {
-        console.log('[useHoverMetrics] Mouse outside chart area, clearing hover');
         setHoverData(null);
         return;
       }
@@ -73,16 +64,6 @@ export function useHoverMetrics(
       
       // Convert to absolute index in the full dataset
       const absoluteIndex = visibleDataIndices.start + clampedVisibleIndex;
-      
-      console.log('[useHoverMetrics] Calculated indices:', {
-        x,
-        relativeX,
-        visibleIndex,
-        clampedVisibleIndex,
-        absoluteIndex,
-        visibleDataLength,
-        candle: data[absoluteIndex]
-      });
       
       if (absoluteIndex >= 0 && absoluteIndex < data.length) {
         const bj = bjCounts[absoluteIndex] ?? 'n/a';

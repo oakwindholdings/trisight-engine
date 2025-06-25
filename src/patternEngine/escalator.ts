@@ -1,10 +1,14 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows the lifecycle: detect → emit event → store in context → render.
 // src/patternEngine/escalator.ts
 // Pure function escalator pattern detector
 // Detects body-only HH+HL / LL+LH sequences
+// NOTE: Debug channel support - DEBUG_PATTERN_DETECT
 
 import { MIN_ESCALATOR_LENGTH, MAX_STEP_DURATION } from '../constants';
 import { Candle, EscalatorRun, StepBox } from '../types';
 import { ThrustDirection } from '../models/PatternTypes';
+import { debugLog, summaryLog, DEBUG_MODE } from '../utils/debug';
+import { logDebug } from '../utils/debug';
 
 /**
  * Detects escalator patterns in candlestick data based on body-only higher highs/higher lows
@@ -21,19 +25,19 @@ export function detectEscalators(
   maxStepBars = MAX_STEP_DURATION
 ): EscalatorRun[] {
   if (!candles || candles.length < minLength) {
-    console.log('[EscalatorDetector] Not enough candles:', candles?.length, 'min required:', minLength);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Not enough candles:', candles?.length, 'min required:', minLength);
     return [];
   }
 
-  console.log('[EscalatorDetector] Starting detection on', candles.length, 'candles');
-  console.log('[EscalatorDetector] First candle:', {
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] First candle:', {
     datetime: candles[0].datetime,
     open: candles[0].open,
     close: candles[0].close,
     bodyHigh: Math.max(candles[0].open, candles[0].close),
     bodyLow: Math.min(candles[0].open, candles[0].close)
   });
-  console.log('[EscalatorDetector] Last candle:', {
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Last candle:', {
     datetime: candles[candles.length-1].datetime,
     open: candles[candles.length-1].open,
     close: candles[candles.length-1].close,
@@ -53,7 +57,7 @@ export function detectEscalators(
     
     if (run) {
       runs.push(run);
-      console.log('[EscalatorDetector] Found run at index', i, 'direction:', run.direction, 'length:', run.endIndex - run.startIndex + 1);
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Found run at index', i, 'direction:', run.direction, 'length:', run.endIndex - run.startIndex + 1);
       // Move past this run
       i = run.endIndex + 1;
     } else {
@@ -71,7 +75,7 @@ export function detectEscalators(
     }
   }
   
-  console.log('[EscalatorDetector] Detection complete:', {
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Detection complete:', {
     runsFound: runs.length,
     attemptsMade: attemptCount,
     failureReasons
@@ -164,14 +168,14 @@ function determineInitialDirection(candle1: Candle, candle2: Candle): ThrustDire
   const body2Low = getBodyLow(candle2);
 
   if (body2High > body1High && body2Low > body1Low) {
-    console.log(`Initial direction: BULLISH (body2High=${body2High} > body1High=${body1High}, body2Low=${body2Low} > body1Low=${body1Low})`);
-    console.log(`  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
-    console.log(`  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `Initial direction: BULLISH (body2High=${body2High} > body1High=${body1High}, body2Low=${body2Low} > body1Low=${body1Low})`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
     return ThrustDirection.BULLISH;
   } else if (body2High < body1High && body2Low < body1Low) {
-    console.log(`Initial direction: BEARISH (body2High=${body2High} < body1High=${body1High}, body2Low=${body2Low} < body1Low=${body1Low})`);
-    console.log(`  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
-    console.log(`  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `Initial direction: BEARISH (body2High=${body2High} < body1High=${body1High}, body2Low=${body2Low} < body1Low=${body1Low})`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
     return ThrustDirection.BEARISH;
   }
 

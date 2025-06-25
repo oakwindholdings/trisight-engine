@@ -1,3 +1,4 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows a 5-stage lifecycle: detect → emit → context → render → score.
 // src/components/Chart/MetricPopover.tsx
 // Popover component that displays hover metrics at cursor position
 // Shows all registered metrics for the hovered candle
@@ -8,6 +9,7 @@ import { usePatternContext } from '../../contexts/PatternContext';
 import { MetricRegistry } from '../../metrics/registry';
 import { useUIState } from '../../contexts/UIStateContext';
 import { useMarketDataContext } from '../../contexts/MarketDataContext';
+import { patternStyles, PatternType } from '../../models/PatternTypes';
 
 export function MetricPopover() {
   const patternContext = usePatternContext();
@@ -17,43 +19,6 @@ export function MetricPopover() {
   
   // Hide popover when date picker is open or no hover data
   if (!pop || isDatePickerOpen) return null;
-  
-  // Debug: Log what data we're using for metrics
-  console.log('[MetricPopover] Debug:', {
-    hoverIndex: pop.idx,
-    hoverCandle: pop.candle ? {
-      datetime: pop.candle.datetime,
-      open: pop.candle.open,
-      high: pop.candle.high,
-      low: pop.candle.low,
-      close: pop.candle.close
-    } : null,
-    contextCandle: candles?.[pop.idx] ? {
-      datetime: candles[pop.idx].datetime,
-      open: candles[pop.idx].open,
-      high: candles[pop.idx].high,
-      low: candles[pop.idx].low,
-      close: candles[pop.idx].close
-    } : null,
-    candlesLength: candles?.length,
-    patternArrays: {
-      bjIntrinsic: patternContext.bjIntrinsic ? `Array(${patternContext.bjIntrinsic.length})` : 'undefined',
-      bjCumulative: patternContext.bjCumulative ? `Array(${patternContext.bjCumulative.length})` : 'undefined',
-      stepIndex: patternContext.stepIndex ? `Array(${patternContext.stepIndex.length})` : 'undefined',
-      escalatorDir: patternContext.escalatorDir ? `Array(${patternContext.escalatorDir.length})` : 'undefined',
-      escalatorLength: patternContext.escalatorLength ? `Array(${patternContext.escalatorLength.length})` : 'undefined',
-      goldmineQual: patternContext.goldmineQual ? `Array(${patternContext.goldmineQual.length})` : 'undefined',
-      trailStop: patternContext.trailStop ? `Array(${patternContext.trailStop.length})` : 'undefined',
-      distToStopPct: patternContext.distToStopPct ? `Array(${patternContext.distToStopPct.length})` : 'undefined'
-    },
-    sampleValues: {
-      bjIntrinsic: patternContext.bjIntrinsic?.[pop.idx],
-      bjCumulative: patternContext.bjCumulative?.[pop.idx],
-      stepIndex: patternContext.stepIndex?.[pop.idx],
-      escalatorDir: patternContext.escalatorDir?.[pop.idx],
-      escalatorLength: patternContext.escalatorLength?.[pop.idx]
-    }
-  });
   
   // Create combined context for metric calculations
   // Use the full candles array for pattern metrics to work
@@ -66,6 +31,10 @@ export function MetricPopover() {
   // Use the index directly but ensure it's within bounds of the candles array
   const candleIndex = pop.idx;
   
+  // CRITICAL FIX: Pattern arrays are built from visible candles only
+  // Use visibleIndex for accessing pattern arrays, not the absolute index
+  const patternArrayIndex = pop.visibleIndex;
+  
   const metrics = Object.values(MetricRegistry).map(metric => {
     // For OHLC metrics, use the candle from hover context if available
     if (['open', 'high', 'low', 'close', 'volume'].includes(metric.id) && pop.candle) {
@@ -73,6 +42,12 @@ export function MetricPopover() {
         ...combinedContext,
         candles: { [candleIndex]: pop.candle } 
       });
+      return { label: metric.label, value };
+    }
+    
+    // For pattern metrics (BJ, Escalator, etc), use visibleIndex to access arrays
+    if (['bjIntrinsic', 'bjCumulative', 'stepNumber', 'escalatorDir', 'escalatorLength', 'goldmineQual', 'trailStop', 'distToStopPct'].includes(metric.id)) {
+      const value = metric.calc(patternArrayIndex, combinedContext);
       return { label: metric.label, value };
     }
     
@@ -98,6 +73,28 @@ export function MetricPopover() {
   });
 
   const stepData = hoveredStep?.data as { stepRef: string; direction: string; floor: number; ceiling: number; height: number } | undefined;
+
+  // Lookup Target Blackjack Score for this step
+  const targetBjEntry = stepData ? (patternContext.bjTargetScores || []).find(e => e.stepRef === stepData.stepRef) : undefined;
+
+  // Check if we're hovering over a breakout box
+  const hoveredBreakoutBox = patternContext.breakoutBoxes?.find(event => {
+    if (event.type === 'BREAKOUT_BOX' && event.data) {
+      const boxData = event.data as { startIndex: number; endIndex: number; blackjackScore?: number; qualifiesForGoldmine?: boolean };
+      return pop.idx >= boxData.startIndex && pop.idx <= boxData.endIndex;
+    }
+    return false;
+  });
+
+  const breakoutBoxData = hoveredBreakoutBox?.data as { 
+    stepRef: string; 
+    direction: string; 
+    floor: number; 
+    ceiling: number; 
+    blackjackScore?: number; 
+    qualifiesForGoldmine?: boolean;
+    boxType?: string;
+  } | undefined;
 
   return (
     <div
@@ -137,8 +134,11 @@ export function MetricPopover() {
           <div className="border-t border-gray-600 mt-2 pt-2 mb-1"></div>
           <div className="flex items-center text-xs mb-1">
             <span className="text-gray-500 mr-2">Escalator Step:</span>
-            <span className={stepData.direction === 'RISING' ? 'text-blue-400' : 'text-red-400'}>
-              {stepData.direction}
+            <span 
+              className="font-medium"
+              style={{ color: stepData.direction === 'RISING' ? patternStyles[PatternType.ESCALATOR].color : '#EF4444' }}
+            >
+              ESC {stepData.direction === 'RISING' ? '↑' : '↓'}
             </span>
           </div>
           <div className="flex justify-between items-center text-xs">
@@ -167,8 +167,71 @@ export function MetricPopover() {
             <span className="text-gray-500">Height:</span>
             <span className="text-gray-300">{stepData.height.toFixed(2)}</span>
           </div>
+          {targetBjEntry && (
+            <>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-500">Blackjack Score:</span>
+                <span className={targetBjEntry.score >= 21 ? 'text-emerald-400' : (targetBjEntry.score < 0 ? 'text-red-400' : 'text-slate-300')}>
+                  {targetBjEntry.score >= 0 ? '+' : ''}{targetBjEntry.score}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-500">Goldmine:</span>
+                <span className={targetBjEntry.qualifiesForGoldmine ? 'text-yellow-400 font-bold' : 'text-gray-400'}>
+                  {targetBjEntry.qualifiesForGoldmine ? 'YES ' : 'NO'}
+                </span>
+              </div>
+            </>
+          )}
         </>
       )}
+      
+      {/* BreakoutBox Details */}
+      {breakoutBoxData && (
+        <>
+          <div className="border-t border-gray-600 mt-2 pt-2 mb-1"></div>
+          <div className="flex items-center text-xs mb-1">
+            <span className="text-gray-500 mr-2">BreakoutBox:</span>
+            <span 
+              className="font-medium"
+              style={{ color: patternStyles[PatternType.BREAKOUTBOX].color }}
+            >
+              BREAKOUT {breakoutBoxData.direction === 'RISING' ? '↑' : '↓'}
+            </span>
+          </div>
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-gray-500">Step Reference:</span>
+            <span className="text-gray-300">{breakoutBoxData.stepRef}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-gray-500">Floor:</span>
+            <span className="text-gray-300">{breakoutBoxData.floor.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-gray-500">Ceiling:</span>
+            <span className="text-gray-300">{breakoutBoxData.ceiling.toFixed(2)}</span>
+          </div>
+          {breakoutBoxData.blackjackScore !== undefined && (
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-gray-500">Blackjack Score:</span>
+              <span className={breakoutBoxData.blackjackScore < 0 ? 'text-red-400' : 'text-green-400'}>
+                {breakoutBoxData.blackjackScore}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-gray-500">Goldmine:</span>
+            <span className={breakoutBoxData.qualifiesForGoldmine ? 'text-yellow-400 font-bold' : 'text-gray-400'}>
+              {breakoutBoxData.qualifiesForGoldmine ? 'YES 🔶' : 'NO'}
+            </span>
+          </div>
+        </>
+      )}
+      
+      <div className="text-xs text-slate-300">Idx {pop.idx}</div>
+      <div className="text-xs text-slate-300">BJ Cnt : {pop.bj ?? 0}</div>
+      {/* NOTE: Displays Blackjack scores from PatternEvent data */}
+      {/* TODO: Add pattern-specific scores when hovering over pattern zones */}
     </div>
   );
 }

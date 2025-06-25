@@ -1,6 +1,7 @@
 // src/utils/patternDetection/core/PatternRelationshipTracker.ts
-// Tracks relationships between patterns
-// Used for advanced analytics
+// Tracks relationships and dependencies between detected patterns
+// NOTE: TriSight uses Canvas, not SVG. Supports DEBUG_PATTERN_DETECT channel via logDebug.
+
 import { 
   Pattern, 
   PatternType, 
@@ -10,6 +11,7 @@ import {
   ThrustDirection
 } from '../../../models/PatternTypes';
 import { MarketContext } from './MarketContext';
+import { logDebug } from '../../debug';
 
 /**
  * Types of relationships between patterns
@@ -67,7 +69,7 @@ export class PatternRelationshipTracker {
       return patterns.map(p => this.enhancePattern(p, []));
     }
     
-    console.log(`Processing relationships between ${patterns.length} patterns`);
+    logDebug('DEBUG_PATTERN_DETECT', `Processing relationships between ${patterns.length} patterns`);
     
     // All identified relationships
     const relationships: PatternRelationship[] = [];
@@ -84,7 +86,7 @@ export class PatternRelationshipTracker {
     // Detect BlackJack confirmation relationships
     relationships.push(...this.detectBlackjackRelationships(patterns, context));
     
-    console.log(`Identified ${relationships.length} pattern relationships`);
+    logDebug('DEBUG_PATTERN_DETECT', `Identified ${relationships.length} pattern relationships`);
     
     // Group relationships by pattern
     const relationshipsByPattern = new Map<string, PatternRelationship[]>();

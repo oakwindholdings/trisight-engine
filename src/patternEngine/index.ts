@@ -1,13 +1,21 @@
 // src/patternEngine/index.ts
-// Barrel export for pattern detection engine modules
+// Export all pattern detection functions
 // Provides centralized access to all pattern detection functions
 
 export { detectEscalators } from './escalator';
-export { detectEscalatorSteps, isValidStep, isInStep } from './escalatorStep';
+export { detectEscalatorSteps } from './escalatorStep';
+export { detectBreakoutBoxes, type BreakoutBox } from './breakoutBox';
 export { 
   getIntrinsicScore, 
   calcStepBlackjack, 
-  getBlackjackSignal 
+  getBlackjackSignal,
+  computeRollingBlackjackScores,
+  computeTargetBlackjackScore
 } from './blackjack';
 export { detectGoldmine } from './goldmine';
 export type { GoldmineSignal } from './goldmine';
+
+// Scaffolded pattern detectors (placeholder implementations)
+export { detectGoldmineChannel, type GoldmineChannelDetection } from './goldmineChannel';
+export { detectPivots, type PivotDetection } from './pivot';
+export { detectRocketman, type RocketmanDetection } from './rocketman';

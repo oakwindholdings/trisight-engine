@@ -33,6 +33,8 @@ export interface StepBox {
   volumeProfile: number; // Average volume during this step
   floor: number; // Step range bottom (lowest low in step)
   ceiling: number; // Step range top (highest high in step)
+  direction?: 'UP' | 'DOWN'; // Direction of the preceding escalator
+  isCompleted?: boolean; // True if step has been broken/completed
 }
 
 // Blackjack pattern structures

@@ -18,6 +18,9 @@ interface ChartWithContextProps {
   timeframe?: string;
   activeTimeRange: TimeRangeOption;
   selectedSymbol?: string;
+  showTradingHoursOnly?: boolean;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContextProps>(({
@@ -28,15 +31,81 @@ export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContex
   selectedDate,
   timeframe,
   activeTimeRange = '1D',
-  selectedSymbol = 'AAPL'
+  selectedSymbol = 'AAPL',
+  showTradingHoursOnly = true,
+  startDate,
+  endDate
 }, ref) => {
+  const { data, fetchSpecificDay, fetchDateRange, loading, error, setIsUsingCustomRange } = useMarketDataContext();
+  const { patterns } = usePatternContext();
+
+  // CRITICAL DIAGNOSTIC: Log data immediately after getting from context
+  console.log('[DIAGNOSTIC] ChartWithContext - Data from useMarketDataContext:', {
+    data,
+    dataType: Array.isArray(data) ? 'array' : typeof data,
+    dataLength: data?.length || 0,
+    dataIsNull: data === null,
+    dataIsUndefined: data === undefined,
+    hasData: !!data && data.length > 0,
+    firstItem: data?.[0],
+    loading,
+    error
+  });
+
+  // Add debug logging for props
+  console.log('[ChartWithContext] Component rendered with props:', {
+    activeTimeRange,
+    selectedSymbol,
+    startDate: startDate?.toISOString(),
+    endDate: endDate?.toISOString(),
+    hasCustomDates: !!(startDate && endDate),
+    startDateValue: startDate,
+    endDateValue: endDate
+  });
+
+  // DIAGNOSTIC: Log data from context
+  console.log('[DIAGNOSTIC] ChartWithContext data from MarketDataContext:', {
+    dataType: Array.isArray(data) ? 'array' : typeof data,
+    dataLength: data?.length || 0,
+    hasData: !!data && data.length > 0,
+    loading,
+    error: error?.message || null,
+    firstCandle: data && data[0] ? {
+      ...data[0],
+      timestampValue: data[0].timestamp,
+      timestampType: typeof data[0].timestamp,
+      timestampAsDate: new Date(data[0].timestamp).toISOString()
+    } : null,
+    lastCandle: data && data[data.length - 1] ? {
+      ...data[data.length - 1],
+      timestampValue: data[data.length - 1].timestamp,
+      timestampType: typeof data[data.length - 1].timestamp,
+      timestampAsDate: new Date(data[data.length - 1].timestamp).toISOString()
+    } : null
+  });
+
   if (process.env.NODE_ENV === 'development') {
     console.log(`ChartWithContext rendering with activeTimeRange: ${activeTimeRange}`);
     console.log(`ChartWithContext selectedSymbol: ${selectedSymbol}`);
   }
   
-  const { data, fetchSpecificDay, fetchDateRange, loading, error, setIsUsingCustomRange } = useMarketDataContext();
-  const { patterns } = usePatternContext();
+  // Filter data based on trading hours if enabled
+  const filteredData = useMemo(() => {
+    if (!showTradingHoursOnly || !data) {
+      return data;
+    }
+    
+    // Filter to only include candles during regular trading hours (9:30 AM - 4:00 PM ET)
+    return data.filter(candle => {
+      const date = new Date(candle.datetime);
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const totalMinutes = hours * 60 + minutes;
+      
+      // Trading hours: 9:30 AM - 4:00 PM ET (570 - 960 minutes from midnight)
+      return totalMinutes >= 570 && totalMinutes <= 960;
+    });
+  }, [data, showTradingHoursOnly]);
 
   // Debug prop changes
   if (process.env.NODE_ENV === 'development') {
@@ -49,6 +118,33 @@ export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContex
     if (process.env.NODE_ENV === 'development') {
       console.log('ChartWithContext useEffect - Running');
       console.log(`ChartWithContext useEffect triggered - activeTimeRange: ${activeTimeRange}, selectedDate: ${selectedDate.toISOString()}`);
+      console.log(`ChartWithContext useEffect - Custom dates:`, { startDate, endDate });
+    }
+    
+    // If we have custom dates, use them directly
+    if (startDate && endDate) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('ChartWithContext useEffect - Using custom date range');
+      }
+      setIsUsingCustomRange(true);
+      
+      // Determine interval based on date range
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay);
+      
+      let interval: string;
+      if (daysDiff <= 1) {
+        interval = '1min';
+      } else if (daysDiff <= 7) {
+        interval = '15min';
+      } else if (daysDiff <= 60) {
+        interval = '60min';
+      } else {
+        interval = '1day';
+      }
+      
+      fetchDateRange(startDate, endDate, interval);
+      return;
     }
     
     if (!activeTimeRange) {
@@ -128,10 +224,10 @@ export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContex
     };
     
     fetchDataForRange();
-  }, [activeTimeRange, selectedDate, fetchSpecificDay, fetchDateRange, setIsUsingCustomRange]);
+  }, [activeTimeRange, selectedDate, fetchSpecificDay, fetchDateRange, setIsUsingCustomRange, startDate, endDate]);
 
   // Calculate date range from activeTimeRange
-  const [startDate, endDate] = useMemo(() => {
+  const [chartStartDate, chartEndDate] = useMemo(() => {
     // Get the most recent trading day (skip weekends)
     const getLastTradingDay = (date: Date): Date => {
       const d = new Date(date);
@@ -210,49 +306,67 @@ export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContex
 
   return (
     <>
-      {loading && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 10,
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      {loading ? (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          height: '100%',
+          color: '#666'
         }}>
-          Loading data...
+          Loading chart data...
         </div>
+      ) : (
+        <>
+          {console.log('[ChartWithContext] Passing data to InfiniteZoomChart:', {
+            symbol: selectedSymbol,
+            dataLength: data?.length || 0,
+            startDate: (startDate || chartStartDate)?.toISOString(),
+            endDate: (endDate || chartEndDate)?.toISOString(),
+            hasData: !!data,
+            firstCandle: data?.[0]?.timestamp,
+            lastCandle: data?.[data.length - 1]?.timestamp
+          })}
+          
+          {/* DIAGNOSTIC: Log detailed data being passed */}
+          {console.log('[DIAGNOSTIC] ChartWithContext passing to InfiniteZoomChart:', {
+            dataLength: data?.length || 0,
+            hasData: !!data && data.length > 0,
+            symbol: selectedSymbol,
+            startDate: (startDate || chartStartDate)?.toISOString(),
+            endDate: (endDate || chartEndDate)?.toISOString(),
+            width,
+            height,
+            timeframe,
+            loading,
+            patternsCount: patterns.length,
+            firstFilteredCandle: data && data[0] ? {
+              timestamp: data[0].timestamp,
+              timestampType: typeof data[0].timestamp,
+              date: new Date(data[0].timestamp).toISOString()
+            } : null,
+            lastFilteredCandle: data && data[data.length - 1] ? {
+              timestamp: data[data.length - 1].timestamp,
+              timestampType: typeof data[data.length - 1].timestamp,
+              date: new Date(data[data.length - 1].timestamp).toISOString()
+            } : null
+          })}
+          
+          <InfiniteZoomChart
+            ref={ref}
+            symbol={selectedSymbol}
+            startDate={startDate || chartStartDate}
+            endDate={endDate || chartEndDate}
+            patterns={patterns}
+            width={width}
+            height={height}
+            onPatternSelect={onPatternSelect}
+            selectedPattern={selectedPattern}
+            data={data}
+            timeframe={timeframe}
+          />
+        </>
       )}
-      {error && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          color: 'red',
-          zIndex: 10,
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-        }}>
-          Error: {error.message}
-        </div>
-      )}
-      <InfiniteZoomChart
-        ref={ref}
-        symbol={selectedSymbol}
-        startDate={startDate}
-        endDate={endDate}
-        patterns={patterns}
-        width={width}
-        height={height}
-        onPatternSelect={onPatternSelect}
-        selectedPattern={selectedPattern}
-        data={data}
-      />
     </>
   );
 });

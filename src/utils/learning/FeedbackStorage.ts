@@ -1,9 +1,11 @@
 // src/utils/learning/FeedbackStorage.ts
 // Stores feedback in localStorage
 // Also saves learning parameters
+// NOTE: TriSight uses Canvas, not SVG. Supports DEBUG_UI channel via logDebug.
 import { PatternFeedback } from '../../models/FeedbackTypes';
 import { PatternType } from '../../models/PatternTypes';
 import { PatternDetectionParameters, PatternFeedbackHistory } from '../../models/LearningTypes';
+import { logDebug } from '../debug';
 
 /**
  * Storage key constants
@@ -58,7 +60,7 @@ export class FeedbackStorage {
         }
       }));
     } catch (error) {
-      console.error('Error loading feedback from storage:', error);
+      logDebug('DEBUG_UI', 'Error loading feedback from storage:', error);
       return [];
     }
   }
@@ -111,7 +113,7 @@ export class FeedbackStorage {
       
       return JSON.parse(storedParameters);
     } catch (error) {
-      console.error('Error loading parameters from storage:', error);
+      logDebug('DEBUG_UI', 'Error loading parameters from storage:', error);
       return {} as Record<PatternType, PatternDetectionParameters>;
     }
   }
@@ -151,7 +153,7 @@ export class FeedbackStorage {
       // Save updated histories
       localStorage.setItem(STORAGE_KEYS.FEEDBACK_HISTORY, JSON.stringify(histories));
     } catch (error) {
-      console.error('Error updating feedback history:', error);
+      logDebug('DEBUG_UI', 'Error updating feedback history:', error);
     }
   }
   
@@ -187,7 +189,7 @@ export class FeedbackStorage {
       // Save updated histories
       localStorage.setItem(STORAGE_KEYS.FEEDBACK_HISTORY, JSON.stringify(histories));
     } catch (error) {
-      console.error('Error updating parameter history:', error);
+      logDebug('DEBUG_UI', 'Error updating parameter history:', error);
     }
   }
   
@@ -221,7 +223,7 @@ export class FeedbackStorage {
         }))
       }));
     } catch (error) {
-      console.error('Error loading feedback histories from storage:', error);
+      logDebug('DEBUG_UI', 'Error loading feedback histories from storage:', error);
       return [];
     }
   }

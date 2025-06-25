@@ -1,8 +1,66 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows a 5-stage lifecycle: detect → emit → context → render → score.
 // src/components/Chart/PatternRenderer.tsx
 // Renders detected patterns on chart
 // Colors based on confidence
+// CRITICAL: We use CANVAS for all rendering, NEVER SVG or other technologies.
+// All pattern drawing uses Canvas 2D context methods (fillRect, strokeRect, etc.)
+
 import { Pattern, PatternType, patternStyles } from '../../models/PatternTypes';
 import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
+
+// Direction arrow symbols for unified labeling
+const DIRECTION_ARROWS = {
+  UP: '↑',
+  DOWN: '↓',
+  RISING: '↑',
+  FALLING: '↓',
+  BULLISH: '↑',
+  BEARISH: '↓',
+  LONG: '↑',
+  SHORT: '↓'
+};
+
+// Unified label font specification
+const LABEL_FONT = 'bold 11px sans-serif';
+
+// Helper function to generate standardized pattern labels
+function generatePatternLabel(pattern: Pattern): string {
+  const patternTypeMap: Record<PatternType, string> = {
+    [PatternType.ESCALATOR]: 'ESC',
+    [PatternType.BLACKJACK]: 'BJ',
+    [PatternType.BREAKOUTBOX]: 'BREAKOUT',
+    [PatternType.GOLDMINE_CHANNEL]: 'GOLDMINE CH',
+    [PatternType.GOLDMINE_SHAFT]: 'GOLDMINE SH',
+    [PatternType.PIVOT]: 'PIVOT',
+    [PatternType.ROCKETMAN]: 'ROCKET'
+  };
+
+  const baseLabel = patternTypeMap[pattern.type] || pattern.type;
+  
+  // Add direction arrow based on pattern type
+  let direction = '';
+  if (pattern.type === PatternType.ESCALATOR && 'direction' in pattern) {
+    direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
+  } else if (pattern.type === PatternType.GOLDMINE_SHAFT && 'direction' in pattern) {
+    direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
+  } else if (pattern.type === PatternType.PIVOT && 'pivotType' in pattern) {
+    direction = ` ${pattern.pivotType === 'SUPPORT' ? DIRECTION_ARROWS.UP : DIRECTION_ARROWS.DOWN}`;
+  } else if (pattern.type === PatternType.ROCKETMAN && 'direction' in pattern) {
+    direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
+  }
+
+  return baseLabel + direction;
+}
+
+// Helper function to determine if pattern qualifies for gold highlight
+function shouldApplyGoldHighlight(pattern: Pattern): boolean {
+  // Apply gold fill for qualified goldmine patterns
+  if (pattern.type === PatternType.GOLDMINE_SHAFT || pattern.type === PatternType.GOLDMINE_CHANNEL) {
+    return pattern.confidence > 0.7; // High confidence goldmine patterns get gold highlight
+  }
+  // Note: BreakoutBox goldmine qualification will be handled when BreakoutBoxPattern interface is added
+  return false;
+}
 
 interface ChartDimensions {
   width: number;
@@ -51,12 +109,60 @@ const PatternRendererImpl = {
     timeScale: any,
     priceScale: any,
     dimensions: ChartDimensions,
-    selectedPattern: Pattern | null
+    selectedPattern: Pattern | null,
+    escalatorSteps: any[] = [],
+    escalatorSettings: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean } = { enabled: true, showLabels: true, showBreakoutBoxes: true },
+    breakoutBoxes: any[] = [], // Add breakoutBoxes parameter
+    candles: any[] = [] // Add candles parameter for fresh timestamp lookup
   ) {
     if (!ctx) return;
     
     // Clear the canvas
     ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+    
+    // Debug escalator steps
+    if (escalatorSteps.length > 0) {
+      console.log('[PatternRenderer] Rendering escalator steps:', {
+        stepCount: escalatorSteps.length,
+        steps: escalatorSteps.map((step, i) => ({
+          index: i,
+          direction: step.direction,
+          startIndex: step.startIndex,
+          endIndex: step.endIndex,
+          startTime: step.startTime,
+          endTime: step.endTime,
+          isCompleted: step.isCompleted
+        })),
+        canvasSize: { width: dimensions.width, height: dimensions.height }
+      });
+    }
+    
+    // NOTE: Show/hide breakout boxes tied to Escalator settings
+    // Debug breakout boxes
+    if (breakoutBoxes && breakoutBoxes.length > 0 && escalatorSettings.showBreakoutBoxes) {
+      console.log('[DEBUG_UI] Breakout boxes visibility enabled, rendering boxes');
+      console.log('[DIAGNOSTIC] [PatternRenderer] Rendering breakout boxes:', {
+        boxCount: breakoutBoxes.length,
+        boxes: breakoutBoxes.slice(0, 3).map(box => ({
+          startIndex: box.data.startIndex,
+          endIndex: box.data.endIndex,
+          high: box.data.high,
+          low: box.data.low,
+          boxType: box.data.boxType
+        }))
+      });
+      
+      // Render each breakout box
+      let renderedCount = 0;
+      breakoutBoxes.forEach((box) => {
+        console.log(`[DIAGNOSTIC] [PatternRenderer] Calling renderBreakoutBox for box ${renderedCount + 1}/${breakoutBoxes.length}`);
+        this.renderBreakoutBox(ctx, box, dimensions, timeScale, priceScale);
+        renderedCount++;
+      });
+      console.log(`[DIAGNOSTIC] [PatternRenderer] Finished rendering ${renderedCount} breakout boxes`);
+    } else if (breakoutBoxes && breakoutBoxes.length > 0 && !escalatorSettings.showBreakoutBoxes) {
+      console.log('[DEBUG_UI] Breakout boxes visibility disabled, skipping rendering of', breakoutBoxes.length, 'boxes');
+    }
     
     // Filter patterns that are in the visible range
     const visiblePatterns = patterns.filter(pattern => {
@@ -73,6 +179,15 @@ const PatternRendererImpl = {
     visiblePatterns.forEach(pattern => {
       this.renderPattern(ctx, pattern, timeScale, priceScale, dimensions, pattern.id === selectedPattern?.id);
     });
+    
+    // Render escalator steps only if enabled
+    if (escalatorSettings.enabled) {
+      escalatorSteps.forEach((step, index) => {
+        if (step.startIndex !== undefined && step.endIndex !== undefined) {
+          this.renderEscalatorStep(ctx, step, timeScale, priceScale, dimensions, escalatorSettings.showLabels, candles);
+        }
+      });
+    }
     
     // Render pattern labels after all patterns
     this.renderPatternLabels(ctx, visiblePatterns, timeScale, priceScale, dimensions);
@@ -441,6 +556,7 @@ const PatternRendererImpl = {
       ctx.font = '12px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      
       ctx.fillText(symbol, pointX, pointY);
     });
     
@@ -469,16 +585,241 @@ const PatternRendererImpl = {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.beginPath();
     ctx.rect(
-      centerX - textWidth/2 - padX,
+      centerX - textWidth / 2 - padX,
       centerY - 6 - padY,
-      textWidth + padX*2,
-      12 + padY*2
+      textWidth + padX * 2,
+      12 + padY * 2
     );
     ctx.fill();
     
     // Score text
     ctx.fillStyle = pattern.score > 10 ? '#4CAF50' : '#FFC107';
     ctx.fillText(scoreDisplay, centerX, centerY);
+  },
+  
+  renderEscalatorStep(
+    ctx: CanvasRenderingContext2D,
+    step: any,
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions,
+    showLabels: boolean = true,
+    candles: any[] = [] // Add candles parameter for fresh timestamp lookup
+  ) {
+    // Save context state & log
+    console.log('[DIAGNOSTIC] [renderEscalatorStep] step', step.stepRef, 'BJ', step.blackjackScore, 'GM', step.qualifiesForGoldmine);
+    // Save context state
+    ctx.save();
+    
+    // Get coordinates from step data
+    // CRITICAL FIX: Use fresh candle timestamps from indices to prevent zoom drift
+    let startX: number;
+    let endX: number;
+    
+    if (candles.length > 0 && step.startIndex !== undefined && step.endIndex !== undefined) {
+      // Use candle indices to get fresh timestamps
+      const startCandle = candles[step.startIndex];
+      const endCandle = candles[step.endIndex];
+      
+      if (startCandle && endCandle && startCandle.datetime && endCandle.datetime) {
+        startX = timeScale.scale(new Date(startCandle.datetime));
+        endX = timeScale.scale(new Date(endCandle.datetime));
+      } else {
+        // Fallback to pre-stored times if candle lookup fails
+        startX = timeScale.scale(step.startTime);
+        endX = timeScale.scale(step.endTime);
+      }
+    } else {
+      // Fallback to pre-stored times if no candles available
+      startX = timeScale.scale(step.startTime);
+      endX = timeScale.scale(step.endTime);
+    }
+    
+    const topY = priceScale.scale(step.ceiling);
+    const bottomY = priceScale.scale(step.floor);
+    
+    // Calculate box dimensions
+    const boxWidth = endX - startX;
+    const boxHeight = bottomY - topY;
+    
+    // Style configuration
+    const isActive = !step.isCompleted;
+    const borderColor = step.direction === 'UP' ? '#10b981' : '#ef4444'; // Green for up, red for down
+    const fillColor = isActive ? `${borderColor}10` : `${borderColor}05`; // More transparent when completed
+    
+    // Draw filled rectangle
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(startX, topY, boxWidth, boxHeight);
+    
+    // Draw border
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    if (!isActive) {
+      ctx.setLineDash([2, 2]); // Dashed when completed
+    }
+    ctx.strokeRect(startX, topY, boxWidth, boxHeight);
+    
+    // Draw STEP and BJ labels if enabled
+    if (showLabels) {
+      // Helper to draw white background behind text
+      const drawBg = (text: string, x: number, y: number) => {
+        const m = ctx.measureText(text);
+        const pad = 4;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x - m.width / 2 - pad, y - 8 - pad / 2, m.width + pad * 2, 16 + pad);
+      };
+
+      // === STEP LABEL ===
+      const stepLabel = step.direction === 'UP' ? 'STEP UP' : 'STEP DOWN';
+      ctx.font = 'bold 12px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const labelX = startX + boxWidth / 2;
+      const labelY = topY + boxHeight / 2 - 10; // shift up to leave room for BJ label
+      drawBg(stepLabel, labelX, labelY);
+      ctx.fillStyle = borderColor;
+      ctx.fillText(stepLabel, labelX, labelY);
+
+      // === BJ TARGET LABEL ===
+      if (typeof step.blackjackScore === 'number') {
+        const bjScore: number = step.blackjackScore;
+        const bjLabel = `BJ: ${bjScore >= 0 ? '+' : ''}${bjScore}`;
+        const bjColor = bjScore >= 21 ? '#10b981' : '#374151';
+        const bjY = labelY + 20;
+        drawBg(bjLabel, labelX, bjY);
+        ctx.fillStyle = bjColor;
+        ctx.fillText(bjLabel, labelX, bjY);
+
+        // Goldmine star indicator
+        if (step.qualifiesForGoldmine === true) {
+          ctx.fillStyle = '#FFD700';
+          ctx.font = 'bold 14px Inter, sans-serif';
+          ctx.fillText('★', labelX + ctx.measureText(bjLabel).width / 2 + 10, bjY);
+        }
+      }
+    }
+    
+    // Restore context state
+    ctx.restore();
+  },
+  
+  renderBreakoutBox(
+    ctx: CanvasRenderingContext2D,
+    box: any,
+    dimensions: ChartDimensions,
+    timeScale: any,
+    priceScale: any
+  ): void {
+    // DIAGNOSTIC: Log incoming box data
+    console.log('[DIAGNOSTIC] [renderBreakoutBox] Rendering box:', {
+      stepRef: box.data.stepRef,
+      qualifiesForGoldmine: box.data.qualifiesForGoldmine,
+      hasQualificationField: 'qualifiesForGoldmine' in box.data,
+      dataKeys: Object.keys(box.data),
+      boxData: box.data
+    });
+    
+    if (!box.data.candles || box.data.candles.length === 0) {
+      console.warn('[PatternRenderer] Cannot render BreakoutBox without candles');
+      return;
+    }
+
+    const candles = box.data.candles;
+    const firstCandle = candles[0];
+    const lastCandle = candles[candles.length - 1];
+
+    const x1 = Math.round(timeScale.scale(new Date(firstCandle.datetime)));
+    const x2 = Math.round(timeScale.scale(new Date(lastCandle.datetime)));
+    const y1 = Math.round(priceScale.scale(box.data.high));
+    const y2 = Math.round(priceScale.scale(box.data.low));
+
+    const width = x2 - x1 + 10; // Add candle width
+    const height = Math.abs(y2 - y1);
+
+    // Skip if box is too small
+    if (width < 10 || height < 5) {
+      return;
+    }
+
+    // Determine styling based on Goldmine qualification
+    const qualified = box.data.qualifiesForGoldmine === true;
+    
+    // DIAGNOSTIC: Log qualification check result
+    console.log('[DIAGNOSTIC] [renderBreakoutBox] Qualification check:', {
+      stepRef: box.data.stepRef,
+      qualified,
+      qualifiesForGoldmine: box.data.qualifiesForGoldmine,
+      typeofQualifiesForGoldmine: typeof box.data.qualifiesForGoldmine
+    });
+    
+    let fillColor: string;
+    let strokeColor: string;
+    
+    if (qualified) {
+      // Goldmine-qualified: darker gold fill (50% opacity) with directional border
+      fillColor = 'rgba(255, 215, 0, 0.5)'; // Darker gold
+      // Direction-based border: green for RISING, red for FALLING
+      strokeColor = box.data.direction === 'RISING' ? '#10b981' : '#ef4444'; // Green : Red
+      console.log('[DIAGNOSTIC] [renderBreakoutBox] Setting GOLD style for qualified box:', { 
+        stepRef: box.data.stepRef, 
+        score: box.data.blackjackScore,
+        fillColor,
+        strokeColor,
+        direction: box.data.direction
+      });
+    } else {
+      // Regular styling based on direction
+      if (box.data.direction === 'RISING') {
+        fillColor = 'rgba(59, 130, 246, 0.1)'; // Blue translucent
+        strokeColor = '#3B82F6'; // Blue
+      } else {
+        fillColor = 'rgba(239, 68, 68, 0.1)'; // Red translucent
+        strokeColor = '#EF4444'; // Red
+      }
+      console.log('[DIAGNOSTIC] [renderBreakoutBox] Setting regular style for non-qualified box:', {
+        stepRef: box.data.stepRef,
+        direction: box.data.direction,
+        fillColor,
+        strokeColor
+      });
+    }
+    
+    // DIAGNOSTIC: Log before drawing
+    console.log('[DIAGNOSTIC] [renderBreakoutBox] Drawing box at:', {
+      stepRef: box.data.stepRef,
+      x1, y1, width, height,
+      fillColor,
+      strokeColor,
+      qualified
+    });
+    
+    // Draw box with determined colors
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(x1, y1, width, height);
+    
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x1, y1, width, height);
+    
+    // Draw label only for Goldmine-qualified boxes
+    if (qualified) {
+      const labelY = y1 - 5;
+      if (labelY > 10) { // Only draw label if there's space
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillStyle = '#000000'; // Black text
+        ctx.textAlign = 'center';
+        // Add directional arrow based on direction
+        const arrow = box.data.direction === 'RISING' ? '↑' : '↓';
+        ctx.fillText(`BREAKOUT ${arrow}`, x1 + width / 2, labelY);
+        console.log('[DIAGNOSTIC] [renderBreakoutBox] Drew BREAKOUT label at:', {
+          stepRef: box.data.stepRef,
+          x: x1 + width / 2,
+          y: labelY,
+          direction: box.data.direction,
+          label: `BREAKOUT ${arrow}`
+        });
+      }
+    }
   },
   
   renderFeedbackIndicator(
@@ -536,7 +877,8 @@ const PatternRendererImpl = {
       const style = patternStyles[pattern.type];
       
       // Draw label background
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      const isGoldHighlight = shouldApplyGoldHighlight(pattern);
+      ctx.fillStyle = isGoldHighlight ? 'rgba(255, 215, 0, 0.9)' : 'rgba(255, 255, 255, 0.8)';
       ctx.strokeStyle = style.color;
       ctx.lineWidth = 1;
       
@@ -545,15 +887,15 @@ const PatternRendererImpl = {
       ctx.fill();
       ctx.stroke();
       
-      // Draw label text
-      ctx.font = '10px Arial';
-      ctx.fillStyle = '#212121';
+      // Draw label text with unified font and format
+      ctx.font = LABEL_FONT;
+      ctx.fillStyle = isGoldHighlight ? '#8B4513' : '#212121'; // Dark brown for gold backgrounds, dark gray otherwise
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      const patternTypeText = pattern.type.replace('_', ' ');
+      const labelText = generatePatternLabel(pattern);
       ctx.fillText(
-        patternTypeText,
+        labelText,
         label.x + label.width / 2,
         label.y + label.height / 2
       );
@@ -633,10 +975,10 @@ const PatternRendererImpl = {
       positions: any[],
       collisions: [number, number][],
       options: {
-        maxIterations: number,
-        repulsionForce: number,
-        constrainToChart: boolean,
-        chartDimensions: { width: number, height: number }
+        maxIterations: number;
+        repulsionForce: number;
+        constrainToChart: boolean;
+        chartDimensions: { width: number; height: number };
       }
     ) => {
       const { maxIterations, repulsionForce, constrainToChart, chartDimensions } = options;

@@ -1,6 +1,8 @@
 // src/metrics/registry.ts
-// Central registry for all metrics displayed in the UI
-// Each metric has an ID, label, and calculation function
+// Central registry for chart metrics and indicators
+// Provides metric calculations for hover displays
+
+// NOTE: This registry powers hover metrics in MetricPopover (e.g., Open, Close, BJ Cum).
 
 export interface MetricDefinition {
   id: string;

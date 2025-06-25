@@ -1,3 +1,4 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows the lifecycle: detect → emit event → store in context → render.
 // src/patternEngine/goldmine.ts
 // Detects Goldmine signals from Escalator patterns
 // Uses two-candle Blackjack scoring and StepBox floor/ceiling

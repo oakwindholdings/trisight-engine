@@ -143,6 +143,7 @@ interface BlackjackSettings {
 
 interface EscalatorSettings {
   enabled: boolean;
+  showLabels: boolean;
   minSteps: number;
   minStepSize: number;
   maxConsolidationVolatility: number;
@@ -252,6 +253,7 @@ const AdaptivePatternControls: React.FC<AdaptivePatternControlsProps> = ({
   // Default Escalator settings
   const [escalatorSettings, setEscalatorSettings] = useState<EscalatorSettings>({
     enabled: true,
+    showLabels: true,
     minSteps: 3,
     minStepSize: 0.5,
     maxConsolidationVolatility: 1.0,
@@ -290,6 +292,7 @@ const AdaptivePatternControls: React.FC<AdaptivePatternControlsProps> = ({
         },
         escalator: {
           enabled: escalatorSettings.enabled,
+          showLabels: escalatorSettings.showLabels,
           minSteps: escalatorSettings.minSteps,
           minStepSize: escalatorSettings.minStepSize,
           maxConsolidationVolatility: escalatorSettings.maxConsolidationVolatility,
