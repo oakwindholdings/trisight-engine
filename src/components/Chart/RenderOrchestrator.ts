@@ -34,6 +34,13 @@ interface RenderArgs {
   escalatorSteps?: any[];
   escalatorSettings?: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean };
   breakoutBoxes?: any[];
+  breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number };
+  // Chart settings for Heikin-Ashi and display options
+  chartSettings?: {
+    isHeikinAshi: boolean;
+    showVolume: boolean;
+    showGrid: boolean;
+  };
 }
 
 export function renderChart(args: RenderArgs) {
@@ -53,7 +60,9 @@ export function renderChart(args: RenderArgs) {
     showOnlyTradingHours,
     escalatorSteps = [],
     escalatorSettings = { enabled: true, showLabels: true, showBreakoutBoxes: true },
-    breakoutBoxes = []
+    breakoutBoxes = [],
+    breakoutBoxSettings = { enabled: true, showBreakoutBoxes: true, minStallLength: 3, breakoutMultiplier: 2, stallThreshold: 0.5 },
+    chartSettings = { isHeikinAshi: false, showVolume: true, showGrid: true }
   } = args;
 
   const mainCanvas = mainCanvasRef.current;
@@ -106,7 +115,14 @@ export function renderChart(args: RenderArgs) {
     testHighPrice: priceScale.scale(visibleRange.maxPrice)
   });
 
-  CandlestickRenderer.render(bufferCtx, visibleData, timeScale, priceScale, { width, height, margin });
+  CandlestickRenderer.render(bufferCtx, visibleData, timeScale, priceScale, { 
+    width, 
+    height, 
+    margin,
+    isHeikinAshi: chartSettings.isHeikinAshi,
+    showVolume: chartSettings.showVolume,
+    showGrid: chartSettings.showGrid
+  });
   mainCtx.drawImage(bufferCanvas, 0, 0);
   
   // Debug pattern rendering
@@ -124,7 +140,7 @@ export function renderChart(args: RenderArgs) {
     }))
   });
   
-  PatternRenderer.render(patternsCtx, visiblePatterns, timeScale, priceScale, { width, height, margin }, selectedPattern || null, escalatorSteps, escalatorSettings, breakoutBoxes, filteredData);
+  PatternRenderer.render(patternsCtx, visiblePatterns, timeScale, priceScale, { width, height, margin }, selectedPattern || null, escalatorSteps, escalatorSettings, breakoutBoxes, filteredData, breakoutBoxSettings);
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });
 }

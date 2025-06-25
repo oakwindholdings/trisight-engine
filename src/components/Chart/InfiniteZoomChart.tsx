@@ -21,6 +21,8 @@ import { MetricPopover } from './MetricPopover';
 import { usePatternBus } from '../../hooks/usePatternBus';
 import { Candle } from '../../types';
 import { logDebug } from '../../utils/debug';
+import { useHeikinAshiTransform } from '../../hooks/useHeikinAshiTransform';
+import { useChartSettings } from '../../contexts/ChartSettingsContext';
 import './InfiniteZoomChart.css';
 
 interface InfiniteZoomChartProps {
@@ -222,9 +224,16 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     });
   }
 
+  // Apply Heikin-Ashi transform to chart data
+  const { candleType, showVolume, showGrid } = useChartSettings();
+  const { transformedData } = useHeikinAshiTransform({
+    candleType,
+    data: dataToUse
+  });
+
   // Convert current data to Candle format for pattern bus
   const candles: Candle[] = useMemo(() => {
-    return controller.data.map(d => ({
+    return transformedData.map((d: CandlestickData) => ({
       datetime: new Date(d.timestamp).toISOString(),
       open: d.open,
       high: d.high,
@@ -233,15 +242,15 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       volume: d.volume || 0,
       timestamp: d.timestamp
     }));
-  }, [controller.data]);
+  }, [transformedData]);
 
   // Convert visible data to Candle format for pattern bus
   const visibleCandles: Candle[] = useMemo(() => {
-    const visibleData = controller.data.slice(
+    const visibleData = transformedData.slice(
       visibleDataIndices.start, 
       visibleDataIndices.end + 1
     );
-    return visibleData.map(d => ({
+    return visibleData.map((d: CandlestickData) => ({
       datetime: new Date(d.timestamp).toISOString(),
       open: d.open,
       high: d.high,
@@ -250,7 +259,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       volume: d.volume || 0,
       timestamp: d.timestamp
     }));
-  }, [controller.data, visibleDataIndices.start, visibleDataIndices.end]);
+  }, [transformedData, visibleDataIndices.start, visibleDataIndices.end]);
 
   // Debug: Log visible data info when it changes
   useEffect(() => {
@@ -266,7 +275,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       //     index: visibleCandles.length - 1,
       //     timestamp: new Date(visibleCandles[visibleCandles.length - 1].timestamp).toISOString()
       //   },
-      //   totalDataLength: controller.data.length
+      //   totalDataLength: transformedData.length
       // });
     }
   }, [visibleCandles.length, visibleDataIndices.start, visibleDataIndices.end]);
@@ -367,8 +376,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Update refs when values change
   useEffect(() => {
-    chartDataRef.current = controller.data;
-  }, [controller.data]);
+    chartDataRef.current = transformedData;
+  }, [transformedData]);
 
   useEffect(() => {
     visibleDataIndicesRef.current = visibleDataIndices;
@@ -376,10 +385,10 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Detect patterns on visible data after zoom/pan completes
   const detectPatternsForVisibleData = useCallback(async () => {
-    if (!controller.data.length || isDetectingPatterns) return;
+    if (!transformedData.length || isDetectingPatterns) return;
     
     // Get the visible data slice
-    const visibleData = controller.data.slice(
+    const visibleData = transformedData.slice(
       visibleDataIndices.start,
       visibleDataIndices.end + 1
     );
@@ -414,7 +423,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     } finally {
       setIsDetectingPatterns(false);
     }
-  }, [controller.data, visibleDataIndices, isDetectingPatterns]);
+  }, [transformedData, visibleDataIndices, isDetectingPatterns]);
 
   // Debounce pattern detection to avoid too many calls during rapid zoom/pan
   const debouncedPatternDetection = useMemo(() => {
@@ -429,18 +438,18 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Trigger pattern detection when visible data changes
   useEffect(() => {
-    if (controller.data.length > 0 && !isLoading) {
+    if (transformedData.length > 0 && !isLoading) {
       debouncedPatternDetection();
     }
-  }, [visibleDataIndices, controller.data.length, isLoading, debouncedPatternDetection]);
+  }, [visibleDataIndices, transformedData.length, isLoading, debouncedPatternDetection]);
 
   // Update visible range when visible data indices change
   useEffect(() => {
-    const hasData = controller.data.length > 0;
+    const hasData = transformedData.length > 0;
     if (!hasData) return;
 
     // For infinite zoom, we use the visible indices from the zoom controller
-    const visibleData = controller.data.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     
     if (visibleData.length > 0) {
       // Get first and last candle times
@@ -479,20 +488,20 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         };
       });
     }
-  }, [controller.data.length, visibleDataIndices.start, visibleDataIndices.end]);
+  }, [transformedData.length, visibleDataIndices.start, visibleDataIndices.end]);
 
   // Update visible indices when data first loads or changes
   useEffect(() => {
-    if (controller.data.length > 0 && targetCandles > 0) {
+    if (transformedData.length > 0 && targetCandles > 0) {
       // Only initialize indices if they haven't been set yet
       // or if the data has completely changed (different length)
       const needsInitialization = !indicesInitializedRef.current || 
-                                  visibleDataIndicesRef.current.end >= controller.data.length ||
+                                  visibleDataIndicesRef.current.end >= transformedData.length ||
                                   visibleDataIndicesRef.current.end === 0;
       
       if (needsInitialization) {
         // Initialize to show the most recent data
-        const endIndex = controller.data.length - 1;
+        const endIndex = transformedData.length - 1;
         const startIndex = Math.max(0, endIndex - targetCandles + 1);
         
         setVisibleDataIndices({ start: startIndex, end: endIndex });
@@ -503,15 +512,15 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         //   start: startIndex,
         //   end: endIndex,
         //   targetCandles,
-        //   dataLength: controller.data.length
+        //   dataLength: transformedData.length
         // });
       }
     }
-  }, [controller.data.length]); // Remove targetCandles from dependencies to prevent re-centering on zoom
+  }, [transformedData.length]); // Remove targetCandles from dependencies to prevent re-centering on zoom
 
   // Handle zoom changes - update visible indices while maintaining focus
   useEffect(() => {
-    if (controller.data.length > 0 && targetCandles > 0 && indicesInitializedRef.current) {
+    if (transformedData.length > 0 && targetCandles > 0 && indicesInitializedRef.current) {
       const currentStart = visibleDataIndicesRef.current.start;
       const currentEnd = visibleDataIndicesRef.current.end;
       const currentRange = currentEnd - currentStart + 1;
@@ -527,13 +536,13 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         let newEnd = Math.round(currentCenter + halfRange - 1);
         
         // Clamp to data bounds
-        if (newEnd >= controller.data.length) {
-          newEnd = controller.data.length - 1;
+        if (newEnd >= transformedData.length) {
+          newEnd = transformedData.length - 1;
           newStart = Math.max(0, newEnd - targetCandles + 1);
         }
         if (newStart < 0) {
           newStart = 0;
-          newEnd = Math.min(controller.data.length - 1, newStart + targetCandles - 1);
+          newEnd = Math.min(transformedData.length - 1, newStart + targetCandles - 1);
         }
         
         // Update indices
@@ -549,7 +558,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         // });
       }
     }
-  }, [targetCandles, controller.data.length]);
+  }, [targetCandles, transformedData.length]);
 
   // Update visible range from pan
   const updateVisibleRangeFromPan = useCallback((translateX: number) => {
@@ -630,7 +639,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       // console.log('InfiniteZoomChart - Canvas clicked at:', { x, y });
     }
     
-    if (controller.data.length === 0) {
+    if (transformedData.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         // console.log('InfiniteZoomChart - No chart data available');
       }
@@ -638,7 +647,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     }
     
     // Create scales for pattern detection
-    const visibleData = controller.data.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     const timeScale = createSequentialTimeScale(
       width - CHART_MARGIN.left - CHART_MARGIN.right,
       visibleData,
@@ -660,8 +669,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     // Check each pattern directly
     for (const pattern of allPatterns) {
       // Simple bounds check for pattern area (can be enhanced later)
-      const startIndex = controller.data.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
-      const endIndex = controller.data.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
+      const startIndex = transformedData.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
+      const endIndex = transformedData.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
       
       if (startIndex >= 0 && endIndex >= 0) {
         const xStart = timeScale.scale(pattern.startTime);
@@ -685,7 +694,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       }
       onPatternSelect(clickedPattern);
     }
-  }, [patterns, controller.data, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
+  }, [patterns, transformedData, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
 
   // Render chart when data or view changes
   useEffect(() => {
@@ -693,12 +702,12 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] Triggering renderChart:', { 
         width, 
         height, 
-        dataLength: controller.data.length,
+        dataLength: transformedData.length,
         visibleIndices: visibleDataIndices 
       });
     }
     
-    if (controller.data.length === 0) {
+    if (transformedData.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         // console.log('InfiniteZoomChart - No data to render');
       }
@@ -715,7 +724,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       return;
     }
     
-    const visibleData = controller.data.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     
     if (process.env.NODE_ENV === 'development') {
       logDebug('DEBUG_RENDER_FLOW', '[DIAGNOSTIC] Rendering with visible data:', {
@@ -738,15 +747,15 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     const visiblePatterns = patterns.filter(pattern => {
       const patternStart = pattern.startTime.getTime();
       const patternEnd = pattern.endTime.getTime();
-      const visibleStart = controller.data[visibleDataIndices.start]?.timestamp || 0;
-      const visibleEnd = controller.data[visibleDataIndices.end]?.timestamp || 0;
+      const visibleStart = transformedData[visibleDataIndices.start]?.timestamp || 0;
+      const visibleEnd = transformedData[visibleDataIndices.end]?.timestamp || 0;
       
       return patternStart <= visibleEnd && patternEnd >= visibleStart;
     });
     
     if (process.env.NODE_ENV === 'development') {
       // console.log('InfiniteZoomChart - Rendering with data:', {
-      //   dataLength: controller.data.length,
+      //   dataLength: transformedData.length,
       //   visibleIndices: visibleDataIndices,
       //   visiblePatternsCount: visiblePatterns.length
       // });
@@ -756,8 +765,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     const escalatorSteps = patternContext.escalatorSteps || [];
     
     // Filter escalator steps to visible time range and deduplicate by stepRef
-    const visibleTimeStart = controller.data[visibleDataIndices.start]?.timestamp || 0;
-    const visibleTimeEnd = controller.data[visibleDataIndices.end]?.timestamp || 0;
+    const visibleTimeStart = transformedData[visibleDataIndices.start]?.timestamp || 0;
+    const visibleTimeEnd = transformedData[visibleDataIndices.end]?.timestamp || 0;
     
     const stepMap = new Map();
     escalatorSteps.forEach(event => {
@@ -834,7 +843,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       mainCanvasRef,
       bufferCanvasRef,
       patternsCanvasRef,
-      filteredData: controller.data,
+      filteredData: transformedData,
       visibleDataIndices,
       visibleRange,
       width,
@@ -846,9 +855,15 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       showOnlyTradingHours: false,
       escalatorSteps: visibleEscalatorSteps,
       escalatorSettings: patternContext.escalatorSettings,
-      breakoutBoxes // Pass breakoutBoxes to renderChart
+      breakoutBoxes, // Pass breakoutBoxes to renderChart
+      breakoutBoxSettings: patternContext.breakoutBoxSettings, // Add breakoutBoxSettings
+      chartSettings: {
+        isHeikinAshi: candleType === 'heikin_ashi',
+        showVolume: showVolume,
+        showGrid: showGrid
+      }
     });
-  }, [controller.data, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, isLoading, patternContext.escalatorSteps, patternContext.escalatorSettings, patternContext.breakoutBoxes, timeframe]);
+  }, [transformedData, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, isLoading, patternContext.escalatorSteps, patternContext.escalatorSettings, patternContext.breakoutBoxes, timeframe, candleType, showVolume, showGrid]);
 
   // Setup canvas dimensions
   useEffect(() => {
@@ -895,7 +910,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Auto-scale when data is first loaded or changes significantly
   useEffect(() => {
-    if (controller.data.length > 0 && zoomToFitController && !indicesInitializedRef.current) {
+    if (transformedData.length > 0 && zoomToFitController && !indicesInitializedRef.current) {
       // Small delay to ensure chart is rendered
       const timer = setTimeout(() => {
         zoomToFitController();
@@ -903,7 +918,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       
       return () => clearTimeout(timer);
     }
-  }, [controller.data.length, zoomToFitController]);
+  }, [transformedData.length, zoomToFitController]);
 
   // Update visible range when date props change
   useEffect(() => {
@@ -942,13 +957,13 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Use hover metrics with the same data we're rendering
   const timeScale = useMemo(() => {
-    const visibleData = controller.data.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     
     if (!visibleData.length) {
       return createSequentialTimeScale(
         width - CHART_MARGIN.left - CHART_MARGIN.right,
-        controller.data,
-        [0, controller.data.length - 1]
+        transformedData,
+        [0, transformedData.length - 1]
       );
     }
     
@@ -965,12 +980,12 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       visibleData,
       [0, width - CHART_MARGIN.left - CHART_MARGIN.right] // We're in transformed space, so range starts at 0
     );
-  }, [width, visibleDataIndices.start, visibleDataIndices.end, controller.data]);
+  }, [width, visibleDataIndices.start, visibleDataIndices.end, transformedData]);
   
   const { hoverData, HoverMetricsProvider } = useHoverMetrics(
     containerRef, 
     timeScale,  // Use the same timeScale we calculated above
-    controller.data,  // Pass the same data we're rendering
+    transformedData,  // Pass the same data we're rendering
     CHART_MARGIN,
     visibleDataIndices
   );
@@ -981,11 +996,11 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       // console.log('[InfiniteZoomChart] Hover data:', {
       //   hoverIndex: hoverData.idx,
       //   hoverCandle: hoverData.candle,
-      //   expectedCandle: controller.data[hoverData.idx],
-      //   match: hoverData.candle === controller.data[hoverData.idx]
+      //   expectedCandle: transformedData[hoverData.idx],
+      //   match: hoverData.candle === transformedData[hoverData.idx]
       // });
     }
-  }, [hoverData, controller.data]);
+  }, [hoverData, transformedData]);
 
   return (
     <HoverMetricsProvider value={hoverData}>
@@ -1035,7 +1050,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
             </div>
           )}
           
-          {!isLoading && !error && controller.data.length === 0 && (
+          {!isLoading && !error && transformedData.length === 0 && (
             <div className="error-overlay">
               <div className="error-message">No data available. Please check symbol and date range.</div>
             </div>
@@ -1092,8 +1107,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         </div>
         
         <div className="data-info">
-          {controller.data.length > 0 && (
-            <span>{controller.data.length} candles</span>
+          {transformedData.length > 0 && (
+            <span>{transformedData.length} candles</span>
           )}
         </div>
       </div>

@@ -7,6 +7,7 @@ import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType, ThrustDirection } from '../models/PatternTypes';
 import { PatternEvent } from './usePatternBus';
 import { AdaptivePatternDetectionService, PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
+import { BreakoutBoxSettings } from '../components/Patterns/BreakoutBoxSettingsPanel';
 import { getIntrinsicScore } from '../patternEngine/blackjack';
 import { detectEscalators } from '../patternEngine/escalator';
 import { Candle } from '../types';
@@ -85,6 +86,30 @@ export function usePatterns(data: CandlestickData[]) {
       contextTimeframeMultiplier: 3,
       minScore: 2.0,
       preferredDirection: 'BOTH'
+    };
+  });
+  
+  // BreakoutBox independent settings
+  const [breakoutBoxSettings, setBreakoutBoxSettings] = useState<BreakoutBoxSettings>(() => {
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem('patternSettings.breakoutbox');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('[usePatterns] Loaded breakoutBox settings from localStorage:', parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading breakoutBox settings:', error);
+    }
+    
+    // Default values
+    return {
+      enabled: true,
+      showBreakoutBoxes: true,
+      minStallLength: 3,
+      breakoutMultiplier: 0.5,
+      stallThreshold: 0.1
     };
   });
   
@@ -391,7 +416,9 @@ export function usePatterns(data: CandlestickData[]) {
     breakoutBoxes,
     setBreakoutBoxes,
     escalatorSettings,
-    setEscalatorSettings
+    setEscalatorSettings,
+    breakoutBoxSettings,
+    setBreakoutBoxSettings
   };
 };
 

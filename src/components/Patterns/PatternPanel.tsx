@@ -13,8 +13,10 @@ import GoldmineShaftSettingsPanel from './GoldmineShaftSettingsPanel';
 import RocketmanSettingsPanel from './RocketmanSettingsPanel';
 import BlackjackSettingsPanel from './BlackjackSettingsPanel';
 import EscalatorSettingsPanel from './EscalatorSettingsPanel';
+import BreakoutBoxSettingsPanel from './BreakoutBoxSettingsPanel';
 import PivotSettingsPanel from '../Settings/PivotSettingsPanel';
 import DebugSettingsPanel from '../Settings/DebugSettingsPanel';
+import ChartSettingsPanel from '../Settings/ChartSettingsPanel';
 import useTwelveDataApiKey from '../../hooks/useTwelveDataApiKey';
 import { logDebug } from '../../utils/debug';
 
@@ -152,7 +154,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   // Define section names as a type for type safety
   type SectionName = 'globalSettings' |
                   'goldmineChannelSettings' | 'goldmineShaftSettings' | 'rocketmanSettings' | 
-                  'blackjackSettings' | 'escalatorSettings' | 'pivotSettings' | 'debugSettings';
+                  'blackjackSettings' | 'escalatorSettings' | 'breakoutBoxSettings' | 'pivotSettings' | 'chartSettings' | 'debugSettings';
   
   // State to track which sections are open
   const [openSections, setOpenSections] = useState<Record<SectionName, boolean>>({
@@ -162,7 +164,9 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     rocketmanSettings: false,
     blackjackSettings: false,
     escalatorSettings: false,
+    breakoutBoxSettings: false,
     pivotSettings: false,
+    chartSettings: false,
     debugSettings: false
   });
 
@@ -587,6 +591,41 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
           </SectionContent>
         </Section>
         
+        {/* Breakout Box Pattern */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('breakoutBoxSettings')}>
+            <SectionTitle>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type="checkbox" 
+                  id="enable-breakout-box"
+                  checked={preferences?.enabledPatternTypes?.includes(PatternType.BREAKOUTBOX) || false}
+                  onChange={(e) => {
+                    const currentTypes = preferences?.enabledPatternTypes || [];
+                    const updatedTypes = e.target.checked
+                      ? [...currentTypes, PatternType.BREAKOUTBOX]
+                      : currentTypes.filter((t: PatternType) => t !== PatternType.BREAKOUTBOX);
+                    updatePreferences({
+                      ...preferences,
+                      enabledPatternTypes: updatedTypes
+                    });
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ marginRight: '8px' }}
+                />
+                Breakout Box
+              </div>
+            </SectionTitle>
+            <ChevronIcon $isOpen={openSections.breakoutBoxSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.breakoutBoxSettings}>
+            <BreakoutBoxSettingsPanel 
+              settings={patternContext.breakoutBoxSettings}
+              onSettingsChange={patternContext.setBreakoutBoxSettings}
+            />
+          </SectionContent>
+        </Section>
+        
         {/* Pivot Pattern */}
         <Section>
           <SectionHeader onClick={() => toggleSection('pivotSettings')}>
@@ -621,6 +660,17 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
                 setPivotSettings(newSettings);
               }}
             />
+          </SectionContent>
+        </Section>
+        
+        {/* Chart Settings */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('chartSettings')}>
+            <SectionTitle>Chart Settings</SectionTitle>
+            <ChevronIcon $isOpen={openSections.chartSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.chartSettings}>
+            <ChartSettingsPanel />
           </SectionContent>
         </Section>
         

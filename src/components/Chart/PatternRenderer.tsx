@@ -113,7 +113,8 @@ const PatternRendererImpl = {
     escalatorSteps: any[] = [],
     escalatorSettings: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean } = { enabled: true, showLabels: true, showBreakoutBoxes: true },
     breakoutBoxes: any[] = [], // Add breakoutBoxes parameter
-    candles: any[] = [] // Add candles parameter for fresh timestamp lookup
+    candles: any[] = [], // Add candles parameter for fresh timestamp lookup
+    breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number } // Add independent breakoutBoxSettings
   ) {
     if (!ctx) return;
     
@@ -137,12 +138,14 @@ const PatternRendererImpl = {
       });
     }
     
-    // NOTE: Show/hide breakout boxes tied to Escalator settings
-    // Debug breakout boxes
-    if (breakoutBoxes && breakoutBoxes.length > 0 && escalatorSettings.showBreakoutBoxes) {
-      console.log('[DEBUG_UI] Breakout boxes visibility enabled, rendering boxes');
+    // NOTE: BreakoutBox now has independent settings, not tied to Escalator
+    // Debug breakout boxes with independent settings
+    const shouldShowBreakoutBoxes = breakoutBoxSettings?.enabled && breakoutBoxSettings?.showBreakoutBoxes;
+    if (breakoutBoxes && breakoutBoxes.length > 0 && shouldShowBreakoutBoxes) {
+      console.log('[DEBUG_UI] BreakoutBox visibility enabled via independent settings, rendering boxes');
       console.log('[DIAGNOSTIC] [PatternRenderer] Rendering breakout boxes:', {
         boxCount: breakoutBoxes.length,
+        breakoutBoxSettings,
         boxes: breakoutBoxes.slice(0, 3).map(box => ({
           startIndex: box.data.startIndex,
           endIndex: box.data.endIndex,
@@ -160,8 +163,8 @@ const PatternRendererImpl = {
         renderedCount++;
       });
       console.log(`[DIAGNOSTIC] [PatternRenderer] Finished rendering ${renderedCount} breakout boxes`);
-    } else if (breakoutBoxes && breakoutBoxes.length > 0 && !escalatorSettings.showBreakoutBoxes) {
-      console.log('[DEBUG_UI] Breakout boxes visibility disabled, skipping rendering of', breakoutBoxes.length, 'boxes');
+    } else if (breakoutBoxes && breakoutBoxes.length > 0 && !shouldShowBreakoutBoxes) {
+      console.log('[DEBUG_UI] BreakoutBox visibility disabled, skipping rendering of', breakoutBoxes.length, 'boxes');
     }
     
     // Filter patterns that are in the visible range

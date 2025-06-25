@@ -437,7 +437,7 @@ export class LearningProcessor {
         sensitivity: 0.5,
         minConfidence: 0.6,
         boundaryPadding: 0.05,
-        typeSpecificParameters: {}
+        typeSpecificParameters: this.getDefaultBreakoutBoxParameters()
       }
     };
   }
@@ -517,9 +517,15 @@ export class LearningProcessor {
   /**
    * Get default BreakoutBox parameters
    */
-  private getDefaultBreakoutBoxParameters(): {} {
+  private getDefaultBreakoutBoxParameters(): {
+    minStallLength: number;
+    breakoutMultiplier: number;
+    stallThreshold: number;
+  } {
     return {
-      // Add default BreakoutBox parameters here
+      minStallLength: 3,        // Default: 3 candles minimum stall length
+      breakoutMultiplier: 0.5,  // Default: 0.5 breakout multiplier
+      stallThreshold: 0.1       // Default: 0.1 (10%) stall threshold
     };
   }
 }

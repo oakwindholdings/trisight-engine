@@ -29,6 +29,7 @@ import ChartControlBar from './components/Chart/ChartControlBar';
 import PatternPanel from './components/Patterns/PatternPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import DebugSettingsPanel from './components/Settings/DebugSettingsPanel';
+import SettingsPanel from './components/Settings/SettingsPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
 
 // Import context providers
@@ -653,21 +654,27 @@ function AppContent() {
   
   // Handle settings toggle
   const handleSettingsToggle = () => {
-    // Implement settings panel toggle logic here
-    logDebug('DEBUG_UI', 'Settings toggled');
+    setShowSettingsPanel(!showSettingsPanel);
+    logDebug('DEBUG_UI', 'Settings toggled:', !showSettingsPanel);
   };
-  
+
   // Handle save pattern
   const handleSavePattern = () => {
-    // Implement save pattern logic here
-    logDebug('DEBUG_UI', 'Pattern saved', selectedPattern);
+    if (selectedPattern) {
+      logDebug('DEBUG_UI', 'Saving pattern:', selectedPattern);
+      // TODO: Implement pattern saving logic
+      console.log('Pattern saved:', selectedPattern);
+    }
   };
-  
-  // Handle pattern filter changes
-  const handleFilterChange = (newFilters: any) => {
-    setPatternFilters(newFilters);
-    // Additional logic for filtering patterns
+
+  // Handle filter change
+  const handleFilterChange = (filters: any) => {
+    setPatternFilters(filters);
+    logDebug('DEBUG_UI', 'Pattern filters updated:', filters);
   };
+
+  // UI state for panels and modals
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
 
   // Refs
   const chartRef = useRef<InfiniteZoomChartRef>(null);
@@ -1009,6 +1016,12 @@ function AppContent() {
             Debug Click Issues
           </div>
         )}
+        
+        {/* Settings Panel */}
+        <SettingsPanel 
+          isOpen={showSettingsPanel}
+          onClose={() => setShowSettingsPanel(false)}
+        />
       </div>
     </div>
   );

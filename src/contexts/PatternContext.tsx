@@ -9,6 +9,7 @@ import { usePatterns } from '../hooks/usePatterns';
 import { useMarketDataContext } from './MarketDataContext';
 import { usePatternBus, PatternEvent } from '../hooks/usePatternBus';
 import { PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
+import { BreakoutBoxSettings } from '../components/Patterns/BreakoutBoxSettingsPanel';
 
 // Define the context type
 interface PatternContextType {
@@ -88,6 +89,9 @@ interface PatternContextType {
     minScore: number;
     preferredDirection: ThrustDirection | 'BOTH';
   }) => void;
+  // BreakoutBox independent settings
+  breakoutBoxSettings: BreakoutBoxSettings;
+  setBreakoutBoxSettings: (settings: BreakoutBoxSettings) => void;
 }
 
 // Create the context with initial values
@@ -151,7 +155,9 @@ const initialPatternContext: PatternContextType = {
     minScore: 0,
     preferredDirection: 'BOTH'
   },
-  setEscalatorSettings: () => {}
+  setEscalatorSettings: () => {},
+  breakoutBoxSettings: {} as BreakoutBoxSettings,
+  setBreakoutBoxSettings: () => {}
 };
 
 export const PatternContext = createContext<PatternContextType>(initialPatternContext);
@@ -201,7 +207,9 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     patternHook.breakoutBoxes,
     patternHook.setBreakoutBoxes,
     patternHook.escalatorSettings,
-    patternHook.setEscalatorSettings
+    patternHook.setEscalatorSettings,
+    patternHook.breakoutBoxSettings,
+    patternHook.setBreakoutBoxSettings
   ]);
   
   // Log when provider renders
