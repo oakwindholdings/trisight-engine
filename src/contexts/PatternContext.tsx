@@ -55,9 +55,17 @@ interface PatternContextType {
   setDistToStopPct: (values: number[]) => void;
   escalatorSteps: PatternEvent[];
   setEscalatorSteps: (events: PatternEvent[]) => void;
+  
+  // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
+  stepIntrinsicCount: number[];
+  setStepIntrinsicCount: (values: number[]) => void;
+  stepBreakoutCount: number[];
+  setStepBreakoutCount: (values: number[]) => void;
+  stepContinuanceCount: number[];
+  setStepContinuanceCount: (values: number[]) => void;
+  
   events: PatternEvent[];  // All pattern events for visualization
   setEvents: (events: PatternEvent[]) => void;
-  // NOTE: Context field breakoutBoxes stores pattern metadata and scores
   breakoutBoxes: PatternEvent[];
   setBreakoutBoxes: (boxes: PatternEvent[]) => void;
   // Display settings for patterns
@@ -137,6 +145,15 @@ const initialPatternContext: PatternContextType = {
   setDistToStopPct: () => {},
   escalatorSteps: [],
   setEscalatorSteps: () => {},
+  
+  // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
+  stepIntrinsicCount: [],
+  setStepIntrinsicCount: () => {},
+  stepBreakoutCount: [],
+  setStepBreakoutCount: () => {},
+  stepContinuanceCount: [],
+  setStepContinuanceCount: () => {},
+  
   events: [],  // All pattern events for visualization
   setEvents: () => {},
   breakoutBoxes: [],
@@ -209,7 +226,13 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     patternHook.escalatorSettings,
     patternHook.setEscalatorSettings,
     patternHook.breakoutBoxSettings,
-    patternHook.setBreakoutBoxSettings
+    patternHook.setBreakoutBoxSettings,
+    patternHook.stepIntrinsicCount,
+    patternHook.setStepIntrinsicCount,
+    patternHook.stepBreakoutCount,
+    patternHook.setStepBreakoutCount,
+    patternHook.stepContinuanceCount,
+    patternHook.setStepContinuanceCount
   ]);
   
   // Log when provider renders

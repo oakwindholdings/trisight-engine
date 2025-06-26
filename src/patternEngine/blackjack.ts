@@ -9,30 +9,31 @@ import { BJ_GOLD_THRESHOLD_LONG, BJ_GOLD_THRESHOLD_SHORT } from '../constants/pa
 import { logDebug } from '../utils/debug';
 
 /**
- * Calculate the intrinsic score for a single candle based on its relationship
- * to the previous candle's body high and low.
+ * Calculate the intrinsic score for a single candle based on price and volume
+ * relationship compared to the previous candle.
  * 
  * @param candle - The current candle to score
- * @param prevBodyHigh - The body high (max of open/close) of the previous candle
- * @param prevBodyLow - The body low (min of open/close) of the previous candle
- * @returns +1 for bullish breakout, -1 for bearish breakdown, 0 for neutral
+ * @param prevCandle - The previous candle for comparison
+ * @returns +1 for Price↑ & Volume↑, -1 for Price↓ & Volume↑, 0 for mixed/other
  */
 export function getIntrinsicScore(
   candle: Candle,
-  prevBodyHigh: number,
-  prevBodyLow: number
+  prevCandle: Candle
 ): -1 | 0 | 1 {
-  // Green breakout bar: close > open AND close > prevBodyHigh
-  if (candle.close > candle.open && candle.close > prevBodyHigh) {
-    return 1;
+  const priceUp = candle.close > prevCandle.close;
+  const priceDown = candle.close < prevCandle.close;
+  const volumeUp = candle.volume > prevCandle.volume;
+  
+  // Apply standardized Blackjack scoring rule
+  if (priceUp && volumeUp) {
+    return 1;  // Price↑ & Volume↑ = Bullish signal
   }
   
-  // Red reversal bar: close < open AND close < prevBodyLow
-  if (candle.close < candle.open && candle.close < prevBodyLow) {
-    return -1;
+  if (priceDown && volumeUp) {
+    return -1; // Price↓ & Volume↑ = Bearish signal (unusual volume with price decline)
   }
   
-  // Otherwise: inside bar, doji, or other neutral pattern
+  // All other cases (Price↑ & Volume↓, Price↓ & Volume↓, Price flat, Volume flat) = 0
   return 0;
 }
 
@@ -65,14 +66,12 @@ export function calcStepBlackjack(stepCandles: Candle[]): BlackjackScore {
   const secondCandle = stepCandles[1];
   
   // Calculate intrinsic scores for each candle
-  // For the first candle, use its own open as reference
+  // For the first candle, use simple price direction as fallback (no volume comparison possible)
   const firstIntrinsic = firstCandle.close > firstCandle.open ? 1 : 
                         firstCandle.close < firstCandle.open ? -1 : 0;
   
-  // For the second candle, use the first candle's body as reference
-  const prevBodyHigh = Math.max(firstCandle.open, firstCandle.close);
-  const prevBodyLow = Math.min(firstCandle.open, firstCandle.close);
-  const secondIntrinsic = getIntrinsicScore(secondCandle, prevBodyHigh, prevBodyLow);
+  // For the second candle, use the standardized price/volume rule
+  const secondIntrinsic = getIntrinsicScore(secondCandle, firstCandle);
   
   // Cumulative score is the sum of the two intrinsic scores
   const cumulativeScore = firstIntrinsic + secondIntrinsic;

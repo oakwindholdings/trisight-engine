@@ -150,15 +150,32 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   onChartHeightChange,
 }) => {
   // Access pattern context for preferences
-  const { preferences = { enabledPatternTypes: [] }, updatePreferences } = usePatternContext();
+  const { preferences = { enabledPatternTypes: [] }, updatePreferences, goldmineQual } = usePatternContext();
+  
+  // Golden Candle filter state with localStorage persistence
+  const [showOnlyGoldenCandles, setShowOnlyGoldenCandles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trisight_golden_candle_filter');
+      return saved === 'true';
+    } catch (e) {
+      console.error('Error loading Golden Candle filter from localStorage:', e);
+      return false;
+    }
+  });
+  
+  // Golden Candle count with defensive fallback for accuracy
+  const goldenCandleCount = goldmineQual?.filter(Boolean).length || 0;
+  const isLoading = goldmineQual?.length === 0;
+  
   // Define section names as a type for type safety
-  type SectionName = 'globalSettings' |
+  type SectionName = 'globalSettings' | 'goldenCandleFilter' |
                   'goldmineChannelSettings' | 'goldmineShaftSettings' | 'rocketmanSettings' | 
                   'blackjackSettings' | 'escalatorSettings' | 'breakoutBoxSettings' | 'pivotSettings' | 'chartSettings' | 'debugSettings';
   
   // State to track which sections are open
   const [openSections, setOpenSections] = useState<Record<SectionName, boolean>>({
     globalSettings: false, // All sections closed by default
+    goldenCandleFilter: false,
     goldmineChannelSettings: false,
     goldmineShaftSettings: false,
     rocketmanSettings: false,
@@ -404,6 +421,42 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
               </div>
               <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
                 Changes are automatically saved to your browser
+              </div>
+            </FilterGroup>
+          </SectionContent>
+        </Section>
+        
+        {/* Golden Candle Filter */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('goldenCandleFilter')}>
+            <SectionTitle>Golden Candle Filter</SectionTitle>
+            <ChevronIcon $isOpen={openSections.goldenCandleFilter}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.goldenCandleFilter}>
+            <FilterGroup>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: ThemeTokens.spacing.small }}>
+                <input 
+                  type="checkbox" 
+                  id="show-only-golden-candles"
+                  checked={showOnlyGoldenCandles}
+                  onChange={(e) => {
+                    const newValue = e.target.checked;
+                    setShowOnlyGoldenCandles(newValue);
+                    localStorage.setItem('trisight_golden_candle_filter', String(newValue));
+                    onFilterChange({...patternFilters, showOnlyGoldenCandles: newValue});
+                  }}
+                  style={{ marginRight: '8px' }}
+                />
+                <FilterLabel htmlFor="show-only-golden-candles" style={{ margin: 0 }}>
+                  Show only Golden Candles
+                </FilterLabel>
+              </div>
+              <div style={{ 
+                fontSize: ThemeTokens.typography.size.xsmall, 
+                color: ThemeTokens.colors.textSecondary,
+                marginTop: ThemeTokens.spacing.xsmall 
+              }}>
+                {isLoading ? 'Loading...' : `${goldenCandleCount} Golden Candles detected`}
               </div>
             </FilterGroup>
           </SectionContent>

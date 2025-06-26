@@ -67,9 +67,10 @@ const CandlestickRendererImpl = {
       isHeikinAshi?: boolean;
       showVolume?: boolean;
       showGrid?: boolean;
+      goldmineQual?: boolean[]; // Golden Candle indicators
     }
   ) {
-    const { isHeikinAshi = false, showVolume = true, showGrid = true } = options || {};
+    const { isHeikinAshi = false, showVolume = true, showGrid = true, goldmineQual = [] } = options || {};
     
     logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] Starting render:', {
       dataLength: data.length,
@@ -185,6 +186,13 @@ const CandlestickRendererImpl = {
       ctx.strokeStyle = colors.stroke;
       ctx.lineWidth = isHeikinAshi ? 1.2 : 1; // Slightly thicker outlines for HA
       ctx.stroke();
+      
+      // Draw Golden Candle stroke if applicable
+      if (goldmineQual[index]) {
+        ctx.strokeStyle = 'gold';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
       
       // Draw volume bar (if enabled)
       if (showVolume && volumeHeight > 0) {

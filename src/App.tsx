@@ -2,7 +2,7 @@
 // Main application component
 // NOTE: supports DEBUG_UI channel
 // Composes TriSight interface
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import './App.css';
 import './styles/globals.css';
@@ -65,6 +65,7 @@ const STORAGE_KEY_TIME_RANGE = 'selectedTimeRange';
 const STORAGE_KEY_SYMBOL = 'selectedSymbol';
 const STORAGE_KEY_SHOW_RIGHT_PANEL = 'trisight_show_right_panel';
 const STORAGE_KEY_SHOW_BOTTOM_TABLE = 'trisight_show_bottom_table';
+const STORAGE_KEY_GOLDEN_CANDLE_FILTER = 'trisight_golden_candle_filter';
 
 // Helper function to get saved date from localStorage
 const getSavedDate = (): Date => {
@@ -116,6 +117,17 @@ const getSavedChartHeight = (): number => {
     console.error('Error loading saved chart height from localStorage:', e);
   }
   return 500; // Default height if no saved height or error
+};
+
+// Helper function to get saved Golden Candle filter state from localStorage
+const getSavedGoldenCandleFilter = (): boolean => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_GOLDEN_CANDLE_FILTER);
+    return saved === 'true';
+  } catch (e) {
+    console.error('Error loading saved Golden Candle filter from localStorage:', e);
+  }
+  return false; // Default to false if no saved state or error
 };
 
 // Helper function to save chart height to localStorage
@@ -275,7 +287,7 @@ function AppContent() {
   const { apiKey } = useTwelveDataApiKey();
   
   const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay, timeframe, setTimeframe } = useMarketDataContext(); 
-  const { patterns, patternCounts, selectedPattern, setSelectedPattern, detectPatterns } = usePatternContext();
+  const { patterns, patternCounts, selectedPattern, setSelectedPattern, detectPatterns, goldmineQual } = usePatternContext();
   
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
@@ -528,8 +540,31 @@ function AppContent() {
   const [patternFilters, setPatternFilters] = useState({
     successRate: 0,
     timeframe: 'all',
-    patternType: 'all'
+    patternType: 'all',
+    showOnlyGoldenCandles: getSavedGoldenCandleFilter()
   });
+  
+  // Apply Golden Candle filter to patterns
+  const filteredPatterns = useMemo(() => {
+    if (!patternFilters.showOnlyGoldenCandles || !goldmineQual?.length || !data?.length) {
+      return patterns;
+    }
+    
+    // Filter patterns to only show those that correspond to Golden Candles
+    return patterns.filter(pattern => {
+      // Find the candle index that corresponds to this pattern's start time
+      const patternStartTime = pattern.startTime.getTime();
+      const candleIndex = data.findIndex(candle => 
+        new Date(candle.timestamp).getTime() >= patternStartTime
+      );
+      
+      // Check if the pattern corresponds to a Golden Candle
+      if (candleIndex >= 0 && candleIndex < goldmineQual.length) {
+        return goldmineQual[candleIndex];
+      }
+      return false;
+    });
+  }, [patterns, patternFilters.showOnlyGoldenCandles, goldmineQual, data]);
   
   // Handle timeframe change
   const handleTimeframeChange = (newTimeframe: string) => {
@@ -548,6 +583,22 @@ function AppContent() {
     const mappedTimeframe = timeframeMap[newTimeframe] || newTimeframe;
     setTimeframe(mappedTimeframe as any); // Use setTimeframe from MarketDataContext
     localStorage.setItem(STORAGE_KEY_TIMEFRAME, mappedTimeframe);
+  };
+  
+  // Handle filter change
+  const handleFilterChange = (filters: any) => {
+    setPatternFilters(filters);
+    
+    // Save Golden Candle filter state to localStorage for persistence
+    if (filters.hasOwnProperty('showOnlyGoldenCandles')) {
+      try {
+        localStorage.setItem(STORAGE_KEY_GOLDEN_CANDLE_FILTER, filters.showOnlyGoldenCandles.toString());
+      } catch (e) {
+        console.error('Error saving Golden Candle filter to localStorage:', e);
+      }
+    }
+    
+    logDebug('DEBUG_UI', 'Pattern filters updated:', filters);
   };
   
   // Handle trading hours toggle
@@ -665,12 +716,6 @@ function AppContent() {
       // TODO: Implement pattern saving logic
       console.log('Pattern saved:', selectedPattern);
     }
-  };
-
-  // Handle filter change
-  const handleFilterChange = (filters: any) => {
-    setPatternFilters(filters);
-    logDebug('DEBUG_UI', 'Pattern filters updated:', filters);
   };
 
   // UI state for panels and modals
@@ -804,7 +849,7 @@ function AppContent() {
                     <ChartWorkspace
                       key={`chart-${showRightPanel}-${showBottomTable}`} // Force re-render when panels toggle
                       data={data}
-                      patterns={patterns}
+                      patterns={filteredPatterns}
                       width={dimensions.width}
                       height={dimensions.height}
                       onPatternSelect={handlePatternSelect}
@@ -831,7 +876,7 @@ function AppContent() {
                         />
                       ) : (
                         <PatternPanel
-                          patterns={patterns}
+                          patterns={filteredPatterns}
                           selectedPattern={selectedPattern}
                           onPatternSelect={handlePatternSelect}
                           patternFilters={patternFilters}

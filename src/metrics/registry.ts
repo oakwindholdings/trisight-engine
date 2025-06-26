@@ -97,5 +97,53 @@ export const MetricRegistry: Record<string, MetricDefinition> = {
       const pct = ctx.distToStopPct?.[idx];
       return pct !== undefined ? pct.toFixed(1) + '%' : '-';
     }
+  },
+  // Phase 1: Core Metrics - Step candle count metrics (as per trisight.escalator_step.yml)
+  stepIntrinsicCount: {
+    id: 'stepIntrinsicCount',
+    label: 'Step Intrinsic',
+    calc: (idx, ctx) => {
+      const count = ctx.stepIntrinsicCount?.[idx];
+      return count !== undefined && count > 0 ? count.toString() : '-';
+    }
+  },
+  stepBreakoutCount: {
+    id: 'stepBreakoutCount', 
+    label: 'Step Breakout',
+    calc: (idx, ctx) => {
+      const count = ctx.stepBreakoutCount?.[idx];
+      return count !== undefined && count > 0 ? count.toString() : '-';
+    }
+  },
+  stepContinuanceCount: {
+    id: 'stepContinuanceCount',
+    label: 'Step Continuance', 
+    calc: (idx, ctx) => {
+      const count = ctx.stepContinuanceCount?.[idx];
+      return count !== undefined && count > 0 ? count.toString() : '-';
+    }
+  },
+  
+  // Blackjack Rolling Score Metric
+  bjRollingScore: {
+    id: 'bjRollingScore',
+    label: 'BJ Rolling',
+    calc: (idx, ctx) => {
+      // Find the rolling score for this timestamp
+      const candle = ctx.candles?.[idx];
+      if (!candle || !ctx.bjRollingScores) return '-';
+      
+      const rollingScore = ctx.bjRollingScores.find((rs: { timestamp: number; score: number }) => 
+        rs.timestamp === candle.timestamp
+      );
+      return rollingScore ? rollingScore.score.toString() : '-';
+    }
+  },
+  
+  // Golden Candle Status Metric
+  goldenCandle: {
+    id: 'goldenCandle',
+    label: 'Golden Candle',
+    calc: (idx, ctx) => ctx.goldmineQual?.[idx] ? 'YES' : '-'
   }
 };

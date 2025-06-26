@@ -3,7 +3,7 @@
 // Provides centralized access to all pattern detection functions
 
 export { detectEscalators } from './escalator';
-export { detectEscalatorSteps } from './escalatorStep';
+export { detectEscalatorSteps, detectStepContinuation } from './escalatorStep';
 export { detectBreakoutBoxes, type BreakoutBox } from './breakoutBox';
 export { 
   getIntrinsicScore, 

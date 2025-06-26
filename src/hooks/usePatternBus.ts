@@ -13,7 +13,8 @@ import {
   detectGoldmine, 
   getIntrinsicScore,
   computeRollingBlackjackScores,
-  computeTargetBlackjackScore 
+  computeTargetBlackjackScore,
+  detectStepContinuation // Phase 4: Continuation Linking
 } from '../patternEngine';
 import type { GoldmineSignal } from '../patternEngine';
 import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop';
@@ -62,7 +63,10 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setDistToStopPct,
     setEscalatorSteps,
     setBreakoutBoxes,
-    escalatorSettings
+    escalatorSettings,
+    setStepIntrinsicCount,
+    setStepBreakoutCount,
+    setStepContinuanceCount
   } = usePatternContext();
   
   useEffect(() => {
@@ -81,9 +85,13 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setDistToStopPct([]);
     setEscalatorSteps([]);
     setBreakoutBoxes([]);
+    setStepIntrinsicCount([]);
+    setStepBreakoutCount([]);
+    setStepContinuanceCount([]);
   }, [candles.length, candles[0]?.datetime, candles[candles.length - 1]?.datetime,
       setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, 
-      setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps, setBreakoutBoxes, setBjTargetScores]);
+      setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps, setBreakoutBoxes, setBjTargetScores,
+      setStepIntrinsicCount, setStepBreakoutCount, setStepContinuanceCount]);
 
   useEffect(() => {
     if (!candles || candles.length === 0) {
@@ -288,12 +296,10 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       });
     });
     
-    const bjIntrinsic = candles.map((candle, i) => {
-      if (i === 0) return 0;
-      const prevCandle = candles[i - 1];
-      const prevBodyHigh = Math.max(prevCandle.open, prevCandle.close);
-      const prevBodyLow = Math.min(prevCandle.open, prevCandle.close);
-      return getIntrinsicScore(candle, prevBodyHigh, prevBodyLow);
+    const bjIntrinsic = candles.map((candle, idx) => {
+      if (idx === 0) return 0; // First candle has no previous reference
+      const prevCandle = candles[idx - 1];
+      return getIntrinsicScore(candle, prevCandle);
     });
     
     const bjCumulative = bjIntrinsic.reduce<number[]>(
@@ -336,6 +342,44 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setGoldmineQual(goldmineQual);
     setTrailStop(trailStop);
     setDistToStopPct(distToStopPct);
+    
+    // Phase 1: Core Metrics - Populate step metrics arrays
+    const stepIntrinsicCount = new Array<number>(candles.length).fill(0);
+    const stepBreakoutCount = new Array<number>(candles.length).fill(0);
+    const stepContinuanceCount = new Array<number>(candles.length).fill(0);
+    
+    // Populate step metrics from escalator steps
+    escalators.forEach(escalator => {
+      escalator.steps.forEach(step => {
+        // Extract step metrics from StepBox (if they exist)
+        const intrinsicCount = step.stepIntrinsicCount || 0;
+        const breakoutCount = step.stepBreakoutCount || 0;
+        const continuanceCount = step.stepContinuanceCount || intrinsicCount + breakoutCount;
+        
+        // Apply metrics to all candles within the step range
+        for (let i = step.startIndex; i <= step.endIndex; i++) {
+          if (i < candles.length) {
+            stepIntrinsicCount[i] = intrinsicCount;
+            stepBreakoutCount[i] = breakoutCount;
+            stepContinuanceCount[i] = continuanceCount;
+          }
+        }
+        
+        logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Step metrics populated:', {
+          stepRef: `${step.startIndex}-${step.endIndex}`,
+          stepIntrinsicCount: intrinsicCount,
+          stepBreakoutCount: breakoutCount,
+          stepContinuanceCount: continuanceCount,
+          range: `${step.startIndex}-${step.endIndex}`
+        });
+      });
+    });
+    
+    // Update context with step metrics
+    setStepIntrinsicCount(stepIntrinsicCount);
+    setStepBreakoutCount(stepBreakoutCount);
+    setStepContinuanceCount(stepContinuanceCount);
+    
     setEscalatorSteps(escalatorEvents);
     setBreakoutBoxes(breakoutBoxEvents);
 
@@ -354,6 +398,101 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       breakoutBoxEventsLength: breakoutBoxEvents.length,
       sampleStepRefs: breakoutBoxEvents.slice(0, 3).map(e => e.data.stepRef)
     });
+
+    // Phase 4: Continuation Linking - Detect post-breakout escalator continuations
+    const continuationEvents: PatternEvent[] = [];
+    
+    breakoutBoxes.forEach(box => {
+      // Find the corresponding step from escalator steps
+      if (box.stepRef) {
+        // Extract step indices from stepRef (format: "timestamp1-timestamp2")
+        const stepRefParts = box.stepRef.split('-');
+        if (stepRefParts.length === 2) {
+          const startTimestamp = parseInt(stepRefParts[0]);
+          const endTimestamp = parseInt(stepRefParts[1]);
+          
+          // Find the step that matches this timestamp range
+          let matchingStep: any = null;
+          for (const escalator of (escalators || [])) {
+            for (const step of escalator.steps) {
+              const stepStartTs = candles[step.startIndex]?.timestamp || 0;
+              const stepEndTs = candles[step.endIndex]?.timestamp || 0;
+              
+              if (stepStartTs === startTimestamp && stepEndTs === endTimestamp) {
+                matchingStep = step;
+                break;
+              }
+            }
+            if (matchingStep) break;
+          }
+          
+          // If we found the matching step, check for continuation
+          if (matchingStep && box.breakoutIndex !== undefined) {
+            logDebug('DEBUG_PATTERN_DETECT', '[Phase 4] Checking continuation for step:', {
+              stepRef: box.stepRef,
+              breakoutIndex: box.breakoutIndex,
+              stepDirection: matchingStep.direction
+            });
+            
+            const continuation = detectStepContinuation(
+              matchingStep,
+              candles,
+              box.breakoutIndex,
+              2 // Minimum continuation length
+            );
+            
+            if (continuation) {
+              logDebug('DEBUG_PATTERN_DETECT', '[Phase 4] Continuation detected:', {
+                stepRef: box.stepRef,
+                continuationRange: `${continuation.startIndex}-${continuation.endIndex}`,
+                direction: continuation.direction,
+                originatingStep: continuation.originatingStep
+              });
+              
+              // Emit continuation escalator event
+              const continuationEvent: PatternEvent = {
+                type: 'ESCALATOR',
+                data: {
+                  ...continuation,
+                  // Mark as continuation
+                  isContinuation: true,
+                  continuationType: 'POST_STEP_BREAKOUT'
+                },
+                timestamp: candles[continuation.startIndex]?.timestamp || Date.now()
+              };
+              
+              continuationEvents.push(continuationEvent);
+              
+              // Also emit step events for the continuation steps
+              continuation.steps.forEach((contStep: any, stepIndex: number) => {
+                const contStepEvent: PatternEvent = {
+                  type: 'ESCALATOR_STEP',
+                  data: {
+                    ...contStep,
+                    // Link back to originating step
+                    originatingStepRef: box.stepRef,
+                    isContinuation: true
+                  },
+                  timestamp: candles[contStep.startIndex]?.timestamp || Date.now()
+                };
+                
+                continuationEvents.push(contStepEvent);
+              });
+            }
+          }
+        }
+      }
+    });
+    
+    // Add continuation events to main events array
+    if (continuationEvents.length > 0) {
+      logDebug('DEBUG_PATTERN_DETECT', '[Phase 4] Continuation events generated:', {
+        count: continuationEvents.length,
+        eventTypes: continuationEvents.map(e => e.type)
+      });
+      
+      newEvents.push(...continuationEvents);
+    }
 
     if (escalators.length > 0 && !existingGoldmineRef.current) {
       const latestEscalator = escalators[escalators.length - 1];
@@ -375,6 +514,14 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
             data: goldmine,
             timestamp: Date.now()
           });
+          
+          // Mark the Golden Candle in goldmineQual array for UI rendering
+          if (goldmine.entryIndex !== undefined) {
+            const newGoldmineQual = new Array<boolean>(candles.length).fill(false);
+            // Copy existing goldmine qualifications and add new one
+            newGoldmineQual[goldmine.entryIndex] = true;
+            setGoldmineQual(newGoldmineQual);
+          }
         }
       }
     }
@@ -411,7 +558,8 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setProcessedDataHash(dataHash);
     
     setIsPatternDetectionComplete(true);
-  }, [candles, events, activePosition, setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps, setBreakoutBoxes, setBjRollingScores, escalatorSettings]);
+  }, [candles, events, activePosition, setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps, setBreakoutBoxes, setBjRollingScores, escalatorSettings,
+    setStepIntrinsicCount, setStepBreakoutCount, setStepContinuanceCount]);
 
   return { events, activePosition, isPatternDetectionComplete, processedDataHash };
 }

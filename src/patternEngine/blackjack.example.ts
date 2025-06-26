@@ -16,11 +16,7 @@ export function scoreCandles(candles: Candle[]) {
     const current = candles[i];
     const previous = candles[i - 1];
     
-    // Calculate body high/low for previous candle
-    const prevBodyHigh = Math.max(previous.open, previous.close);
-    const prevBodyLow = Math.min(previous.open, previous.close);
-    
-    const score = getIntrinsicScore(current, prevBodyHigh, prevBodyLow);
+    const score = getIntrinsicScore(current, previous);
     
     console.log(`Candle ${i}: ${score === 1 ? 'Bullish' : score === -1 ? 'Bearish' : 'Neutral'} (${score})`);
   }

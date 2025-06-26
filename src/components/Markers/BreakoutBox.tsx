@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { Candle } from '../../types/pattern';
+import { usePatternContext } from '../../contexts/PatternContext';
 
 interface BreakoutBoxProps {
   box: {
@@ -36,6 +37,7 @@ export const BreakoutBox: React.FC<BreakoutBoxProps> = ({
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const { goldmineQual } = usePatternContext();
 
   if (!candles.length || box.startIndex >= candles.length || box.endIndex >= candles.length) {
     return null;
@@ -47,6 +49,15 @@ export const BreakoutBox: React.FC<BreakoutBoxProps> = ({
   
   if (!startCandle || !endCandle) {
     return null;
+  }
+
+  // GOLDMINE suppression logic - hide breakout box if any candle in range is a Golden Candle
+  if (goldmineQual?.length) {
+    for (let i = box.startIndex; i <= box.endIndex; i++) {
+      if (i < goldmineQual.length && goldmineQual[i]) {
+        return null; // Skip drawing breakout box if it contains Golden Candles
+      }
+    }
   }
 
   // Calculate x positions

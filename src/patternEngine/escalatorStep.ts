@@ -71,6 +71,7 @@ function detectEscalatorDirection(candles: Candle[], startIdx: number, endIdx: n
 
 /**
  * Detects if a candle is stalling after an escalator sequence
+ * Phase 2: Enhanced with wick-first trigger detection as per trisight.escalator_step.yml
  * A stalling candle breaks the escalator pattern but stays within a range
  */
 function isStalling(candles: Candle[], idx: number, escalatorDir: 'rising' | 'falling'): boolean {
@@ -84,12 +85,82 @@ function isStalling(candles: Candle[], idx: number, escalatorDir: 'rising' | 'fa
   const prevBodyHigh = Math.max(prev.open, prev.close);
   const prevBodyLow = Math.min(prev.open, prev.close);
   
+  // Phase 2: First check if escalator pattern is broken (existing body logic)
+  let isEscalatorBroken = false;
+  
   if (escalatorDir === 'rising') {
     // For rising escalator, stalling means not making a higher high or higher low
-    return !(currBodyHigh > prevBodyHigh && currBodyLow > prevBodyLow);
+    isEscalatorBroken = !(currBodyHigh > prevBodyHigh && currBodyLow > prevBodyLow);
   } else {
     // For falling escalator, stalling means not making a lower high or lower low
-    return !(currBodyHigh < prevBodyHigh && currBodyLow < prevBodyLow);
+    isEscalatorBroken = !(currBodyHigh < prevBodyHigh && currBodyLow < prevBodyLow);
+  }
+  
+  // If escalator pattern is not broken, not stalling
+  if (!isEscalatorBroken) {
+    return false;
+  }
+  
+  // Phase 2: Wick-first trigger detection - look for significant wick
+  const hasSignificantWick = checkForWickTrigger(curr, escalatorDir);
+  
+  if (hasSignificantWick) {
+    logDebug('DEBUG_PATTERN_DETECT', '[isStalling] Wick-first trigger detected:', {
+      index: idx,
+      direction: escalatorDir,
+      candle: { open: curr.open, close: curr.close, high: curr.high, low: curr.low },
+      wickType: escalatorDir === 'rising' ? 'bottom' : 'top'
+    });
+  }
+  
+  return isEscalatorBroken && hasSignificantWick;
+}
+
+/**
+ * Phase 2: Wick-first trigger detection helper
+ * Checks if a candle has a significant wick that indicates step trigger
+ */
+function checkForWickTrigger(candle: Candle, escalatorDir: 'rising' | 'falling'): boolean {
+  const bodyHigh = Math.max(candle.open, candle.close);
+  const bodyLow = Math.min(candle.open, candle.close);
+  const bodySize = Math.abs(candle.close - candle.open);
+  
+  if (escalatorDir === 'rising') {
+    // For rising escalator, look for bottom wick (rejection of lower prices)
+    const bottomWickSize = bodyLow - candle.low;
+    const topWickSize = candle.high - bodyHigh;
+    
+    // Bottom wick must be significant relative to body and total range
+    const totalRange = candle.high - candle.low;
+    const bottomWickRatio = totalRange > 0 ? bottomWickSize / totalRange : 0;
+    
+    // Trigger conditions:
+    // 1. Bottom wick exists and is at least 20% of total range
+    // 2. Bottom wick is larger than top wick (shows rejection of lower prices)
+    // 3. Or bottom wick is at least 1.5x the body size (significant rejection)
+    return bottomWickSize > 0 && (
+      bottomWickRatio >= 0.2 ||
+      bottomWickSize > topWickSize ||
+      (bodySize > 0 && bottomWickSize >= bodySize * 1.5)
+    );
+  } else {
+    // For falling escalator, look for top wick (rejection of higher prices)
+    const topWickSize = candle.high - bodyHigh;
+    const bottomWickSize = bodyLow - candle.low;
+    
+    // Top wick must be significant relative to body and total range
+    const totalRange = candle.high - candle.low;
+    const topWickRatio = totalRange > 0 ? topWickSize / totalRange : 0;
+    
+    // Trigger conditions:
+    // 1. Top wick exists and is at least 20% of total range
+    // 2. Top wick is larger than bottom wick (shows rejection of higher prices)
+    // 3. Or top wick is at least 1.5x the body size (significant rejection)
+    return topWickSize > 0 && (
+      topWickRatio >= 0.2 ||
+      topWickSize > bottomWickSize ||
+      (bodySize > 0 && topWickSize >= bodySize * 1.5)
+    );
   }
 }
 
@@ -222,6 +293,14 @@ export function detectEscalatorSteps(
           const avgVolume = totalVolume / (endIdx - ceilingIdx + 1);
           const level = (bodyHigh + bodyLow) / 2;
           
+          // Phase 1: Core Metrics - Calculate stepIntrinsicCount
+          // Count candles in the directional escalator prior to stall (from escalatorStart to floorIdx-1)
+          const stepIntrinsicCount = escalatorStart >= 0 ? (floorIdx - escalatorStart) : 0;
+          
+          // Phase 1: Initialize breakout and continuance counts (to be calculated post-breakout)
+          const stepBreakoutCount = 0; // Will be updated when breakout is detected
+          const stepContinuanceCount = stepIntrinsicCount + stepBreakoutCount;
+          
           steps.push({
             startIndex: ceilingIdx,
             endIndex: endIdx,
@@ -235,7 +314,12 @@ export function detectEscalatorSteps(
             floor: lowestLow,  // Maps to bodyLow concept
             ceiling: highestHigh,  // Maps to bodyHigh concept
             direction: escalatorDir === 'rising' ? 'UP' : 'DOWN', // Add direction based on escalator
-            isCompleted: false // Active step
+            isCompleted: false, // Active step
+            
+            // Phase 1: Core Metrics (as per trisight.escalator_step.yml)
+            stepIntrinsicCount,
+            stepBreakoutCount,
+            stepContinuanceCount
           });
           
           // Debug log the detected step
@@ -257,6 +341,200 @@ export function detectEscalatorSteps(
   }
   
   return steps;
+}
+
+/**
+ * Updates StepBox metrics after breakout detection
+ * Calculates stepBreakoutCount by counting candles that continue directional movement after breakout
+ * 
+ * @param step - The StepBox to update
+ * @param candles - Array of candlestick data
+ * @param breakoutIndex - Index where breakout occurred
+ * @returns Updated StepBox with breakout metrics
+ */
+export function updateStepBoxMetricsAfterBreakout(
+  step: StepBox,
+  candles: Candle[],
+  breakoutIndex: number
+): StepBox {
+  if (breakoutIndex < 0 || breakoutIndex >= candles.length) {
+    logDebug('DEBUG_PATTERN_DETECT', '[updateStepBoxMetricsAfterBreakout] Invalid breakout index:', breakoutIndex);
+    return step;
+  }
+
+  let stepBreakoutCount = 0;
+  const direction = step.direction;
+  
+  // Count candles after breakout that continue the directional movement
+  for (let i = breakoutIndex + 1; i < candles.length; i++) {
+    const currentCandle = candles[i];
+    const prevCandle = candles[i - 1];
+    
+    // Check if candle continues the directional movement
+    const isDirectionalMove = direction === 'UP' 
+      ? currentCandle.close > prevCandle.close
+      : currentCandle.close < prevCandle.close;
+    
+    if (isDirectionalMove) {
+      stepBreakoutCount++;
+    } else {
+      // Stop counting on first reversal/stall
+      break;
+    }
+    
+    // Limit count to prevent runaway counting (max 20 candles)
+    if (stepBreakoutCount >= 20) {
+      break;
+    }
+  }
+  
+  // Update the step metrics
+  const updatedStep: StepBox = {
+    ...step,
+    stepBreakoutCount,
+    stepContinuanceCount: (step.stepIntrinsicCount || 0) + stepBreakoutCount,
+    isCompleted: true // Mark as completed since breakout occurred
+  };
+  
+  logDebug('DEBUG_PATTERN_DETECT', '[updateStepBoxMetricsAfterBreakout] Updated step metrics:', {
+    stepRef: `${step.startIndex}-${step.endIndex}`,
+    stepIntrinsicCount: step.stepIntrinsicCount,
+    stepBreakoutCount,
+    stepContinuanceCount: updatedStep.stepContinuanceCount,
+    breakoutIndex
+  });
+  
+  return updatedStep;
+}
+
+/**
+ * Phase 4: Continuation Linking - Detects post-breakout escalator continuation
+ * Links step breakouts back to escalator runs when HH/HL (or LL/LH) criteria resume
+ * 
+ * @param step - The StepBox that experienced breakout
+ * @param candles - Full array of candlestick data
+ * @param breakoutIndex - Index where breakout occurred
+ * @param minContinuationLength - Minimum candles for valid continuation (default: 2)
+ * @returns EscalatorRun if continuation is detected, null otherwise
+ */
+export function detectStepContinuation(
+  step: StepBox,
+  candles: Candle[],
+  breakoutIndex: number,
+  minContinuationLength: number = 2
+): any | null {
+  if (breakoutIndex < 0 || breakoutIndex >= candles.length - 1) {
+    logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Invalid breakout index:', breakoutIndex);
+    return null;
+  }
+
+  const direction = step.direction;
+  if (!direction) {
+    logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] No step direction available');
+    return null;
+  }
+
+  // Start checking from breakout candle onwards
+  let continuationStart = breakoutIndex;
+  let continuationEnd = breakoutIndex;
+  let validSteps = 0;
+  
+  // Look for continuation of escalator pattern after breakout
+  for (let i = breakoutIndex + 1; i < Math.min(candles.length, breakoutIndex + 20); i++) {
+    const currentCandle = candles[i];
+    const prevCandle = candles[i - 1];
+    
+    const currBodyHigh = Math.max(currentCandle.open, currentCandle.close);
+    const currBodyLow = Math.min(currentCandle.open, currentCandle.close);
+    const prevBodyHigh = Math.max(prevCandle.open, prevCandle.close);
+    const prevBodyLow = Math.min(prevCandle.open, prevCandle.close);
+    
+    // Check if escalator pattern continues
+    let isValidStep = false;
+    
+    if (direction === 'UP') {
+      // For UP direction, need HH + HL (higher high and higher low)
+      isValidStep = currBodyHigh > prevBodyHigh && currBodyLow > prevBodyLow;
+    } else {
+      // For DOWN direction, need LL + LH (lower low and lower high)
+      isValidStep = currBodyHigh < prevBodyHigh && currBodyLow < prevBodyLow;
+    }
+    
+    if (isValidStep) {
+      validSteps++;
+      continuationEnd = i;
+      
+      logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Valid step found:', {
+        index: i,
+        direction,
+        validSteps,
+        currentCandle: { open: currentCandle.open, close: currentCandle.close },
+        prevCandle: { open: prevCandle.open, close: prevCandle.close }
+      });
+    } else {
+      // Pattern broken, stop checking
+      break;
+    }
+  }
+  
+  // Check if we have enough valid steps for continuation
+  if (validSteps < minContinuationLength) {
+    logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Insufficient continuation steps:', {
+      validSteps,
+      required: minContinuationLength,
+      stepRef: `${step.startIndex}-${step.endIndex}`
+    });
+    return null;
+  }
+  
+  // Create continuation escalator run
+  const continuationRun = {
+    startIndex: continuationStart,
+    endIndex: continuationEnd,
+    direction: direction === 'UP' ? 'BULLISH' : 'BEARISH',
+    steps: [{
+      startIndex: continuationStart,
+      endIndex: continuationEnd,
+      startTime: new Date(candles[continuationStart].timestamp),
+      endTime: new Date(candles[continuationEnd].timestamp),
+      level: (Math.max(candles[continuationEnd].open, candles[continuationEnd].close) + 
+             Math.min(candles[continuationEnd].open, candles[continuationEnd].close)) / 2,
+      height: 0, // Will be calculated
+      duration: continuationEnd - continuationStart + 1,
+      isConsolidation: false,
+      volumeProfile: 0, // Will be calculated
+      floor: Math.min(...candles.slice(continuationStart, continuationEnd + 1).map(c => c.low)),
+      ceiling: Math.max(...candles.slice(continuationStart, continuationEnd + 1).map(c => c.high)),
+      direction: direction,
+      isCompleted: false,
+      
+      // Phase 1: Core Metrics - Initialize for continuation
+      stepIntrinsicCount: step.stepIntrinsicCount || 0, // Inherit from originating step
+      stepBreakoutCount: validSteps,
+      stepContinuanceCount: (step.stepIntrinsicCount || 0) + validSteps
+    }],
+    averageStepHeight: 0, // Will be calculated
+    consistency: 1.0,
+    
+    // Link back to originating step
+    originatingStep: {
+      stepRef: `${step.startIndex}-${step.endIndex}`,
+      stepIntrinsicCount: step.stepIntrinsicCount,
+      breakoutIndex: breakoutIndex
+    }
+  };
+  
+  logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Continuation detected:', {
+    stepRef: `${step.startIndex}-${step.endIndex}`,
+    continuationRange: `${continuationStart}-${continuationEnd}`,
+    direction,
+    validSteps,
+    stepIntrinsicCount: step.stepIntrinsicCount,
+    stepBreakoutCount: validSteps,
+    stepContinuanceCount: (step.stepIntrinsicCount || 0) + validSteps
+  });
+  
+  return continuationRun;
 }
 
 /**

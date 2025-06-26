@@ -45,6 +45,11 @@ export function usePatterns(data: CandlestickData[]) {
   const [events, setEvents] = useState<PatternEvent[]>([]);  // All pattern events
   const [breakoutBoxes, setBreakoutBoxes] = useState<PatternEvent[]>([]);
   
+  // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
+  const [stepIntrinsicCount, setStepIntrinsicCount] = useState<number[]>([]);
+  const [stepBreakoutCount, setStepBreakoutCount] = useState<number[]>([]);
+  const [stepContinuanceCount, setStepContinuanceCount] = useState<number[]>([]);
+  
   // Display settings for patterns
   const [escalatorSettings, setEscalatorSettings] = useState<{ 
     enabled: boolean; 
@@ -140,9 +145,7 @@ export function usePatterns(data: CandlestickData[]) {
     const bjIntrinsic = candles.map((candle, i) => {
       if (i === 0) return 0;
       const prevCandle = candles[i - 1];
-      const prevBodyHigh = Math.max(prevCandle.open, prevCandle.close);
-      const prevBodyLow = Math.min(prevCandle.open, prevCandle.close);
-      return getIntrinsicScore(candle, prevBodyHigh, prevBodyLow);
+      return getIntrinsicScore(candle, prevCandle);
     });
     
     // Compute cumulative Blackjack scores
@@ -418,7 +421,13 @@ export function usePatterns(data: CandlestickData[]) {
     escalatorSettings,
     setEscalatorSettings,
     breakoutBoxSettings,
-    setBreakoutBoxSettings
+    setBreakoutBoxSettings,
+    stepIntrinsicCount,
+    setStepIntrinsicCount,
+    stepBreakoutCount,
+    setStepBreakoutCount,
+    stepContinuanceCount,
+    setStepContinuanceCount
   };
 };
 

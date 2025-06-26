@@ -35,6 +35,7 @@ interface RenderArgs {
   escalatorSettings?: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean };
   breakoutBoxes?: any[];
   breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number };
+  goldmineQual?: boolean[]; // Golden Candle indicators
   // Chart settings for Heikin-Ashi and display options
   chartSettings?: {
     isHeikinAshi: boolean;
@@ -62,6 +63,7 @@ export function renderChart(args: RenderArgs) {
     escalatorSettings = { enabled: true, showLabels: true, showBreakoutBoxes: true },
     breakoutBoxes = [],
     breakoutBoxSettings = { enabled: true, showBreakoutBoxes: true, minStallLength: 3, breakoutMultiplier: 2, stallThreshold: 0.5 },
+    goldmineQual = [],
     chartSettings = { isHeikinAshi: false, showVolume: true, showGrid: true }
   } = args;
 
@@ -119,9 +121,12 @@ export function renderChart(args: RenderArgs) {
     width, 
     height, 
     margin,
+    showingTradingHoursOnly: showOnlyTradingHours
+  }, {
     isHeikinAshi: chartSettings.isHeikinAshi,
     showVolume: chartSettings.showVolume,
-    showGrid: chartSettings.showGrid
+    showGrid: chartSettings.showGrid,
+    goldmineQual
   });
   mainCtx.drawImage(bufferCanvas, 0, 0);
   
