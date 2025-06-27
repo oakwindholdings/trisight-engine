@@ -2,6 +2,7 @@
 // src/components/Chart/RenderOrchestrator.ts
 // Orchestrates chart rendering across multiple canvases
 // Ensures all data displays contiguously
+// HA Infrastructure Alignment Patch v1.0.0: Now supports HA candle rendering
 
 // NOTE: This component controls all drawing flows across chart and pattern overlays.
 // CRITICAL: We use CANVAS for all rendering, NEVER SVG or other technologies.
@@ -16,6 +17,7 @@ import { createPriceScale } from '../../utils/scaling';
 import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import TimeAxis from './TimeAxis';
 import PriceAxis from './PriceAxis';
+import { convertToHeikinAshi } from '../../utils/candleTransform'; // HA Infrastructure Alignment Patch v1.0.0
 
 interface RenderArgs {
   mainCanvasRef: RefObject<HTMLCanvasElement | null>;
@@ -160,6 +162,7 @@ export function renderChart(args: RenderArgs) {
     escalatorSettings, 
     breakoutBoxes, 
     filteredData, 
+    convertToHeikinAshi(filteredData), 
     breakoutBoxSettings,
     { showLabels: false }, // pivotSettings
     { showLabels: false }, // goldmineChannelSettings  

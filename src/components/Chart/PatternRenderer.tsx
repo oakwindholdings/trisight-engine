@@ -4,9 +4,11 @@
 // Colors based on confidence
 // CRITICAL: We use CANVAS for all rendering, NEVER SVG or other technologies.
 // All pattern drawing uses Canvas 2D context methods (fillRect, strokeRect, etc.)
+// HA Infrastructure Alignment Patch v1.0.0: All overlay rendering now uses HA context arrays for consistency with detection logic
 
 import { Pattern, PatternType, patternStyles } from '../../models/PatternTypes';
 import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
+import { logDebugHAAlignmentMismatch } from '../../utils/debug';
 
 // Direction arrow symbols for unified labeling
 const DIRECTION_ARROWS = {
@@ -117,7 +119,8 @@ const PatternRendererImpl = {
     escalatorSteps: any[] = [],
     escalatorSettings: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean } = { enabled: true, showLabels: true, showBreakoutBoxes: true },
     breakoutBoxes: any[] = [], // Add breakoutBoxes parameter
-    candles: any[] = [], // Add candles parameter for fresh timestamp lookup
+    candles: any[] = [], // Original OHLC candles for compatibility
+    haCandles: any[] = [], // HA Infrastructure Alignment Patch v1.0.0: Add HA candles for overlay rendering
     breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number }, // Add independent breakoutBoxSettings
     pivotSettings: { showLabels: boolean } = { showLabels: false },
     goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
@@ -125,6 +128,25 @@ const PatternRendererImpl = {
     goldenNearMisses: boolean[] = [] // Add goldenNearMisses parameter for Dick O'Leary compliance
   ) {
     if (!ctx) return;
+    
+    // HA Infrastructure Alignment Patch v1.0.0: Validate HA array lengths
+    if (candles.length > 0 && haCandles.length !== candles.length) {
+      logDebugHAAlignmentMismatch(
+        0, 
+        'PatternRenderer.render', 
+        `haCandles.length=${candles.length}`, 
+        `actual=${haCandles.length}`
+      );
+    }
+    
+    if (goldenNearMisses.length > 0 && haCandles.length > 0 && goldenNearMisses.length !== haCandles.length) {
+      logDebugHAAlignmentMismatch(
+        0, 
+        'PatternRenderer.goldenNearMisses', 
+        `goldenNearMisses.length=${haCandles.length}`, 
+        `actual=${goldenNearMisses.length}`
+      );
+    }
     
     // Clear the canvas
     ctx.clearRect(0, 0, dimensions.width, dimensions.height);
@@ -195,14 +217,14 @@ const PatternRendererImpl = {
     if (escalatorSettings.enabled) {
       escalatorSteps.forEach((step, index) => {
         if (step.startIndex !== undefined && step.endIndex !== undefined) {
-          this.renderEscalatorStep(ctx, step, timeScale, priceScale, dimensions, escalatorSettings.showLabels, candles);
+          this.renderEscalatorStep(ctx, step, timeScale, priceScale, dimensions, escalatorSettings.showLabels, haCandles);
         }
       });
     }
     
     // Render Golden Candle near-miss overlays if present (Dick O'Leary Compliance)
-    if (goldenCandleSettings.showNearMiss && goldenNearMisses && goldenNearMisses.length > 0 && candles && candles.length > 0) {
-      this.renderGoldenNearMisses(ctx, goldenNearMisses, candles, timeScale, priceScale, dimensions);
+    if (goldenCandleSettings.showNearMiss && goldenNearMisses && goldenNearMisses.length > 0 && haCandles && haCandles.length > 0) {
+      this.renderGoldenNearMisses(ctx, goldenNearMisses, haCandles, timeScale, priceScale, dimensions);
     }
     
     // Render pattern labels after all patterns (including Pivot and Goldmine Channel labels if enabled)
@@ -840,13 +862,14 @@ const PatternRendererImpl = {
   renderGoldenNearMisses(
     ctx: CanvasRenderingContext2D,
     goldenNearMisses: boolean[],
-    candles: any[],
+    haCandles: any[], // HA Infrastructure Alignment Patch v1.0.0: Now uses HA candles
     timeScale: any,
     priceScale: any,
     dimensions: ChartDimensions
   ) {
     // DICK O'LEARY COMPLIANCE: Render near-miss Golden Candle candidates with black fill/outline
     // This provides forensic visualization for breakout opportunities that nearly qualified
+    // HA Infrastructure Alignment Patch v1.0.0: Uses HA candles for consistency with detection logic
     
     ctx.save();
     
@@ -858,16 +881,22 @@ const PatternRendererImpl = {
     let renderedCount = 0;
     
     goldenNearMisses.forEach((isNearMiss, index) => {
-      if (isNearMiss && index < candles.length) {
-        const candle = candles[index];
+      if (isNearMiss && index < haCandles.length) {
+        const haCandle = haCandles[index]; // HA Infrastructure Alignment: Use HA candle
         
-        // Calculate candle position and dimensions
-        const x = timeScale.scale(new Date(candle.timestamp));
+        // Validate HA candle data
+        if (!haCandle) {
+          logDebugHAAlignmentMismatch(index, 'PatternRenderer.renderGoldenNearMisses', 'HA candle data', 'undefined');
+          return;
+        }
+        
+        // Calculate candle position and dimensions using HA candle data
+        const x = timeScale.scale(new Date(haCandle.timestamp));
         const candleWidth = Math.max(1, timeScale.bandwidth ? timeScale.bandwidth() : 4);
         
         // Calculate candle body dimensions using HA-aware logic
-        const bodyTop = priceScale.scale(Math.max(candle.open, candle.close));
-        const bodyBottom = priceScale.scale(Math.min(candle.open, candle.close));
+        const bodyTop = priceScale.scale(Math.max(haCandle.open, haCandle.close));
+        const bodyBottom = priceScale.scale(Math.min(haCandle.open, haCandle.close));
         const bodyHeight = Math.max(1, bodyBottom - bodyTop);
         
         // Only render if candle is within visible chart area
@@ -887,7 +916,7 @@ const PatternRendererImpl = {
     
     // Debug logging for rendered near-miss overlays
     if (renderedCount > 0) {
-      console.log(`[DEBUG_GOLDEN_MISS] [PatternRenderer] Rendered ${renderedCount} Golden Candle near-miss overlays with Dick O'Leary compliance`);
+      console.log(`[DEBUG_GOLDEN_MISS] [PatternRenderer] Rendered ${renderedCount} Golden Candle near-miss overlays with Dick O'Leary compliance using HA candles`);
     }
   },
   

@@ -3,6 +3,9 @@
 // Provides metric calculations for hover displays
 
 // NOTE: This registry powers hover metrics in MetricPopover (e.g., Open, Close, BJ Cum).
+// HA Infrastructure Alignment Patch v1.0.0: All metrics now use HA candles for consistency with detection logic
+
+import { logDebugHAAlignmentMismatch } from '../utils/debug';
 
 export interface MetricDefinition {
   id: string;
@@ -11,45 +14,66 @@ export interface MetricDefinition {
 }
 
 export const MetricRegistry: Record<string, MetricDefinition> = {
-  // Candle data metrics
+  // Candle data metrics - NOW USING HA CANDLES FOR ALIGNMENT WITH DETECTION LOGIC
   open: {
     id: 'open',
-    label: 'Open',
+    label: 'Open (HA)',
     calc: (idx, ctx) => {
-      const candle = ctx.candles?.[idx];
-      return candle ? candle.open.toFixed(2) : '-';
+      // Use HA candles instead of OHLC for consistency with pattern detection
+      const haCandle = ctx.haCandles?.[idx];
+      if (!haCandle) {
+        logDebugHAAlignmentMismatch(idx, 'MetricRegistry.open', 'HA candle data', 'undefined');
+        return '-';
+      }
+      return haCandle.open.toFixed(2);
     }
   },
   high: {
     id: 'high', 
-    label: 'High',
+    label: 'High (HA)',
     calc: (idx, ctx) => {
-      const candle = ctx.candles?.[idx];
-      return candle ? candle.high.toFixed(2) : '-';
+      const haCandle = ctx.haCandles?.[idx];
+      if (!haCandle) {
+        logDebugHAAlignmentMismatch(idx, 'MetricRegistry.high', 'HA candle data', 'undefined');
+        return '-';
+      }
+      return haCandle.high.toFixed(2);
     }
   },
   low: {
     id: 'low',
-    label: 'Low',
+    label: 'Low (HA)',
     calc: (idx, ctx) => {
-      const candle = ctx.candles?.[idx];
-      return candle ? candle.low.toFixed(2) : '-';
+      const haCandle = ctx.haCandles?.[idx];
+      if (!haCandle) {
+        logDebugHAAlignmentMismatch(idx, 'MetricRegistry.low', 'HA candle data', 'undefined');
+        return '-';
+      }
+      return haCandle.low.toFixed(2);
     }
   },
   close: {
     id: 'close',
-    label: 'Close',
+    label: 'Close (HA)',
     calc: (idx, ctx) => {
-      const candle = ctx.candles?.[idx];
-      return candle ? candle.close.toFixed(2) : '-';
+      const haCandle = ctx.haCandles?.[idx];
+      if (!haCandle) {
+        logDebugHAAlignmentMismatch(idx, 'MetricRegistry.close', 'HA candle data', 'undefined');
+        return '-';
+      }
+      return haCandle.close.toFixed(2);
     }
   },
   volume: {
     id: 'volume',
-    label: 'Volume',
+    label: 'Volume (HA)',
     calc: (idx, ctx) => {
-      const candle = ctx.candles?.[idx];
-      return candle ? (candle.volume / 1000000).toFixed(1) + 'M' : '-';
+      const haCandle = ctx.haCandles?.[idx];
+      if (!haCandle) {
+        logDebugHAAlignmentMismatch(idx, 'MetricRegistry.volume', 'HA candle data', 'undefined');
+        return '-';
+      }
+      return (haCandle.volume / 1000000).toFixed(1) + 'M';
     }
   },
   bjIntrinsic: {
@@ -130,11 +154,11 @@ export const MetricRegistry: Record<string, MetricDefinition> = {
     label: 'BJ Rolling',
     calc: (idx, ctx) => {
       // Find the rolling score for this timestamp
-      const candle = ctx.candles?.[idx];
-      if (!candle || !ctx.bjRollingScores) return '-';
+      const haCandle = ctx.haCandles?.[idx];
+      if (!haCandle || !ctx.bjRollingScores) return '-';
       
       const rollingScore = ctx.bjRollingScores.find((rs: { timestamp: number; score: number }) => 
-        rs.timestamp === candle.timestamp
+        rs.timestamp === haCandle.timestamp
       );
       return rollingScore ? rollingScore.score.toString() : '-';
     }

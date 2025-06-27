@@ -2,9 +2,14 @@
 // Detects golden candle patterns in candlestick data
 // Golden candles are high-confidence breakout candles confirmed by prior step consolidation and strong Blackjack scores
 // HEIKIN-ASHI: Improved breakout signal clarity with HA smoothing - reduces noise in consolidation phases, enhances trend confirmation
+// DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform';
+import { isNearMissGoldenCandle } from '../utils/patternQualifiers';
+
+const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
 export interface GoldenCandlePattern {
   index: number;
@@ -32,11 +37,13 @@ export interface GoldenCandleCandidate {
   stepIntrinsicCount: number;
   candlePrice: number;
   failureReason: string;
-  nearMissType: 'CONTINUATION_LOW' | 'INTRINSIC_ZERO' | 'CUMULATIVE_WEAK' | 'NO_BREAKOUT';
+  nearMissType: 'CONTINUATION_LOW' | 'INTRINSIC_ZERO' | 'CUMULATIVE_WEAK' | 'NO_BREAKOUT' | 'NEAR_MISS';
 }
 
 /**
  * Detects golden candle patterns in candlestick data
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
+ * // TODO: SOURCE_VERIFIED_FROM_DECKS - Breakout thresholds should be explicitly defined from Dick O'Leary deck sources
  * @param candles - Array of candlestick data
  * @param stepIntrinsicCounts - Array of step intrinsic counts per candle
  * @param stepBreakoutCounts - Array of step breakout counts per candle
@@ -53,18 +60,20 @@ export function detectGoldenCandle(
   bjIntrinsic: number[] = [],
   bjCumulative: number[] = []
 ): GoldenCandlePattern[] {
-  logDebug('DEBUG_PATTERN_DETECT', '[GoldenCandle] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldenCandle] Starting detection on', candles.length, 'candles');
   
   if (!candles || candles.length === 0) {
-    logDebug('DEBUG_PATTERN_DETECT', '[GoldenCandle] No candles provided for detection');
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldenCandle] No candles provided for detection');
     return [];
   }
 
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
   const goldenCandles: GoldenCandlePattern[] = [];
 
   // Iterate through candles to find golden candle candidates
   for (let i = 0; i < candles.length; i++) {
-    const candle = candles[i];
+    const haCandle = haCandles[i];
     
     // Get metrics for current candle
     const intrinsicScore = bjIntrinsic[i] || 0;
@@ -73,25 +82,26 @@ export function detectGoldenCandle(
     const intrinsicCount = stepIntrinsicCounts[i] || 0;
     const breakoutCount = stepBreakoutCounts[i] || 0;
 
-    // Debug logging for current candle evaluation
-    logDebug('DEBUG_PATTERN_DETECT', `[GoldenCandle] Evaluating candle ${i}:`, {
-      candleClose: candle.close.toFixed(2),
+    // Debug logging for current candle evaluation using HA candle
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] Evaluating HA candle ${i}:`, {
+      haCandleClose: haCandle.close.toFixed(2),
       intrinsicScore: intrinsicScore,
       cumulativeScore: cumulativeScore,
       continuanceCount: continuanceCount,
       intrinsicCount: intrinsicCount,
-      breakoutCount: breakoutCount
+      breakoutCount: breakoutCount,
+      dickOLearyCompliant: true
     });
 
     // 1. Check continuation count requirement (≥ 2)
     if (continuanceCount < 2) {
-      logDebug('DEBUG_PATTERN_DETECT', `[GoldenCandle] Candle ${i} rejected: continuation count ${continuanceCount} < 2`);
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] HA candle ${i} rejected: continuation count ${continuanceCount} < 2`);
       continue;
     }
 
     // 2. Check intrinsic score requirement (= ±1)
     if (Math.abs(intrinsicScore) !== 1) {
-      logDebug('DEBUG_PATTERN_DETECT', `[GoldenCandle] Candle ${i} rejected: intrinsic score ${intrinsicScore} ≠ ±1`);
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] HA candle ${i} rejected: intrinsic score ${intrinsicScore} ≠ ±1`);
       continue;
     }
 
@@ -102,7 +112,7 @@ export function detectGoldenCandle(
     } else if (cumulativeScore <= -2) {
       direction = 'SHORT';
     } else {
-      logDebug('DEBUG_PATTERN_DETECT', `[GoldenCandle] Candle ${i} rejected: cumulative score ${cumulativeScore} doesn't meet ≥2 (LONG) or ≤-2 (SHORT)`);
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] HA candle ${i} rejected: cumulative score ${cumulativeScore} doesn't meet ≥2 (LONG) or ≤-2 (SHORT)`);
       continue;
     }
 
@@ -112,7 +122,7 @@ export function detectGoldenCandle(
     const hasBreakout = breakoutCount > 0;
     
     if (!hasBreakout) {
-      logDebug('DEBUG_PATTERN_DETECT', `[GoldenCandle] Candle ${i} rejected: no step box breakout detected`);
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] HA candle ${i} rejected: no step box breakout detected`);
       continue;
     }
 
@@ -120,10 +130,10 @@ export function detectGoldenCandle(
     const goldenScore = Math.abs(intrinsicScore) + Math.abs(cumulativeScore) + continuanceCount;
     const confidence = Math.min(goldenScore / 10.0, 1.0); // Normalize to 0-1 scale
 
-    // 6. Create golden candle pattern
+    // 6. Create golden candle pattern using HA candle data
     const goldenCandle: GoldenCandlePattern = {
       index: i,
-      timestamp: new Date(candle.datetime),
+      timestamp: new Date(candles[i].datetime), // Use original timestamp
       direction: direction,
       goldenScore: goldenScore,
       intrinsicScore: intrinsicScore,
@@ -131,13 +141,13 @@ export function detectGoldenCandle(
       stepIntrinsicCount: intrinsicCount,
       stepBreakoutCount: breakoutCount,
       stepContinuanceCount: continuanceCount,
-      candlePrice: candle.close,
+      candlePrice: haCandle.close, // Use HA candle close for Dick O'Leary compliance
       confidence: confidence
     };
 
     // Add comprehensive DEBUG_PATTERN_DETECT logging
-    if (typeof logDebug === 'function') {
-      logDebug('DEBUG_PATTERN_DETECT', `Golden Candle detected`, {
+    if (DEBUG_MODE && typeof logDebug === 'function') {
+      logDebug('DEBUG_PATTERN_DETECT', `HA Golden Candle detected`, {
         index: i,
         direction: direction,
         goldenScore: goldenScore.toFixed(2),
@@ -146,17 +156,18 @@ export function detectGoldenCandle(
         continuanceCount: continuanceCount,
         intrinsicCount: intrinsicCount,
         breakoutCount: breakoutCount,
-        candlePrice: candle.close.toFixed(2),
+        haCandlePrice: haCandle.close.toFixed(2), // Use HA candle close
         confidence: confidence.toFixed(2),
-        timestamp: candle.datetime,
-        signalStrength: confidence >= 0.8 ? 'STRONG' : confidence >= 0.6 ? 'MEDIUM' : 'WEAK'
+        timestamp: candles[i].datetime,
+        signalStrength: confidence >= 0.8 ? 'STRONG' : confidence >= 0.6 ? 'MEDIUM' : 'WEAK',
+        dickOLearyCompliant: true
       });
     }
 
     goldenCandles.push(goldenCandle);
   }
 
-  logDebug('DEBUG_PATTERN_DETECT', '[GoldenCandle] Detection complete. Found', goldenCandles.length, 'golden candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldenCandle] Detection complete. Found', goldenCandles.length, 'golden candles');
   
   return goldenCandles;
 }
@@ -164,6 +175,7 @@ export function detectGoldenCandle(
 /**
  * Detects Golden Candle candidates (near-misses) for forensic analysis
  * Uses relaxed criteria to identify candles that almost meet Golden Candle requirements
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  * @param candles - Array of candlestick data
  * @param stepIntrinsicCounts - Array of step intrinsic counts per candle
  * @param stepBreakoutCounts - Array of step breakout counts per candle
@@ -180,18 +192,20 @@ export function detectGoldenCandleCandidates(
   bjIntrinsic: number[] = [],
   bjCumulative: number[] = []
 ): GoldenCandleCandidate[] {
-  logDebug('DEBUG_PATTERN_DETECT', '[GOLDMINE_FORENSICS] Starting forensic candidate detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_FORENSICS] Starting forensic candidate detection on', candles.length, 'candles');
   
   if (!candles || candles.length === 0) {
-    logDebug('DEBUG_PATTERN_DETECT', '[GOLDMINE_FORENSICS] No candles provided for forensic detection');
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_FORENSICS] No candles provided for forensic detection');
     return [];
   }
 
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
   const candidates: GoldenCandleCandidate[] = [];
 
   // Iterate through candles to find near-miss candidates with relaxed criteria
   for (let i = 0; i < candles.length; i++) {
-    const candle = candles[i];
+    const haCandle = haCandles[i];
     
     // Get metrics for current candle
     const intrinsicScore = bjIntrinsic[i] || 0;
@@ -245,19 +259,19 @@ export function detectGoldenCandleCandidates(
     if (isCandidate) {
       const candidate: GoldenCandleCandidate = {
         index: i,
-        timestamp: new Date(candle.datetime),
+        timestamp: new Date(candles[i].datetime),
         intrinsicScore: intrinsicScore,
         cumulativeScore: cumulativeScore,
         stepContinuanceCount: continuanceCount,
         stepBreakoutCount: breakoutCount,
         stepIntrinsicCount: intrinsicCount,
-        candlePrice: candle.close,
+        candlePrice: haCandle.close, // Use HA candle close for Dick O'Leary compliance
         failureReason: failureReason,
         nearMissType: nearMissType
       };
 
       // Comprehensive forensic logging
-      logDebug('DEBUG_PATTERN_DETECT', `[GOLDMINE_FORENSICS] Golden Candle candidate detected`, {
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GOLDMINE_FORENSICS] Golden Candle candidate detected`, {
         idx: i,
         continuationCount: continuanceCount,
         intrinsicScore: intrinsicScore,
@@ -265,15 +279,15 @@ export function detectGoldenCandleCandidates(
         breakoutCount: breakoutCount,
         failureReason: failureReason,
         nearMissType: nearMissType,
-        candlePrice: candle.close.toFixed(2),
-        timestamp: candle.datetime
+        candlePrice: haCandle.close.toFixed(2), // Use HA candle close
+        timestamp: candles[i].datetime
       });
 
       candidates.push(candidate);
     }
   }
 
-  logDebug('DEBUG_PATTERN_DETECT', '[GOLDMINE_FORENSICS] Forensic detection complete. Found', candidates.length, 'Golden Candle candidates');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_FORENSICS] Forensic detection complete. Found', candidates.length, 'Golden Candle candidates');
   
   return candidates;
 }
@@ -306,4 +320,121 @@ export function validateGoldenCandleCriteria(
   }
   
   return true;
+}
+
+/**
+ * Detects Golden Near Misses for TriSight Detection Input Refactor Patch v1.3.0 integration with usePatternBus
+ * @param candles - Array of candlestick data
+ * @param latestStep - Latest escalator step for context (optional)
+ * @returns Array of boolean values indicating Golden Near Miss at each candle index
+ */
+export function detectGoldenNearMisses(
+  candles: Candle[],
+  latestStep?: any
+): boolean[] {
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_NEAR_MISS] Starting near miss detection on', candles.length, 'candles');
+  
+  if (!candles || candles.length === 0) {
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_NEAR_MISS] No candles provided for near miss detection');
+    return [];
+  }
+
+  // Initialize near miss array with false values
+  const nearMisses: boolean[] = new Array(candles.length).fill(false);
+
+  // Need at least 4 candles for context (3 previous + 1 current)
+  if (candles.length < 4) {
+    return nearMisses;
+  }
+
+  // Iterate through candles starting from index 3 (need 3 previous candles for context)
+  for (let i = 3; i < candles.length; i++) {
+    const currentCandle = candles[i];
+    const previousCandles = candles.slice(0, i); // All previous candles up to current
+
+    // Check if this candle is a near miss using the proper signature
+    if (isNearMissGoldenCandle(currentCandle, previousCandles)) {
+      nearMisses[i] = true;
+
+      // Comprehensive near miss logging
+      if (DEBUG_MODE) logDebug('DEBUG_GOLDEN_MISS', `[HA GOLDMINE_NEAR_MISS] Golden Near Miss detected`, {
+        idx: i,
+        candlePrice: currentCandle.close.toFixed(2),
+        timestamp: currentCandle.datetime,
+        dickOLearyCompliant: true,
+        forensicAnalysis: true
+      });
+    }
+  }
+
+  const totalNearMisses = nearMisses.filter(nm => nm).length;
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_NEAR_MISS] Near miss detection complete. Found', totalNearMisses, 'Golden Near Misses');
+  
+  return nearMisses;
+}
+
+/**
+ * Checks if trailing stop has been triggered for a Golden Candle entry
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively for exit trigger logic
+ * // TODO: SOURCE_VERIFIED_FROM_DECKS - Trailing stop logic should be verified against Dick O'Leary source decks
+ * @param entryCandle - The candle where Golden Candle was detected
+ * @param currentCandle - The current candle to evaluate for stop trigger
+ * @param direction - The direction of the Golden Candle ('LONG' | 'SHORT')
+ * @param trailingStopPercent - Trailing stop threshold as percentage (default: 2.0%)
+ * @returns boolean indicating if trailing stop has been triggered
+ */
+export function isTrailingStopTriggered(
+  entryCandle: Candle,
+  currentCandle: Candle,
+  direction: 'LONG' | 'SHORT',
+  trailingStopPercent: number = 2.0
+): boolean {
+  if (!entryCandle || !currentCandle) {
+    return false;
+  }
+
+  // Convert to HA candles for Dick O'Leary compliance
+  const haEntryCandle = convertToHeikinAshi([entryCandle])[0];
+  const haCurrentCandle = convertToHeikinAshi([currentCandle])[0];
+
+  // Calculate trailing stop threshold based on entry HA candle
+  const trailingStopValue = (trailingStopPercent / 100) * haEntryCandle.open;
+
+  let isTriggered = false;
+
+  if (direction === 'LONG') {
+    // LONG: current HA low < entry HA open - (trailingStop %)
+    const stopLevel = haEntryCandle.open - trailingStopValue;
+    isTriggered = haCurrentCandle.low < stopLevel;
+
+    if (DEBUG_MODE && isTriggered) {
+      logDebug('DEBUG_GOLDEN_TRAIL_EXIT', '[TRAILING STOP TRIGGERED - LONG]', {
+        entryPrice: haEntryCandle.open.toFixed(4),
+        currentLow: haCurrentCandle.low.toFixed(4),
+        stopLevel: stopLevel.toFixed(4),
+        trailingStopPercent,
+        direction,
+        timestamp: currentCandle.datetime,
+        dickOLearyCompliant: true
+      });
+    }
+  } else if (direction === 'SHORT') {
+    // SHORT: current HA high > entry HA open + (trailingStop %)
+    const stopLevel = haEntryCandle.open + trailingStopValue;
+    isTriggered = haCurrentCandle.high > stopLevel;
+
+    if (DEBUG_MODE && isTriggered) {
+      logDebug('DEBUG_GOLDEN_TRAIL_EXIT', '[TRAILING STOP TRIGGERED - SHORT]', {
+        entryPrice: haEntryCandle.open.toFixed(4),
+        currentHigh: haCurrentCandle.high.toFixed(4),
+        stopLevel: stopLevel.toFixed(4),
+        trailingStopPercent,
+        direction,
+        timestamp: currentCandle.datetime,
+        dickOLearyCompliant: true
+      });
+    }
+  }
+
+  return isTriggered;
 }

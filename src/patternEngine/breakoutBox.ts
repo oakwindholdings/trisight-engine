@@ -4,6 +4,7 @@
 // Independent from escalator step detection
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
 // DICK O'LEARY COMPLIANCE: Strict HA-only breakout logic - no OHLC substitution allowed
+// TODO: SOURCE_VERIFIED_FROM_DECKS - Breakout detection thresholds should be explicitly defined from Dick O'Leary deck sources
 
 import { Candle } from '../types/pattern';
 import { debugLog, summaryLog, DEBUG_MODE, logDebug } from '../utils/debug';

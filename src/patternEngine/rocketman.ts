@@ -4,10 +4,14 @@
 // Detects rapid price acceleration with volume confirmation
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
 // HEIKIN-ASHI: Enhanced acceleration detection with HA smoothing - reduces false breakouts, improves momentum analysis
+// DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
 import { RocketmanDetector } from '../utils/patternDetection/RocketmanDetector';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform';
+
+const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
 export interface RocketmanDetection {
   startIndex: number;
@@ -30,33 +34,37 @@ export interface RocketmanDetection {
 
 /**
  * Detects rocketman acceleration patterns in candlestick data
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  * @param candles - Array of candlestick data
  * @returns Array of detected rocketman patterns
  */
 export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
-  logDebug('DEBUG_PATTERN_DETECT', '[Rocketman] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Starting detection on', candles.length, 'candles');
   
   if (!candles || candles.length === 0) {
-    logDebug('DEBUG_PATTERN_DETECT', '[Rocketman] No candles provided');
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] No candles provided');
     return [];
   }
 
-  // Convert Candle[] to CandlestickData[] for the detector
-  const candlestickData = candles.map(candle => ({
-    datetime: candle.datetime,
-    timestamp: new Date(candle.datetime).getTime(),
-    open: candle.open,
-    high: candle.high,
-    low: candle.low,
-    close: candle.close,
-    volume: candle.volume
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
+
+  // Convert HA Candle[] to CandlestickData[] for the detector using HA metrics exclusively
+  const haCandlestickData = haCandles.map(haCandle => ({
+    datetime: haCandle.datetime,
+    timestamp: new Date(haCandle.datetime).getTime(),
+    open: haCandle.open,    // Use HA open
+    high: haCandle.high,    // Use HA high
+    low: haCandle.low,      // Use HA low
+    close: haCandle.close,  // Use HA close
+    volume: haCandle.volume // Volume remains from original candle
   }));
 
-  // Use the restored RocketmanDetector
+  // Use the restored RocketmanDetector with HA data
   const detector = new RocketmanDetector();
-  const rocketmanPatterns = detector.detect(candlestickData);
+  const rocketmanPatterns = detector.detect(haCandlestickData);
   
-  logDebug('DEBUG_PATTERN_DETECT', '[Rocketman] Detection complete. Found', rocketmanPatterns.length, 'patterns');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Detection complete. Found', rocketmanPatterns.length, 'patterns with HA compliance');
   
   // Convert RocketmanPattern[] to RocketmanDetection[] for pattern bus compatibility
   const detections: RocketmanDetection[] = rocketmanPatterns.map((pattern, index) => {
@@ -73,15 +81,12 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
       new Date(candle.datetime).getTime() === pattern.peakTime.getTime()
     );
 
-    // DEBUG_PATTERN_DETECT: Log each detected pattern
-    logDebug('DEBUG_PATTERN_DETECT', '[Rocketman] Detected pattern at', peakIndex, 'with confidence', pattern.confidence, {
+    // DEBUG_PATTERN_DETECT: Log each detected pattern with HA compliance
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Detected HA pattern at', peakIndex, 'with confidence', pattern.confidence, {
       direction: pattern.direction,
       accelerationRate: pattern.accelerationRate,
       intensity: pattern.intensity,
-      momentumScore: pattern.momentumScore,
-      signalStrength: pattern.signalStrength,
-      peakPrice: pattern.peakPrice,
-      volumeConfirmation: pattern.volumeConfirmation
+      dickOLearyCompliant: true
     });
 
     return {
@@ -104,7 +109,7 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
     };
   });
 
-  logDebug('DEBUG_PATTERN_DETECT', '[Rocketman] Converted', detections.length, 'patterns to detections');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Converted', detections.length, 'patterns to detections');
   
   return detections;
 }

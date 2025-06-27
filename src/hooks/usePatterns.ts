@@ -143,20 +143,8 @@ export function usePatterns(data: CandlestickData[]) {
   
   // Golden Candle settings with near-miss toggle
   const [goldenCandleSettings, setGoldenCandleSettings] = useState(() => {
-    // Try to load from localStorage
-    try {
-      const saved = localStorage.getItem('patternSettings.goldenCandle');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        console.log('[usePatterns] Loaded Golden Candle settings from localStorage:', parsed);
-        return parsed;
-      }
-    } catch (error) {
-      console.error('[usePatterns] Error loading Golden Candle settings:', error);
-    }
-    
-    // Default values
-    return {
+    // Default values for v1.3.2 compatibility
+    const defaults = {
       enabled: true,
       showLabels: true,
       showForensics: false, // Default to false for forensic overlays
@@ -165,8 +153,34 @@ export function usePatterns(data: CandlestickData[]) {
       minCumulativeScore: 5,
       confidenceThreshold: 0.7,
       intrinsicScoreRequired: 2,
-      preferredDirection: 'BOTH' as 'LONG' | 'SHORT' | 'BOTH'
+      preferredDirection: 'BOTH' as 'LONG' | 'SHORT' | 'BOTH',
+      trailingStopPercent: 2.0, // TriSight Detection Input Refactor Patch v1.3.1: Default 2.0%
+      stopLossPercent: 2.0 // TriSight Detection Input Refactor Patch v1.3.2: Default 2.0%
     };
+    
+    // Try to load from localStorage with migration
+    try {
+      const saved = localStorage.getItem('patternSettings.goldenCandle');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Migrate existing settings to include new trailingStopPercent and stopLossPercent fields
+        const migrated = {
+          ...defaults,
+          ...parsed,
+          // Ensure trailingStopPercent is always present (v1.3.1)
+          trailingStopPercent: parsed.trailingStopPercent ?? defaults.trailingStopPercent,
+          // Ensure stopLossPercent is always present (v1.3.2)
+          stopLossPercent: parsed.stopLossPercent ?? defaults.stopLossPercent
+        };
+        console.log('[usePatterns] Loaded and migrated Golden Candle settings from localStorage:', migrated);
+        return migrated;
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading Golden Candle settings:', error);
+    }
+    
+    // Return defaults if no localStorage or error
+    return defaults;
   });
 
   // Persist Golden Candle settings to localStorage when they change

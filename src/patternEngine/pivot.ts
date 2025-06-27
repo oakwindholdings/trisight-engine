@@ -4,10 +4,14 @@
 // Identifies significant price reversal points with multiple confirmations
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
 // HEIKIN-ASHI: Superior pivot detection with HA smoothing - cleaner support/resistance levels, reduced false signals
+// DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
 import { PivotType } from '../models/PatternTypes';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform';
+
+const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
 export interface PivotDetection {
   startIndex: number;
@@ -36,6 +40,7 @@ export interface PivotDetection {
 
 /**
  * Detects pivot support and resistance patterns in candlestick data
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  * @param candles - Array of candlestick data
  * @param minTouchPoints - Minimum touch points for valid pivot (default: 3)
  * @param pivotLookback - Lookback period for pivot identification (default: 5)
@@ -48,48 +53,50 @@ export function detectPivots(
   pivotLookback: number = 5,
   zoneTolerance: number = 0.002
 ): PivotDetection[] {
-  logDebug('DEBUG_PATTERN_DETECT', '[Pivot] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Starting detection on', candles.length, 'candles');
   
   if (!candles || candles.length < pivotLookback * 2 + 1) {
-    logDebug('DEBUG_PATTERN_DETECT', '[Pivot] Not enough candles for detection:', candles?.length, 'min required:', pivotLookback * 2 + 1);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Not enough candles for detection:', candles?.length, 'min required:', pivotLookback * 2 + 1);
     return [];
   }
 
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
   const pivots: PivotDetection[] = [];
 
-  // Detect pivot points (local highs and lows)
+  // Detect pivot points (local highs and lows) using HA candles
   const pivotPoints: Array<{index: number, price: number, type: PivotType}> = [];
   
-  for (let i = pivotLookback; i < candles.length - pivotLookback; i++) {
-    const candle = candles[i];
+  for (let i = pivotLookback; i < haCandles.length - pivotLookback; i++) {
+    const haCandle = haCandles[i];
     
-    // Check for resistance (local high)
+    // Check for resistance (local high) using HA candles
     let isResistance = true;
     for (let j = i - pivotLookback; j <= i + pivotLookback; j++) {
-      if (j !== i && candles[j].high >= candle.high) {
+      if (j !== i && haCandles[j].high >= haCandle.high) {
         isResistance = false;
         break;
       }
     }
     
-    // Check for support (local low)
+    // Check for support (local low) using HA candles
     let isSupport = true;
     for (let j = i - pivotLookback; j <= i + pivotLookback; j++) {
-      if (j !== i && candles[j].low <= candle.low) {
+      if (j !== i && haCandles[j].low <= haCandle.low) {
         isSupport = false;
         break;
       }
     }
     
     if (isResistance) {
-      pivotPoints.push({ index: i, price: candle.high, type: PivotType.RESISTANCE });
+      pivotPoints.push({ index: i, price: haCandle.high, type: PivotType.RESISTANCE });
     }
     if (isSupport) {
-      pivotPoints.push({ index: i, price: candle.low, type: PivotType.SUPPORT });
+      pivotPoints.push({ index: i, price: haCandle.low, type: PivotType.SUPPORT });
     }
   }
 
-  logDebug('DEBUG_PATTERN_DETECT', '[Pivot] Found', pivotPoints.length, 'potential pivot points');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Found', pivotPoints.length, 'potential pivot points');
 
   // Group nearby pivot points into zones
   const pivotZones = new Map<string, Array<{index: number, price: number, type: PivotType}>>();
@@ -127,10 +134,10 @@ export function detectPivots(
         pivotType: pivotType,
         pivotLevel: avgPrice,
         pivotIndex: firstTouchIndex,
-        timestamp: new Date(candles[firstTouchIndex].datetime),
+        timestamp: new Date(haCandles[firstTouchIndex].datetime),
         touchCount: touchCount,
         touchPoints: zonePoints.map(p => ({
-          time: new Date(candles[p.index].datetime),
+          time: new Date(haCandles[p.index].datetime),
           price: p.price,
           candleIndex: p.index,
           touchStrength: 1.0
@@ -156,7 +163,7 @@ export function detectPivots(
           confidence: (Math.min(strength * 0.5 + (touchCount - minTouchPoints) * 0.1, 1.0)).toFixed(2),
           zoneWidth: adaptiveZoneWidth.toFixed(4),
           stepRef: `${firstTouchIndex}-${lastTouchIndex}`,
-          timeRange: `${candles[firstTouchIndex].datetime} to ${candles[lastTouchIndex].datetime}`,
+          timeRange: `${haCandles[firstTouchIndex].datetime} to ${haCandles[lastTouchIndex].datetime}`,
           priceRange: `${Math.min(...zonePoints.map(p => p.price)).toFixed(2)} - ${Math.max(...zonePoints.map(p => p.price)).toFixed(2)}`,
           candidatePoints: zonePoints.length,
           qualifiedTouches: touchCount,
@@ -167,11 +174,11 @@ export function detectPivots(
       
       pivots.push(pivotDetection);
       
-      logDebug('DEBUG_PATTERN_DETECT', '[Pivot] Detected', pivotType, 'at', avgPrice.toFixed(4), 'with', touchCount, 'touches, confidence:', pivotDetection.confidence.toFixed(3));
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Detected', pivotType, 'at', avgPrice.toFixed(4), 'with', touchCount, 'touches, confidence:', pivotDetection.confidence.toFixed(3));
     }
   });
 
-  logDebug('DEBUG_PATTERN_DETECT', '[Pivot] Detection complete. Found', pivots.length, 'valid pivots');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Detection complete. Found', pivots.length, 'valid pivots');
   
   return pivots;
 }
@@ -187,7 +194,7 @@ export function identifyPivotPoints(
   lookback: number
 ): Array<{ index: number; type: PivotType; level: number; strength: number }> {
   // PLACEHOLDER: Implement pivot point identification
-  logDebug('DEBUG_PATTERN_DETECT', '[Pivot] STUB: Pivot point identification not implemented');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[Pivot] STUB: Pivot point identification not implemented');
   return [];
 }
 
@@ -204,7 +211,7 @@ export function calculateTouchStrength(
   previousCandles: Candle[]
 ): number {
   // PLACEHOLDER: Implement touch strength calculation
-  logDebug('DEBUG_PATTERN_DETECT', '[Pivot] STUB: Touch strength calculation not implemented');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[Pivot] STUB: Touch strength calculation not implemented');
   return 0.5; // Placeholder score
 }
 
@@ -219,6 +226,6 @@ export function calculateAdaptiveZoneWidth(
   baseTolerance: number
 ): number {
   // PLACEHOLDER: Implement adaptive zone width calculation
-  logDebug('DEBUG_PATTERN_DETECT', '[Pivot] STUB: Adaptive zone width calculation not implemented');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[Pivot] STUB: Adaptive zone width calculation not implemented');
   return baseTolerance; // Placeholder - return base tolerance
 }

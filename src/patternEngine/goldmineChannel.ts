@@ -3,10 +3,14 @@
 // Detects goldmine channel patterns in candlestick data
 // Identifies horizontal, ascending, and descending channel formations
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
+// DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
 import { ChannelDirection, ThrustDirection } from '../models/PatternTypes';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform';
+
+const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
 export interface GoldmineChannelDetection {
   startIndex: number;
@@ -30,6 +34,7 @@ export interface GoldmineChannelDetection {
 
 /**
  * Detects goldmine channel patterns in candlestick data
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  * @param candles - Array of candlestick data
  * @param minTouchPoints - Minimum touch points for valid channel (default: 4)
  * @param maxChannelWidth - Maximum channel width as percentage (default: 0.05)
@@ -42,13 +47,15 @@ export function detectGoldmineChannel(
   maxChannelWidth: number = 0.05,
   minChannelLength: number = 10
 ): GoldmineChannelDetection[] {
-  logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] Starting detection on', candles.length, 'candles');
   
   if (!candles || candles.length < minChannelLength) {
-    logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] Not enough candles for detection:', candles?.length, 'min required:', minChannelLength);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] Not enough candles for detection:', candles?.length, 'min required:', minChannelLength);
     return [];
   }
 
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
   const channels: GoldmineChannelDetection[] = [];
 
   // Look for cup-shaped consolidation channels with breakout potential
@@ -56,42 +63,43 @@ export function detectGoldmineChannel(
     // 1. Find potential channel base (consolidation period)
     const channelStart = Math.max(0, i - 20);
     const channelEnd = Math.min(candles.length - 1, i + 15);
-    const channelCandles = candles.slice(channelStart, channelEnd + 1);
+    const channelHACandles = haCandles.slice(channelStart, channelEnd + 1);
     
-    if (channelCandles.length < minChannelLength) continue;
+    if (channelHACandles.length < minChannelLength) continue;
     
-    // 2. Calculate channel boundaries
-    const highs = channelCandles.map(c => c.high);
-    const lows = channelCandles.map(c => c.low);
-    const upperBoundary = Math.max(...highs);
-    const lowerBoundary = Math.min(...lows);
+    // 2. Calculate channel boundaries using HA candles exclusively
+    const haHighs = channelHACandles.map(c => c.high);
+    const haLows = channelHACandles.map(c => c.low);
+    const upperBoundary = Math.max(...haHighs);
+    const lowerBoundary = Math.min(...haLows);
     const channelWidth = (upperBoundary - lowerBoundary) / lowerBoundary;
     
     // 3. Check for 15-30% depth consolidation requirement
     const depthPercent = channelWidth * 100;
     if (depthPercent < 15 || depthPercent > 30) {
-      logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] Channel depth requirement not met:', {
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] HA channel depth requirement not met:', {
         depthPercent: depthPercent.toFixed(1) + '%',
         required: '15-30%',
         channelStart: channelStart,
         upperBoundary: upperBoundary.toFixed(2),
-        lowerBoundary: lowerBoundary.toFixed(2)
+        lowerBoundary: lowerBoundary.toFixed(2),
+        dickOLearyCompliant: true
       });
       continue;
     }
     
     // 4. Verify uptrend before channel (look back 20 candles before channel start)
     const preChannelStart = Math.max(0, channelStart - 20);
-    const preChannelCandles = candles.slice(preChannelStart, channelStart);
+    const preChannelHACandles = haCandles.slice(preChannelStart, channelStart);
     
-    if (preChannelCandles.length < 10) continue;
+    if (preChannelHACandles.length < 10) continue;
     
-    const preChannelLow = Math.min(...preChannelCandles.map(c => c.low));
-    const channelEntryPrice = channelCandles[0].close;
+    const preChannelLow = Math.min(...preChannelHACandles.map(c => c.low));
+    const channelEntryPrice = channelHACandles[0].close;
     const uptrendConfirmed = channelEntryPrice > preChannelLow * 1.1; // 10% uptrend minimum
     
     if (!uptrendConfirmed) {
-      logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] Uptrend requirement not met:', {
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] Uptrend requirement not met:', {
         channelEntryPrice: channelEntryPrice.toFixed(2),
         preChannelLow: preChannelLow.toFixed(2),
         uptrendGain: (((channelEntryPrice / preChannelLow) - 1) * 100).toFixed(1) + '%',
@@ -100,10 +108,10 @@ export function detectGoldmineChannel(
       continue;
     }
     
-    logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] Channel requirements met:', {
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] HA channel requirements met:', {
       depthPercent: depthPercent.toFixed(1) + '%',
       uptrendGain: (((channelEntryPrice / preChannelLow) - 1) * 100).toFixed(1) + '%',
-      channelLength: channelCandles.length,
+      channelLength: channelHACandles.length,
       channelStart: channelStart,
       channelEnd: channelEnd
     });
@@ -112,7 +120,7 @@ export function detectGoldmineChannel(
     const touchPoints: Array<{ time: Date; price: number; isUpper: boolean; candleIndex: number }> = [];
     const tolerance = channelWidth * 0.1; // 10% tolerance for touch point detection
     
-    channelCandles.forEach((candle, idx) => {
+    channelHACandles.forEach((candle, idx) => {
       const globalIdx = channelStart + idx;
       
       // Upper boundary touch
@@ -146,7 +154,7 @@ export function detectGoldmineChannel(
     let breakoutIndex = -1;
     
     for (let j = channelEnd + 1; j < Math.min(candles.length, channelEnd + 5); j++) {
-      if (candles[j].close > upperBoundary) {
+      if (haCandles[j].close > upperBoundary) {
         breakoutConfirmed = true;
         breakoutIndex = j;
         break;
@@ -192,7 +200,7 @@ export function detectGoldmineChannel(
       
       // Add comprehensive DEBUG_PATTERN_DETECT logging
       if (typeof logDebug === 'function') {
-        logDebug('DEBUG_PATTERN_DETECT', `Goldmine Channel detected`, {
+        logDebug('DEBUG_PATTERN_DETECT', `HA Goldmine Channel detected`, {
           direction: direction,
           depthPercent: depthPercent.toFixed(1) + '%',
           channelStart: channelStart,
@@ -208,7 +216,7 @@ export function detectGoldmineChannel(
           uptrendConfirmed: uptrendConfirmed,
           breakoutConfirmed: breakoutConfirmed,
           breakoutIndex: breakoutIndex,
-          timeRange: `${channelCandles[0].datetime} to ${channelCandles[channelCandles.length-1].datetime}`,
+          timeRange: `${channelHACandles[0].datetime} to ${channelHACandles[channelHACandles.length-1].datetime}`,
           signalStrength: confidence >= 0.8 ? 'STRONG' : confidence >= 0.6 ? 'MEDIUM' : 'WEAK'
         });
       }
@@ -217,7 +225,7 @@ export function detectGoldmineChannel(
     }
   }
 
-  logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] Detection complete. Found', channels.length, 'channels');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] Detection complete. Found', channels.length, 'channels');
   
   return channels;
 }
@@ -231,7 +239,7 @@ export function calculateChannelDirection(
   touchPoints: Array<{ time: Date; price: number; isUpper: boolean }>
 ): ChannelDirection {
   // PLACEHOLDER: Implement direction calculation
-  logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] STUB: Direction calculation not implemented');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] STUB: Direction calculation not implemented');
   return ChannelDirection.HORIZONTAL;
 }
 
@@ -246,6 +254,6 @@ export function validateChannelConsistency(
   channelWidth: number
 ): number {
   // PLACEHOLDER: Implement consistency validation
-  logDebug('DEBUG_PATTERN_DETECT', '[GoldmineChannel] STUB: Consistency validation not implemented');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] STUB: Consistency validation not implemented');
   return 0.5; // Placeholder score
 }

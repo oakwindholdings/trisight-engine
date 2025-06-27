@@ -87,14 +87,14 @@ interface PatternContextType {
   setGoldenScore: (values: number[]) => void;
   goldenDirection: ('LONG' | 'SHORT' | null)[];
   setGoldenDirection: (values: ('LONG' | 'SHORT' | null)[]) => void;
+  goldenNearMisses: boolean[];
+  setGoldenNearMisses: (values: boolean[]) => void;
   
   // Golden Candle Forensics (Debug Mode)
   goldmineForensics: boolean[];
   setGoldmineForensics: (values: boolean[]) => void;
   goldmineForensicsNotes: string[];
   setGoldmineForensicsNotes: (values: string[]) => void;
-  goldenNearMisses: boolean[];
-  setGoldenNearMisses: (values: boolean[]) => void;
   
   // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
   stepIntrinsicCount: number[];
@@ -151,6 +151,8 @@ interface PatternContextType {
     confidenceThreshold: number;
     intrinsicScoreRequired: number;
     preferredDirection: 'LONG' | 'SHORT' | 'BOTH';
+    trailingStopPercent: number; // TriSight Detection Input Refactor Patch v1.3.1: Trailing stop threshold (%)
+    stopLossPercent: number; // TriSight Detection Input Refactor Patch v1.3.2: Stop-Loss % (Exit)
   };
   setGoldenCandleSettings: (settings: {
     enabled: boolean;
@@ -162,6 +164,8 @@ interface PatternContextType {
     confidenceThreshold: number;
     intrinsicScoreRequired: number;
     preferredDirection: 'LONG' | 'SHORT' | 'BOTH';
+    trailingStopPercent: number; // TriSight Detection Input Refactor Patch v1.3.1: Trailing stop threshold (%)
+    stopLossPercent: number; // TriSight Detection Input Refactor Patch v1.3.2: Stop-Loss % (Exit)
   }) => void;
 }
 
@@ -240,14 +244,14 @@ const initialPatternContext: PatternContextType = {
   setGoldenScore: () => {},
   goldenDirection: [],
   setGoldenDirection: () => {},
+  goldenNearMisses: [],
+  setGoldenNearMisses: () => {},
   
   // Golden Candle Forensics (Debug Mode)
   goldmineForensics: [],
   setGoldmineForensics: () => {},
   goldmineForensicsNotes: [],
   setGoldmineForensicsNotes: () => {},
-  goldenNearMisses: [],
-  setGoldenNearMisses: () => {},
   
   // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
   stepIntrinsicCount: [],
@@ -287,7 +291,9 @@ const initialPatternContext: PatternContextType = {
     minCumulativeScore: 0,
     confidenceThreshold: 0,
     intrinsicScoreRequired: 0,
-    preferredDirection: 'BOTH'
+    preferredDirection: 'BOTH',
+    trailingStopPercent: 2.0, // TriSight Detection Input Refactor Patch v1.3.1: Trailing stop threshold (%) - default 2.0%
+    stopLossPercent: 2.0 // TriSight Detection Input Refactor Patch v1.3.2: Stop-Loss % (Exit) - default 2.0%
   },
   setGoldenCandleSettings: () => {}
 };

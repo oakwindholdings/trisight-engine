@@ -3,6 +3,7 @@
 // Detects Goldmine signals from Escalator patterns
 // Uses two-candle Blackjack scoring and StepBox floor/ceiling
 // DICK O'LEARY COMPLIANCE: Strict HA-only breakout logic - no OHLC substitution allowed
+// TODO: SOURCE_VERIFIED_FROM_DECKS - This logic assumes Dick O'Leary's breakout model is strictly HA-based
 
 import { 
   Candle, 

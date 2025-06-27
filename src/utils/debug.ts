@@ -214,3 +214,38 @@ export function logGoldenMissReasons(candle: any, reasons: string[], qualifyingF
     forensicAnalysis: true
   });
 }
+
+// -----------------------------------------------------------------------------
+// HA Infrastructure Alignment Audit Utility (v1.0.0)
+// -----------------------------------------------------------------------------
+
+/**
+ * Logs index alignment issues between UI overlays and HA detection source
+ * Part of TriSight HA Infrastructure Alignment Patch v1.0.0
+ * @param index - The array index where mismatch occurred
+ * @param source - Description of the source context (e.g., 'MetricPopover', 'PatternRenderer')
+ * @param expected - Expected HA candle data or description
+ * @param actual - Actual data found or description of mismatch
+ */
+export const logDebugHAAlignmentMismatch = (
+  index: number, 
+  source: string, 
+  expected: any, 
+  actual?: any
+): void => {
+  logDebug('DEBUG_HA_INDEX_ALIGNMENT', `[HA ALIGNMENT MISMATCH] ${source} at index ${index}:`, {
+    index,
+    source,
+    expected: expected || 'undefined',
+    actual: actual || 'undefined',
+    timestamp: new Date().toISOString(),
+    alignmentIssue: true,
+    dickOLearyCompliance: false,
+    requiresFixing: true,
+    troubleshooting: {
+      checkContextArrayLength: 'Verify context arrays match haCandles.length',
+      verifyHADetection: 'Confirm HA detection completed before UI render',
+      validateIndexMapping: 'Ensure no OHLC->HA index transformation occurring'
+    }
+  });
+};

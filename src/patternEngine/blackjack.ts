@@ -3,14 +3,17 @@
 // Implements Intrinsic and Cumulative Blackjack scoring for Goldmine signal qualification
 // Focuses on the first full Step candle for scoring
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
+// DICK O'LEARY COMPLIANCE: Strict HA-only scoring logic - no OHLC substitution allowed
 
 import { Candle, BlackjackScore } from '../types/pattern';
 import { BJ_GOLD_THRESHOLD_LONG, BJ_GOLD_THRESHOLD_SHORT } from '../constants/pattern';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only scoring
 
 /**
  * Calculate the intrinsic score for a single candle based on price and volume
  * relationship compared to the previous candle.
+ * DICK O'LEARY COMPLIANCE: Uses HA candle metrics exclusively for trend analysis
  * 
  * @param candle - The current candle to score
  * @param prevCandle - The previous candle for comparison
@@ -20,26 +23,45 @@ export function getIntrinsicScore(
   candle: Candle,
   prevCandle: Candle
 ): -1 | 0 | 1 {
-  const priceUp = candle.close > prevCandle.close;
-  const priceDown = candle.close < prevCandle.close;
-  const volumeUp = candle.volume > prevCandle.volume;
+  // DICK O'LEARY COMPLIANCE: Convert to HA candles for trend analysis
+  const haCandles = convertToHeikinAshi([prevCandle, candle]);
+  const haPrev = haCandles[0];
+  const haCurrent = haCandles[1];
   
-  // Apply standardized Blackjack scoring rule
+  // Use HA close for trend direction (smoother than OHLC)
+  const priceUp = haCurrent.close > haPrev.close;
+  const priceDown = haCurrent.close < haPrev.close;
+  const volumeUp = candle.volume > prevCandle.volume; // Volume remains from original data
+  
+  // Log HA scoring analysis for debugging
+  logDebug('DEBUG_PATTERN_DETECT', '[Blackjack HA Scoring]', {
+    candleTimestamp: candle.timestamp,
+    haCurrentClose: haCurrent.close.toFixed(4),
+    haPrevClose: haPrev.close.toFixed(4),
+    priceDirection: priceUp ? 'UP' : priceDown ? 'DOWN' : 'FLAT',
+    volumeDirection: volumeUp ? 'UP' : 'DOWN',
+    currentVolume: candle.volume,
+    prevVolume: prevCandle.volume,
+    dickOLearyCompliant: true
+  });
+  
+  // Apply standardized Blackjack scoring rule using HA metrics
   if (priceUp && volumeUp) {
-    return 1;  // Price↑ & Volume↑ = Bullish signal
+    return 1;  // HA Price↑ & Volume↑ = Bullish signal
   }
   
   if (priceDown && volumeUp) {
-    return -1; // Price↓ & Volume↑ = Bearish signal (unusual volume with price decline)
+    return -1; // HA Price↓ & Volume↑ = Bearish signal (unusual volume with price decline)
   }
   
-  // All other cases (Price↑ & Volume↓, Price↓ & Volume↓, Price flat, Volume flat) = 0
+  // All other cases (HA Price↑ & Volume↓, HA Price↓ & Volume↓, HA Price flat, Volume flat) = 0
   return 0;
 }
 
 /**
  * Calculate the Blackjack score for step candles.
  * For Goldmine, sum the intrinsic scores of the first two reversal candles.
+ * DICK O'LEARY COMPLIANCE: Uses HA candle metrics exclusively for trend analysis
  * 
  * @param stepCandles - Array of at least 2 candles for scoring
  * @returns BlackjackScore with intrinsic (candle #2) and cumulative (sum of candles #1 and #2)
@@ -61,16 +83,21 @@ export function calcStepBlackjack(stepCandles: Candle[]): BlackjackScore {
     };
   }
   
-  // Get the first two candles
+  // DICK O'LEARY COMPLIANCE: Convert to HA candles for all scoring analysis
+  const haCandles = convertToHeikinAshi(stepCandles);
+  const haFirst = haCandles[0];
+  const haSecond = haCandles[1];
+  
+  // Get the first two candles (original for volume, HA for price/trend)
   const firstCandle = stepCandles[0];
   const secondCandle = stepCandles[1];
   
-  // Calculate intrinsic scores for each candle
-  // For the first candle, use simple price direction as fallback (no volume comparison possible)
-  const firstIntrinsic = firstCandle.close > firstCandle.open ? 1 : 
-                        firstCandle.close < firstCandle.open ? -1 : 0;
+  // Calculate intrinsic scores for each candle using HA metrics
+  // For the first candle, use HA body direction (close vs open)
+  const firstIntrinsic = haFirst.close > haFirst.open ? 1 : 
+                        haFirst.close < haFirst.open ? -1 : 0;
   
-  // For the second candle, use the standardized price/volume rule
+  // For the second candle, use the standardized HA price/volume rule
   const secondIntrinsic = getIntrinsicScore(secondCandle, firstCandle);
   
   // Cumulative score is the sum of the two intrinsic scores
@@ -79,12 +106,26 @@ export function calcStepBlackjack(stepCandles: Candle[]): BlackjackScore {
   // Use the second candle's intrinsic as the reported intrinsic score
   const intrinsicScore = secondIntrinsic;
   
-  // Calculate components based on both candles
-  const priceChange = (secondCandle.close - firstCandle.open) / firstCandle.open;
+  // Calculate components based on HA candles (Dick O'Leary compliance)
+  const priceChange = (haSecond.close - haFirst.open) / haFirst.open;
   const volatility = Math.max(
-    (firstCandle.high - firstCandle.low) / firstCandle.open,
-    (secondCandle.high - secondCandle.low) / secondCandle.open
+    (haFirst.high - haFirst.low) / haFirst.open,
+    (haSecond.high - haSecond.low) / haSecond.open
   );
+  
+  // Log HA Blackjack scoring for debugging
+  logDebug('DEBUG_PATTERN_DETECT', '[HA Blackjack Step Scoring]', {
+    stepLength: stepCandles.length,
+    haFirstClose: haFirst.close.toFixed(4),
+    haFirstOpen: haFirst.open.toFixed(4),
+    haSecondClose: haSecond.close.toFixed(4),
+    firstIntrinsic,
+    secondIntrinsic,
+    cumulativeScore,
+    priceChange: (priceChange * 100).toFixed(2) + '%',
+    volatility: (volatility * 100).toFixed(2) + '%',
+    dickOLearyCompliant: true
+  });
   
   return {
     timestamp: new Date(secondCandle.datetime),
@@ -98,6 +139,52 @@ export function calcStepBlackjack(stepCandles: Candle[]): BlackjackScore {
     },
     signal: getBlackjackSignal(cumulativeScore)
   };
+}
+
+/**
+ * Compute cumulative Blackjack score for an Escalator step between start & breakout candles (inclusive).
+ * DICK O'LEARY COMPLIANCE: Uses HA candle metrics exclusively for trend analysis
+ */
+export function computeTargetBlackjackScore(
+  candles: Candle[],
+  startIndex: number,
+  endIndex: number
+): number {
+  if (!candles || candles.length === 0) return 0;
+  if (endIndex <= startIndex) return 0;
+
+  // DICK O'LEARY COMPLIANCE: Convert candle range to HA for scoring
+  const relevantCandles = candles.slice(startIndex, endIndex + 1);
+  const haCandles = convertToHeikinAshi(relevantCandles);
+
+  let score = 0;
+  for (let i = 1; i < haCandles.length; i++) {
+    const haPrev = haCandles[i - 1];
+    const haCurrent = haCandles[i];
+    const origPrev = relevantCandles[i - 1];
+    const origCurrent = relevantCandles[i];
+
+    // Use HA candles for price trend analysis
+    const priceUp = haCurrent.close > haPrev.close;
+    const priceDown = haCurrent.close < haPrev.close;
+    // Volume remains from original data
+    const volumeUp = origCurrent.volume > origPrev.volume;
+
+    if (priceUp && volumeUp) score += 1;
+    else if (priceDown && volumeUp) score -= 1;
+    // else 0, no change
+  }
+
+  // Log HA Target scoring for debugging
+  logDebug('DEBUG_PATTERN_DETECT', '[HA Target Blackjack Scoring]', {
+    startIndex,
+    endIndex,
+    candleCount: relevantCandles.length,
+    finalScore: score,
+    dickOLearyCompliant: true
+  });
+
+  return score;
 }
 
 /**
@@ -144,35 +231,6 @@ export function computeRollingBlackjackScores(
   });
 
   return rolling;
-}
-
-/**
- * Compute cumulative Blackjack score for an Escalator step between start & breakout candles (inclusive).
- */
-export function computeTargetBlackjackScore(
-  candles: Candle[],
-  startIndex: number,
-  endIndex: number
-): number {
-  if (!candles || candles.length === 0) return 0;
-  if (endIndex <= startIndex) return 0;
-
-  let score = 0;
-  for (let i = startIndex + 1; i <= endIndex && i < candles.length; i++) {
-    const prev = candles[i - 1];
-    const curr = candles[i];
-
-    const priceUp = curr.close > prev.close;
-    const priceDown = curr.close < prev.close;
-    const volumeUp = curr.volume > prev.volume;
-    const volumeDown = curr.volume < prev.volume;
-
-    if (priceUp && volumeUp) score += 1;
-    else if (priceDown && volumeUp) score -= 1;
-    // else 0, no change
-  }
-
-  return score;
 }
 
 export function getBlackjackSignal(cumulativeScore: number): 'LONG' | 'SHORT' | 'NEUTRAL' {

@@ -3,17 +3,19 @@
 // Pure function escalator pattern detector
 // Detects body-only HH+HL / LL+LH sequences
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
-// HEIKIN-ASHI: Optimized for HA candles - smoother trend detection, reduced noise, improved step consistency
+// DICK O'LEARY COMPLIANCE: Strict HA-only detection logic - no OHLC substitution allowed
 
 import { MIN_ESCALATOR_LENGTH, MAX_STEP_DURATION } from '../constants';
 import { Candle, EscalatorRun, StepBox } from '../types';
 import { ThrustDirection } from '../models/PatternTypes';
 import { debugLog, summaryLog, DEBUG_MODE } from '../utils/debug';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only detection
 
 /**
  * Detects escalator patterns in candlestick data based on body-only higher highs/higher lows
  * or lower lows/lower highs sequences.
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively for trend detection
  * 
  * @param candles - Array of candlestick data
  * @param minLength - Minimum number of candles for a valid escalator (default: MIN_ESCALATOR_LENGTH)
@@ -30,20 +32,25 @@ export function detectEscalators(
     return [];
   }
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Starting detection on', candles.length, 'candles');
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] First candle:', {
+  // DICK O'LEARY COMPLIANCE: Convert to HA candles for all detection analysis
+  const haCandles = convertToHeikinAshi(candles);
+
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Starting HA detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] First HA candle:', {
     datetime: candles[0].datetime,
-    open: candles[0].open,
-    close: candles[0].close,
-    bodyHigh: Math.max(candles[0].open, candles[0].close),
-    bodyLow: Math.min(candles[0].open, candles[0].close)
+    haOpen: haCandles[0].open,
+    haClose: haCandles[0].close,
+    haBodyHigh: Math.max(haCandles[0].open, haCandles[0].close),
+    haBodyLow: Math.min(haCandles[0].open, haCandles[0].close),
+    dickOLearyCompliant: true
   });
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Last candle:', {
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Last HA candle:', {
     datetime: candles[candles.length-1].datetime,
-    open: candles[candles.length-1].open,
-    close: candles[candles.length-1].close,
-    bodyHigh: Math.max(candles[candles.length-1].open, candles[candles.length-1].close),
-    bodyLow: Math.min(candles[candles.length-1].open, candles[candles.length-1].close)
+    haOpen: haCandles[haCandles.length-1].open,
+    haClose: haCandles[haCandles.length-1].close,
+    haBodyHigh: Math.max(haCandles[haCandles.length-1].open, haCandles[haCandles.length-1].close),
+    haBodyLow: Math.min(haCandles[haCandles.length-1].open, haCandles[haCandles.length-1].close),
+    dickOLearyCompliant: true
   });
 
   const runs: EscalatorRun[] = [];
@@ -51,10 +58,10 @@ export function detectEscalators(
   let attemptCount = 0;
   let failureReasons: Record<string, number> = {};
 
-  while (i < candles.length - 1) {
-    // Try to start a run from current position
+  while (i < haCandles.length - 1) {
+    // Try to start a run from current position using HA candles
     attemptCount++;
-    const run = detectRunFromIndex(candles, i, minLength, maxStepBars);
+    const run = detectRunFromIndex(haCandles, candles, i, minLength, maxStepBars);
     
     if (run) {
       runs.push(run);
@@ -63,8 +70,8 @@ export function detectEscalators(
       i = run.endIndex + 1;
     } else {
       // Track why we failed to find a run
-      if (i < candles.length - 1) {
-        const dir = determineInitialDirection(candles[i], candles[i + 1]);
+      if (i < haCandles.length - 1) {
+        const dir = determineInitialDirection(haCandles[i], haCandles[i + 1]);
         if (!dir) {
           failureReasons['no_initial_direction'] = (failureReasons['no_initial_direction'] || 0) + 1;
         } else {
@@ -89,17 +96,18 @@ export function detectEscalators(
  * Attempts to detect an escalator run starting from a specific index
  */
 function detectRunFromIndex(
+  haCandles: Candle[],
   candles: Candle[],
   startIndex: number,
   minLength: number,
   maxStepBars: number
 ): EscalatorRun | null {
-  if (startIndex >= candles.length - 1) {
+  if (startIndex >= haCandles.length - 1) {
     return null;
   }
 
   // Determine initial direction by comparing first two candles
-  const direction = determineInitialDirection(candles[startIndex], candles[startIndex + 1]);
+  const direction = determineInitialDirection(haCandles[startIndex], haCandles[startIndex + 1]);
   if (!direction) {
     return null;
   }
@@ -108,11 +116,11 @@ function detectRunFromIndex(
   const steps: StepBox[] = [];
   let currentStepStart = startIndex;
   let runLength = 1;
-  let lastBodyHigh = getBodyHigh(candles[startIndex]);
-  let lastBodyLow = getBodyLow(candles[startIndex]);
+  let lastBodyHigh = getBodyHigh(haCandles[startIndex]);
+  let lastBodyLow = getBodyLow(haCandles[startIndex]);
 
-  for (let i = startIndex + 1; i < candles.length && runLength < maxStepBars; i++) {
-    const currentCandle = candles[i];
+  for (let i = startIndex + 1; i < haCandles.length && runLength < maxStepBars; i++) {
+    const currentCandle = haCandles[i];
     const currentBodyHigh = getBodyHigh(currentCandle);
     const currentBodyLow = getBodyLow(currentCandle);
 
@@ -134,7 +142,7 @@ function detectRunFromIndex(
     }
 
     // Check if we've reached the last candle
-    if (i === candles.length - 1 || runLength === maxStepBars) {
+    if (i === haCandles.length - 1 || runLength === maxStepBars) {
       // Create final step
       steps.push(createStepBox(candles, currentStepStart, i, false));
       runLength = i - startIndex + 1;
@@ -160,23 +168,24 @@ function detectRunFromIndex(
 }
 
 /**
- * Determines the initial direction by comparing two candles
+ * Determines the initial direction (BULLISH or BEARISH) based on the first two candles
+ * DICK O'LEARY COMPLIANCE: Uses HA candle body metrics exclusively
  */
-function determineInitialDirection(candle1: Candle, candle2: Candle): ThrustDirection | null {
-  const body1High = getBodyHigh(candle1);
-  const body1Low = getBodyLow(candle1);
-  const body2High = getBodyHigh(candle2);
-  const body2Low = getBodyLow(candle2);
+function determineInitialDirection(haCandle1: Candle, haCandle2: Candle): ThrustDirection | null {
+  const body1High = getBodyHigh(haCandle1);
+  const body1Low = getBodyLow(haCandle1);
+  const body2High = getBodyHigh(haCandle2);
+  const body2Low = getBodyLow(haCandle2);
 
   if (body2High > body1High && body2Low > body1Low) {
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `Initial direction: BULLISH (body2High=${body2High} > body1High=${body1High}, body2Low=${body2Low} > body1Low=${body1Low})`);
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `HA Initial direction: BULLISH (haBody2High=${body2High} > haBody1High=${body1High}, haBody2Low=${body2Low} > haBody1Low=${body1Low})`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  HA Candle1: open=${haCandle1.open}, close=${haCandle1.close}, datetime=${haCandle1.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  HA Candle2: open=${haCandle2.open}, close=${haCandle2.close}, datetime=${haCandle2.datetime}, dickOLearyCompliant=true`);
     return ThrustDirection.BULLISH;
   } else if (body2High < body1High && body2Low < body1Low) {
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `Initial direction: BEARISH (body2High=${body2High} < body1High=${body1High}, body2Low=${body2Low} < body1Low=${body1Low})`);
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle1: open=${candle1.open}, close=${candle1.close}, datetime=${candle1.datetime}`);
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  Candle2: open=${candle2.open}, close=${candle2.close}, datetime=${candle2.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `HA Initial direction: BEARISH (haBody2High=${body2High} < haBody1High=${body1High}, haBody2Low=${body2Low} < haBody1Low=${body1Low})`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  HA Candle1: open=${haCandle1.open}, close=${haCandle1.close}, datetime=${haCandle1.datetime}`);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `  HA Candle2: open=${haCandle2.open}, close=${haCandle2.close}, datetime=${haCandle2.datetime}, dickOLearyCompliant=true`);
     return ThrustDirection.BEARISH;
   }
 

@@ -2,9 +2,13 @@
 // Detects Escalator Step patterns (stalling ranges)
 // Based on TriSight logic confirmed with Dick O'Leary
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
+// DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle, StepBox } from '../types/pattern';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform';
+
+const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
 /**
  * Options for detecting escalator steps
@@ -19,9 +23,13 @@ interface DetectEscalatorStepsOptions {
 /**
  * Detects if a sequence of candles forms a valid escalator pattern
  * Returns the direction ('rising' | 'falling') or null if not valid
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  */
 function detectEscalatorDirection(candles: Candle[], startIdx: number, endIdx: number): 'rising' | 'falling' | null {
   if (endIdx - startIdx < 2) return null;
+  
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
   
   let isRising = true;
   let isFalling = true;
@@ -29,13 +37,14 @@ function detectEscalatorDirection(candles: Candle[], startIdx: number, endIdx: n
   let fallingFailures = 0;
   
   for (let i = startIdx + 1; i <= endIdx; i++) {
-    const curr = candles[i];
-    const prev = candles[i - 1];
+    const currHA = haCandles[i];
+    const prevHA = haCandles[i - 1];
     
-    const currBodyHigh = Math.max(curr.open, curr.close);
-    const currBodyLow = Math.min(curr.open, curr.close);
-    const prevBodyHigh = Math.max(prev.open, prev.close);
-    const prevBodyLow = Math.min(prev.open, prev.close);
+    // Use HA candle body metrics exclusively
+    const currBodyHigh = Math.max(currHA.open, currHA.close);
+    const currBodyLow = Math.min(currHA.open, currHA.close);
+    const prevBodyHigh = Math.max(prevHA.open, prevHA.close);
+    const prevBodyLow = Math.min(prevHA.open, prevHA.close);
     
     // Check for higher high and higher low (rising)
     if (!(currBodyHigh > prevBodyHigh && currBodyLow > prevBodyLow)) {
@@ -51,16 +60,17 @@ function detectEscalatorDirection(candles: Candle[], startIdx: number, endIdx: n
   }
   
   // Debug only first few attempts to avoid spam
-  if (startIdx < 10) {
-    logDebug('DEBUG_PATTERN_DETECT', '[detectEscalatorDirection] Debug:', {
+  if (startIdx < 10 && DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[HA detectEscalatorDirection] HA compliance check:', {
       range: `${startIdx}-${endIdx}`,
       candles: endIdx - startIdx + 1,
       isRising,
       isFalling,
       risingFailures,
       fallingFailures,
-      firstCandle: { open: candles[startIdx].open, close: candles[startIdx].close },
-      lastCandle: { open: candles[endIdx].open, close: candles[endIdx].close }
+      firstHACandle: { open: haCandles[startIdx].open, close: haCandles[startIdx].close },
+      lastHACandle: { open: haCandles[endIdx].open, close: haCandles[endIdx].close },
+      dickOLearyCompliant: true
     });
   }
   
@@ -73,17 +83,21 @@ function detectEscalatorDirection(candles: Candle[], startIdx: number, endIdx: n
  * Detects if a candle is stalling after an escalator sequence
  * Phase 2: Enhanced with wick-first trigger detection as per trisight.escalator_step.yml
  * A stalling candle breaks the escalator pattern but stays within a range
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  */
 function isStalling(candles: Candle[], idx: number, escalatorDir: 'rising' | 'falling'): boolean {
   if (idx < 1) return false;
   
-  const curr = candles[idx];
-  const prev = candles[idx - 1];
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
+  const currHA = haCandles[idx];
+  const prevHA = haCandles[idx - 1];
   
-  const currBodyHigh = Math.max(curr.open, curr.close);
-  const currBodyLow = Math.min(curr.open, curr.close);
-  const prevBodyHigh = Math.max(prev.open, prev.close);
-  const prevBodyLow = Math.min(prev.open, prev.close);
+  // Use HA candle body metrics exclusively
+  const currBodyHigh = Math.max(currHA.open, currHA.close);
+  const currBodyLow = Math.min(currHA.open, currHA.close);
+  const prevBodyHigh = Math.max(prevHA.open, prevHA.close);
+  const prevBodyLow = Math.min(prevHA.open, prevHA.close);
   
   // Phase 2: First check if escalator pattern is broken (existing body logic)
   let isEscalatorBroken = false;
@@ -102,14 +116,15 @@ function isStalling(candles: Candle[], idx: number, escalatorDir: 'rising' | 'fa
   }
   
   // Phase 2: Wick-first trigger detection - look for significant wick
-  const hasSignificantWick = checkForWickTrigger(curr, escalatorDir);
+  const hasSignificantWick = checkForWickTrigger(currHA, escalatorDir);
   
-  if (hasSignificantWick) {
-    logDebug('DEBUG_PATTERN_DETECT', '[isStalling] Wick-first trigger detected:', {
+  if (hasSignificantWick && DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[HA isStalling] HA wick-first trigger detected:', {
       index: idx,
       direction: escalatorDir,
-      candle: { open: curr.open, close: curr.close, high: curr.high, low: curr.low },
-      wickType: escalatorDir === 'rising' ? 'bottom' : 'top'
+      haCandle: { open: currHA.open, close: currHA.close, high: currHA.high, low: currHA.low },
+      wickType: escalatorDir === 'rising' ? 'bottom' : 'top',
+      dickOLearyCompliant: true
     });
   }
   
@@ -119,19 +134,21 @@ function isStalling(candles: Candle[], idx: number, escalatorDir: 'rising' | 'fa
 /**
  * Phase 2: Wick-first trigger detection helper
  * Checks if a candle has a significant wick that indicates step trigger
+ * DICK O'LEARY COMPLIANCE: Uses HA candle metrics exclusively
  */
-function checkForWickTrigger(candle: Candle, escalatorDir: 'rising' | 'falling'): boolean {
-  const bodyHigh = Math.max(candle.open, candle.close);
-  const bodyLow = Math.min(candle.open, candle.close);
-  const bodySize = Math.abs(candle.close - candle.open);
+function checkForWickTrigger(haCandle: Candle, escalatorDir: 'rising' | 'falling'): boolean {
+  // Use HA candle body metrics exclusively
+  const bodyHigh = Math.max(haCandle.open, haCandle.close);
+  const bodyLow = Math.min(haCandle.open, haCandle.close);
+  const bodySize = Math.abs(haCandle.close - haCandle.open);
   
   if (escalatorDir === 'rising') {
     // For rising escalator, look for bottom wick (rejection of lower prices)
-    const bottomWickSize = bodyLow - candle.low;
-    const topWickSize = candle.high - bodyHigh;
+    const bottomWickSize = bodyLow - haCandle.low;
+    const topWickSize = haCandle.high - bodyHigh;
     
     // Bottom wick must be significant relative to body and total range
-    const totalRange = candle.high - candle.low;
+    const totalRange = haCandle.high - haCandle.low;
     const bottomWickRatio = totalRange > 0 ? bottomWickSize / totalRange : 0;
     
     // Trigger conditions:
@@ -145,11 +162,11 @@ function checkForWickTrigger(candle: Candle, escalatorDir: 'rising' | 'falling')
     );
   } else {
     // For falling escalator, look for top wick (rejection of higher prices)
-    const topWickSize = candle.high - bodyHigh;
-    const bottomWickSize = bodyLow - candle.low;
+    const topWickSize = haCandle.high - bodyHigh;
+    const bottomWickSize = bodyLow - haCandle.low;
     
     // Top wick must be significant relative to body and total range
-    const totalRange = candle.high - candle.low;
+    const totalRange = haCandle.high - haCandle.low;
     const topWickRatio = totalRange > 0 ? topWickSize / totalRange : 0;
     
     // Trigger conditions:
@@ -166,15 +183,19 @@ function checkForWickTrigger(candle: Candle, escalatorDir: 'rising' | 'falling')
 
 /**
  * Finds the ceiling (highest top wick) within a lookback range
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  */
 function findCeiling(candles: Candle[], floorIdx: number, lookback: number): number {
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
+  
   const startIdx = Math.max(0, floorIdx - lookback);
   let ceilingIdx = floorIdx;
-  let highestWick = candles[floorIdx].high;
+  let highestWick = haCandles[floorIdx].high;
   
   for (let i = startIdx; i < floorIdx; i++) {
-    if (candles[i].high > highestWick) {
-      highestWick = candles[i].high;
+    if (haCandles[i].high > highestWick) {
+      highestWick = haCandles[i].high;
       ceilingIdx = i;
     }
   }
@@ -190,6 +211,7 @@ function findCeiling(candles: Candle[], floorIdx: number, lookback: number): num
  * 2. From that candle (Floor), search backward for the highest top wick (Ceiling)
  * 3. A valid Step must contain at least one Floor + Ceiling bounding range
  * 4. Return StepBox objects with proper indices and body values
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  * 
  * @param candles Array of candle data
  * @param options Detection options
@@ -209,6 +231,9 @@ export function detectEscalatorSteps(
   if (!candles || candles.length < minEscalatorLength + minStepSize) {
     return [];
   }
+  
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
   
   const steps: StepBox[] = [];
   let i = minEscalatorLength; // Start after minimum escalator length
@@ -243,21 +268,21 @@ export function detectEscalatorSteps(
         
         // Continue forward while candles are still stalling
         while (endIdx + 1 < candles.length && endIdx - ceilingIdx < maxStepSize - 1) {
-          const nextCandle = candles[endIdx + 1];
-          const stepHigh = candles[ceilingIdx].high;
-          const stepLow = candles[floorIdx].low;
+          const nextHACandle = haCandles[endIdx + 1];
+          const stepHigh = haCandles[ceilingIdx].high;
+          const stepLow = haCandles[floorIdx].low;
           
           // Use tighter tolerance (0.5% instead of 2%) and check body containment
-          const nextBodyHigh = Math.max(nextCandle.open, nextCandle.close);
-          const nextBodyLow = Math.min(nextCandle.open, nextCandle.close);
+          const nextBodyHigh = Math.max(nextHACandle.open, nextHACandle.close);
+          const nextBodyLow = Math.min(nextHACandle.open, nextHACandle.close);
           
           // Check if next candle body is within the step range with tighter tolerance
           if (nextBodyHigh <= stepHigh * 1.005 && nextBodyLow >= stepLow * 0.995) {
             // Additional check: ensure we're not trending strongly
             if (endIdx >= floorIdx + 2) {
-              const recentCandle = candles[endIdx];
-              const recentBodyMid = (Math.max(recentCandle.open, recentCandle.close) + 
-                                   Math.min(recentCandle.open, recentCandle.close)) / 2;
+              const recentHACandle = haCandles[endIdx];
+              const recentBodyMid = (Math.max(recentHACandle.open, recentHACandle.close) + 
+                                   Math.min(recentHACandle.open, recentHACandle.close)) / 2;
               const nextBodyMid = (nextBodyHigh + nextBodyLow) / 2;
               
               // If price is trending more than 0.2% per candle, stop extending
@@ -274,7 +299,7 @@ export function detectEscalatorSteps(
         
         // Create step box if it meets minimum size
         if (endIdx - ceilingIdx + 1 >= minStepSize) {
-          // Calculate body high and low for the entire step
+          // Calculate body high and low for the entire step using HA candles
           let bodyHigh = -Infinity;
           let bodyLow = Infinity;
           let totalVolume = 0;
@@ -282,12 +307,13 @@ export function detectEscalatorSteps(
           let lowestLow = Infinity;
           
           for (let j = ceilingIdx; j <= endIdx; j++) {
-            const candle = candles[j];
-            bodyHigh = Math.max(bodyHigh, Math.max(candle.open, candle.close));
-            bodyLow = Math.min(bodyLow, Math.min(candle.open, candle.close));
-            highestHigh = Math.max(highestHigh, candle.high);
-            lowestLow = Math.min(lowestLow, candle.low);
-            totalVolume += candle.volume;
+            const haCandle = haCandles[j];
+            const originalCandle = candles[j]; // Volume from original candle
+            bodyHigh = Math.max(bodyHigh, Math.max(haCandle.open, haCandle.close));
+            bodyLow = Math.min(bodyLow, Math.min(haCandle.open, haCandle.close));
+            highestHigh = Math.max(highestHigh, haCandle.high);
+            lowestLow = Math.min(lowestLow, haCandle.low);
+            totalVolume += originalCandle.volume;
           }
           
           const avgVolume = totalVolume / (endIdx - ceilingIdx + 1);
@@ -346,6 +372,7 @@ export function detectEscalatorSteps(
 /**
  * Updates StepBox metrics after breakout detection
  * Calculates stepBreakoutCount by counting candles that continue directional movement after breakout
+ * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
  * 
  * @param step - The StepBox to update
  * @param candles - Array of candlestick data
@@ -358,22 +385,25 @@ export function updateStepBoxMetricsAfterBreakout(
   breakoutIndex: number
 ): StepBox {
   if (breakoutIndex < 0 || breakoutIndex >= candles.length) {
-    logDebug('DEBUG_PATTERN_DETECT', '[updateStepBoxMetricsAfterBreakout] Invalid breakout index:', breakoutIndex);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA updateStepBoxMetricsAfterBreakout] Invalid breakout index:', breakoutIndex);
     return step;
   }
+
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
 
   let stepBreakoutCount = 0;
   const direction = step.direction;
   
   // Count candles after breakout that continue the directional movement
   for (let i = breakoutIndex + 1; i < candles.length; i++) {
-    const currentCandle = candles[i];
-    const prevCandle = candles[i - 1];
+    const currentHACandle = haCandles[i];
+    const prevHACandle = haCandles[i - 1];
     
-    // Check if candle continues the directional movement
+    // Check if candle continues the directional movement using HA close
     const isDirectionalMove = direction === 'UP' 
-      ? currentCandle.close > prevCandle.close
-      : currentCandle.close < prevCandle.close;
+      ? currentHACandle.close > prevHACandle.close
+      : currentHACandle.close < prevHACandle.close;
     
     if (isDirectionalMove) {
       stepBreakoutCount++;
@@ -424,15 +454,18 @@ export function detectStepContinuation(
   minContinuationLength: number = 2
 ): any | null {
   if (breakoutIndex < 0 || breakoutIndex >= candles.length - 1) {
-    logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Invalid breakout index:', breakoutIndex);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA detectStepContinuation] Invalid breakout index:', breakoutIndex);
     return null;
   }
 
   const direction = step.direction;
   if (!direction) {
-    logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] No step direction available');
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA detectStepContinuation] No step direction available');
     return null;
   }
+
+  // Convert to HA candles for Dick O'Leary compliance
+  const haCandles = convertToHeikinAshi(candles);
 
   // Start checking from breakout candle onwards
   let continuationStart = breakoutIndex;
@@ -441,13 +474,14 @@ export function detectStepContinuation(
   
   // Look for continuation of escalator pattern after breakout
   for (let i = breakoutIndex + 1; i < Math.min(candles.length, breakoutIndex + 20); i++) {
-    const currentCandle = candles[i];
-    const prevCandle = candles[i - 1];
+    const currentHACandle = haCandles[i];
+    const prevHACandle = haCandles[i - 1];
     
-    const currBodyHigh = Math.max(currentCandle.open, currentCandle.close);
-    const currBodyLow = Math.min(currentCandle.open, currentCandle.close);
-    const prevBodyHigh = Math.max(prevCandle.open, prevCandle.close);
-    const prevBodyLow = Math.min(prevCandle.open, prevCandle.close);
+    // Use HA candle body metrics exclusively
+    const currBodyHigh = Math.max(currentHACandle.open, currentHACandle.close);
+    const currBodyLow = Math.min(currentHACandle.open, currentHACandle.close);
+    const prevBodyHigh = Math.max(prevHACandle.open, prevHACandle.close);
+    const prevBodyLow = Math.min(prevHACandle.open, prevHACandle.close);
     
     // Check if escalator pattern continues
     let isValidStep = false;
@@ -464,12 +498,12 @@ export function detectStepContinuation(
       validSteps++;
       continuationEnd = i;
       
-      logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Valid step found:', {
+      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA detectStepContinuation] Valid HA step found:', {
         index: i,
         direction,
         validSteps,
-        currentCandle: { open: currentCandle.open, close: currentCandle.close },
-        prevCandle: { open: prevCandle.open, close: prevCandle.close }
+        haCandle: { open: currentHACandle.open, close: currentHACandle.close },
+        dickOLearyCompliant: true
       });
     } else {
       // Pattern broken, stop checking
@@ -479,15 +513,17 @@ export function detectStepContinuation(
   
   // Check if we have enough valid steps for continuation
   if (validSteps < minContinuationLength) {
-    logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Insufficient continuation steps:', {
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA detectStepContinuation] Insufficient continuation steps:', {
       validSteps,
       required: minContinuationLength,
-      stepRef: `${step.startIndex}-${step.endIndex}`
+      stepRef: `${step.startIndex}-${step.endIndex}`,
+      dickOLearyCompliant: true
     });
     return null;
   }
   
-  // Create continuation escalator run
+  // Create continuation escalator run using HA candles
+  const endHACandle = haCandles[continuationEnd];
   const continuationRun = {
     startIndex: continuationStart,
     endIndex: continuationEnd,
@@ -497,14 +533,14 @@ export function detectStepContinuation(
       endIndex: continuationEnd,
       startTime: new Date(candles[continuationStart].timestamp),
       endTime: new Date(candles[continuationEnd].timestamp),
-      level: (Math.max(candles[continuationEnd].open, candles[continuationEnd].close) + 
-             Math.min(candles[continuationEnd].open, candles[continuationEnd].close)) / 2,
+      level: (Math.max(endHACandle.open, endHACandle.close) + 
+             Math.min(endHACandle.open, endHACandle.close)) / 2,
       height: 0, // Will be calculated
       duration: continuationEnd - continuationStart + 1,
       isConsolidation: false,
       volumeProfile: 0, // Will be calculated
-      floor: Math.min(...candles.slice(continuationStart, continuationEnd + 1).map(c => c.low)),
-      ceiling: Math.max(...candles.slice(continuationStart, continuationEnd + 1).map(c => c.high)),
+      floor: Math.min(...haCandles.slice(continuationStart, continuationEnd + 1).map(c => c.low)),
+      ceiling: Math.max(...haCandles.slice(continuationStart, continuationEnd + 1).map(c => c.high)),
       direction: direction,
       isCompleted: false,
       
@@ -524,7 +560,7 @@ export function detectStepContinuation(
     }
   };
   
-  logDebug('DEBUG_PATTERN_DETECT', '[detectStepContinuation] Continuation detected:', {
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA detectStepContinuation] Continuation detected:', {
     stepRef: `${step.startIndex}-${step.endIndex}`,
     continuationRange: `${continuationStart}-${continuationEnd}`,
     direction,

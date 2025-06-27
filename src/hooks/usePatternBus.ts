@@ -19,12 +19,13 @@ import {
   detectPivots, // Added import for detectPivots
   detectGoldmineChannel, // Added import for detectGoldmineChannel
   detectGoldenCandle, // Added import for detectGoldenCandle
-  detectGoldenCandleCandidates // Added import for detectGoldenCandleCandidates forensics
+  detectGoldenCandleCandidates, // Added import for detectGoldenCandleCandidates forensics
+  detectGoldenNearMisses // Added import for detectGoldenNearMisses
 } from '../patternEngine';
 import type { GoldmineSignal } from '../patternEngine';
 import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop';
 import { usePatternContext } from '../contexts/PatternContext';
-import { logDebug } from '../utils/debug';
+import { logDebug, logDebugHAAlignmentMismatch } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // HA transformation for pattern detection
 
 export interface Position {
@@ -35,7 +36,7 @@ export interface Position {
 
 // NOTE: Valid PatternEvent types: ESCALATOR, ESCALATOR_STEP, BREAKOUT_BOX, GOLDMINE, etc.
 export interface PatternEvent {
-  type: 'ESCALATOR' | 'ESCALATOR_STEP' | 'GOLDMINE' | 'STOP_EVENT' | 'BREAKOUT_BOX' | 'BLACKJACK_ROLLING' | 'BLACKJACK_TARGET' | 'ROCKETMAN' | 'PIVOT' | 'GOLDMINE_CHANNEL' | 'GOLDEN_CANDLE' | 'GOLDMINE_FORENSICS'; // Added 'GOLDMINE_FORENSICS' type
+  type: 'ESCALATOR' | 'ESCALATOR_STEP' | 'GOLDMINE' | 'STOP_EVENT' | 'BREAKOUT_BOX' | 'BLACKJACK_ROLLING' | 'BLACKJACK_TARGET' | 'ROCKETMAN' | 'PIVOT' | 'GOLDMINE_CHANNEL' | 'GOLDEN_CANDLE' | 'GOLDMINE_FORENSICS' | 'GOLDEN_NEAR_MISS'; // Added 'GOLDEN_NEAR_MISS' type
   data: EscalatorRun | GoldmineSignal | StopLossEvent | any; // 'any' for StepBox data
   timestamp: number;
   index?: number;
@@ -84,6 +85,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setGoldenDirection, // Added setGoldenDirection
     setGoldmineForensics, // Added setGoldmineForensics
     setGoldmineForensicsNotes, // Added setGoldmineForensicsNotes
+    setGoldenNearMisses, // Added setGoldenNearMisses
     escalatorSettings,
     setStepIntrinsicCount,
     setStepBreakoutCount,
@@ -409,6 +411,10 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setStepBreakoutCount(stepBreakoutCount);
     setStepContinuanceCount(stepContinuanceCount);
 
+    // TriSight Detection Input Refactor Patch v1.3.0: Golden Candle near-miss forensics
+    const goldenMisses = detectGoldenNearMisses(haCandles, escalators[escalators.length - 1]);
+    setGoldenNearMisses(goldenMisses);
+
     const goldenCandlePatterns = detectGoldenCandle(
       haCandles,
       stepIntrinsicCount,
@@ -546,6 +552,34 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Context update:', {
       breakoutBoxEventsLength: breakoutBoxEvents.length,
       sampleStepRefs: breakoutBoxEvents.slice(0, 3).map(e => e.data.stepRef)
+    });
+
+    // Comprehensive HA alignment validation
+    const arraysToValidate = [
+      newRocketmanConfidence,
+      newRocketmanAcceleration,
+      newRocketmanDirection,
+      newPivotDirection,
+      newPivotStrength,
+      newPivotTouchCount,
+      newGmcDepthPercent,
+      newGmcBreakoutStrength,
+      newGmcBaseDuration,
+      newGoldenCandleQual,
+      newGoldenScore,
+      newGoldenDirection,
+      escalatorDirArray,
+      escalatorLength,
+      goldmineQual,
+      trailStop,
+      distToStopPct,
+      stepIndex
+    ];
+
+    arraysToValidate.forEach((array, index) => {
+      if (array.length !== haCandles.length) {
+        logDebugHAAlignmentMismatch(index, `usePatternBus.contextArray[${index}]`, `haCandles.length=${haCandles.length}`, `array.length=${array.length}`);
+      }
     });
 
     // Phase 4: Continuation Linking - Detect post-breakout escalator continuations

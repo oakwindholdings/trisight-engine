@@ -19,4 +19,4 @@ export type { GoldmineSignal } from './goldmine';
 export { detectGoldmineChannel, type GoldmineChannelDetection } from './goldmineChannel';
 export { detectPivots, type PivotDetection } from './pivot';
 export { detectRocketman, type RocketmanDetection } from './rocketman';
-export { detectGoldenCandle, detectGoldenCandleCandidates, type GoldenCandlePattern, type GoldenCandleCandidate } from './goldenCandle';
+export { detectGoldenCandle, detectGoldenCandleCandidates, detectGoldenNearMisses, isTrailingStopTriggered, type GoldenCandlePattern, type GoldenCandleCandidate } from './goldenCandle';

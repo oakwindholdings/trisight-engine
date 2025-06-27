@@ -2,6 +2,7 @@
 // src/components/Chart/MetricPopover.tsx
 // Popover component that displays hover metrics at cursor position
 // Shows all registered metrics for the hovered candle
+// HA Infrastructure Alignment Patch v1.0.0: Now uses HA candles for consistency with detection logic
 
 import React from 'react';
 import { useHoverMetricsContext } from '../../hooks/useHoverMetrics';
@@ -10,6 +11,8 @@ import { MetricRegistry } from '../../metrics/registry';
 import { useUIState } from '../../contexts/UIStateContext';
 import { useMarketDataContext } from '../../contexts/MarketDataContext';
 import { patternStyles, PatternType } from '../../models/PatternTypes';
+import { convertToHeikinAshi } from '../../utils/candleTransform';
+import { logDebugHAAlignmentMismatch } from '../../utils/debug';
 
 export function MetricPopover() {
   const patternContext = usePatternContext();
@@ -20,15 +23,28 @@ export function MetricPopover() {
   // Hide popover when date picker is open or no hover data
   if (!pop || isDatePickerOpen) return null;
   
-  // Create combined context for metric calculations
-  // Use the full candles array for pattern metrics to work
+  // HA Infrastructure Alignment Patch v1.0.0: Convert to HA candles for metric consistency
+  const haCandles = candles ? convertToHeikinAshi(candles) : [];
+  
+  // Validate HA alignment
+  if (candles && haCandles.length !== candles.length) {
+    logDebugHAAlignmentMismatch(
+      pop.idx, 
+      'MetricPopover.haCandles', 
+      `haCandles.length=${candles.length}`, 
+      `actual=${haCandles.length}`
+    );
+  }
+  
+  // Create combined context for metric calculations using HA candles
   const combinedContext = {
     ...patternContext,
-    candles: candles || []
+    candles: candles || [], // Keep original for compatibility
+    haCandles: haCandles    // Add HA candles for metrics
   };
   
   // The hover index (pop.idx) is absolute
-  // Use the index directly but ensure it's within bounds of the candles array
+  // Use the index directly but ensure it's within bounds of the HA candles array
   const candleIndex = pop.idx;
   
   // CRITICAL FIX: Pattern arrays are built from visible candles only
@@ -36,28 +52,19 @@ export function MetricPopover() {
   const patternArrayIndex = pop.visibleIndex;
   
   const metrics = Object.values(MetricRegistry).map(metric => {
-    // For OHLC metrics, use the candle from hover context if available
-    if (['open', 'high', 'low', 'close', 'volume'].includes(metric.id) && pop.candle) {
-      const value = metric.calc(candleIndex, { 
-        ...combinedContext,
-        candles: { [candleIndex]: pop.candle } 
-      });
+    // HA Infrastructure Alignment: All metrics now use HA candles for consistency
+    try {
+      const value = metric.calc(candleIndex, combinedContext);
       return { label: metric.label, value };
+    } catch (error) {
+      logDebugHAAlignmentMismatch(
+        candleIndex, 
+        `MetricRegistry.${metric.id}`, 
+        'HA candle data', 
+        `error: ${(error as Error).message}`
+      );
+      return { label: metric.label, value: '-' };
     }
-    
-    // For pattern metrics (BJ, Escalator, etc), use visibleIndex to access arrays
-    if (['bjIntrinsic', 'bjCumulative', 'stepNumber', 'escalatorDir', 'escalatorLength', 'goldmineQual', 'trailStop', 'distToStopPct'].includes(metric.id)) {
-      const value = metric.calc(patternArrayIndex, combinedContext);
-      return { label: metric.label, value };
-    }
-    
-    // For other metrics, use the combined context with full candles array
-    const value = metric.calc(candleIndex, combinedContext);
-    
-    return {
-      label: metric.label,
-      value
-    };
   });
 
   // Check if we're hovering over an escalator step

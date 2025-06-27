@@ -121,6 +121,8 @@ export interface GoldenCandleSettings {
   confidenceThreshold: number;
   intrinsicScoreRequired: number;
   preferredDirection: 'LONG' | 'SHORT' | 'BOTH';
+  trailingStopPercent: number; // TriSight Detection Input Refactor Patch v1.3.1: Trailing stop threshold (%)
+  stopLossPercent: number; // TriSight Detection Input Refactor Patch v1.3.2: Stop-Loss % (Exit)
 }
 
 interface GoldenCandleSettingsPanelProps {
@@ -268,6 +270,43 @@ export const GoldenCandleSettingsPanel: React.FC<GoldenCandleSettingsPanelProps>
               onChange={(e) => handleSettingChange('intrinsicScoreRequired', parseInt(e.target.value))}
             />
           </SliderContainer>
+        </SettingItem>
+
+        <SettingItem>
+          <SettingLabel>
+            <span>Trailing Stop Threshold (%)</span>
+            <SliderValue>{(settings.trailingStopPercent || 2.0).toFixed(2)}</SliderValue>
+          </SettingLabel>
+          <SliderContainer>
+            <Slider
+              type="range"
+              min={0.1}
+              max={10.0}
+              step={0.1}
+              value={settings.trailingStopPercent || 2.0}
+              onChange={(e) => handleSettingChange('trailingStopPercent', parseFloat(e.target.value))}
+            />
+          </SliderContainer>
+        </SettingItem>
+
+        <SettingItem>
+          <SettingLabel>
+            <span>Stop-Loss % (Exit)</span>
+            <SliderValue>{(settings.stopLossPercent || 2.0).toFixed(2)}</SliderValue>
+          </SettingLabel>
+          <SliderContainer>
+            <Slider
+              type="range"
+              min={0.1}
+              max={10.0}
+              step={0.1}
+              value={settings.stopLossPercent || 2.0}
+              onChange={(e) => handleSettingChange('stopLossPercent', parseFloat(e.target.value))}
+            />
+          </SliderContainer>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+            Defines exit risk threshold post-entry. If exceeded, candle is invalidated.
+          </div>
         </SettingItem>
 
         <SettingItem>
