@@ -121,3 +121,96 @@ export const setDebugSettings = (settings: DebugSettings): void => {
   runtimeSettings = { ...defaultDebugSettings, ...settings };
   persistRuntimeSettings();
 };
+
+// -----------------------------------------------------------------------------
+// Heikin-Ashi Specific Debug Logging
+// -----------------------------------------------------------------------------
+
+/**
+ * HA-aware logging for pattern detection with candle type indication
+ * Automatically prefixes logs with [HA] to distinguish from OHLC-based detection
+ */
+export const logDebugHA = (channel: string, patternName: string, ...args: any[]): void => {
+  if (isChannelEnabled(channel)) {
+    // eslint-disable-next-line no-console
+    console.log(`[${channel}:HA] [${patternName}]`, ...args);
+  }
+};
+
+/**
+ * Logs HA transformation details for debugging conversion accuracy
+ */
+export const logHATransform = (originalCandle: any, haCandle: any, index: number): void => {
+  if (isChannelEnabled('DEBUG_PATTERN_DETECT')) {
+    // eslint-disable-next-line no-console
+    console.log(`[DEBUG_PATTERN_DETECT:HA] [TRANSFORM] Candle ${index}:`, {
+      original: {
+        open: originalCandle.open.toFixed(4),
+        high: originalCandle.high.toFixed(4),
+        low: originalCandle.low.toFixed(4),
+        close: originalCandle.close.toFixed(4),
+        bodySize: Math.abs(originalCandle.close - originalCandle.open).toFixed(4)
+      },
+      heikinAshi: {
+        open: haCandle.open.toFixed(4),
+        high: haCandle.high.toFixed(4),
+        low: haCandle.low.toFixed(4),
+        close: haCandle.close.toFixed(4),
+        bodySize: Math.abs(haCandle.close - haCandle.open).toFixed(4)
+      },
+      smoothingEffect: {
+        bodyChange: (Math.abs(haCandle.close - haCandle.open) - Math.abs(originalCandle.close - originalCandle.open)).toFixed(4),
+        rangeChange: ((haCandle.high - haCandle.low) - (originalCandle.high - originalCandle.low)).toFixed(4)
+      }
+    });
+  }
+};
+
+/**
+ * Logs HA vs OHLC pattern detection comparison results
+ */
+export const logHAComparison = (patternName: string, haResults: any[], ohlcResults: any[]): void => {
+  if (isChannelEnabled('DEBUG_PATTERN_DETECT')) {
+    // eslint-disable-next-line no-console
+    console.log(`[DEBUG_PATTERN_DETECT:HA] [COMPARISON] ${patternName}:`, {
+      haDetections: haResults.length,
+      ohlcDetections: ohlcResults.length,
+      improvement: haResults.length - ohlcResults.length,
+      haOnlyPatterns: haResults.filter(ha => !ohlcResults.some(ohlc => Math.abs(ha.index - ohlc.index) <= 2)),
+      ohlcOnlyPatterns: ohlcResults.filter(ohlc => !haResults.some(ha => Math.abs(ha.index - ohlc.index) <= 2))
+    });
+  }
+};
+
+/**
+ * Logs HA-specific pattern quality metrics
+ */
+export const logHAQuality = (patternName: string, pattern: any, qualityMetrics: any): void => {
+  if (isChannelEnabled('DEBUG_PATTERN_DETECT')) {
+    // eslint-disable-next-line no-console
+    console.log(`[DEBUG_PATTERN_DETECT:HA] [QUALITY] ${patternName} at ${pattern.index}:`, {
+      confidence: pattern.confidence?.toFixed(3) || 'N/A',
+      haSmoothing: qualityMetrics.smoothingFactor?.toFixed(3) || 'N/A',
+      noiseReduction: qualityMetrics.noiseReduction?.toFixed(3) || 'N/A',
+      trendClarity: qualityMetrics.trendClarity?.toFixed(3) || 'N/A',
+      signalStrength: qualityMetrics.signalStrength || 'UNKNOWN'
+    });
+  }
+};
+
+// Golden Candle miss analysis debug logging
+export function logGoldenMissReasons(candle: any, reasons: string[], qualifyingFactors: string[] = []) {
+  logDebug('DEBUG_GOLDEN_MISS', '[Golden Miss Analysis] Near-miss candle analysis', {
+    candleTimestamp: candle.timestamp || new Date().toISOString(),
+    candleClose: candle.close?.toFixed(4) || 'N/A',
+    candleHigh: candle.high?.toFixed(4) || 'N/A',
+    candleLow: candle.low?.toFixed(4) || 'N/A',
+    missReasons: reasons,
+    qualifyingFactors: qualifyingFactors,
+    totalMissReasons: reasons.length,
+    totalQualifyingFactors: qualifyingFactors.length,
+    isNearMiss: qualifyingFactors.length >= 2 && reasons.length >= 1,
+    dickOLearyCompliant: true,
+    forensicAnalysis: true
+  });
+}

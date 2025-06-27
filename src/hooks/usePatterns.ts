@@ -50,6 +50,29 @@ export function usePatterns(data: CandlestickData[]) {
   const [stepBreakoutCount, setStepBreakoutCount] = useState<number[]>([]);
   const [stepContinuanceCount, setStepContinuanceCount] = useState<number[]>([]);
   
+  // Rocketman pattern metrics
+  const [rocketmanConfidence, setRocketmanConfidence] = useState<number[]>([]);
+  const [rocketmanAcceleration, setRocketmanAcceleration] = useState<number[]>([]);
+  const [rocketmanDirection, setRocketmanDirection] = useState<('LONG' | 'SHORT')[]>([]);
+  
+  // Pivot pattern metrics
+  const [pivotDirection, setPivotDirection] = useState<('SUPPORT' | 'RESISTANCE' | null)[]>([]);
+  const [pivotStrength, setPivotStrength] = useState<number[]>([]);
+  const [pivotTouchCount, setPivotTouchCount] = useState<number[]>([]);
+  
+  // Goldmine Channel pattern metrics
+  const [gmcDepthPercent, setGmcDepthPercent] = useState<number[]>([]);
+  const [gmcBreakoutStrength, setGmcBreakoutStrength] = useState<number[]>([]);
+  const [gmcBaseDuration, setGmcBaseDuration] = useState<number[]>([]);
+  
+  // Golden Candle pattern metrics
+  const [goldenCandleQual, setGoldenCandleQual] = useState<boolean[]>([]);
+  const [goldenScore, setGoldenScore] = useState<number[]>([]);
+  const [goldenDirection, setGoldenDirection] = useState<('LONG' | 'SHORT' | null)[]>([]);
+  const [goldmineForensics, setGoldmineForensics] = useState<boolean[]>([]);
+  const [goldmineForensicsNotes, setGoldmineForensicsNotes] = useState<string[]>([]);
+  const [goldenNearMisses, setGoldenNearMisses] = useState<boolean[]>([]);
+  
   // Display settings for patterns
   const [escalatorSettings, setEscalatorSettings] = useState<{ 
     enabled: boolean; 
@@ -117,6 +140,44 @@ export function usePatterns(data: CandlestickData[]) {
       stallThreshold: 0.1
     };
   });
+  
+  // Golden Candle settings with near-miss toggle
+  const [goldenCandleSettings, setGoldenCandleSettings] = useState(() => {
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem('patternSettings.goldenCandle');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('[usePatterns] Loaded Golden Candle settings from localStorage:', parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading Golden Candle settings:', error);
+    }
+    
+    // Default values
+    return {
+      enabled: true,
+      showLabels: true,
+      showForensics: false, // Default to false for forensic overlays
+      showNearMiss: false, // Default to false for near-miss highlighting
+      minContinuanceCount: 3,
+      minCumulativeScore: 5,
+      confidenceThreshold: 0.7,
+      intrinsicScoreRequired: 2,
+      preferredDirection: 'BOTH' as 'LONG' | 'SHORT' | 'BOTH'
+    };
+  });
+
+  // Persist Golden Candle settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('patternSettings.goldenCandle', JSON.stringify(goldenCandleSettings));
+      console.log('[usePatterns] Saved Golden Candle settings to localStorage:', goldenCandleSettings);
+    } catch (error) {
+      console.error('[usePatterns] Error saving Golden Candle settings:', error);
+    }
+  }, [goldenCandleSettings]);
   
   // Initialize preferences from service (which loads from localStorage)
   const [preferences, setPreferences] = useState<Partial<PatternDetectionPreferences>>(() => {
@@ -427,7 +488,39 @@ export function usePatterns(data: CandlestickData[]) {
     stepBreakoutCount,
     setStepBreakoutCount,
     stepContinuanceCount,
-    setStepContinuanceCount
+    setStepContinuanceCount,
+    rocketmanConfidence,
+    setRocketmanConfidence,
+    rocketmanAcceleration,
+    setRocketmanAcceleration,
+    rocketmanDirection,
+    setRocketmanDirection,
+    pivotDirection,
+    setPivotDirection,
+    pivotStrength,
+    setPivotStrength,
+    pivotTouchCount,
+    setPivotTouchCount,
+    gmcDepthPercent,
+    setGmcDepthPercent,
+    gmcBreakoutStrength,
+    setGmcBreakoutStrength,
+    gmcBaseDuration,
+    setGmcBaseDuration,
+    goldenCandleQual,
+    setGoldenCandleQual,
+    goldenScore,
+    setGoldenScore,
+    goldenDirection,
+    setGoldenDirection,
+    goldmineForensics,
+    setGoldmineForensics,
+    goldmineForensicsNotes,
+    setGoldmineForensicsNotes,
+    goldenNearMisses,
+    setGoldenNearMisses,
+    goldenCandleSettings,
+    setGoldenCandleSettings
   };
 };
 

@@ -8,7 +8,8 @@ export enum PatternType {
   ROCKETMAN = 'ROCKETMAN',
   ESCALATOR = 'ESCALATOR',
   BLACKJACK = 'BLACKJACK',
-  BREAKOUTBOX = 'BREAKOUTBOX'
+  BREAKOUTBOX = 'BREAKOUTBOX',
+  GOLDEN_CANDLE = 'GOLDEN_CANDLE'
 }
 
 export enum BlackjackSignalStrength {
@@ -146,13 +147,28 @@ export interface BlackjackPattern extends PatternBase {
   relatedPatternIds?: string[];    // IDs of related patterns
 }
 
+export interface GoldenCandlePattern extends PatternBase {
+  type: PatternType.GOLDEN_CANDLE;
+  direction: 'LONG' | 'SHORT';
+  goldenScore: number;
+  intrinsicScore: number;
+  cumulativeScore: number;
+  stepIntrinsicCount: number;
+  stepBreakoutCount: number;
+  stepContinuanceCount: number;
+  candlePrice: number;
+  stepBoxCeiling?: number;
+  stepBoxFloor?: number;
+}
+
 export type Pattern =
   | GoldmineChannelPattern
   | GoldmineShaftPattern
   | PivotPattern
   | RocketmanPattern
   | EscalatorPattern
-  | BlackjackPattern;
+  | BlackjackPattern
+  | GoldenCandlePattern;
 
 export interface PatternStyle {
   color: string;
@@ -196,6 +212,11 @@ export const patternStyles: Record<PatternType, PatternStyle> = {
   },
   [PatternType.BREAKOUTBOX]: {
     color: '#2196F3', // Blue
+    lineWidth: 2,
+    opacity: 0.8
+  },
+  [PatternType.GOLDEN_CANDLE]: {
+    color: '#FFD700', // Golden
     lineWidth: 2,
     opacity: 0.8
   }

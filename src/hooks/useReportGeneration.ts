@@ -107,9 +107,7 @@ export function useReportGeneration(): UseReportGenerationReturn {
     // Generate golden candle reports (using breakout events as golden events for now)
     // TODO: Replace with actual golden candle events when available
     const goldenCandles = generateGoldenCandleReport(
-      stepBoxes,
-      breakoutBoxes, // Using breakout events as placeholder
-      data,
+      breakoutBoxes, // Using breakout events as placeholder until golden candle events are available
       'TRISIGHT'
     );
     

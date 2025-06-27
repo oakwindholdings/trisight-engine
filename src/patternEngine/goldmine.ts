@@ -2,6 +2,7 @@
 // src/patternEngine/goldmine.ts
 // Detects Goldmine signals from Escalator patterns
 // Uses two-candle Blackjack scoring and StepBox floor/ceiling
+// DICK O'LEARY COMPLIANCE: Strict HA-only breakout logic - no OHLC substitution allowed
 
 import { 
   Candle, 
@@ -15,6 +16,8 @@ import {
   BJ_GOLD_THRESHOLD_LONG, 
   BJ_GOLD_THRESHOLD_SHORT 
 } from '../constants/pattern';
+import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only detection
 
 // Simplified GoldmineSignal interface for detectGoldmine
 export interface GoldmineSignal {
@@ -40,10 +43,21 @@ export function detectGoldmine(
   if (!candles || candles.length === 0 || step.endIndex >= candles.length) {
     return null;
   }
+
+  // DICK O'LEARY COMPLIANCE: Convert to HA candles for all breakout analysis
+  // This ensures strict adherence to HA body/wick/close logic with no OHLC substitution
+  const haCandles = convertToHeikinAshi(candles);
+  
+  logDebug('DEBUG_PATTERN_DETECT', '[Goldmine:HA] Using Heikin-Ashi candles for breakout detection:', {
+    originalCandles: candles.length,
+    haCandles: haCandles.length,
+    stepRef: `${step.startIndex}-${step.endIndex}`,
+    dickOLearyCompliance: true
+  });
   
   // Determine step direction from height
-  // Positive height = rising = look for SHORT signal (candle through floor)
-  // Negative height = falling = look for LONG signal (candle through ceiling)
+  // Positive height = rising = look for SHORT signal (HA candle through floor)
+  // Negative height = falling = look for LONG signal (HA candle through ceiling)
   const isRising = step.height > 0;
   const targetSide = isRising ? 'SHORT' : 'LONG';
   
@@ -51,40 +65,49 @@ export function detectGoldmine(
   const keyLevel = isRising ? step.floor : step.ceiling;
   const entryPrice = keyLevel;
   
-  // Search for two consecutive reversal candles after the step
+  // Search for two consecutive reversal candles after the step using HA metrics
   const reversalCandles: Candle[] = [];
   let firstReversalIndex = -1;
   
-  for (let i = step.endIndex + 1; i < candles.length - 1; i++) {
-    const candle = candles[i];
-    const nextCandle = candles[i + 1];
+  for (let i = step.endIndex + 1; i < haCandles.length - 1; i++) {
+    const haCandle = haCandles[i];
+    const nextHACandle = haCandles[i + 1];
     
-    // For rising step (SHORT): look for lower-low and lower-high pattern
-    // For falling step (LONG): look for higher-high and higher-low pattern
+    // DICK O'LEARY COMPLIANCE: Use HA close/open for trend confirmation, HA body size for breakout analysis
+    // For rising step (SHORT): look for HA lower-low and lower-high pattern
+    // For falling step (LONG): look for HA higher-high and higher-low pattern
     let isFirstReversal = false;
     let isSecondReversal = false;
     
     if (isRising) {
-      // SHORT: First candle must trade through floor
-      isFirstReversal = candle.low <= step.floor;
+      // SHORT: First HA candle must trade through floor (HA low ≤ floor)
+      isFirstReversal = haCandle.low <= step.floor;
       
-      // SHORT: Second candle must have lower-low and lower-high
-      if (isFirstReversal && nextCandle) {
-        isSecondReversal = nextCandle.low < candle.low && nextCandle.high < candle.high;
+      // SHORT: Second HA candle must have lower-low and lower-high (strict HA logic)
+      if (isFirstReversal && nextHACandle) {
+        isSecondReversal = nextHACandle.low < haCandle.low && nextHACandle.high < haCandle.high;
       }
     } else {
-      // LONG: First candle must trade through ceiling
-      isFirstReversal = candle.high >= step.ceiling;
+      // LONG: First HA candle must trade through ceiling (HA high ≥ ceiling)
+      isFirstReversal = haCandle.high >= step.ceiling;
       
-      // LONG: Second candle must have higher-high and higher-low
-      if (isFirstReversal && nextCandle) {
-        isSecondReversal = nextCandle.high > candle.high && nextCandle.low > candle.low;
+      // LONG: Second HA candle must have higher-high and higher-low (strict HA logic)
+      if (isFirstReversal && nextHACandle) {
+        isSecondReversal = nextHACandle.high > haCandle.high && nextHACandle.low > haCandle.low;
       }
     }
     
     if (isFirstReversal && isSecondReversal) {
-      reversalCandles.push(candle, nextCandle);
+      reversalCandles.push(haCandle, nextHACandle);
       firstReversalIndex = i;
+      logDebug('DEBUG_PATTERN_DETECT', '[Goldmine:HA] Confirmed HA reversal at index', i, {
+        direction: targetSide,
+        keyLevel,
+        haCandleClose: haCandle.close.toFixed(4),
+        haBodySize: Math.abs(haCandle.close - haCandle.open).toFixed(4),
+        reversalType: isRising ? 'bearish' : 'bullish',
+        dickOLearyCompliant: true
+      });
       break;
     }
   }
@@ -94,7 +117,7 @@ export function detectGoldmine(
     return null;
   }
   
-  // Calculate Blackjack score for the two reversal candles
+  // Calculate Blackjack score for the two HA reversal candles
   const bjScore = calcStepBlackjack(reversalCandles);
   
   // Check cumulative score meets threshold
@@ -105,7 +128,7 @@ export function detectGoldmine(
     return null;
   }
   
-  // Verify intrinsic score of second candle has strict polarity
+  // Verify intrinsic score of second HA candle has strict polarity
   if (targetSide === 'SHORT' && bjScore.intrinsicScore !== -1) {
     return null;
   }
@@ -113,10 +136,19 @@ export function detectGoldmine(
     return null;
   }
   
-  // All conditions met - construct signal
+  // All conditions met - construct signal using HA-derived metrics
+  logDebug('DEBUG_PATTERN_DETECT', '[Goldmine:HA] Signal qualified with Dick O\'Leary HA compliance:', {
+    side: targetSide,
+    entryIndex: firstReversalIndex + 1,
+    entryPrice,
+    intrinsic: bjScore.intrinsicScore,
+    cumulative: bjScore.cumulativeScore,
+    stepRef: `${step.startIndex}-${step.endIndex}`
+  });
+  
   return {
     side: targetSide,
-    entryIndex: firstReversalIndex + 1, // Second reversal candle index
+    entryIndex: firstReversalIndex + 1, // Second HA reversal candle index
     entryPrice,
     intrinsic: bjScore.intrinsicScore,
     cumulative: bjScore.cumulativeScore,

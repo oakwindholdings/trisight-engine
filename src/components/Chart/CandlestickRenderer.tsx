@@ -5,6 +5,7 @@ import { CandlestickData } from '../../models/ChartTypes';
 import { createPriceScale } from '../../utils/scaling';
 import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import { logDebug } from '../../utils/debug';
+import { isNearMissGoldenCandle } from '../../utils/patternQualifiers';
 
 interface ChartDimensions {
   width: number;
@@ -68,9 +69,10 @@ const CandlestickRendererImpl = {
       showVolume?: boolean;
       showGrid?: boolean;
       goldmineQual?: boolean[]; // Golden Candle indicators
+      goldmineForensics?: boolean[]; // Golden Candle forensics overlay
     }
   ) {
-    const { isHeikinAshi = false, showVolume = true, showGrid = true, goldmineQual = [] } = options || {};
+    const { isHeikinAshi = false, showVolume = true, showGrid = true, goldmineQual = [], goldmineForensics = [] } = options || {};
     
     logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] Starting render:', {
       dataLength: data.length,
@@ -192,6 +194,32 @@ const CandlestickRendererImpl = {
         ctx.strokeStyle = 'gold';
         ctx.lineWidth = 2;
         ctx.stroke();
+      }
+      
+      // Draw forensic overlay if applicable
+      if (goldmineForensics[index]) {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(left, bodyTop, candleWidth, bodyHeight);
+      }
+      
+      // Draw near-miss Golden Candle overlay if applicable
+      // DICK O'LEARY COMPLIANCE: Visualize near-miss Golden Candle candidates with black fill
+      if (index >= 3) { // Ensure we have enough previous candles for analysis
+        const previousCandles = data.slice(Math.max(0, index - 5), index);
+        if (isNearMissGoldenCandle(candle, previousCandles)) {
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 2;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Semi-transparent black fill
+          ctx.fillRect(left, bodyTop, candleWidth, bodyHeight);
+          ctx.strokeRect(left, bodyTop, candleWidth, bodyHeight);
+          
+          logDebug('DEBUG_GOLDEN_MISS', '[CandlestickRenderer] Near-miss Golden Candle overlay rendered:', {
+            candleIndex: index,
+            candleClose: candle.close.toFixed(4),
+            overlayStyle: 'black fill with 30% opacity',
+            dickOLearyCompliant: true
+          });
+        }
       }
       
       // Draw volume bar (if enabled)

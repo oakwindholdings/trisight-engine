@@ -54,9 +54,13 @@ const InfoLabel = styled.p`
 const DebugSettingsPanel: React.FC = () => {
   const [settings, setSettings] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState(true);
+  const [showHAComparisons, setShowHAComparisons] = useState(false);
 
   useEffect(() => {
     setSettings(getDebugSettings());
+    // Check for HA comparison setting in localStorage
+    const haComparison = localStorage.getItem('trisight_ha_comparisons');
+    setShowHAComparisons(haComparison === 'true');
   }, []);
 
   const handleToggle = (channel: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +68,19 @@ const DebugSettingsPanel: React.FC = () => {
     setSettings(prev => ({ ...prev, [channel]: enabled }));
     setChannelEnabled(channel, enabled);
     logDebug('DEBUG_UI', '[DebugSettingsPanel] Toggled channel:', channel, enabled);
+  };
+
+  const handleHAToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const enabled = e.target.checked;
+    setShowHAComparisons(enabled);
+    localStorage.setItem('trisight_ha_comparisons', enabled.toString());
+    logDebug('DEBUG_UI', '[DebugSettingsPanel] Toggled HA comparisons:', enabled);
+    
+    if (enabled) {
+      // Enable HA-related debug channels when HA comparisons are turned on
+      setChannelEnabled('DEBUG_PATTERN_DETECT', true);
+      setSettings(prev => ({ ...prev, 'DEBUG_PATTERN_DETECT': true }));
+    }
   };
 
   const channels = Object.keys(settings);
@@ -86,6 +103,15 @@ const DebugSettingsPanel: React.FC = () => {
             <span>{channel}</span>
           </ChannelRow>
         ))}
+        <ChannelRow htmlFor="dbg-ha-comparisons">
+          <input
+            id="dbg-ha-comparisons"
+            type="checkbox"
+            checked={showHAComparisons}
+            onChange={handleHAToggle}
+          />
+          <span>HA Comparisons</span>
+        </ChannelRow>
         <InfoLabel>Logs are developer-facing and stored locally.</InfoLabel>
       </Content>
     </PanelContainer>

@@ -3,24 +3,12 @@
 // Detects floor-ceiling breakout boxes in candlestick data
 // Independent from escalator step detection
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
+// DICK O'LEARY COMPLIANCE: Strict HA-only breakout logic - no OHLC substitution allowed
 
 import { Candle } from '../types/pattern';
 import { debugLog, summaryLog, DEBUG_MODE, logDebug } from '../utils/debug';
 import { calcStepBlackjack } from './blackjack';
-
-export interface BreakoutBox {
-  startIndex: number;
-  endIndex: number;
-  stepRef: string;
-  direction: 'RISING' | 'FALLING';
-  floor: number;
-  ceiling: number;
-  height: number;
-  breakoutCandle?: Candle;
-  blackjackScore?: number;
-  blackjackComponents?: number[];
-  qualifiesForGoldmine?: boolean;
-}
+import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only detection
 
 /**
  * Detects breakout boxes (floor-ceiling zones) in candlestick data
@@ -38,73 +26,80 @@ export function detectBreakoutBoxes(
 ): BreakoutBox[] {
   const boxes: BreakoutBox[] = [];
   
-  // DIAGNOSTIC: Log detection start
-  logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] detectBreakoutBoxes START:', {
-    candlesLength: candles.length,
+  // DICK O'LEARY COMPLIANCE: Convert to HA candles for all breakout analysis
+  // This ensures strict adherence to HA body/wick/close logic with no OHLC substitution
+  const haCandles = convertToHeikinAshi(candles);
+  
+  // DIAGNOSTIC: Log detection start with HA compliance
+  logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] detectBreakoutBoxes START with HA compliance:', {
+    originalCandles: candles.length,
+    haCandles: haCandles.length,
     minStallLength,
     stallThreshold,
-    breakoutMultiplier
+    breakoutMultiplier,
+    dickOLearyCompliance: true
   });
   
   if (DEBUG_MODE) {
-    debugLog('[detectBreakoutBoxes] Starting detection with', candles.length, 'candles');
+    debugLog('[detectBreakoutBoxes] Starting HA detection with', haCandles.length, 'HA candles');
   }
   
-  if (candles.length < minStallLength + 1) {
+  if (haCandles.length < minStallLength + 1) {
     if (DEBUG_MODE) {
-      debugLog('[detectBreakoutBoxes] Not enough candles for detection');
+      debugLog('[detectBreakoutBoxes] Not enough HA candles for detection');
     }
     return boxes;
   }
   
-  let i = 1; // Start from second candle
+  let i = 1; // Start from second HA candle
   
-  while (i < candles.length - minStallLength) {
-    // Look for potential stalling pattern
-    const prevCandle = candles[i - 1];
-    const firstStallCandle = candles[i];
+  while (i < haCandles.length - minStallLength) {
+    // Look for potential stalling pattern using HA candles
+    const prevHACandle = haCandles[i - 1];
+    const firstStallHACandle = haCandles[i];
     
-    // Check if we have a potential stall start
-    // Stall starts when a candle's body stays within previous candle's range
-    if (isWithinRange(firstStallCandle, prevCandle)) {
+    // DICK O'LEARY COMPLIANCE: Check if HA candle's body stays within previous HA candle's range
+    // Use HA close/open for trend confirmation, HA body size for breakout analysis
+    if (isWithinRange(firstStallHACandle, prevHACandle)) {
       if (DEBUG_MODE) {
-        debugLog('[detectBreakoutBoxes] Potential stall start at index', i);
+        debugLog('[detectBreakoutBoxes] Potential HA stall start at index', i);
       }
       
-      // Find the extent of the stall
+      // Find the extent of the stall using HA metrics
       let stallEnd = i;
-      let floor = firstStallCandle.low;
-      let ceiling = prevCandle.high;
+      let floor = firstStallHACandle.low;
+      let ceiling = prevHACandle.high;
       
-      // Extend the stall while candles remain in range
-      while (stallEnd < candles.length - 1) {
-        const nextCandle = candles[stallEnd + 1];
+      // Extend the stall while HA candles remain in range
+      while (stallEnd < haCandles.length - 1) {
+        const nextHACandle = haCandles[stallEnd + 1];
         
-        // Check if next candle stays within the box
-        if (isWithinBox(nextCandle, floor, ceiling)) {
-          // Update floor and ceiling
-          floor = Math.min(floor, nextCandle.low);
-          ceiling = Math.max(ceiling, nextCandle.high);
+        // DICK O'LEARY COMPLIANCE: Check if next HA candle stays within the box
+        if (isWithinBox(nextHACandle, floor, ceiling)) {
+          // Update floor and ceiling using HA low/high
+          floor = Math.min(floor, nextHACandle.low);
+          ceiling = Math.max(ceiling, nextHACandle.high);
           stallEnd++;
           
           if (DEBUG_MODE) {
-            debugLog('[detectBreakoutBoxes] Extending stall at index', stallEnd);
+            debugLog('[detectBreakoutBoxes] Extending HA stall at index', stallEnd);
           }
         } else {
-          // Potential breakout found
+          // Potential HA breakout found
           if (DEBUG_MODE) {
-            debugLog('[detectBreakoutBoxes] Breakout detected at index', stallEnd + 1);
+            debugLog('[detectBreakoutBoxes] HA breakout detected at index', stallEnd + 1);
           }
           
-          // Check if the stall was long enough
+          // Check if the HA stall was long enough
           if (stallEnd - i + 1 >= minStallLength) {
-            // We have a valid breakout!
-            const breakoutCandle = nextCandle;
-            const direction = breakoutCandle.close > ceiling ? 'RISING' : 'FALLING';
+            // We have a valid HA breakout!
+            const breakoutHACandle = nextHACandle;
+            const direction = breakoutHACandle.close > ceiling ? 'RISING' : 'FALLING';
             
-            // Only count valid breakouts (not just wicks)
-            if ((direction === 'RISING' && breakoutCandle.close > ceiling) ||
-                (direction === 'FALLING' && breakoutCandle.close < floor)) {
+            // DICK O'LEARY COMPLIANCE: Only count valid HA breakouts (not just wicks)
+            // Use HA close for breakout confirmation
+            if ((direction === 'RISING' && breakoutHACandle.close > ceiling) ||
+                (direction === 'FALLING' && breakoutHACandle.close < floor)) {
               
               const box: BreakoutBox = {
                 startIndex: i,
@@ -114,28 +109,26 @@ export function detectBreakoutBoxes(
                 floor,
                 ceiling,
                 height: ceiling - floor,
-                breakoutCandle
+                breakoutCandle: breakoutHACandle
               };
               
-              // Extract stall candles and calculate Blackjack score
-              const stallCandles = candles.slice(i, stallEnd + 1);
-              const bjScore = calcStepBlackjack(stallCandles);
-              
-              // Attach scoring metadata
+              // Calculate HA-based Blackjack score for stall candles
+              const stallHACandles = haCandles.slice(i, stallEnd + 1);
+              const bjScore = calcStepBlackjack(stallHACandles);
               box.blackjackScore = bjScore.cumulativeScore;
-              box.blackjackComponents = [bjScore.intrinsicScore]; // Can expand to include per-candle scores if needed
+              box.blackjackComponents = Array.isArray(bjScore.components) ? bjScore.components : [bjScore.intrinsicScore];
               
-              // Determine Goldmine qualification based on direction and score
-              box.qualifiesForGoldmine = (
-                (direction === 'RISING' && bjScore.cumulativeScore <= -2) ||
-                (direction === 'FALLING' && bjScore.cumulativeScore >= 2)
-              );
+              // DICK O'LEARY COMPLIANCE: Qualify based on HA-derived Blackjack scores
+              // Rising breakout needs bearish setup (cumulative score <= -2)
+              // Falling breakout needs bullish setup (cumulative score >= 2)
+              box.qualifiesForGoldmine = (direction === 'RISING' && bjScore.cumulativeScore <= -2) ||
+                                        (direction === 'FALLING' && bjScore.cumulativeScore >= 2);
               
-              // Always log scoring details to understand qualification
-              logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] [detectBreakoutBoxes] BreakoutBox qualification check:', { 
+              // Always log HA scoring details to understand qualification
+              logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] [detectBreakoutBoxes] HA BreakoutBox qualification check:', { 
                 stepRef: box.stepRef,
                 direction: box.direction,
-                stallLength: stallCandles.length,
+                stallLength: stallHACandles.length,
                 intrinsicScore: bjScore.intrinsicScore,
                 cumulativeScore: bjScore.cumulativeScore,
                 components: bjScore.components,
@@ -143,26 +136,29 @@ export function detectBreakoutBoxes(
                 qualificationReason: box.qualifiesForGoldmine ? 'QUALIFIED' : 
                   (direction === 'RISING' ? 
                     `Need score <= -2, got ${bjScore.cumulativeScore}` : 
-                    `Need score >= 2, got ${bjScore.cumulativeScore}`)
+                    `Need score >= 2, got ${bjScore.cumulativeScore}`),
+                dickOLearyCompliant: true,
+                haBodySize: Math.abs(breakoutHACandle.close - breakoutHACandle.open).toFixed(4)
               });
               
-              // Log scoring in dev mode
+              // Log HA scoring in dev mode
               if (DEBUG_MODE) {
-                logDebug('DEBUG_PATTERN_DETECT', '[Blackjack] BreakoutBox score:', { 
+                logDebug('DEBUG_PATTERN_DETECT', '[Blackjack:HA] BreakoutBox score:', { 
                   score: bjScore,
                   box: {
                     stepRef: box.stepRef,
                     direction: box.direction,
                     blackjackScore: box.blackjackScore,
                     qualifiesForGoldmine: box.qualifiesForGoldmine
-                  }
+                  },
+                  dickOLearyCompliant: true
                 });
               }
               
               boxes.push(box);
               
               if (DEBUG_MODE) {
-                debugLog('[detectBreakoutBoxes] Found box:', {
+                debugLog('[detectBreakoutBoxes] Found HA box:', {
                   startIndex: box.startIndex,
                   endIndex: box.endIndex,
                   stallLength: stallEnd - i + 1,
@@ -172,55 +168,58 @@ export function detectBreakoutBoxes(
                 });
               }
               
-              logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] detectBreakoutBoxes found box:', {
+              logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] detectBreakoutBoxes found HA box:', {
                 startIndex: box.startIndex,
                 endIndex: box.endIndex,
                 stallLength: stallEnd - i + 1,
                 direction: box.direction,
-                height: box.height
+                height: box.height,
+                dickOLearyCompliant: true
               });
               
               // Skip past this box for next detection
               i = stallEnd + 2;
             } else {
-              // Not a valid breakout, continue searching
+              // Not a valid HA breakout, continue searching
               i++;
             }
           } else {
-            // Stall too short, continue searching
+            // HA stall too short, continue searching
             i++;
           }
           break; // Exit the while loop since we found a breakout
         }
       }
       
-      // If we reached end of candles without breakout, move on
-      if (stallEnd >= candles.length - 1) {
-        i = candles.length;
+      // If we reached end of HA candles without breakout, move on
+      if (stallEnd >= haCandles.length - 1) {
+        i = haCandles.length;
       }
     } else {
       i++;
     }
   }
   
-  // Summary log at end of detection
+  // Summary log at end of HA detection
   const qualifiedCount = boxes.filter(b => b.qualifiesForGoldmine).length;
-  logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] [detectBreakoutBoxes] Detection complete:', {
+  logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] [detectBreakoutBoxes] HA Detection complete:', {
     totalBoxes: boxes.length,
     qualifiedBoxes: qualifiedCount,
     qualifiedStepRefs: boxes
       .filter(b => b.qualifiesForGoldmine)
-      .map(b => ({ stepRef: b.stepRef, score: b.blackjackScore }))
+      .map(b => ({ stepRef: b.stepRef, score: b.blackjackScore })),
+    dickOLearyCompliance: true
   });
   
   if (DEBUG_MODE) {
-    debugLog('[detectBreakoutBoxes] Detection complete:', {
+    debugLog('[detectBreakoutBoxes] HA Detection complete:', {
       totalBoxes: boxes.length,
       boxes: boxes.map(b => ({
         stepRef: b.stepRef,
         dir: b.direction,
         indices: `${b.startIndex}-${b.endIndex}`
-      }))
+      })),
+      dickOLearyCompliant: true
     });
   }
   
@@ -245,4 +244,18 @@ function isWithinBox(candle: Candle, floor: number, ceiling: number): boolean {
   const bodyLow = Math.min(candle.open, candle.close);
   
   return bodyHigh <= ceiling && bodyLow >= floor;
+}
+
+export interface BreakoutBox {
+  startIndex: number;
+  endIndex: number;
+  stepRef: string;
+  direction: 'RISING' | 'FALLING';
+  floor: number;
+  ceiling: number;
+  height: number;
+  breakoutCandle?: Candle;
+  blackjackScore?: number;
+  blackjackComponents?: number[];
+  qualifiesForGoldmine?: boolean;
 }

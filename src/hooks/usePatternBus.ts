@@ -11,15 +11,21 @@ import {
   detectEscalators, 
   detectBreakoutBoxes,
   detectGoldmine, 
+  detectRocketman,
   getIntrinsicScore,
   computeRollingBlackjackScores,
   computeTargetBlackjackScore,
-  detectStepContinuation // Phase 4: Continuation Linking
+  detectStepContinuation, // Phase 4: Continuation Linking
+  detectPivots, // Added import for detectPivots
+  detectGoldmineChannel, // Added import for detectGoldmineChannel
+  detectGoldenCandle, // Added import for detectGoldenCandle
+  detectGoldenCandleCandidates // Added import for detectGoldenCandleCandidates forensics
 } from '../patternEngine';
 import type { GoldmineSignal } from '../patternEngine';
 import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop';
 import { usePatternContext } from '../contexts/PatternContext';
 import { logDebug } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform'; // HA transformation for pattern detection
 
 export interface Position {
   side: 'LONG' | 'SHORT';
@@ -29,9 +35,10 @@ export interface Position {
 
 // NOTE: Valid PatternEvent types: ESCALATOR, ESCALATOR_STEP, BREAKOUT_BOX, GOLDMINE, etc.
 export interface PatternEvent {
-  type: 'ESCALATOR' | 'ESCALATOR_STEP' | 'GOLDMINE' | 'STOP_EVENT' | 'BREAKOUT_BOX' | 'BLACKJACK_ROLLING' | 'BLACKJACK_TARGET';
+  type: 'ESCALATOR' | 'ESCALATOR_STEP' | 'GOLDMINE' | 'STOP_EVENT' | 'BREAKOUT_BOX' | 'BLACKJACK_ROLLING' | 'BLACKJACK_TARGET' | 'ROCKETMAN' | 'PIVOT' | 'GOLDMINE_CHANNEL' | 'GOLDEN_CANDLE' | 'GOLDMINE_FORENSICS'; // Added 'GOLDMINE_FORENSICS' type
   data: EscalatorRun | GoldmineSignal | StopLossEvent | any; // 'any' for StepBox data
   timestamp: number;
+  index?: number;
 }
 
 export interface PatternBusState {
@@ -63,6 +70,20 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setDistToStopPct,
     setEscalatorSteps,
     setBreakoutBoxes,
+    setRocketmanConfidence,
+    setRocketmanAcceleration,
+    setRocketmanDirection,
+    setPivotDirection, // Added setPivotDirection
+    setPivotStrength, // Added setPivotStrength
+    setPivotTouchCount, // Added setPivotTouchCount
+    setGmcDepthPercent, // Added setGmcDepthPercent
+    setGmcBreakoutStrength, // Added setGmcBreakoutStrength
+    setGmcBaseDuration, // Added setGmcBaseDuration
+    setGoldenCandleQual, // Added setGoldenCandleQual
+    setGoldenScore, // Added setGoldenScore
+    setGoldenDirection, // Added setGoldenDirection
+    setGoldmineForensics, // Added setGoldmineForensics
+    setGoldmineForensicsNotes, // Added setGoldmineForensicsNotes
     escalatorSettings,
     setStepIntrinsicCount,
     setStepBreakoutCount,
@@ -116,14 +137,28 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
 
     const newEvents: PatternEvent[] = [];
 
-    // Detect BreakoutBoxes independently
+    // ──── HEIKIN-ASHI TRANSFORMATION ────────────────────────────────────────
+    // Convert OHLC candles to Heikin-Ashi for all pattern detection
+    // UI rendering continues to use original OHLC candles for user display
+    const haCandles = convertToHeikinAshi(candles);
+    
+    logDebug('DEBUG_PATTERN_DETECT', '[HA_TRANSFORM] Pattern detection using Heikin-Ashi candles:', {
+      originalCandles: candles.length,
+      heikinAshiCandles: haCandles.length,
+      firstHA: haCandles[0] ? {
+        open: haCandles[0].open.toFixed(2),
+        close: haCandles[0].close.toFixed(2)
+      } : null
+    });
+
+    // Detect BreakoutBoxes independently using HA candles
     let breakoutBoxes: any[] = [];
     const targetEvents: PatternEvent[] = [];
     const bjTargets: { stepRef: string; score: number; qualifiesForGoldmine?: boolean }[] = [];
     const breakoutBoxEvents: PatternEvent[] = [];
     
     try {
-      breakoutBoxes = detectBreakoutBoxes(candles);
+      breakoutBoxes = detectBreakoutBoxes(haCandles);
     } catch (error) {
       console.error('[usePatternBus] Error in detectBreakoutBoxes:', error);
       console.error('[usePatternBus] Stack trace:', (error as Error).stack);
@@ -131,9 +166,9 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     
     // Process breakout boxes
     breakoutBoxes.forEach(box => {
-      const boxCandles = candles.slice(box.startIndex, box.endIndex + 1);
+      const boxCandles = haCandles.slice(box.startIndex, box.endIndex + 1);
       // Compute Target Blackjack Score for this breakout box
-      const tbsScore = computeTargetBlackjackScore(candles, box.startIndex, box.endIndex);
+      const tbsScore = computeTargetBlackjackScore(haCandles, box.startIndex, box.endIndex);
       bjTargets.push({ stepRef: box.stepRef, score: tbsScore, qualifiesForGoldmine: box.qualifiesForGoldmine });
       targetEvents.push({
         type: 'BLACKJACK_TARGET',
@@ -193,7 +228,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
 
     // Detect escalators using pattern engine - only if enabled
     const shouldDetect = escalatorSettings?.enabled === true;
-    const escalators = shouldDetect ? detectEscalators(candles) : [];
+    const escalators = shouldDetect ? detectEscalators(haCandles) : [];
     
     logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Escalator detection:', {
       escalatorSettings,
@@ -210,13 +245,13 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       escalatorEvents.push({
         type: 'ESCALATOR',
         data: escalator,
-        timestamp: candles[escalator.startIndex]?.timestamp || Date.now()
+        timestamp: haCandles[escalator.startIndex]?.timestamp || Date.now()
       });
       
       // Emit ESCALATOR_STEP events for each step within the escalator
       escalator.steps.forEach((step, stepIndex) => {
-        const startTimestamp = candles[step.startIndex]?.timestamp || 0;
-        const endTimestamp = candles[step.endIndex]?.timestamp || 0;
+        const startTimestamp = haCandles[step.startIndex]?.timestamp || 0;
+        const endTimestamp = haCandles[step.endIndex]?.timestamp || 0;
         const stepRef = `${startTimestamp}-${endTimestamp}`;
         
         const existingEvent = escalatorEvents.find(event => event.type === 'ESCALATOR_STEP' && event.data.stepRef === stepRef);
@@ -234,7 +269,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
               startTime: step.startTime,
               endTime: step.endTime
             },
-            timestamp: candles[step.startIndex]?.timestamp || Date.now()
+            timestamp: haCandles[step.startIndex]?.timestamp || Date.now()
           });
         }
       });
@@ -243,62 +278,89 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     // Add all escalator events to the main events array
     newEvents.push(...escalatorEvents);
     
-    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(candles.length).fill(null);
-    
-    escalators.forEach(escalator => {
-      escalator.steps.forEach((step, stepIndex) => {
-        for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < candles.length) {
-            const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
-            escalatorDirArray[i] = dir;
-          }
-        }
+    // Detect Rocketman patterns
+    const rocketmanPatterns = detectRocketman(haCandles);
+    rocketmanPatterns.forEach((pattern) => {
+      newEvents.push({
+        type: 'ROCKETMAN',
+        data: pattern,
+        timestamp: pattern.peakTime.getTime(),
+        index: pattern.peakIndex
       });
     });
-    
-    setEscalatorDir(escalatorDirArray);
-    
-    const escalatorLength = new Array<number>(candles.length).fill(0);
-    
-    escalators.forEach(escalator => {
-      for (let i = escalator.startIndex; i <= escalator.endIndex; i++) {
-        if (i < candles.length) {
-          escalatorLength[i] = i - escalator.startIndex + 1;
-        }
-      }
+
+    const newRocketmanConfidence = new Array<number>(haCandles.length).fill(0);
+    const newRocketmanAcceleration = new Array<number>(haCandles.length).fill(0);
+    const newRocketmanDirection = new Array(haCandles.length).fill('LONG');
+
+    rocketmanPatterns.forEach((p) => {
+      newRocketmanConfidence[p.peakIndex] = p.confidence;
+      newRocketmanAcceleration[p.peakIndex] = p.accelerationRate;
+      newRocketmanDirection[p.peakIndex] = p.direction === 'BULLISH' ? 'LONG' : 'SHORT';
     });
-    
-    const goldmineQual = new Array<boolean>(candles.length).fill(false);
-    
-    const trailStop = new Array<number>(candles.length).fill(0);
-    const distToStopPct = new Array<number>(candles.length).fill(0);
-    
-    events.forEach(event => {
-      if (event.type === 'GOLDMINE' && event.data) {
-        const goldmine = event.data as any;
-        if (goldmine.entryIndex < candles.length) {
-          goldmineQual[goldmine.entryIndex] = true;
-        }
-      }
-    });
-    
-    escalators.forEach(escalator => {
-      escalator.steps.forEach(step => {
-        for (let i = step.endIndex + 1; i < candles.length; i++) {
-          if (i >= 2) {
-            const stopPrice = candles[i - 2].low;
-            trailStop[i] = stopPrice;
-            
-            const closePrice = candles[i].close;
-            distToStopPct[i] = ((closePrice - stopPrice) / closePrice) * 100;
-          }
-        }
+
+    setRocketmanConfidence(newRocketmanConfidence);
+    setRocketmanAcceleration(newRocketmanAcceleration);
+    setRocketmanDirection(newRocketmanDirection);
+
+    // Detect Pivot patterns
+    const pivotPatterns = detectPivots(haCandles);
+    pivotPatterns.forEach((pattern) => {
+      newEvents.push({
+        type: 'PIVOT',
+        data: pattern,
+        timestamp: pattern.timestamp.getTime(),
+        index: pattern.pivotIndex
       });
     });
-    
-    const bjIntrinsic = candles.map((candle, idx) => {
+
+    const newPivotDirection = new Array<'SUPPORT' | 'RESISTANCE' | null>(haCandles.length).fill(null);
+    const newPivotStrength = new Array<number>(haCandles.length).fill(0);
+    const newPivotTouchCount = new Array<number>(haCandles.length).fill(0);
+
+    pivotPatterns.forEach((p) => {
+      newPivotDirection[p.pivotIndex] = p.pivotType;
+      newPivotStrength[p.pivotIndex] = p.strengthScore;
+      newPivotTouchCount[p.pivotIndex] = p.touchCount;
+    });
+
+    setPivotDirection(newPivotDirection);
+    setPivotStrength(newPivotStrength);
+    setPivotTouchCount(newPivotTouchCount);
+
+    // Detect Goldmine Channel patterns
+    const goldmineChannelPatterns = detectGoldmineChannel(haCandles);
+    goldmineChannelPatterns.forEach((pattern) => {
+      newEvents.push({
+        type: 'GOLDMINE_CHANNEL',
+        data: pattern,
+        timestamp: pattern.touchPoints[0]?.time.getTime() || new Date().getTime(),
+        index: pattern.startIndex
+      });
+    });
+
+    const newGmcDepthPercent = new Array<number>(haCandles.length).fill(0);
+    const newGmcBreakoutStrength = new Array<number>(haCandles.length).fill(0);
+    const newGmcBaseDuration = new Array<number>(haCandles.length).fill(0);
+
+    goldmineChannelPatterns.forEach((p) => {
+      const depthPercent = (p.channelWidth * 100);
+      const baseDuration = p.endIndex - p.startIndex;
+      const breakoutStrength = p.confidence;
+      
+      newGmcDepthPercent[p.startIndex] = depthPercent;
+      newGmcBreakoutStrength[p.startIndex] = breakoutStrength;
+      newGmcBaseDuration[p.startIndex] = baseDuration;
+    });
+
+    setGmcDepthPercent(newGmcDepthPercent);
+    setGmcBreakoutStrength(newGmcBreakoutStrength);
+    setGmcBaseDuration(newGmcBaseDuration);
+
+    // Calculate blackjack scores first (needed for Golden Candle detection)
+    const bjIntrinsic = haCandles.map((candle, idx) => {
       if (idx === 0) return 0; // First candle has no previous reference
-      const prevCandle = candles[idx - 1];
+      const prevCandle = haCandles[idx - 1];
       return getIntrinsicScore(candle, prevCandle);
     });
     
@@ -310,15 +372,136 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       []
     );
 
+    // Detect Golden Candle patterns
+    const stepIntrinsicCount = new Array<number>(haCandles.length).fill(0);
+    const stepBreakoutCount = new Array<number>(haCandles.length).fill(0);
+    const stepContinuanceCount = new Array<number>(haCandles.length).fill(0);
+    
+    // Populate step metrics from escalator steps
+    escalators.forEach(escalator => {
+      escalator.steps.forEach(step => {
+        // Extract step metrics from StepBox (if they exist)
+        const intrinsicCount = step.stepIntrinsicCount || 0;
+        const breakoutCount = step.stepBreakoutCount || 0;
+        const continuanceCount = step.stepContinuanceCount || intrinsicCount + breakoutCount;
+        
+        // Apply metrics to all candles within the step range
+        for (let i = step.startIndex; i <= step.endIndex; i++) {
+          if (i < haCandles.length) {
+            stepIntrinsicCount[i] = intrinsicCount;
+            stepBreakoutCount[i] = breakoutCount;
+            stepContinuanceCount[i] = continuanceCount;
+          }
+        }
+        
+        logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Step metrics populated:', {
+          stepRef: `${step.startIndex}-${step.endIndex}`,
+          stepIntrinsicCount: intrinsicCount,
+          stepBreakoutCount: breakoutCount,
+          stepContinuanceCount: continuanceCount,
+          range: `${step.startIndex}-${step.endIndex}`
+        });
+      });
+    });
+    
+    // Update context with step metrics
+    setStepIntrinsicCount(stepIntrinsicCount);
+    setStepBreakoutCount(stepBreakoutCount);
+    setStepContinuanceCount(stepContinuanceCount);
+
+    const goldenCandlePatterns = detectGoldenCandle(
+      haCandles,
+      stepIntrinsicCount,
+      stepBreakoutCount,
+      stepContinuanceCount,
+      bjIntrinsic,
+      bjCumulative
+    );
+    goldenCandlePatterns.forEach((pattern) => {
+      newEvents.push({
+        type: 'GOLDEN_CANDLE',
+        data: pattern,
+        timestamp: pattern.timestamp.getTime(),
+        index: pattern.index
+      });
+    });
+
+    const newGoldenCandleQual = new Array<boolean>(haCandles.length).fill(false);
+    const newGoldenScore = new Array<number>(haCandles.length).fill(0);
+    const newGoldenDirection = new Array<'LONG' | 'SHORT' | null>(haCandles.length).fill(null);
+
+    goldenCandlePatterns.forEach((p) => {
+      newGoldenCandleQual[p.index] = true;
+      newGoldenScore[p.index] = p.goldenScore;
+      newGoldenDirection[p.index] = p.direction;
+    });
+
+    setGoldenCandleQual(newGoldenCandleQual);
+    setGoldenScore(newGoldenScore);
+    setGoldenDirection(newGoldenDirection);
+
+    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(haCandles.length).fill(null);
+    
+    escalators.forEach(escalator => {
+      escalator.steps.forEach((step, stepIndex) => {
+        for (let i = step.startIndex; i <= step.endIndex; i++) {
+          if (i < haCandles.length) {
+            const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
+            escalatorDirArray[i] = dir;
+          }
+        }
+      });
+    });
+    
+    setEscalatorDir(escalatorDirArray);
+    
+    const escalatorLength = new Array<number>(haCandles.length).fill(0);
+    
+    escalators.forEach(escalator => {
+      for (let i = escalator.startIndex; i <= escalator.endIndex; i++) {
+        if (i < haCandles.length) {
+          escalatorLength[i] = i - escalator.startIndex + 1;
+        }
+      }
+    });
+    
+    const goldmineQual = new Array<boolean>(haCandles.length).fill(false);
+    
+    const trailStop = new Array<number>(haCandles.length).fill(0);
+    const distToStopPct = new Array<number>(haCandles.length).fill(0);
+    
+    events.forEach(event => {
+      if (event.type === 'GOLDMINE' && event.data) {
+        const goldmine = event.data as any;
+        if (goldmine.entryIndex < haCandles.length) {
+          goldmineQual[goldmine.entryIndex] = true;
+        }
+      }
+    });
+    
+    escalators.forEach(escalator => {
+      escalator.steps.forEach(step => {
+        for (let i = step.endIndex + 1; i < haCandles.length; i++) {
+          if (i >= 2) {
+            const stopPrice = haCandles[i - 2].low;
+            trailStop[i] = stopPrice;
+            
+            const closePrice = haCandles[i].close;
+            distToStopPct[i] = ((closePrice - stopPrice) / closePrice) * 100;
+          }
+        }
+      });
+    });
+    
     // Rolling blackjack scores (window 5 default)
-    const bjRollingScores = computeRollingBlackjackScores(candles);
+    const bjRollingScores = computeRollingBlackjackScores(haCandles);
 
     
-    const stepIndex = new Array(candles.length).fill(null);
+    const stepIndex = new Array(haCandles.length).fill(null);
     escalators.forEach(escalator => {
       escalator.steps.forEach(step => {
         for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < candles.length) {
+          if (i < haCandles.length) {
             stepIndex[i] = i - step.startIndex + 1;
           }
         }
@@ -344,42 +527,8 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setDistToStopPct(distToStopPct);
     
     // Phase 1: Core Metrics - Populate step metrics arrays
-    const stepIntrinsicCount = new Array<number>(candles.length).fill(0);
-    const stepBreakoutCount = new Array<number>(candles.length).fill(0);
-    const stepContinuanceCount = new Array<number>(candles.length).fill(0);
-    
     // Populate step metrics from escalator steps
-    escalators.forEach(escalator => {
-      escalator.steps.forEach(step => {
-        // Extract step metrics from StepBox (if they exist)
-        const intrinsicCount = step.stepIntrinsicCount || 0;
-        const breakoutCount = step.stepBreakoutCount || 0;
-        const continuanceCount = step.stepContinuanceCount || intrinsicCount + breakoutCount;
-        
-        // Apply metrics to all candles within the step range
-        for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < candles.length) {
-            stepIntrinsicCount[i] = intrinsicCount;
-            stepBreakoutCount[i] = breakoutCount;
-            stepContinuanceCount[i] = continuanceCount;
-          }
-        }
-        
-        logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Step metrics populated:', {
-          stepRef: `${step.startIndex}-${step.endIndex}`,
-          stepIntrinsicCount: intrinsicCount,
-          stepBreakoutCount: breakoutCount,
-          stepContinuanceCount: continuanceCount,
-          range: `${step.startIndex}-${step.endIndex}`
-        });
-      });
-    });
-    
     // Update context with step metrics
-    setStepIntrinsicCount(stepIntrinsicCount);
-    setStepBreakoutCount(stepBreakoutCount);
-    setStepContinuanceCount(stepContinuanceCount);
-    
     setEscalatorSteps(escalatorEvents);
     setBreakoutBoxes(breakoutBoxEvents);
 
@@ -415,8 +564,8 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
           let matchingStep: any = null;
           for (const escalator of (escalators || [])) {
             for (const step of escalator.steps) {
-              const stepStartTs = candles[step.startIndex]?.timestamp || 0;
-              const stepEndTs = candles[step.endIndex]?.timestamp || 0;
+              const stepStartTs = haCandles[step.startIndex]?.timestamp || 0;
+              const stepEndTs = haCandles[step.endIndex]?.timestamp || 0;
               
               if (stepStartTs === startTimestamp && stepEndTs === endTimestamp) {
                 matchingStep = step;
@@ -436,7 +585,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
             
             const continuation = detectStepContinuation(
               matchingStep,
-              candles,
+              haCandles,
               box.breakoutIndex,
               2 // Minimum continuation length
             );
@@ -458,7 +607,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
                   isContinuation: true,
                   continuationType: 'POST_STEP_BREAKOUT'
                 },
-                timestamp: candles[continuation.startIndex]?.timestamp || Date.now()
+                timestamp: haCandles[continuation.startIndex]?.timestamp || Date.now()
               };
               
               continuationEvents.push(continuationEvent);
@@ -473,7 +622,7 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
                     originatingStepRef: box.stepRef,
                     isContinuation: true
                   },
-                  timestamp: candles[contStep.startIndex]?.timestamp || Date.now()
+                  timestamp: haCandles[contStep.startIndex]?.timestamp || Date.now()
                 };
                 
                 continuationEvents.push(contStepEvent);
@@ -494,51 +643,19 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       newEvents.push(...continuationEvents);
     }
 
-    if (escalators.length > 0 && !existingGoldmineRef.current) {
-      const latestEscalator = escalators[escalators.length - 1];
-      const latestStep = latestEscalator.steps[latestEscalator.steps.length - 1];
-      
-      const candlesAfterStep = candles.slice(latestStep.endIndex + 1);
-      
-      if (candlesAfterStep.length > 0) {
-        const goldmine = detectGoldmine(
-          latestStep,
-          candlesAfterStep,
-          existingGoldmineRef.current
-        );
-        
-        if (goldmine) {
-          existingGoldmineRef.current = goldmine;
-          newEvents.push({
-            type: 'GOLDMINE',
-            data: goldmine,
-            timestamp: Date.now()
-          });
-          
-          // Mark the Golden Candle in goldmineQual array for UI rendering
-          if (goldmine.entryIndex !== undefined) {
-            const newGoldmineQual = new Array<boolean>(candles.length).fill(false);
-            // Copy existing goldmine qualifications and add new one
-            newGoldmineQual[goldmine.entryIndex] = true;
-            setGoldmineQual(newGoldmineQual);
-          }
-        }
-      }
-    }
-
     if (activePosition) {
-      for (let i = activePosition.openIndex; i < candles.length; i++) {
-        const partialCandles = candles.slice(0, i + 1);
+      for (let i = activePosition.openIndex; i < haCandles.length; i++) {
+        const partialCandles = haCandles.slice(0, i + 1);
         const stopEvent = computeEscalatorStop(activePosition, partialCandles);
         
         if (stopEvent && stopEvent.price) {
           trailStop[i] = stopEvent.price;
-          const closePrice = candles[i].close;
+          const closePrice = haCandles[i].close;
           distToStopPct[i] = ((closePrice - stopEvent.price) / closePrice) * 100;
         }
       }
       
-      const stopEvent = computeEscalatorStop(activePosition, candles);
+      const stopEvent = computeEscalatorStop(activePosition, haCandles);
       
       if (stopEvent) {
         newEvents.push({
@@ -552,9 +669,68 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       }
     }
 
+    // Golden Candle Forensics Detection (Debug Mode)
+    try {
+      // Get required arrays for Golden Candle detection
+      const stepIntrinsicCounts = bjRollingScores.map((_, idx) => stepIntrinsicCount[idx] || 0);
+      const stepBreakoutCounts = bjRollingScores.map((_, idx) => stepBreakoutCount[idx] || 0);
+      const stepContinuanceCounts = bjRollingScores.map((_, idx) => stepContinuanceCount[idx] || 0);
+      const bjIntrinsicScores = bjIntrinsic;
+      const bjCumulativeScores = bjCumulative;
+
+      // Detect Golden Candle forensic candidates (near-misses)
+      const goldenCandidates = detectGoldenCandleCandidates(
+        haCandles,
+        stepIntrinsicCounts,
+        stepBreakoutCounts,
+        stepContinuanceCounts,
+        bjIntrinsicScores,
+        bjCumulativeScores
+      );
+
+      // Initialize forensics arrays
+      const newForensics = new Array<boolean>(haCandles.length).fill(false);
+      const newForensicsNotes = new Array<string>(haCandles.length).fill('-');
+
+      // Emit forensic events for each candidate and populate context arrays
+      goldenCandidates.forEach(candidate => {
+        const forensicEvent: PatternEvent = {
+          type: 'GOLDMINE_FORENSICS',
+          data: candidate,
+          timestamp: candidate.timestamp.getTime(),
+          index: candidate.index
+        };
+        
+        newEvents.push(forensicEvent);
+        
+        // Populate forensics arrays for UI rendering
+        if (candidate.index < haCandles.length) {
+          newForensics[candidate.index] = true;
+          newForensicsNotes[candidate.index] = candidate.failureReason;
+        }
+        
+        logDebug('DEBUG_PATTERN_DETECT', '[GOLDMINE_FORENSICS] Emitting forensic event:', {
+          index: candidate.index,
+          failureReason: candidate.failureReason,
+          nearMissType: candidate.nearMissType,
+          candlePrice: candidate.candlePrice.toFixed(2)
+        });
+      });
+
+      // Update forensics context arrays
+      setGoldmineForensics(newForensics);
+      setGoldmineForensicsNotes(newForensicsNotes);
+
+      logDebug('DEBUG_PATTERN_DETECT', '[GOLDMINE_FORENSICS] Forensic detection complete. Generated', goldenCandidates.length, 'forensic events');
+
+    } catch (error) {
+      console.error('[usePatternBus] Error in Golden Candle forensics detection:', error);
+      console.error('[usePatternBus] Forensics stack trace:', (error as Error).stack);
+    }
+
     setEvents(prev => [...prev, ...newEvents]);
     
-    const dataHash = candles[0]?.datetime + '_' + candles[candles.length - 1]?.datetime + '_' + candles.length;
+    const dataHash = haCandles[0]?.datetime + '_' + haCandles[haCandles.length - 1]?.datetime + '_' + haCandles.length;
     setProcessedDataHash(dataHash);
     
     setIsPatternDetectionComplete(true);

@@ -99,10 +99,11 @@ const patternDescriptions: Record<PatternType, string> = {
   [PatternType.GOLDMINE_CHANNEL]: 'Parallel lines connecting highs and lows',
   [PatternType.GOLDMINE_SHAFT]: 'Arrow-like formation showing thrust direction',
   [PatternType.PIVOT]: 'Horizontal line at pivot level with triangle markers',
-  [PatternType.ROCKETMAN]: 'Curved acceleration line with gradient fill',
-  [PatternType.ESCALATOR]: 'Horizontal lines marking step levels with transitions',
-  [PatternType.BLACKJACK]: 'Card suit symbols showing price/volume correlation',
-  [PatternType.BREAKOUTBOX]: 'Horizontal range breakout following consolidation'
+  [PatternType.ROCKETMAN]: 'Rapid price acceleration with momentum indicators',
+  [PatternType.ESCALATOR]: 'Step-like price progression with support/resistance levels',
+  [PatternType.BLACKJACK]: 'Intrinsic score pattern with cumulative analysis',
+  [PatternType.BREAKOUTBOX]: 'Box consolidation with breakout confirmation',
+  [PatternType.GOLDEN_CANDLE]: 'High-confidence breakout candle with Blackjack validation'
 };
 
 // First letter icons for pattern types
@@ -113,7 +114,8 @@ const patternIcons: Record<PatternType, string> = {
   [PatternType.ROCKETMAN]: 'R',
   [PatternType.ESCALATOR]: 'E',
   [PatternType.BLACKJACK]: 'BJ',
-  [PatternType.BREAKOUTBOX]: 'B'
+  [PatternType.BREAKOUTBOX]: 'BB',
+  [PatternType.GOLDEN_CANDLE]: 'GLD'
 };
 
 /**

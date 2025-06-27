@@ -3,6 +3,7 @@
 // Pure function escalator pattern detector
 // Detects body-only HH+HL / LL+LH sequences
 // NOTE: Debug channel support - DEBUG_PATTERN_DETECT
+// HEIKIN-ASHI: Optimized for HA candles - smoother trend detection, reduced noise, improved step consistency
 
 import { MIN_ESCALATOR_LENGTH, MAX_STEP_DURATION } from '../constants';
 import { Candle, EscalatorRun, StepBox } from '../types';

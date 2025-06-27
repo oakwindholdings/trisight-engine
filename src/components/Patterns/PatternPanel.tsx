@@ -17,6 +17,7 @@ import BreakoutBoxSettingsPanel from './BreakoutBoxSettingsPanel';
 import PivotSettingsPanel from '../Settings/PivotSettingsPanel';
 import DebugSettingsPanel from '../Settings/DebugSettingsPanel';
 import ChartSettingsPanel from '../Settings/ChartSettingsPanel';
+import GoldenCandleSettingsPanel from './GoldenCandleSettingsPanel';
 import useTwelveDataApiKey from '../../hooks/useTwelveDataApiKey';
 import { logDebug } from '../../utils/debug';
 
@@ -150,7 +151,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   onChartHeightChange,
 }) => {
   // Access pattern context for preferences
-  const { preferences = { enabledPatternTypes: [] }, updatePreferences, goldmineQual } = usePatternContext();
+  const { preferences = { enabledPatternTypes: [] }, updatePreferences, goldmineQual, goldenCandleSettings, setGoldenCandleSettings } = usePatternContext();
   
   // Golden Candle filter state with localStorage persistence
   const [showOnlyGoldenCandles, setShowOnlyGoldenCandles] = useState(() => {
@@ -170,7 +171,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   // Define section names as a type for type safety
   type SectionName = 'globalSettings' | 'goldenCandleFilter' |
                   'goldmineChannelSettings' | 'goldmineShaftSettings' | 'rocketmanSettings' | 
-                  'blackjackSettings' | 'escalatorSettings' | 'breakoutBoxSettings' | 'pivotSettings' | 'chartSettings' | 'debugSettings';
+                  'blackjackSettings' | 'escalatorSettings' | 'breakoutBoxSettings' | 'pivotSettings' | 'chartSettings' | 'debugSettings' | 'goldenCandleSettings';
   
   // State to track which sections are open
   const [openSections, setOpenSections] = useState<Record<SectionName, boolean>>({
@@ -184,7 +185,8 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     breakoutBoxSettings: false,
     pivotSettings: false,
     chartSettings: false,
-    debugSettings: false
+    debugSettings: false,
+    goldenCandleSettings: false
   });
 
   const { apiKey, setApiKey } = useTwelveDataApiKey();
@@ -197,11 +199,13 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     minChannelHeight: 1.5,
     minChannelDuration: 20,
     confidenceThreshold: 0.5,
-    preferredDirection: 'ALL' as 'ALL' | ChannelDirection
+    preferredDirection: 'ALL' as 'ALL' | ChannelDirection,
+    showLabels: false
   });
   
   const [goldmineShaftSettings, setGoldmineShaftSettings] = useState({
     enabled: true,
+    showLabels: false,
     minThrustMagnitude: 1.5,
     minRetracementPercentage: 30,
     maxRetracementPercentage: 60,
@@ -217,7 +221,8 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     minMomentumScore: 0.6,
     minVolumeConfirmation: 0.5,
     lookbackPeriods: 5,
-    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection
+    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
+    showLabels: false
   });
   
   const [blackjackSettings, setBlackjackSettings] = useState({
@@ -265,7 +270,8 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     volumeReactionThreshold: 1.2,
     minimumTouchGap: 3,
     detectSupport: true,
-    detectResistance: true
+    detectResistance: true,
+    showLabels: false
   });
   
   // Get pattern context to sync escalator settings
@@ -318,7 +324,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
       window.dispatchEvent(new Event('resize'));
     }, 500);
   };
-  
+
   return (
     <PanelContainer>
       <PanelHeader>
@@ -712,6 +718,41 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
               onChange={(patternType, newSettings) => {
                 setPivotSettings(newSettings);
               }}
+            />
+          </SectionContent>
+        </Section>
+        
+        {/* Golden Candle Pattern */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('goldenCandleSettings')}>
+            <SectionTitle>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type="checkbox" 
+                  id="enable-golden-candle"
+                  checked={preferences?.enabledPatternTypes?.includes(PatternType.GOLDEN_CANDLE) || false}
+                  onChange={(e) => {
+                    const currentTypes = preferences?.enabledPatternTypes || [];
+                    const updatedTypes = e.target.checked
+                      ? [...currentTypes, PatternType.GOLDEN_CANDLE]
+                      : currentTypes.filter((t: PatternType) => t !== PatternType.GOLDEN_CANDLE);
+                    updatePreferences({
+                      ...preferences,
+                      enabledPatternTypes: updatedTypes
+                    });
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ marginRight: '8px' }}
+                />
+                Golden Candle
+              </div>
+            </SectionTitle>
+            <ChevronIcon $isOpen={openSections.goldenCandleSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.goldenCandleSettings}>
+            <GoldenCandleSettingsPanel 
+              settings={goldenCandleSettings}
+              onSettingsChange={setGoldenCandleSettings}
             />
           </SectionContent>
         </Section>

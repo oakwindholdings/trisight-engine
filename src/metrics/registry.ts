@@ -145,5 +145,78 @@ export const MetricRegistry: Record<string, MetricDefinition> = {
     id: 'goldenCandle',
     label: 'Golden Candle',
     calc: (idx, ctx) => ctx.goldmineQual?.[idx] ? 'YES' : '-'
-  }
+  },
+  
+  // Goldmine Shaft Status Metric
+  goldmineShaft: {
+    id: 'goldmineShaft',
+    label: 'Shaft?',
+    calc: (idx, ctx) => ctx.goldmineQual?.[idx] ? 'YES' : '-'
+  },
+  
+  // Rocketman pattern metrics
+  rocketmanConfidence: {
+    id: 'rocketmanConfidence',
+    label: 'Rocket Conf',
+    calc: (idx, ctx) => ctx.rocketmanConfidence?.[idx]?.toFixed(2) ?? '-'
+  },
+  rocketmanAcceleration: {
+    id: 'rocketmanAcceleration',
+    label: 'Accel Rate',
+    calc: (idx, ctx) => ctx.rocketmanAcceleration?.[idx]?.toFixed(2) ?? '-'
+  },
+  
+  // Pivot pattern metrics
+  pivotStrength: {
+    id: 'pivotStrength',
+    label: 'Pivot Str',
+    calc: (idx, ctx) => ctx.pivotStrength?.[idx]?.toFixed(2) ?? '-'
+  },
+  pivotTouchCount: {
+    id: 'pivotTouchCount',
+    label: 'Touches',
+    calc: (idx, ctx) => ctx.pivotTouchCount?.[idx]?.toString() ?? '-'
+  },
+  
+  // Goldmine Channel pattern metrics
+  gmcDepthPercent: {
+    id: 'gmcDepthPercent',
+    label: 'Depth %',
+    calc: (idx, ctx) => (ctx.gmcDepthPercent?.[idx]?.toFixed(1) ?? '-') === '-' ? '-' : ctx.gmcDepthPercent[idx].toFixed(1) + '%'
+  },
+  gmcBaseDuration: {
+    id: 'gmcBaseDuration',
+    label: 'Base Dur',
+    calc: (idx, ctx) => ctx.gmcBaseDuration?.[idx]?.toString() ?? '-'
+  },
+  gmcBreakoutStrength: {
+    id: 'gmcBreakoutStrength',
+    label: 'Breakout',
+    calc: (idx, ctx) => ctx.gmcBreakoutStrength?.[idx]?.toFixed(2) ?? '-'
+  },
+  
+  // Golden Candle pattern metrics
+  goldenCandleQual: {
+    id: 'goldenCandleQual',
+    label: 'Golden',
+    calc: (idx, ctx) => ctx.goldenCandleQual?.[idx] ? 'GOLD' : '-'
+  },
+  goldenScore: {
+    id: 'goldenScore',
+    label: 'GoldScore',
+    calc: (idx, ctx) => ctx.goldenScore?.[idx]?.toFixed(2) ?? '-'
+  },
+  goldmineForensics: {
+    id: 'goldmineForensics',
+    label: 'Forensics',
+    calc: (idx, ctx) => ctx.goldmineForensics?.[idx] ? 'NEAR-MISS' : '-'
+  },
+  goldmineForensicsNotes: {
+    id: 'goldmineForensicsNotes',
+    label: 'Fail Reason',
+    calc: (idx, ctx) => {
+      const note = ctx.goldmineForensicsNotes?.[idx];
+      return (note && note !== '-') ? note : '-';
+    }
+  },
 };

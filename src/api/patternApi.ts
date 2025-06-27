@@ -139,23 +139,31 @@ export const processNewFeedback = async (feedback: PatternFeedback): Promise<voi
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
           detectionSensitivity: 0.6,
           minPatternDuration: 5,
-          maxPatternDuration: 20,
+          maxPatternDuration: 50,
           additionalParams: {}
         },
         [PatternType.BLACKJACK]: {
           confidenceThreshold: 0.7,
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
           detectionSensitivity: 0.6,
-          minPatternDuration: 3,
+          minPatternDuration: 1,
           maxPatternDuration: 10,
           additionalParams: {}
         },
         [PatternType.BREAKOUTBOX]: {
-          confidenceThreshold: 0.6,
+          confidenceThreshold: 0.7,
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
-          detectionSensitivity: 0.5,
+          detectionSensitivity: 0.6,
           minPatternDuration: 3,
           maxPatternDuration: 20,
+          additionalParams: {}
+        },
+        [PatternType.GOLDEN_CANDLE]: {
+          confidenceThreshold: 0.7,
+          timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
+          detectionSensitivity: 0.6,
+          minPatternDuration: 1,
+          maxPatternDuration: 5,
           additionalParams: {}
         }
       },
@@ -168,7 +176,8 @@ export const processNewFeedback = async (feedback: PatternFeedback): Promise<voi
           [PatternType.ROCKETMAN]: 0,
           [PatternType.ESCALATOR]: 0,
           [PatternType.BLACKJACK]: 0,
-          [PatternType.BREAKOUTBOX]: 0
+          [PatternType.BREAKOUTBOX]: 0,
+          [PatternType.GOLDEN_CANDLE]: 0
         },
         feedbackCountByPatternType: {
           [PatternType.GOLDMINE_CHANNEL]: 0,
@@ -177,7 +186,8 @@ export const processNewFeedback = async (feedback: PatternFeedback): Promise<voi
           [PatternType.ROCKETMAN]: 0,
           [PatternType.ESCALATOR]: 0,
           [PatternType.BLACKJACK]: 0,
-          [PatternType.BREAKOUTBOX]: 0
+          [PatternType.BREAKOUTBOX]: 0,
+          [PatternType.GOLDEN_CANDLE]: 0
         },
         falsePositiveRate: 0,
         correctionsByType: [],
@@ -247,23 +257,31 @@ export const getLearningMetrics = async (): Promise<LearningMetrics> => {
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
           detectionSensitivity: 0.6,
           minPatternDuration: 5,
-          maxPatternDuration: 20,
+          maxPatternDuration: 50,
           additionalParams: {}
         },
         [PatternType.BLACKJACK]: {
           confidenceThreshold: 0.7,
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
           detectionSensitivity: 0.6,
-          minPatternDuration: 3,
+          minPatternDuration: 1,
           maxPatternDuration: 10,
           additionalParams: {}
         },
         [PatternType.BREAKOUTBOX]: {
-          confidenceThreshold: 0.6,
+          confidenceThreshold: 0.7,
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
-          detectionSensitivity: 0.5,
+          detectionSensitivity: 0.6,
           minPatternDuration: 3,
           maxPatternDuration: 20,
+          additionalParams: {}
+        },
+        [PatternType.GOLDEN_CANDLE]: {
+          confidenceThreshold: 0.7,
+          timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
+          detectionSensitivity: 0.6,
+          minPatternDuration: 1,
+          maxPatternDuration: 5,
           additionalParams: {}
         }
       },
@@ -276,7 +294,8 @@ export const getLearningMetrics = async (): Promise<LearningMetrics> => {
           [PatternType.ROCKETMAN]: 0,
           [PatternType.ESCALATOR]: 0,
           [PatternType.BLACKJACK]: 0,
-          [PatternType.BREAKOUTBOX]: 0
+          [PatternType.BREAKOUTBOX]: 0,
+          [PatternType.GOLDEN_CANDLE]: 0
         },
         feedbackCountByPatternType: {
           [PatternType.GOLDMINE_CHANNEL]: 0,
@@ -285,7 +304,8 @@ export const getLearningMetrics = async (): Promise<LearningMetrics> => {
           [PatternType.ROCKETMAN]: 0,
           [PatternType.ESCALATOR]: 0,
           [PatternType.BLACKJACK]: 0,
-          [PatternType.BREAKOUTBOX]: 0
+          [PatternType.BREAKOUTBOX]: 0,
+          [PatternType.GOLDEN_CANDLE]: 0
         },
         falsePositiveRate: 0,
         correctionsByType: [],
@@ -348,23 +368,31 @@ export const exportLearningModel = async (): Promise<LearningModelState> => {
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
           detectionSensitivity: 0.6,
           minPatternDuration: 5,
-          maxPatternDuration: 20,
+          maxPatternDuration: 50,
           additionalParams: {}
         },
         [PatternType.BLACKJACK]: {
           confidenceThreshold: 0.7,
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
           detectionSensitivity: 0.6,
-          minPatternDuration: 3,
+          minPatternDuration: 1,
           maxPatternDuration: 10,
           additionalParams: {}
         },
         [PatternType.BREAKOUTBOX]: {
-          confidenceThreshold: 0.6,
+          confidenceThreshold: 0.7,
           timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
-          detectionSensitivity: 0.5,
+          detectionSensitivity: 0.6,
           minPatternDuration: 3,
           maxPatternDuration: 20,
+          additionalParams: {}
+        },
+        [PatternType.GOLDEN_CANDLE]: {
+          confidenceThreshold: 0.7,
+          timeframeWeights: { '1day': 1.0, '1hour': 0.8, '15min': 0.6 },
+          detectionSensitivity: 0.6,
+          minPatternDuration: 1,
+          maxPatternDuration: 5,
           additionalParams: {}
         }
       },
@@ -377,7 +405,8 @@ export const exportLearningModel = async (): Promise<LearningModelState> => {
           [PatternType.ROCKETMAN]: 0,
           [PatternType.ESCALATOR]: 0,
           [PatternType.BLACKJACK]: 0,
-          [PatternType.BREAKOUTBOX]: 0
+          [PatternType.BREAKOUTBOX]: 0,
+          [PatternType.GOLDEN_CANDLE]: 0
         },
         feedbackCountByPatternType: {
           [PatternType.GOLDMINE_CHANNEL]: 0,
@@ -386,7 +415,8 @@ export const exportLearningModel = async (): Promise<LearningModelState> => {
           [PatternType.ROCKETMAN]: 0,
           [PatternType.ESCALATOR]: 0,
           [PatternType.BLACKJACK]: 0,
-          [PatternType.BREAKOUTBOX]: 0
+          [PatternType.BREAKOUTBOX]: 0,
+          [PatternType.GOLDEN_CANDLE]: 0
         },
         falsePositiveRate: 0,
         correctionsByType: [],

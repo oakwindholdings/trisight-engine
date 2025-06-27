@@ -29,10 +29,11 @@ function generatePatternLabel(pattern: Pattern): string {
     [PatternType.ESCALATOR]: 'ESC',
     [PatternType.BLACKJACK]: 'BJ',
     [PatternType.BREAKOUTBOX]: 'BREAKOUT',
-    [PatternType.GOLDMINE_CHANNEL]: 'GOLDMINE CH',
-    [PatternType.GOLDMINE_SHAFT]: 'GOLDMINE SH',
+    [PatternType.GOLDMINE_CHANNEL]: 'GMC',
+    [PatternType.GOLDMINE_SHAFT]: 'SHAFT',
     [PatternType.PIVOT]: 'PIVOT',
-    [PatternType.ROCKETMAN]: 'ROCKET'
+    [PatternType.ROCKETMAN]: 'ROCKET',
+    [PatternType.GOLDEN_CANDLE]: 'GOLD'
   };
 
   const baseLabel = patternTypeMap[pattern.type] || pattern.type;
@@ -43,6 +44,9 @@ function generatePatternLabel(pattern: Pattern): string {
     direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
   } else if (pattern.type === PatternType.GOLDMINE_SHAFT && 'direction' in pattern) {
     direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
+  } else if (pattern.type === PatternType.GOLDMINE_CHANNEL && 'direction' in pattern) {
+    // GMC patterns: ↑ for ASCENDING (upward breakout), ↓ for DESCENDING (downward breakout)
+    direction = ` ${pattern.direction === 'ASCENDING' ? DIRECTION_ARROWS.UP : DIRECTION_ARROWS.DOWN}`;
   } else if (pattern.type === PatternType.PIVOT && 'pivotType' in pattern) {
     direction = ` ${pattern.pivotType === 'SUPPORT' ? DIRECTION_ARROWS.UP : DIRECTION_ARROWS.DOWN}`;
   } else if (pattern.type === PatternType.ROCKETMAN && 'direction' in pattern) {
@@ -114,7 +118,11 @@ const PatternRendererImpl = {
     escalatorSettings: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean } = { enabled: true, showLabels: true, showBreakoutBoxes: true },
     breakoutBoxes: any[] = [], // Add breakoutBoxes parameter
     candles: any[] = [], // Add candles parameter for fresh timestamp lookup
-    breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number } // Add independent breakoutBoxSettings
+    breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number }, // Add independent breakoutBoxSettings
+    pivotSettings: { showLabels: boolean } = { showLabels: false },
+    goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
+    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean } = { showLabels: false, showNearMiss: false },
+    goldenNearMisses: boolean[] = [] // Add goldenNearMisses parameter for Dick O'Leary compliance
   ) {
     if (!ctx) return;
     
@@ -192,8 +200,13 @@ const PatternRendererImpl = {
       });
     }
     
-    // Render pattern labels after all patterns
-    this.renderPatternLabels(ctx, visiblePatterns, timeScale, priceScale, dimensions);
+    // Render Golden Candle near-miss overlays if present (Dick O'Leary Compliance)
+    if (goldenCandleSettings.showNearMiss && goldenNearMisses && goldenNearMisses.length > 0 && candles && candles.length > 0) {
+      this.renderGoldenNearMisses(ctx, goldenNearMisses, candles, timeScale, priceScale, dimensions);
+    }
+    
+    // Render pattern labels after all patterns (including Pivot and Goldmine Channel labels if enabled)
+    this.renderPatternLabels(ctx, visiblePatterns, timeScale, priceScale, dimensions, pivotSettings, goldmineChannelSettings, goldenCandleSettings);
   },
   
   renderPattern(
@@ -370,19 +383,18 @@ const PatternRendererImpl = {
     if (pattern.touchPoints) {
       pattern.touchPoints.forEach((point: any) => {
         const pointX = timeScale.scale(point.time);
-        const triangleSize = 6;
+        const pointY = priceScale.scale(point.price);
         
         ctx.beginPath();
+        ctx.moveTo(pointX, pivotY);
         if (pattern.pivotType === 'SUPPORT') {
           // Triangle pointing up for support
-          ctx.moveTo(pointX, pivotY);
-          ctx.lineTo(pointX - triangleSize, pivotY + triangleSize);
-          ctx.lineTo(pointX + triangleSize, pivotY + triangleSize);
+          ctx.lineTo(pointX - 6, pivotY + 6);
+          ctx.lineTo(pointX + 6, pivotY + 6);
         } else {
           // Triangle pointing down for resistance
-          ctx.moveTo(pointX, pivotY);
-          ctx.lineTo(pointX - triangleSize, pivotY - triangleSize);
-          ctx.lineTo(pointX + triangleSize, pivotY - triangleSize);
+          ctx.lineTo(pointX - 6, pivotY - 6);
+          ctx.lineTo(pointX + 6, pivotY - 6);
         }
         ctx.closePath();
         ctx.fill();
@@ -825,6 +837,60 @@ const PatternRendererImpl = {
     }
   },
   
+  renderGoldenNearMisses(
+    ctx: CanvasRenderingContext2D,
+    goldenNearMisses: boolean[],
+    candles: any[],
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions
+  ) {
+    // DICK O'LEARY COMPLIANCE: Render near-miss Golden Candle candidates with black fill/outline
+    // This provides forensic visualization for breakout opportunities that nearly qualified
+    
+    ctx.save();
+    
+    // Set black overlay styling for near-miss candidates
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Semi-transparent black fill
+    
+    let renderedCount = 0;
+    
+    goldenNearMisses.forEach((isNearMiss, index) => {
+      if (isNearMiss && index < candles.length) {
+        const candle = candles[index];
+        
+        // Calculate candle position and dimensions
+        const x = timeScale.scale(new Date(candle.timestamp));
+        const candleWidth = Math.max(1, timeScale.bandwidth ? timeScale.bandwidth() : 4);
+        
+        // Calculate candle body dimensions using HA-aware logic
+        const bodyTop = priceScale.scale(Math.max(candle.open, candle.close));
+        const bodyBottom = priceScale.scale(Math.min(candle.open, candle.close));
+        const bodyHeight = Math.max(1, bodyBottom - bodyTop);
+        
+        // Only render if candle is within visible chart area
+        if (x >= dimensions.margin.left && x <= dimensions.width - dimensions.margin.right) {
+          // Draw black fill overlay
+          ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+          
+          // Draw black outline
+          ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+          
+          renderedCount++;
+        }
+      }
+    });
+    
+    ctx.restore();
+    
+    // Debug logging for rendered near-miss overlays
+    if (renderedCount > 0) {
+      console.log(`[DEBUG_GOLDEN_MISS] [PatternRenderer] Rendered ${renderedCount} Golden Candle near-miss overlays with Dick O'Leary compliance`);
+    }
+  },
+  
   renderFeedbackIndicator(
     ctx: CanvasRenderingContext2D,
     pattern: Pattern,
@@ -855,7 +921,10 @@ const PatternRendererImpl = {
     patterns: Pattern[],
     timeScale: any,
     priceScale: any,
-    dimensions: ChartDimensions
+    dimensions: ChartDimensions,
+    pivotSettings: { showLabels: boolean } = { showLabels: false },
+    goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
+    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean } = { showLabels: false, showNearMiss: false }
   ) {
     const labelPositions = this.placePatternLabels(
       patterns,
@@ -911,6 +980,59 @@ const PatternRendererImpl = {
         ctx.stroke();
       }
     });
+    
+    // Render Pivot labels if enabled
+    if (pivotSettings.showLabels) {
+      patterns.forEach(pattern => {
+        if (pattern.type === PatternType.PIVOT) {
+          const startX = timeScale.scale(pattern.startTime);
+          const endX = timeScale.scale(pattern.endTime);
+          const pivotY = priceScale.scale(pattern.pivotLevel);
+          const labelX = (startX + endX) / 2;
+          const labelY = pivotY - 10;
+          ctx.font = LABEL_FONT;
+          ctx.fillStyle = '#212121'; // Dark gray
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+        }
+      });
+    }
+    
+    // Render Goldmine Channel labels if enabled
+    if (goldmineChannelSettings.showLabels) {
+      patterns.forEach(pattern => {
+        if (pattern.type === PatternType.GOLDMINE_CHANNEL) {
+          const startX = timeScale.scale(pattern.startTime);
+          const endX = timeScale.scale(pattern.endTime);
+          const upperY = priceScale.scale(pattern.upperBoundary);
+          const labelX = (startX + endX) / 2;
+          const labelY = upperY - 10;
+          ctx.font = LABEL_FONT;
+          ctx.fillStyle = '#212121'; // Dark gray
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+        }
+      });
+    }
+    
+    // Render Golden Candle labels if enabled
+    if (goldenCandleSettings.showLabels) {
+      patterns.forEach(pattern => {
+        if (pattern.type === PatternType.GOLDEN_CANDLE) {
+          const startX = timeScale.scale(pattern.startTime);
+          const endX = timeScale.scale(pattern.endTime);
+          const labelX = (startX + endX) / 2;
+          const labelY = priceScale.scale((pattern.highPrice + pattern.lowPrice) / 2) - 10;
+          ctx.font = LABEL_FONT;
+          ctx.fillStyle = '#212121'; // Dark gray
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+        }
+      });
+    }
   },
   
   placePatternLabels(

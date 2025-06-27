@@ -857,6 +857,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       escalatorSettings: patternContext.escalatorSettings,
       breakoutBoxes, // Pass breakoutBoxes to renderChart
       breakoutBoxSettings: patternContext.breakoutBoxSettings, // Add breakoutBoxSettings
+      goldenCandleSettings: patternContext.goldenCandleSettings, // Golden Candle settings with near-miss toggle
+      goldenNearMisses: patternContext.goldenNearMisses || [], // Golden Candle near-miss overlays
       chartSettings: {
         isHeikinAshi: candleType === 'heikin_ashi',
         showVolume: showVolume,

@@ -56,6 +56,46 @@ interface PatternContextType {
   escalatorSteps: PatternEvent[];
   setEscalatorSteps: (events: PatternEvent[]) => void;
   
+  // Rocketman pattern metrics
+  rocketmanConfidence: number[];
+  setRocketmanConfidence: (values: number[]) => void;
+  rocketmanAcceleration: number[];
+  setRocketmanAcceleration: (values: number[]) => void;
+  rocketmanDirection: ('LONG' | 'SHORT')[];
+  setRocketmanDirection: (values: ('LONG' | 'SHORT')[]) => void;
+  
+  // Pivot pattern metrics
+  pivotDirection: ('SUPPORT' | 'RESISTANCE' | null)[];
+  setPivotDirection: (values: ('SUPPORT' | 'RESISTANCE' | null)[]) => void;
+  pivotStrength: number[];
+  setPivotStrength: (values: number[]) => void;
+  pivotTouchCount: number[];
+  setPivotTouchCount: (values: number[]) => void;
+  
+  // Goldmine Channel pattern metrics
+  gmcDepthPercent: number[];
+  setGmcDepthPercent: (values: number[]) => void;
+  gmcBreakoutStrength: number[];
+  setGmcBreakoutStrength: (values: number[]) => void;
+  gmcBaseDuration: number[];
+  setGmcBaseDuration: (values: number[]) => void;
+  
+  // Golden Candle pattern metrics
+  goldenCandleQual: boolean[];
+  setGoldenCandleQual: (values: boolean[]) => void;
+  goldenScore: number[];
+  setGoldenScore: (values: number[]) => void;
+  goldenDirection: ('LONG' | 'SHORT' | null)[];
+  setGoldenDirection: (values: ('LONG' | 'SHORT' | null)[]) => void;
+  
+  // Golden Candle Forensics (Debug Mode)
+  goldmineForensics: boolean[];
+  setGoldmineForensics: (values: boolean[]) => void;
+  goldmineForensicsNotes: string[];
+  setGoldmineForensicsNotes: (values: string[]) => void;
+  goldenNearMisses: boolean[];
+  setGoldenNearMisses: (values: boolean[]) => void;
+  
   // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
   stepIntrinsicCount: number[];
   setStepIntrinsicCount: (values: number[]) => void;
@@ -100,6 +140,29 @@ interface PatternContextType {
   // BreakoutBox independent settings
   breakoutBoxSettings: BreakoutBoxSettings;
   setBreakoutBoxSettings: (settings: BreakoutBoxSettings) => void;
+  // Golden Candle settings with near-miss toggle
+  goldenCandleSettings: {
+    enabled: boolean;
+    showLabels: boolean;
+    showForensics: boolean;
+    showNearMiss: boolean;
+    minContinuanceCount: number;
+    minCumulativeScore: number;
+    confidenceThreshold: number;
+    intrinsicScoreRequired: number;
+    preferredDirection: 'LONG' | 'SHORT' | 'BOTH';
+  };
+  setGoldenCandleSettings: (settings: {
+    enabled: boolean;
+    showLabels: boolean;
+    showForensics: boolean;
+    showNearMiss: boolean;
+    minContinuanceCount: number;
+    minCumulativeScore: number;
+    confidenceThreshold: number;
+    intrinsicScoreRequired: number;
+    preferredDirection: 'LONG' | 'SHORT' | 'BOTH';
+  }) => void;
 }
 
 // Create the context with initial values
@@ -146,6 +209,46 @@ const initialPatternContext: PatternContextType = {
   escalatorSteps: [],
   setEscalatorSteps: () => {},
   
+  // Rocketman pattern metrics
+  rocketmanConfidence: [],
+  setRocketmanConfidence: () => {},
+  rocketmanAcceleration: [],
+  setRocketmanAcceleration: () => {},
+  rocketmanDirection: [],
+  setRocketmanDirection: () => {},
+  
+  // Pivot pattern metrics
+  pivotDirection: [],
+  setPivotDirection: () => {},
+  pivotStrength: [],
+  setPivotStrength: () => {},
+  pivotTouchCount: [],
+  setPivotTouchCount: () => {},
+  
+  // Goldmine Channel pattern metrics
+  gmcDepthPercent: [],
+  setGmcDepthPercent: () => {},
+  gmcBreakoutStrength: [],
+  setGmcBreakoutStrength: () => {},
+  gmcBaseDuration: [],
+  setGmcBaseDuration: () => {},
+  
+  // Golden Candle pattern metrics
+  goldenCandleQual: [],
+  setGoldenCandleQual: () => {},
+  goldenScore: [],
+  setGoldenScore: () => {},
+  goldenDirection: [],
+  setGoldenDirection: () => {},
+  
+  // Golden Candle Forensics (Debug Mode)
+  goldmineForensics: [],
+  setGoldmineForensics: () => {},
+  goldmineForensicsNotes: [],
+  setGoldmineForensicsNotes: () => {},
+  goldenNearMisses: [],
+  setGoldenNearMisses: () => {},
+  
   // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
   stepIntrinsicCount: [],
   setStepIntrinsicCount: () => {},
@@ -174,7 +277,19 @@ const initialPatternContext: PatternContextType = {
   },
   setEscalatorSettings: () => {},
   breakoutBoxSettings: {} as BreakoutBoxSettings,
-  setBreakoutBoxSettings: () => {}
+  setBreakoutBoxSettings: () => {},
+  goldenCandleSettings: {
+    enabled: true,
+    showLabels: true,
+    showForensics: true,
+    showNearMiss: true,
+    minContinuanceCount: 0,
+    minCumulativeScore: 0,
+    confidenceThreshold: 0,
+    intrinsicScoreRequired: 0,
+    preferredDirection: 'BOTH'
+  },
+  setGoldenCandleSettings: () => {}
 };
 
 export const PatternContext = createContext<PatternContextType>(initialPatternContext);
@@ -192,7 +307,23 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
   const patternHook = usePatterns(data);
   
   // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = useMemo(() => patternHook, [
+  const contextValue = useMemo(() => ({
+    ...patternHook,
+    goldenCandleQual: patternHook.goldenCandleQual,
+    setGoldenCandleQual: patternHook.setGoldenCandleQual,
+    goldenScore: patternHook.goldenScore,
+    setGoldenScore: patternHook.setGoldenScore,
+    goldenDirection: patternHook.goldenDirection,
+    setGoldenDirection: patternHook.setGoldenDirection,
+    goldmineForensics: patternHook.goldmineForensics,
+    setGoldmineForensics: patternHook.setGoldmineForensics,
+    goldmineForensicsNotes: patternHook.goldmineForensicsNotes,
+    setGoldmineForensicsNotes: patternHook.setGoldmineForensicsNotes,
+    goldenNearMisses: patternHook.goldenNearMisses,
+    setGoldenNearMisses: patternHook.setGoldenNearMisses,
+    goldenCandleSettings: patternHook.goldenCandleSettings,
+    setGoldenCandleSettings: patternHook.setGoldenCandleSettings
+  }), [
     patternHook.patterns,
     patternHook.visiblePatterns,
     patternHook.selectedPattern,
@@ -232,7 +363,39 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     patternHook.stepBreakoutCount,
     patternHook.setStepBreakoutCount,
     patternHook.stepContinuanceCount,
-    patternHook.setStepContinuanceCount
+    patternHook.setStepContinuanceCount,
+    patternHook.rocketmanConfidence,
+    patternHook.setRocketmanConfidence,
+    patternHook.rocketmanAcceleration,
+    patternHook.setRocketmanAcceleration,
+    patternHook.rocketmanDirection,
+    patternHook.setRocketmanDirection,
+    patternHook.pivotDirection,
+    patternHook.setPivotDirection,
+    patternHook.pivotStrength,
+    patternHook.setPivotStrength,
+    patternHook.pivotTouchCount,
+    patternHook.setPivotTouchCount,
+    patternHook.gmcDepthPercent,
+    patternHook.setGmcDepthPercent,
+    patternHook.gmcBreakoutStrength,
+    patternHook.setGmcBreakoutStrength,
+    patternHook.gmcBaseDuration,
+    patternHook.setGmcBaseDuration,
+    patternHook.goldenCandleQual,
+    patternHook.setGoldenCandleQual,
+    patternHook.goldenScore,
+    patternHook.setGoldenScore,
+    patternHook.goldenDirection,
+    patternHook.setGoldenDirection,
+    patternHook.goldmineForensics,
+    patternHook.setGoldmineForensics,
+    patternHook.goldmineForensicsNotes,
+    patternHook.setGoldmineForensicsNotes,
+    patternHook.goldenNearMisses,
+    patternHook.setGoldenNearMisses,
+    patternHook.goldenCandleSettings,
+    patternHook.setGoldenCandleSettings
   ]);
   
   // Log when provider renders

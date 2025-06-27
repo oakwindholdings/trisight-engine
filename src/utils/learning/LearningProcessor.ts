@@ -438,6 +438,12 @@ export class LearningProcessor {
         minConfidence: 0.6,
         boundaryPadding: 0.05,
         typeSpecificParameters: this.getDefaultBreakoutBoxParameters()
+      },
+      [PatternType.GOLDEN_CANDLE]: {
+        sensitivity: 0.5,
+        minConfidence: 0.7,
+        boundaryPadding: 0.02,
+        typeSpecificParameters: {} // Golden Candle uses internal Blackjack parameters
       }
     };
   }

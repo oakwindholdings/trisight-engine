@@ -36,6 +36,8 @@ interface RenderArgs {
   breakoutBoxes?: any[];
   breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number };
   goldmineQual?: boolean[]; // Golden Candle indicators
+  goldenCandleSettings?: { showLabels: boolean; showNearMiss: boolean }; // Golden Candle settings including near-miss toggle
+  goldenNearMisses?: boolean[]; // Golden Candle near-miss overlays
   // Chart settings for Heikin-Ashi and display options
   chartSettings?: {
     isHeikinAshi: boolean;
@@ -64,6 +66,8 @@ export function renderChart(args: RenderArgs) {
     breakoutBoxes = [],
     breakoutBoxSettings = { enabled: true, showBreakoutBoxes: true, minStallLength: 3, breakoutMultiplier: 2, stallThreshold: 0.5 },
     goldmineQual = [],
+    goldenCandleSettings = { showLabels: false, showNearMiss: false },
+    goldenNearMisses = [],
     chartSettings = { isHeikinAshi: false, showVolume: true, showGrid: true }
   } = args;
 
@@ -145,7 +149,23 @@ export function renderChart(args: RenderArgs) {
     }))
   });
   
-  PatternRenderer.render(patternsCtx, visiblePatterns, timeScale, priceScale, { width, height, margin }, selectedPattern || null, escalatorSteps, escalatorSettings, breakoutBoxes, filteredData, breakoutBoxSettings);
+  PatternRenderer.render(
+    patternsCtx, 
+    visiblePatterns, 
+    timeScale, 
+    priceScale, 
+    { width, height, margin }, 
+    selectedPattern || null, 
+    escalatorSteps, 
+    escalatorSettings, 
+    breakoutBoxes, 
+    filteredData, 
+    breakoutBoxSettings,
+    { showLabels: false }, // pivotSettings
+    { showLabels: false }, // goldmineChannelSettings  
+    goldenCandleSettings, // goldenCandleSettings with near-miss toggle
+    goldenNearMisses // goldenNearMisses - will be populated by pattern detection
+  );
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });
 }

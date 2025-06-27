@@ -119,6 +119,7 @@ interface RocketmanSettings {
   minVolumeConfirmation: number;
   lookbackPeriods: number;
   preferredDirection: ThrustDirection | 'BOTH';
+  showLabels: boolean;
 }
 
 interface RocketmanSettingsPanelProps {
@@ -149,6 +150,14 @@ const RocketmanSettingsPanel: React.FC<RocketmanSettingsPanelProps> = ({
             onChange={(e) => handleChange('enabled', e.target.checked)}
           />
           Enable Rocketman Detection
+        </StyledCheckboxLabel>
+        <StyledCheckboxLabel>
+          <StyledCheckbox
+            type="checkbox"
+            checked={settings.showLabels}
+            onChange={(e) => handleChange('showLabels', e.target.checked)}
+          />
+          Show Labels
         </StyledCheckboxLabel>
       </CheckboxGroup>
       
