@@ -126,6 +126,7 @@ const PatternRendererImpl = {
     pivotSettings: { showLabels: boolean } = { showLabels: false },
     goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
     goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean; showEntryExitLabels?: boolean } = { showLabels: false, showNearMiss: false, showEntryExitLabels: true },
+    blackjackSettings: { showLabels: boolean } = { showLabels: true },
     goldenNearMisses: boolean[] = [], // Add goldenNearMisses parameter for Dick O'Leary compliance
     goldenCandleEntries: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: ENTRY events
     goldenCandleExits: any[] = [] // TriSight Detection Input Refactor Patch v1.3.3: EXIT events
@@ -213,7 +214,7 @@ const PatternRendererImpl = {
     
     // Render each pattern
     visiblePatterns.forEach(pattern => {
-      this.renderPattern(ctx, pattern, timeScale, priceScale, dimensions, pattern.id === selectedPattern?.id);
+      this.renderPattern(ctx, pattern, timeScale, priceScale, dimensions, pattern.id === selectedPattern?.id, blackjackSettings);
     });
     
     // Render escalator steps only if enabled
@@ -252,7 +253,8 @@ const PatternRendererImpl = {
     timeScale: any,
     priceScale: any,
     dimensions: ChartDimensions,
-    isSelected: boolean
+    isSelected: boolean,
+    blackjackSettings: { showLabels: boolean } = { showLabels: true }
   ) {
     // Save current context state
     ctx.save();
@@ -287,7 +289,7 @@ const PatternRendererImpl = {
         this.renderEscalator(ctx, pattern, timeScale, priceScale);
         break;
       case PatternType.BLACKJACK:
-        this.renderBlackjack(ctx, pattern, timeScale, priceScale);
+        this.renderBlackjack(ctx, pattern, timeScale, priceScale, blackjackSettings.showLabels);
         break;
     }
     
@@ -576,7 +578,8 @@ const PatternRendererImpl = {
     ctx: CanvasRenderingContext2D,
     pattern: any,
     timeScale: any,
-    priceScale: any
+    priceScale: any,
+    showLabels: boolean = true
   ) {
     if (!pattern.priceVolumeCorrelations || pattern.priceVolumeCorrelations.length === 0) return;
     
@@ -586,31 +589,34 @@ const PatternRendererImpl = {
     );
     const centerY = priceScale.scale((pattern.highPrice + pattern.lowPrice) / 2);
     
-    // Draw card suit symbols at confirmation points
-    pattern.priceVolumeCorrelations.forEach((point: any) => {
-      const pointX = timeScale.scale(point.time);
-      const pointY = priceScale.scale(
-        point.priceMovement === 'up' ? pattern.highPrice : pattern.lowPrice
-      );
-      
-      // Skip points with zero value (no correlation)
-      if (point.value === 0) return;
-      
-      // Choose symbol based on value
-      let symbol = '';
-      if (point.value === 1) {
-        symbol = '♠'; // Spade for positive correlation
-      } else if (point.value === -1) {
-        symbol = '♦'; // Diamond for negative correlation
-      }
-      
-      // Draw the symbol
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      ctx.fillText(symbol, pointX, pointY);
-    });
+    // Only render labels if showLabels is enabled
+    if (showLabels) {
+      // Draw card suit symbols at confirmation points
+      pattern.priceVolumeCorrelations.forEach((point: any) => {
+        const pointX = timeScale.scale(point.time);
+        const pointY = priceScale.scale(
+          point.priceMovement === 'up' ? pattern.highPrice : pattern.lowPrice
+        );
+        
+        // Skip points with zero value (no correlation)
+        if (point.value === 0) return;
+        
+        // Choose symbol based on value
+        let symbol = '';
+        if (point.value === 1) {
+          symbol = '♠'; // Spade for positive correlation
+        } else if (point.value === -1) {
+          symbol = '♦'; // Diamond for negative correlation
+        }
+        
+        // Draw the symbol
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.fillText(symbol, pointX, pointY);
+      });
+    }
     
     // Draw connection lines to related patterns if any
     if (pattern.relatedPatternIds && pattern.relatedPatternIds.length > 0) {
@@ -627,26 +633,29 @@ const PatternRendererImpl = {
       ctx.stroke();
     }
     
-    // Draw numerical confidence display
-    const scoreDisplay = Math.round(pattern.score).toString();
-    
-    // Background for score
-    const textWidth = ctx.measureText(scoreDisplay).width;
-    const padX = 5, padY = 3;
-    
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.beginPath();
-    ctx.rect(
-      centerX - textWidth / 2 - padX,
-      centerY - 6 - padY,
-      textWidth + padX * 2,
-      12 + padY * 2
-    );
-    ctx.fill();
-    
-    // Score text
-    ctx.fillStyle = pattern.score > 10 ? '#4CAF50' : '#FFC107';
-    ctx.fillText(scoreDisplay, centerX, centerY);
+    // Only render numerical score if showLabels is enabled
+    if (showLabels) {
+      // Draw numerical confidence display
+      const scoreDisplay = Math.round(pattern.score).toString();
+      
+      // Background for score
+      const textWidth = ctx.measureText(scoreDisplay).width;
+      const padX = 5, padY = 3;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.beginPath();
+      ctx.rect(
+        centerX - textWidth / 2 - padX,
+        centerY - 6 - padY,
+        textWidth + padX * 2,
+        12 + padY * 2
+      );
+      ctx.fill();
+      
+      // Score text
+      ctx.fillStyle = pattern.score > 10 ? '#4CAF50' : '#FFC107';
+      ctx.fillText(scoreDisplay, centerX, centerY);
+    }
   },
   
   renderEscalatorStep(

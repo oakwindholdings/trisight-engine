@@ -37,6 +37,7 @@ interface RenderArgs {
   escalatorSettings?: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean };
   breakoutBoxes?: any[];
   breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number };
+  blackjackSettings?: { showLabels: boolean };
   goldmineQual?: boolean[]; // Golden Candle indicators
   goldenCandleSettings?: { showLabels: boolean; showNearMiss: boolean }; // Golden Candle settings including near-miss toggle
   goldenNearMisses?: boolean[]; // Golden Candle near-miss overlays
@@ -67,6 +68,7 @@ export function renderChart(args: RenderArgs) {
     escalatorSettings = { enabled: true, showLabels: true, showBreakoutBoxes: true },
     breakoutBoxes = [],
     breakoutBoxSettings = { enabled: true, showBreakoutBoxes: true, minStallLength: 3, breakoutMultiplier: 2, stallThreshold: 0.5 },
+    blackjackSettings = { showLabels: true },
     goldmineQual = [],
     goldenCandleSettings = { showLabels: false, showNearMiss: false },
     goldenNearMisses = [],
@@ -167,6 +169,7 @@ export function renderChart(args: RenderArgs) {
     { showLabels: false }, // pivotSettings
     { showLabels: false }, // goldmineChannelSettings  
     goldenCandleSettings, // goldenCandleSettings with near-miss toggle
+    blackjackSettings, // blackjackSettings - BlackJack label toggle from UI
     goldenNearMisses // goldenNearMisses - will be populated by pattern detection
   );
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
