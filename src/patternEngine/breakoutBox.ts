@@ -188,7 +188,7 @@ export function detectBreakoutBoxes(
             // HA stall too short, continue searching
             i++;
           }
-          // Removed incorrect break - continue scanning for more BreakoutBox patterns
+          break; // Exit inner while loop after processing breakout, continue outer loop
         }
       }
       
