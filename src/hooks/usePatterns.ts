@@ -139,6 +139,7 @@ export function usePatterns(data: CandlestickData[]) {
     return {
       enabled: true,
       showBreakoutBoxes: true,
+      showLabels: false,
       minStallLength: 3,
       breakoutMultiplier: 0.5,
       stallThreshold: 0.1

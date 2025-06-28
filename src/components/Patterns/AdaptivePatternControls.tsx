@@ -139,6 +139,7 @@ interface BlackjackSettings {
   contextTimeframeMultiplier: number;
   basePriceChangeThreshold: number;
   baseVolumeChangeThreshold: number;
+  showLabels: boolean;
 }
 
 interface EscalatorSettings {
@@ -214,7 +215,8 @@ const AdaptivePatternControls: React.FC<AdaptivePatternControlsProps> = ({
     showContextTimeframe: true,
     contextTimeframeMultiplier: 5,
     basePriceChangeThreshold: 0.1,
-    baseVolumeChangeThreshold: 0.5
+    baseVolumeChangeThreshold: 0.5,
+    showLabels: false
   });
   
   // Default GoldmineChannel settings

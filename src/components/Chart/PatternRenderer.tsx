@@ -703,8 +703,8 @@ const PatternRendererImpl = {
     ctx.fillStyle = fillColor;
     ctx.fillRect(startX, topY, boxWidth, boxHeight);
     
-    // Draw border
-    ctx.strokeStyle = borderColor;
+    // Draw border (transparent)
+    ctx.strokeStyle = 'transparent';
     ctx.lineWidth = 2;
     if (!isActive) {
       ctx.setLineDash([2, 2]); // Dashed when completed

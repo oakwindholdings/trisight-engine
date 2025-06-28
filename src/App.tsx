@@ -918,7 +918,7 @@ function AppContent() {
           )}
           
           <div className={mainGridStyles.footer}>
-            TriSight Pattern Training Interface &copy; {new Date().getFullYear()}
+            TriSight Pattern Training Interface v2025.06.28.10.48 &copy; {new Date().getFullYear()}
           </div>
         </>
       ) : (
@@ -1012,7 +1012,7 @@ function AppContent() {
             </>
           </ContentArea>
           <Footer>
-            TriSight Pattern Training Interface &copy; {new Date().getFullYear()}
+            TriSight Pattern Training Interface v2025.06.28.10.48 &copy; {new Date().getFullYear()}
           </Footer>
         </AppContainer>
       )}

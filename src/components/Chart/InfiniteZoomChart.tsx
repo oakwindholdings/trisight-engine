@@ -125,6 +125,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     minPrice: 180,  // More reasonable default
     maxPrice: 220   // More reasonable default
   });
+  const [showResolutionIndicator, setShowResolutionIndicator] = useState(true);
   const [visibleDataIndices, setVisibleDataIndices] = useState({ start: 0, end: 0 });
   const [initialVisibleIndices, setInitialVisibleIndices] = useState({ start: 0, end: 0 });
 
@@ -1030,12 +1031,13 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
             style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
           />
           
-          {currentResolution && (
+          {currentResolution && showResolutionIndicator && (
             <ResolutionIndicator
               resolution={currentResolution}
               zoomLevel={zoomLevel}
               candleCount={targetCandles}
               isTransitioning={isTransitioning}
+              onClose={() => setShowResolutionIndicator(false)}
             />
           )}
           

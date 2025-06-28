@@ -155,7 +155,7 @@ const ContextBar: React.FC<ContextBarProps> = ({
   onCustomDateRange,
 }) => {
   const { setIsDatePickerOpen } = useUIState();
-  const { symbol, setTimeframe, setSymbol, fetchDateRange, timeframe } = useMarketDataContext();
+  const { symbol, setTimeframe, setSymbol, fetchDateRange, timeframe, clearData } = useMarketDataContext();
   
   // State for symbol info
   const [symbolInfo, setSymbolInfo] = useState<{ symbol: string; name?: string; exchange?: string }>(() => {
@@ -170,8 +170,19 @@ const ContextBar: React.FC<ContextBarProps> = ({
     return { symbol: symbol || '' };
   });
   
-  // State for current symbol input value
-  const [currentSymbol, setCurrentSymbol] = useState(symbol || 'AAPL');
+  // State for current symbol input value - initialize from context or localStorage
+  const [currentSymbol, setCurrentSymbol] = useState(() => {
+    if (symbol) return symbol;
+    // Fallback to localStorage if context symbol isn't ready yet
+    const saved = localStorage.getItem(STORAGE_KEYS.SYMBOL_INFO);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.symbol || 'AAPL';
+      } catch {}
+    }
+    return 'AAPL';
+  });
   
   // State for form inputs - initialize from localStorage
   const [startDate, setStartDate] = useState(() => {
@@ -223,15 +234,39 @@ const ContextBar: React.FC<ContextBarProps> = ({
   // Trigger initial fetch with persisted values on mount
   useEffect(() => {
     const performInitialFetch = async () => {
-      // Only run once on mount and if we have valid dates
-      if (validateDate(startDate) && validateDate(endDate)) {
+      // Only run once on mount and if we have valid dates AND a symbol
+      const hasValidSymbol = symbol || currentSymbol;
+      const hasValidDates = validateDate(startDate) && validateDate(endDate);
+      
+      console.log('[ContextBar] Initial fetch conditions:', {
+        hasValidSymbol,
+        symbol,
+        currentSymbol,
+        hasValidDates,
+        startDate,
+        endDate,
+        selectedTimeframe
+      });
+      
+      if (hasValidSymbol && hasValidDates) {
         console.log('[ContextBar] Preparing initial fetch with persisted values:', {
           symbol,
+          currentSymbol,
+          effectiveSymbol: symbol || currentSymbol,
           startDate,
           endDate,
           timeframe: selectedTimeframe,
           contextTimeframe: timeframe
         });
+        
+        // Ensure we use the correct symbol - prioritize context symbol, fallback to currentSymbol
+        const effectiveSymbol = symbol || currentSymbol;
+        
+        // Update symbol in context if it's not already set
+        if (!symbol && currentSymbol) {
+          console.log('[ContextBar] Setting symbol in context to:', currentSymbol);
+          setSymbol(currentSymbol);
+        }
         
         // Parse dates
         const [startMonth, startDay, startYear] = startDate.split('/').map(Number);
@@ -263,7 +298,7 @@ const ContextBar: React.FC<ContextBarProps> = ({
           };
           
           const interval = intervalMap[selectedTimeframe] || selectedTimeframe;
-          console.log('[ContextBar] Initial fetch using interval:', interval);
+          console.log('[ContextBar] Initial fetch using interval:', interval, 'for symbol:', effectiveSymbol);
           
           // Call fetchDateRange with persisted values and explicit interval
           await fetchDateRange(start, end, interval);
@@ -271,13 +306,23 @@ const ContextBar: React.FC<ContextBarProps> = ({
         } catch (error) {
           console.error('[ContextBar] Initial fetch failed:', error);
         }
+      } else {
+        console.log('[ContextBar] Skipping initial fetch - missing required data:', {
+          hasValidSymbol,
+          hasValidDates,
+          startDate,
+          endDate
+        });
       }
     };
     
-    performInitialFetch();
-    // Only run on mount
+    // Small delay to ensure all contexts are initialized
+    const timeoutId = setTimeout(performInitialFetch, 200);
+    
+    return () => clearTimeout(timeoutId);
+    // Dependencies: symbol and currentSymbol to trigger fetch when symbol context becomes available
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [symbol, currentSymbol]);
   
   // Handle symbol selection from SymbolSearch
   const handleSymbolSelect = (newSymbol: string, name?: string, exchange?: string) => {
@@ -368,6 +413,10 @@ const ContextBar: React.FC<ContextBarProps> = ({
     if (onCustomDateRange) {
       onCustomDateRange(start, end);
     }
+    
+    // Clear existing data first to ensure fresh fetch
+    console.log('[ContextBar] Clearing existing data for fresh fetch');
+    clearData();
     
     // Update symbol in MarketDataContext first
     console.log('[ContextBar] Setting symbol to:', currentSymbol);

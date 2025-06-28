@@ -129,11 +129,20 @@ export interface GoldenCandleSettings {
 interface GoldenCandleSettingsPanelProps {
   settings: GoldenCandleSettings;
   onSettingsChange: (settings: GoldenCandleSettings) => void;
+  // Filter functionality
+  showOnlyGoldenCandles: boolean;
+  onShowOnlyGoldenCandlesChange: (show: boolean) => void;
+  goldenCandleCount: number;
+  isLoading?: boolean;
 }
 
 export const GoldenCandleSettingsPanel: React.FC<GoldenCandleSettingsPanelProps> = ({
   settings,
-  onSettingsChange
+  onSettingsChange,
+  showOnlyGoldenCandles,
+  onShowOnlyGoldenCandlesChange,
+  goldenCandleCount,
+  isLoading = false
 }) => {
   const handleSettingChange = (key: keyof GoldenCandleSettings, value: any) => {
     onSettingsChange({
@@ -146,6 +155,31 @@ export const GoldenCandleSettingsPanel: React.FC<GoldenCandleSettingsPanelProps>
     <Container>
       <Title>Golden Candle Settings</Title>
       
+      {/* Filter Section */}
+      <SettingsGroup>
+        <SettingItem>
+          <CheckboxContainer>
+            <Checkbox
+              type="checkbox"
+              id="show-only-golden-candles"
+              checked={showOnlyGoldenCandles}
+              onChange={(e) => onShowOnlyGoldenCandlesChange(e.target.checked)}
+            />
+            <CheckboxLabel htmlFor="show-only-golden-candles">
+              Show only Golden Candles
+            </CheckboxLabel>
+          </CheckboxContainer>
+          <div style={{ 
+            fontSize: '12px', 
+            color: '#666', 
+            marginTop: '4px' 
+          }}>
+            {isLoading ? 'Loading...' : `${goldenCandleCount} Golden Candles detected`}
+          </div>
+        </SettingItem>
+      </SettingsGroup>
+      
+      {/* Detection Settings */}
       <SettingsGroup>
         <SettingItem>
           <CheckboxContainer>

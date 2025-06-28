@@ -181,6 +181,13 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
     }
   }, [symbol]);
 
+  // Function to clear data (for Apply button functionality)
+  const clearData = useCallback(() => {
+    console.log('[useMarketData] Clearing data for fresh fetch');
+    setData([]);
+    setError(null);
+  }, []);
+
   // Initialize data on mount and when symbol/timeframe changes (unless using custom range)
   useEffect(() => {
     // Only auto-fetch if not using custom range (prevents interference with manual date selections)
@@ -203,6 +210,7 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
     refresh,
     fetchSpecificDay,
     fetchDateRange,
+    clearData,
     marketStatus,
     isUsingCustomRange,
     setIsUsingCustomRange

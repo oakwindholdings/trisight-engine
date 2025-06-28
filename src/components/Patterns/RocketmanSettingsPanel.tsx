@@ -132,10 +132,14 @@ const RocketmanSettingsPanel: React.FC<RocketmanSettingsPanelProps> = ({
   onSettingsChange 
 }) => {
   const handleChange = (key: keyof RocketmanSettings, value: any) => {
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       [key]: value
-    });
+    };
+    onSettingsChange(newSettings);
+    
+    // Persist to localStorage
+    localStorage.setItem('rocketmanSettings', JSON.stringify(newSettings));
   };
 
   return (

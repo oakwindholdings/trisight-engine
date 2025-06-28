@@ -9,6 +9,7 @@ import styled from 'styled-components';
 export interface BreakoutBoxSettings {
   enabled: boolean;
   showBreakoutBoxes: boolean;
+  showLabels: boolean;
   minStallLength: number;
   breakoutMultiplier: number;
   stallThreshold: number;
@@ -92,6 +93,15 @@ const BreakoutBoxSettingsPanel: React.FC<BreakoutBoxSettingsPanelProps> = ({
     console.log('[DEBUG_PATTERN_DETECT] BreakoutBox visibility changed:', e.target.checked);
   };
 
+  const handleShowLabelsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSettings = { ...settings, showLabels: e.target.checked };
+    onSettingsChange(newSettings);
+    
+    // Persist to localStorage
+    localStorage.setItem('patternSettings.breakoutbox', JSON.stringify(newSettings));
+    console.log('[DEBUG_PATTERN_DETECT] BreakoutBox labels visibility changed:', e.target.checked);
+  };
+
   const handleMinStallLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(1, parseInt(e.target.value) || 3);
     const newSettings = { ...settings, minStallLength: value };
@@ -142,6 +152,19 @@ const BreakoutBoxSettingsPanel: React.FC<BreakoutBoxSettingsPanelProps> = ({
           type="checkbox"
           checked={settings.showBreakoutBoxes}
           onChange={handleShowBreakoutBoxesChange}
+          disabled={!settings.enabled}
+        />
+      </SettingRow>
+
+      <SettingRow>
+        <SettingLabel htmlFor="breakoutbox-labels">
+          Show Labels
+        </SettingLabel>
+        <SettingCheckbox
+          id="breakoutbox-labels"
+          type="checkbox"
+          checked={settings.showLabels}
+          onChange={handleShowLabelsChange}
           disabled={!settings.enabled}
         />
       </SettingRow>

@@ -18,6 +18,7 @@ interface MarketDataContextType {
   refresh: () => Promise<void>;
   fetchSpecificDay: (date: Date) => Promise<void>;
   fetchDateRange: (startDate: Date, endDate: Date, interval?: string) => Promise<void>;
+  clearData: () => void;
   marketStatus: {
     isOpen: boolean;
     timeToOpen?: string;
@@ -32,13 +33,14 @@ const initialMarketDataContext: MarketDataContextType = {
   data: [],
   loading: false,
   error: null,
-  symbol: 'AAPL',
+  symbol: '',
   setSymbol: () => {},
   timeframe: '5min',
   setTimeframe: () => {},
   refresh: async () => {},
   fetchSpecificDay: async () => {},
   fetchDateRange: async () => {},
+  clearData: () => {},
   marketStatus: { isOpen: false },
   isUsingCustomRange: false,
   setIsUsingCustomRange: () => {}

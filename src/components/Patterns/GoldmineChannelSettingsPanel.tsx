@@ -132,10 +132,14 @@ const GoldmineChannelSettingsPanel: React.FC<GoldmineChannelSettingsPanelProps> 
   onSettingsChange 
 }) => {
   const handleChange = (key: keyof GoldmineChannelSettings, value: any) => {
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       [key]: value
-    });
+    };
+    onSettingsChange(newSettings);
+    
+    // Persist to localStorage
+    localStorage.setItem('goldmineChannelSettings', JSON.stringify(newSettings));
   };
 
   return (

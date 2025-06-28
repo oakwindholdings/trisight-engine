@@ -169,14 +169,13 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   const isLoading = goldmineQual?.length === 0;
   
   // Define section names as a type for type safety
-  type SectionName = 'globalSettings' | 'goldenCandleFilter' |
+  type SectionName = 'globalSettings' |
                   'goldmineChannelSettings' | 'goldmineShaftSettings' | 'rocketmanSettings' | 
                   'blackjackSettings' | 'escalatorSettings' | 'breakoutBoxSettings' | 'pivotSettings' | 'chartSettings' | 'debugSettings' | 'goldenCandleSettings';
   
   // State to track which sections are open
   const [openSections, setOpenSections] = useState<Record<SectionName, boolean>>({
     globalSettings: false, // All sections closed by default
-    goldenCandleFilter: false,
     goldmineChannelSettings: false,
     goldmineShaftSettings: false,
     rocketmanSettings: false,
@@ -191,39 +190,75 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
 
   const { apiKey, setApiKey } = useTwelveDataApiKey();
   
-  // State for pattern settings
-  const [goldmineChannelSettings, setGoldmineChannelSettings] = useState({
-    enabled: true,
-    minTouchPoints: 4,
-    priceTolerance: 0.2,
-    minChannelHeight: 1.5,
-    minChannelDuration: 20,
-    confidenceThreshold: 0.5,
-    preferredDirection: 'ALL' as 'ALL' | ChannelDirection,
-    showLabels: false
-  });
+  // State for pattern settings with localStorage persistence
+  const getInitialGoldmineChannelSettings = () => {
+    try {
+      const saved = localStorage.getItem('goldmineChannelSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading goldmine channel settings:', error);
+    }
+    return {
+      enabled: true,
+      minTouchPoints: 4,
+      priceTolerance: 0.2,
+      minChannelHeight: 1.5,
+      minChannelDuration: 20,
+      confidenceThreshold: 0.5,
+      preferredDirection: 'ALL' as 'ALL' | ChannelDirection,
+      showLabels: false
+    };
+  };
   
-  const [goldmineShaftSettings, setGoldmineShaftSettings] = useState({
-    enabled: true,
-    showLabels: false,
-    minThrustMagnitude: 1.5,
-    minRetracementPercentage: 30,
-    maxRetracementPercentage: 60,
-    thrustDurationRange: [5, 20] as [number, number],
-    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
-    confidenceThreshold: 0.5
-  });
+  const [goldmineChannelSettings, setGoldmineChannelSettings] = useState(getInitialGoldmineChannelSettings());
   
-  const [rocketmanSettings, setRocketmanSettings] = useState({
-    enabled: true,
-    minAccelerationRate: 0.2,
-    minIntensity: 0.5,
-    minMomentumScore: 0.6,
-    minVolumeConfirmation: 0.5,
-    lookbackPeriods: 5,
-    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
-    showLabels: false
-  });
+  const getInitialGoldmineShaftSettings = () => {
+    try {
+      const saved = localStorage.getItem('goldmineShaftSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading goldmine shaft settings:', error);
+    }
+    return {
+      enabled: true,
+      showLabels: false,
+      minThrustMagnitude: 1.5,
+      minRetracementPercentage: 30,
+      maxRetracementPercentage: 60,
+      thrustDurationRange: [5, 20] as [number, number],
+      preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
+      confidenceThreshold: 0.5
+    };
+  };
+  
+  const [goldmineShaftSettings, setGoldmineShaftSettings] = useState(getInitialGoldmineShaftSettings());
+  
+  const getInitialRocketmanSettings = () => {
+    try {
+      const saved = localStorage.getItem('rocketmanSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading rocketman settings:', error);
+    }
+    return {
+      enabled: true,
+      minAccelerationRate: 0.2,
+      minIntensity: 0.5,
+      minMomentumScore: 0.6,
+      minVolumeConfirmation: 0.5,
+      lookbackPeriods: 5,
+      preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
+      showLabels: false
+    };
+  };
+  
+  const [rocketmanSettings, setRocketmanSettings] = useState(getInitialRocketmanSettings());
   
   const [blackjackSettings, setBlackjackSettings] = useState({
     enabled: true,
@@ -232,7 +267,8 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     showContextTimeframe: true,
     contextTimeframeMultiplier: 5,
     basePriceChangeThreshold: 0.1,
-    baseVolumeChangeThreshold: 0.5
+    baseVolumeChangeThreshold: 0.5,
+    showLabels: false
   });
   
   // Initialize escalator settings from localStorage
@@ -263,19 +299,33 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   
   const [escalatorSettings, setEscalatorSettings] = useState(getInitialEscalatorSettings());
   
-  const [pivotSettings, setPivotSettings] = useState({
-    touchPointThreshold: 3,
-    priceTolerance: 0.3,
-    confidenceThreshold: 0.6,
-    volumeReactionThreshold: 1.2,
-    minimumTouchGap: 3,
-    detectSupport: true,
-    detectResistance: true,
-    showLabels: false
-  });
+  const getInitialPivotSettings = () => {
+    try {
+      const saved = localStorage.getItem('pivotSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading pivot settings:', error);
+    }
+    return {
+      touchPointThreshold: 3,
+      priceTolerance: 0.3,
+      confidenceThreshold: 0.6,
+      volumeReactionThreshold: 1.2,
+      minimumTouchGap: 3,
+      detectSupport: true,
+      detectResistance: true,
+      showLabels: false
+    };
+  };
+  
+  const [pivotSettings, setPivotSettings] = useState(getInitialPivotSettings());
   
   // Get pattern context to sync escalator settings
   const patternContext = usePatternContext();
+  
+  // NOTE: localStorage persistence is handled in individual setting change handlers to avoid infinite loops
   
   // Sync escalator settings with preferences on mount and when preferences change
   useEffect(() => {
@@ -432,41 +482,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
           </SectionContent>
         </Section>
         
-        {/* Golden Candle Filter */}
-        <Section>
-          <SectionHeader onClick={() => toggleSection('goldenCandleFilter')}>
-            <SectionTitle>Golden Candle Filter</SectionTitle>
-            <ChevronIcon $isOpen={openSections.goldenCandleFilter}>›</ChevronIcon>
-          </SectionHeader>
-          <SectionContent $isOpen={openSections.goldenCandleFilter}>
-            <FilterGroup>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: ThemeTokens.spacing.small }}>
-                <input 
-                  type="checkbox" 
-                  id="show-only-golden-candles"
-                  checked={showOnlyGoldenCandles}
-                  onChange={(e) => {
-                    const newValue = e.target.checked;
-                    setShowOnlyGoldenCandles(newValue);
-                    localStorage.setItem('trisight_golden_candle_filter', String(newValue));
-                    onFilterChange({...patternFilters, showOnlyGoldenCandles: newValue});
-                  }}
-                  style={{ marginRight: '8px' }}
-                />
-                <FilterLabel htmlFor="show-only-golden-candles" style={{ margin: 0 }}>
-                  Show only Golden Candles
-                </FilterLabel>
-              </div>
-              <div style={{ 
-                fontSize: ThemeTokens.typography.size.xsmall, 
-                color: ThemeTokens.colors.textSecondary,
-                marginTop: ThemeTokens.spacing.xsmall 
-              }}>
-                {isLoading ? 'Loading...' : `${goldenCandleCount} Golden Candles detected`}
-              </div>
-            </FilterGroup>
-          </SectionContent>
-        </Section>
+
         
         {/* Goldmine Channel Pattern */}
         <Section>
@@ -753,6 +769,14 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
             <GoldenCandleSettingsPanel 
               settings={goldenCandleSettings}
               onSettingsChange={setGoldenCandleSettings}
+              showOnlyGoldenCandles={showOnlyGoldenCandles}
+              onShowOnlyGoldenCandlesChange={(show) => {
+                setShowOnlyGoldenCandles(show);
+                localStorage.setItem('trisight_golden_candle_filter', String(show));
+                onFilterChange({...patternFilters, showOnlyGoldenCandles: show});
+              }}
+              goldenCandleCount={goldenCandleCount}
+              isLoading={isLoading}
             />
           </SectionContent>
         </Section>

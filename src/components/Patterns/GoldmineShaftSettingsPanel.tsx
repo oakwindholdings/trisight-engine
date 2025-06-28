@@ -132,10 +132,14 @@ const GoldmineShaftSettingsPanel: React.FC<GoldmineShaftSettingsPanelProps> = ({
   onSettingsChange
 }) => {
   const handleChange = (key: keyof GoldmineShaftSettings, value: any) => {
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       [key]: value
-    });
+    };
+    onSettingsChange(newSettings);
+    
+    // Persist to localStorage
+    localStorage.setItem('goldmineShaftSettings', JSON.stringify(newSettings));
   };
 
   return (

@@ -12,6 +12,7 @@ interface BlackjackSettings {
   contextTimeframeMultiplier: number;
   basePriceChangeThreshold: number;
   baseVolumeChangeThreshold: number;
+  showLabels: boolean;
 }
 
 interface BlackjackSettingsPanelProps {
@@ -98,6 +99,10 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
     onSettingsChange({ ...settings, minScore: parseInt(e.target.value, 10) });
   };
   
+  const handleShowLabelsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSettingsChange({ ...settings, showLabels: e.target.checked });
+  };
+  
   const handleShowContextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onSettingsChange({ ...settings, showContextTimeframe: e.target.checked });
   };
@@ -126,6 +131,16 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           onChange={handleEnableChange}
         />
         <SettingsLabel htmlFor="enableBlackjack">Enable BlackJack Detection</SettingsLabel>
+      </SettingsRow>
+      
+      <SettingsRow>
+        <SettingsToggle 
+          type="checkbox" 
+          id="showBlackjackLabels"
+          checked={settings.showLabels}
+          onChange={handleShowLabelsChange}
+        />
+        <SettingsLabel htmlFor="showBlackjackLabels">Show Labels</SettingsLabel>
       </SettingsRow>
       
       <SettingsRow>
