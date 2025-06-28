@@ -1,5 +1,6 @@
 // src/patternEngine/index.ts
-// Export all pattern detection functions
+// TriSight Detection Input Refactor Patch v1.3.0: Export near-miss detection and trailing stop functions
+// TriSight Detection Input Refactor Patch v1.3.3: Export ENTRY/EXIT lifecycle detection
 // Provides centralized access to all pattern detection functions
 
 export { detectEscalators } from './escalator';
@@ -19,4 +20,4 @@ export type { GoldmineSignal } from './goldmine';
 export { detectGoldmineChannel, type GoldmineChannelDetection } from './goldmineChannel';
 export { detectPivots, type PivotDetection } from './pivot';
 export { detectRocketman, type RocketmanDetection } from './rocketman';
-export { detectGoldenCandle, detectGoldenCandleCandidates, detectGoldenNearMisses, isTrailingStopTriggered, type GoldenCandlePattern, type GoldenCandleCandidate } from './goldenCandle';
+export { detectGoldenCandle, detectGoldenCandleCandidates, detectGoldenNearMisses, isTrailingStopTriggered, detectGoldenCandleEntryExit, type GoldenCandlePattern, type GoldenCandleCandidate } from './goldenCandle';

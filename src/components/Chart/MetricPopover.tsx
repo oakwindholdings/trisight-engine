@@ -84,6 +84,34 @@ export function MetricPopover() {
   // Lookup Target Blackjack Score for this step
   const targetBjEntry = stepData ? (patternContext.bjTargetScores || []).find(e => e.stepRef === stepData.stepRef) : undefined;
 
+  // TriSight Detection Input Refactor Patch v1.3.3: Check if we're hovering over Golden Candle ENTRY/EXIT events
+  const hoveredGoldenEntry = patternContext.goldenCandleEntries?.find(event => {
+    return event.index === pop.idx;
+  });
+  
+  const hoveredGoldenExit = patternContext.goldenCandleExits?.find(event => {
+    return event.index === pop.idx;
+  });
+  
+  // Log hover alignment for Golden Candle ENTRY/EXIT events
+  if (hoveredGoldenEntry) {
+    logDebugHAAlignmentMismatch(
+      pop.idx,
+      'MetricPopover.GoldenCandleEntry',
+      `ENTRY event at index ${pop.idx}`,
+      `event: ${JSON.stringify(hoveredGoldenEntry)}`
+    );
+  }
+  
+  if (hoveredGoldenExit) {
+    logDebugHAAlignmentMismatch(
+      pop.idx,
+      'MetricPopover.GoldenCandleExit', 
+      `EXIT event at index ${pop.idx}`,
+      `event: ${JSON.stringify(hoveredGoldenExit)}`
+    );
+  }
+
   // Check if we're hovering over a breakout box
   const hoveredBreakoutBox = patternContext.breakoutBoxes?.find(event => {
     if (event.type === 'BREAKOUT_BOX' && event.data) {

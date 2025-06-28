@@ -90,6 +90,12 @@ interface PatternContextType {
   goldenNearMisses: boolean[];
   setGoldenNearMisses: (values: boolean[]) => void;
   
+  // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT lifecycle arrays
+  goldenCandleEntries: PatternEvent[];
+  goldenCandleExits: PatternEvent[];
+  setGoldenCandleEntries: (entries: PatternEvent[]) => void;
+  setGoldenCandleExits: (exits: PatternEvent[]) => void;
+  
   // Golden Candle Forensics (Debug Mode)
   goldmineForensics: boolean[];
   setGoldmineForensics: (values: boolean[]) => void;
@@ -146,6 +152,7 @@ interface PatternContextType {
     showLabels: boolean;
     showForensics: boolean;
     showNearMiss: boolean;
+    showEntryExitLabels: boolean; // TriSight Detection Input Refactor Patch v1.3.3: Toggle ENTRY/EXIT label visibility
     minContinuanceCount: number;
     minCumulativeScore: number;
     confidenceThreshold: number;
@@ -159,6 +166,7 @@ interface PatternContextType {
     showLabels: boolean;
     showForensics: boolean;
     showNearMiss: boolean;
+    showEntryExitLabels: boolean; // TriSight Detection Input Refactor Patch v1.3.3: Toggle ENTRY/EXIT label visibility
     minContinuanceCount: number;
     minCumulativeScore: number;
     confidenceThreshold: number;
@@ -247,6 +255,12 @@ const initialPatternContext: PatternContextType = {
   goldenNearMisses: [],
   setGoldenNearMisses: () => {},
   
+  // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT lifecycle arrays
+  goldenCandleEntries: [],
+  goldenCandleExits: [],
+  setGoldenCandleEntries: () => {},
+  setGoldenCandleExits: () => {},
+  
   // Golden Candle Forensics (Debug Mode)
   goldmineForensics: [],
   setGoldmineForensics: () => {},
@@ -287,6 +301,7 @@ const initialPatternContext: PatternContextType = {
     showLabels: true,
     showForensics: true,
     showNearMiss: true,
+    showEntryExitLabels: true, // TriSight Detection Input Refactor Patch v1.3.3: Default to showing ENTRY/EXIT labels
     minContinuanceCount: 0,
     minCumulativeScore: 0,
     confidenceThreshold: 0,
@@ -410,7 +425,11 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     bjCountsLength: patternHook.bjCounts?.length,
     escalatorDirLength: patternHook.escalatorDir?.length,
     patterns: patternHook.patterns?.length,
-    escalatorSettings: patternHook.escalatorSettings
+    escalatorSettings: patternHook.escalatorSettings,
+    goldenCandleEntries: patternHook.goldenCandleEntries,
+    goldenCandleExits: patternHook.goldenCandleExits,
+    setGoldenCandleEntries: patternHook.setGoldenCandleEntries,
+    setGoldenCandleExits: patternHook.setGoldenCandleExits
   });
   
   return (

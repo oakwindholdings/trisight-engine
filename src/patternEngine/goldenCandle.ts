@@ -383,6 +383,143 @@ export function detectGoldenNearMisses(
  * @param trailingStopPercent - Trailing stop threshold as percentage (default: 2.0%)
  * @returns boolean indicating if trailing stop has been triggered
  */
+/**
+ * Detects Golden Candle ENTRY and EXIT PatternEvents for lifecycle visualization
+ * TriSight Detection Input Refactor Patch v1.3.3: Complete lifecycle PatternEvent emission
+ * @param candles - Array of candlestick data
+ * @param stepIntrinsicCounts - Array of step intrinsic counts per candle
+ * @param stepBreakoutCounts - Array of step breakout counts per candle
+ * @param stepContinuanceCounts - Array of step continuance counts per candle
+ * @param bjIntrinsic - Array of blackjack intrinsic scores per candle
+ * @param bjCumulative - Array of blackjack cumulative scores per candle
+ * @param trailingStopPercent - Trailing stop threshold percentage (default: 2.0%)
+ * @param stopLossPercent - Stop-loss threshold percentage (default: 2.0%)
+ * @returns Array of PatternEvents with type 'GOLDEN_CANDLE_ENTRY' and 'GOLDEN_CANDLE_EXIT'
+ */
+export function detectGoldenCandleEntryExit(
+  candles: Candle[],
+  stepIntrinsicCounts: number[] = [],
+  stepBreakoutCounts: number[] = [],
+  stepContinuanceCounts: number[] = [],
+  bjIntrinsic: number[] = [],
+  bjCumulative: number[] = [],
+  trailingStopPercent: number = 2.0,
+  stopLossPercent: number = 2.0
+): Array<{type: 'GOLDEN_CANDLE_ENTRY' | 'GOLDEN_CANDLE_EXIT', data: any, index: number, timestamp: Date}> {
+  if (DEBUG_MODE) logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[HA GoldenCandle ENTRY/EXIT] Starting lifecycle detection on', candles.length, 'candles');
+  
+  const events: Array<{type: 'GOLDEN_CANDLE_ENTRY' | 'GOLDEN_CANDLE_EXIT', data: any, index: number, timestamp: Date}> = [];
+  
+  if (!candles || candles.length === 0) {
+    return events;
+  }
+
+  // First, detect all Golden Candle patterns (ENTRY points)
+  const goldenCandles = detectGoldenCandle(
+    candles,
+    stepIntrinsicCounts,
+    stepBreakoutCounts,
+    stepContinuanceCounts,
+    bjIntrinsic,
+    bjCumulative
+  );
+
+  // Convert Golden Candle patterns to ENTRY events
+  goldenCandles.forEach(gc => {
+    events.push({
+      type: 'GOLDEN_CANDLE_ENTRY',
+      data: {
+        ...gc,
+        entryCandle: candles[gc.index],
+        peakIndex: gc.index,
+        isEntry: true
+      },
+      index: gc.index,
+      timestamp: gc.timestamp
+    });
+
+    if (DEBUG_MODE) {
+      logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[GOLDEN_CANDLE_ENTRY] Entry confirmed', {
+        index: gc.index,
+        timestamp: gc.timestamp.toISOString(),
+        direction: gc.direction,
+        confidence: gc.confidence,
+        goldenScore: gc.goldenScore,
+        dickOLearyCompliant: true
+      });
+    }
+  });
+
+  // Detect EXIT points using trailing stop and stop-loss logic
+  goldenCandles.forEach(entryGc => {
+    const entryCandle = candles[entryGc.index];
+    
+    // Look for EXIT triggers in subsequent candles
+    for (let i = entryGc.index + 1; i < candles.length; i++) {
+      const currentCandle = candles[i];
+      
+      // Check if trailing stop is triggered
+      const trailingStopTriggered = isTrailingStopTriggered(
+        entryCandle,
+        currentCandle,
+        entryGc.direction,
+        trailingStopPercent
+      );
+      
+      // Check if stop-loss is triggered (similar logic but with stopLossPercent)
+      const stopLossTriggered = isTrailingStopTriggered(
+        entryCandle,
+        currentCandle,
+        entryGc.direction,
+        stopLossPercent
+      );
+      
+      if (trailingStopTriggered || stopLossTriggered) {
+        events.push({
+          type: 'GOLDEN_CANDLE_EXIT',
+          data: {
+            ...entryGc,
+            exitCandle: currentCandle,
+            entryCandle: entryCandle,
+            exitIndex: i,
+            exitReason: trailingStopTriggered ? 'TRAILING_STOP' : 'STOP_LOSS',
+            triggeredStopPercent: trailingStopTriggered ? trailingStopPercent : stopLossPercent,
+            isExit: true
+          },
+          index: i,
+          timestamp: new Date(currentCandle.datetime)
+        });
+
+        if (DEBUG_MODE) {
+          logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[GOLDEN_CANDLE_EXIT] Exit confirmed', {
+            entryIndex: entryGc.index,
+            exitIndex: i,
+            entryTimestamp: entryCandle.datetime,
+            exitTimestamp: currentCandle.datetime,
+            direction: entryGc.direction,
+            exitReason: trailingStopTriggered ? 'TRAILING_STOP' : 'STOP_LOSS',
+            triggeredStopPercent: trailingStopTriggered ? trailingStopPercent : stopLossPercent,
+            dickOLearyCompliant: true
+          });
+        }
+        
+        // Only emit one EXIT per ENTRY
+        break;
+      }
+    }
+  });
+
+  if (DEBUG_MODE) {
+    logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[HA GoldenCandle ENTRY/EXIT] Lifecycle detection complete', {
+      totalEvents: events.length,
+      entryEvents: events.filter(e => e.type === 'GOLDEN_CANDLE_ENTRY').length,
+      exitEvents: events.filter(e => e.type === 'GOLDEN_CANDLE_EXIT').length
+    });
+  }
+
+  return events;
+}
+
 export function isTrailingStopTriggered(
   entryCandle: Candle,
   currentCandle: Candle,

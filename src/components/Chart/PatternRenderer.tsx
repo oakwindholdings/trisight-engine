@@ -6,6 +6,7 @@
 // All pattern drawing uses Canvas 2D context methods (fillRect, strokeRect, etc.)
 // HA Infrastructure Alignment Patch v1.0.0: All overlay rendering now uses HA context arrays for consistency with detection logic
 
+import React from 'react';
 import { Pattern, PatternType, patternStyles } from '../../models/PatternTypes';
 import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
 import { logDebugHAAlignmentMismatch } from '../../utils/debug';
@@ -124,8 +125,10 @@ const PatternRendererImpl = {
     breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number }, // Add independent breakoutBoxSettings
     pivotSettings: { showLabels: boolean } = { showLabels: false },
     goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
-    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean } = { showLabels: false, showNearMiss: false },
-    goldenNearMisses: boolean[] = [] // Add goldenNearMisses parameter for Dick O'Leary compliance
+    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean; showEntryExitLabels?: boolean } = { showLabels: false, showNearMiss: false, showEntryExitLabels: true },
+    goldenNearMisses: boolean[] = [], // Add goldenNearMisses parameter for Dick O'Leary compliance
+    goldenCandleEntries: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: ENTRY events
+    goldenCandleExits: any[] = [] // TriSight Detection Input Refactor Patch v1.3.3: EXIT events
   ) {
     if (!ctx) return;
     
@@ -229,6 +232,18 @@ const PatternRendererImpl = {
     
     // Render pattern labels after all patterns (including Pivot and Goldmine Channel labels if enabled)
     this.renderPatternLabels(ctx, visiblePatterns, timeScale, priceScale, dimensions, pivotSettings, goldmineChannelSettings, goldenCandleSettings);
+    
+    // TriSight Detection Input Refactor Patch v1.3.3: Render ENTRY/EXIT labels for Golden Candle patterns
+    if (goldenCandleSettings.showEntryExitLabels) {
+      visiblePatterns.forEach(pattern => {
+        if (pattern.type === PatternType.GOLDEN_CANDLE) {
+          // Render ENTRY label for all Golden Candle patterns
+          this.renderGoldenEntryLabel(ctx, pattern, timeScale, priceScale, dimensions, goldenCandleSettings.showEntryExitLabels);
+          // Render EXIT label for all Golden Candle patterns (for testing)
+          this.renderGoldenExitLabel(ctx, pattern, timeScale, priceScale, dimensions, goldenCandleSettings.showEntryExitLabels);
+        }
+      });
+    }
   },
   
   renderPattern(
@@ -698,22 +713,30 @@ const PatternRendererImpl = {
     
     // Draw STEP and BJ labels if enabled
     if (showLabels) {
-      // Helper to draw white background behind text
-      const drawBg = (text: string, x: number, y: number) => {
-        const m = ctx.measureText(text);
-        const pad = 4;
-        ctx.fillStyle = 'white';
-        ctx.fillRect(x - m.width / 2 - pad, y - 8 - pad / 2, m.width + pad * 2, 16 + pad);
-      };
-
-      // === STEP LABEL ===
-      const stepLabel = step.direction === 'UP' ? 'STEP UP' : 'STEP DOWN';
+      // ✅ FIXED: Use separate padX/padY variables like Blackjack
+      const padX = 5, padY = 3;
+      
+      // Set font and alignment properties (following Blackjack pattern)
       ctx.font = 'bold 12px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      
       const labelX = startX + boxWidth / 2;
       const labelY = topY + boxHeight / 2 - 10; // shift up to leave room for BJ label
-      drawBg(stepLabel, labelX, labelY);
+
+      // === STEP LABEL ===
+      const stepLabel = step.direction === 'UP' ? 'STEP UP' : 'STEP DOWN';
+      
+      // ✅ FIXED: Dynamic text measurement and background-first rendering like Blackjack
+      const stepTextWidth = ctx.measureText(stepLabel).width;
+      ctx.fillStyle = 'white';
+      ctx.fillRect(
+        labelX - stepTextWidth / 2 - padX,
+        labelY - 6 - padY,
+        stepTextWidth + padX * 2,
+        12 + padY * 2
+      );
+      
       ctx.fillStyle = borderColor;
       ctx.fillText(stepLabel, labelX, labelY);
 
@@ -723,7 +746,17 @@ const PatternRendererImpl = {
         const bjLabel = `BJ: ${bjScore >= 0 ? '+' : ''}${bjScore}`;
         const bjColor = bjScore >= 21 ? '#10b981' : '#374151';
         const bjY = labelY + 20;
-        drawBg(bjLabel, labelX, bjY);
+        
+        // ✅ FIXED: Dynamic text measurement and background-first rendering like Blackjack
+        const bjTextWidth = ctx.measureText(bjLabel).width;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(
+          labelX - bjTextWidth / 2 - padX,
+          bjY - 6 - padY,
+          bjTextWidth + padX * 2,
+          12 + padY * 2
+        );
+        
         ctx.fillStyle = bjColor;
         ctx.fillText(bjLabel, labelX, bjY);
 
@@ -731,7 +764,7 @@ const PatternRendererImpl = {
         if (step.qualifiesForGoldmine === true) {
           ctx.fillStyle = '#FFD700';
           ctx.font = 'bold 14px Inter, sans-serif';
-          ctx.fillText('★', labelX + ctx.measureText(bjLabel).width / 2 + 10, bjY);
+          ctx.fillText('★', labelX + bjTextWidth / 2 + 10, bjY);
         }
       }
     }
@@ -840,22 +873,59 @@ const PatternRendererImpl = {
     
     // Draw label only for Goldmine-qualified boxes
     if (qualified) {
-      const labelY = y1 - 5;
-      if (labelY > 10) { // Only draw label if there's space
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillStyle = '#000000'; // Black text
-        ctx.textAlign = 'center';
-        // Add directional arrow based on direction
-        const arrow = box.data.direction === 'RISING' ? '↑' : '↓';
-        ctx.fillText(`BREAKOUT ${arrow}`, x1 + width / 2, labelY);
-        console.log('[DIAGNOSTIC] [renderBreakoutBox] Drew BREAKOUT label at:', {
-          stepRef: box.data.stepRef,
-          x: x1 + width / 2,
-          y: labelY,
-          direction: box.data.direction,
-          label: `BREAKOUT ${arrow}`
-        });
-      }
+      // Calculate positions using Blackjack approach
+      const centerX = x1 + width / 2;
+      const centerY = y1 - 15; // Position above box
+      
+      // Context state management like Blackjack
+      ctx.save();
+      
+      // Set font and alignment properties like Blackjack
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle'; // Added missing textBaseline
+      
+      // Add directional arrow based on direction
+      const arrow = box.data.direction === 'RISING' ? '↑' : '↓';
+      const text = `BREAKOUT ${arrow}`;
+      
+      // Dynamic text measurement like Blackjack
+      const textWidth = ctx.measureText(text).width;
+      const padX = 5, padY = 3; // Separate X/Y padding like Blackjack
+      
+      // Background-first rendering like Blackjack
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // White background
+      ctx.fillRect(
+        centerX - textWidth / 2 - padX,
+        centerY - 6 - padY,
+        textWidth + padX * 2,
+        12 + padY * 2
+      );
+      
+      // Draw border
+      ctx.strokeStyle = box.data.direction === 'RISING' ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(
+        centerX - textWidth / 2 - padX,
+        centerY - 6 - padY,
+        textWidth + padX * 2,
+        12 + padY * 2
+      );
+      
+      // Clean coordinate calculation like Blackjack
+      ctx.fillStyle = '#000000'; // Black text
+      ctx.fillText(text, centerX, centerY);
+      
+      console.log('[DIAGNOSTIC] [renderBreakoutBox] Drew BREAKOUT label at:', {
+        stepRef: box.data.stepRef,
+        x: centerX,
+        y: centerY,
+        direction: box.data.direction,
+        label: text
+      });
+      
+      // Restore context state like Blackjack
+      ctx.restore();
     }
   },
   
@@ -1250,7 +1320,134 @@ const PatternRendererImpl = {
     };
     
     return attachLeaderLines(resolvedPositions, patterns, timeScale, priceScale);
+  },
+
+  // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT Visual Labeling with Conditional Rendering
+  renderGoldenEntryLabel(
+    ctx: CanvasRenderingContext2D,
+    pattern: Pattern,
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions,
+    showEntryExitLabels: boolean = true
+  ): void {
+    // Only render if showEntryExitLabels is enabled
+    if (!showEntryExitLabels || pattern.type !== PatternType.GOLDEN_CANDLE) {
+      return;
+    }
+
+    // For now, treat all Golden Candle patterns as potential ENTRY events
+    // TODO: Implement proper ENTRY/EXIT event type discrimination when metadata is available
+
+    // Calculate positions using Blackjack approach
+    const centerX = timeScale.scale(pattern.startTime);
+    const centerY = priceScale.scale(pattern.highPrice) - 25; // Place above candle
+    
+    // Save context state (following Blackjack pattern)
+    ctx.save();
+    
+    // Set font and alignment properties (following Blackjack pattern)
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle'; // ✅ FIXED: Added missing textBaseline like Blackjack
+    
+    // Draw label text
+    const text = 'ENTRY';
+    
+    // ✅ FIXED: Dynamic text measurement like Blackjack
+    const textWidth = ctx.measureText(text).width;
+    const padX = 5, padY = 3; // ✅ FIXED: Separate X/Y padding like Blackjack
+    
+    // ✅ FIXED: Background-first rendering like Blackjack
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.9)'; // Semi-transparent gold background
+    ctx.fillRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // Draw border (maintaining visual style)
+    ctx.strokeStyle = '#B8860B';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // ✅ FIXED: Clean coordinate calculation like Blackjack
+    ctx.fillStyle = '#333';
+    ctx.fillText(text, centerX, centerY);
+    
+    // Restore context state
+    ctx.restore();
+  },
+
+// ...
+  renderGoldenExitLabel(
+    ctx: CanvasRenderingContext2D,
+    pattern: Pattern,
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions,
+    showEntryExitLabels: boolean = true
+  ): void {
+    // Only render if showEntryExitLabels is enabled
+    if (!showEntryExitLabels || pattern.type !== PatternType.GOLDEN_CANDLE) {
+      return;
+    }
+
+    // For now, enable EXIT labeling for testing boundary positioning
+    // TODO: Implement proper ENTRY/EXIT event type discrimination when metadata is available
+
+    // Calculate positions using Blackjack approach
+    const centerX = timeScale.scale(pattern.startTime);
+    const centerY = priceScale.scale(pattern.lowPrice) + 25; // Place below candle
+    
+    // Save context state (following Blackjack pattern)
+    ctx.save();
+    
+    // Set font and alignment properties (following Blackjack pattern)
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle'; // ✅ FIXED: Added missing textBaseline like Blackjack
+    
+    // Draw label text
+    const text = 'EXIT';
+    
+    // ✅ FIXED: Dynamic text measurement like Blackjack
+    const textWidth = ctx.measureText(text).width;
+    const padX = 5, padY = 3; // ✅ FIXED: Separate X/Y padding like Blackjack
+    
+    // ✅ FIXED: Background-first rendering like Blackjack
+    ctx.fillStyle = 'rgba(255, 68, 68, 0.9)'; // Semi-transparent red background
+    ctx.fillRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // Draw border (maintaining visual style)
+    ctx.strokeStyle = '#CC0000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // ✅ FIXED: Clean coordinate calculation like Blackjack
+    ctx.fillStyle = '#FFF';
+    ctx.fillText(text, centerX, centerY);
+    
+    // Restore context state
+    ctx.restore();
   }
+
 };
 
 // Export directly with the name expected by importers

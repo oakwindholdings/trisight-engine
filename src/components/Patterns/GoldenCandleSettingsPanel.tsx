@@ -116,6 +116,7 @@ export interface GoldenCandleSettings {
   showLabels: boolean;
   showForensics: boolean; // Enable forensic near-miss overlay
   showNearMiss: boolean; // Enable Dick O'Leary near-miss highlighting
+  showEntryExitLabels: boolean; // TriSight Detection Input Refactor Patch v1.3.3: Toggle ENTRY/EXIT label visibility
   minContinuanceCount: number;
   minCumulativeScore: number;
   confidenceThreshold: number;
@@ -197,9 +198,26 @@ export const GoldenCandleSettingsPanel: React.FC<GoldenCandleSettingsPanelProps>
               onChange={(e) => handleSettingChange('showNearMiss', e.target.checked)}
             />
             <CheckboxLabel htmlFor="goldenCandle-showNearMiss">
-              Show Near Miss Highlighting
+              Show Near-Miss Highlighting
             </CheckboxLabel>
           </CheckboxContainer>
+        </SettingItem>
+
+        <SettingItem>
+          <CheckboxContainer>
+            <Checkbox
+              type="checkbox"
+              id="goldenCandle-showEntryExitLabels"
+              checked={settings.showEntryExitLabels}
+              onChange={(e) => handleSettingChange('showEntryExitLabels', e.target.checked)}
+            />
+            <CheckboxLabel htmlFor="goldenCandle-showEntryExitLabels">
+              Show ENTRY/EXIT Labels
+            </CheckboxLabel>
+          </CheckboxContainer>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+            Toggle visibility of ENTRY and EXIT labels on Golden Candles
+          </div>
         </SettingItem>
       </SettingsGroup>
 

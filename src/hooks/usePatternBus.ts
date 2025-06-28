@@ -415,6 +415,16 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     const goldenMisses = detectGoldenNearMisses(haCandles, escalators[escalators.length - 1]);
     setGoldenNearMisses(goldenMisses);
 
+    // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT lifecycle detection
+    // TODO: Implement detectGoldenCandleEntryExit function for full lifecycle support
+    // For now, we'll use placeholder arrays to maintain type safety
+    const entryEvents: any[] = [];
+    const exitEvents: any[] = [];
+    
+    // Update context arrays with empty defaults (will be populated when function is implemented)
+    // Note: setGoldenCandleEntries and setGoldenCandleExits need to be passed from usePatterns
+    // TODO: Wire up setter functions from PatternContext
+
     const goldenCandlePatterns = detectGoldenCandle(
       haCandles,
       stepIntrinsicCount,

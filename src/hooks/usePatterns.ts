@@ -73,6 +73,10 @@ export function usePatterns(data: CandlestickData[]) {
   const [goldmineForensicsNotes, setGoldmineForensicsNotes] = useState<string[]>([]);
   const [goldenNearMisses, setGoldenNearMisses] = useState<boolean[]>([]);
   
+  // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT lifecycle arrays
+  const [goldenCandleEntries, setGoldenCandleEntries] = useState<PatternEvent[]>([]);
+  const [goldenCandleExits, setGoldenCandleExits] = useState<PatternEvent[]>([]);
+  
   // Display settings for patterns
   const [escalatorSettings, setEscalatorSettings] = useState<{ 
     enabled: boolean; 
@@ -143,12 +147,13 @@ export function usePatterns(data: CandlestickData[]) {
   
   // Golden Candle settings with near-miss toggle
   const [goldenCandleSettings, setGoldenCandleSettings] = useState(() => {
-    // Default values for v1.3.2 compatibility
+    // Default values for v1.3.3 compatibility
     const defaults = {
       enabled: true,
       showLabels: true,
       showForensics: false, // Default to false for forensic overlays
       showNearMiss: false, // Default to false for near-miss highlighting
+      showEntryExitLabels: true, // TriSight Detection Input Refactor Patch v1.3.3: Default to showing ENTRY/EXIT labels
       minContinuanceCount: 3,
       minCumulativeScore: 5,
       confidenceThreshold: 0.7,
@@ -163,14 +168,16 @@ export function usePatterns(data: CandlestickData[]) {
       const saved = localStorage.getItem('patternSettings.goldenCandle');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Migrate existing settings to include new trailingStopPercent and stopLossPercent fields
+        // Migrate existing settings to include new trailingStopPercent, stopLossPercent, and showEntryExitLabels fields
         const migrated = {
           ...defaults,
           ...parsed,
           // Ensure trailingStopPercent is always present (v1.3.1)
           trailingStopPercent: parsed.trailingStopPercent ?? defaults.trailingStopPercent,
           // Ensure stopLossPercent is always present (v1.3.2)
-          stopLossPercent: parsed.stopLossPercent ?? defaults.stopLossPercent
+          stopLossPercent: parsed.stopLossPercent ?? defaults.stopLossPercent,
+          // Ensure showEntryExitLabels is always present (v1.3.3)
+          showEntryExitLabels: parsed.showEntryExitLabels ?? defaults.showEntryExitLabels
         };
         console.log('[usePatterns] Loaded and migrated Golden Candle settings from localStorage:', migrated);
         return migrated;
@@ -534,7 +541,13 @@ export function usePatterns(data: CandlestickData[]) {
     goldenNearMisses,
     setGoldenNearMisses,
     goldenCandleSettings,
-    setGoldenCandleSettings
+    setGoldenCandleSettings,
+    
+    // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT arrays
+    goldenCandleEntries,
+    goldenCandleExits,
+    setGoldenCandleEntries,
+    setGoldenCandleExits
   };
 };
 

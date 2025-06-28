@@ -32,40 +32,40 @@ describe('Blackjack Scoring', () => {
 
   describe('getIntrinsicScore', () => {
     it('should return 1 for price up with volume up', () => {
-      const candle: Candle = { open: 100, high: 101, low: 99, close: 101, volume: 1200, timestamp: Date.now() };
-      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now() };
+      const candle: Candle = { open: 100, high: 101, low: 99, close: 101, volume: 1200, timestamp: Date.now(), datetime: new Date().toISOString() };
+      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now(), datetime: new Date().toISOString() };
       
       const score = getIntrinsicScore(candle, prevCandle);
       expect(score).toBe(1); // close > open AND close > prevBodyHigh
     });
 
     it('should return -1 for price down with volume up', () => {
-      const candle: Candle = { open: 100, high: 100.5, low: 98.5, close: 99, volume: 1200, timestamp: Date.now() };
-      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now() };
+      const candle: Candle = { open: 100, high: 100.5, low: 98.5, close: 99, volume: 1200, timestamp: Date.now(), datetime: new Date().toISOString() };
+      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now(), datetime: new Date().toISOString() };
       
       const score = getIntrinsicScore(candle, prevCandle);
       expect(score).toBe(-1); // close < prevClose AND volume > prevVolume
     });
 
     it('should return 0 for price up with volume down', () => {
-      const candle: Candle = { open: 100, high: 101, low: 99, close: 101, volume: 800, timestamp: Date.now() };
-      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now() };
+      const candle: Candle = { open: 100, high: 101, low: 99, close: 101, volume: 800, timestamp: Date.now(), datetime: new Date().toISOString() };
+      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now(), datetime: new Date().toISOString() };
       
       const score = getIntrinsicScore(candle, prevCandle);
       expect(score).toBe(0); // close > prevClose BUT volume < prevVolume
     });
 
     it('should return 0 for price down with volume down', () => {
-      const candle: Candle = { open: 100, high: 100.5, low: 98.5, close: 99, volume: 800, timestamp: Date.now() };
-      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now() };
+      const candle: Candle = { open: 100, high: 100.5, low: 98.5, close: 99, volume: 800, timestamp: Date.now(), datetime: new Date().toISOString() };
+      const prevCandle: Candle = { open: 99, high: 100, low: 98, close: 100, volume: 1000, timestamp: Date.now(), datetime: new Date().toISOString() };
       
       const score = getIntrinsicScore(candle, prevCandle);
       expect(score).toBe(0); // close < prevClose AND volume < prevVolume
     });
 
     it('should return 0 for doji', () => {
-      const candle: Candle = { open: 101, high: 102, low: 100, close: 101, volume: 1000, timestamp: Date.now() };
-      const prevCandle: Candle = { open: 100.5, high: 101.5, low: 99.5, close: 100.5, volume: 1000, timestamp: Date.now() };
+      const candle: Candle = { open: 101, high: 102, low: 100, close: 101, volume: 1000, timestamp: Date.now(), datetime: new Date().toISOString() };
+      const prevCandle: Candle = { open: 100.5, high: 101.5, low: 99.5, close: 100.5, volume: 1000, timestamp: Date.now(), datetime: new Date().toISOString() };
       
       const score = getIntrinsicScore(candle, prevCandle);
       expect(score).toBe(0); // close = open
