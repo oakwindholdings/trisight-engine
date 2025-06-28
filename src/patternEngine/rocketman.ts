@@ -7,7 +7,7 @@
 // DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
-import { RocketmanDetector } from '../utils/patternDetection/RocketmanDetector';
+import AdaptiveRocketmanDetector from '../utils/patternDetection/AdaptiveRocketmanDetector';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
 
@@ -60,8 +60,8 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
     volume: haCandle.volume // Volume remains from original candle
   }));
 
-  // Use the restored RocketmanDetector with HA data
-  const detector = new RocketmanDetector();
+  // Use the AdaptiveRocketmanDetector with HA data (migrated from legacy RocketmanDetector)
+  const detector = new AdaptiveRocketmanDetector();
   const rocketmanPatterns = detector.detect(haCandlestickData);
   
   if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Detection complete. Found', rocketmanPatterns.length, 'patterns with HA compliance');
