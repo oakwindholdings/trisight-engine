@@ -7,9 +7,13 @@
 // DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
-import AdaptiveRocketmanDetector from '../utils/patternDetection/AdaptiveRocketmanDetector';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
+import AdaptiveRocketmanDetector from '../utils/patternDetection/AdaptiveRocketmanDetector';
+import { CandlestickData } from '../models/ChartTypes';
+import { RocketmanPattern } from '../models/PatternTypes';
+import { emitTradeSignal } from '../framework/tradeActionEmitter';
+import { TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -67,7 +71,7 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
   if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Detection complete. Found', rocketmanPatterns.length, 'patterns with HA compliance');
   
   // Convert RocketmanPattern[] to RocketmanDetection[] for pattern bus compatibility
-  const detections: RocketmanDetection[] = rocketmanPatterns.map((pattern, index) => {
+  const detections: RocketmanDetection[] = rocketmanPatterns.map((pattern: RocketmanPattern, index: number) => {
     // Find start and end indices in the original candles array
     const startIndex = candles.findIndex(candle => 
       new Date(candle.datetime).getTime() === pattern.startTime.getTime()
@@ -111,5 +115,107 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
 
   if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Converted', detections.length, 'patterns to detections');
   
+  // 🔗 Pattern Detector Signal Evaluation Hook - Ensure emitTradeSignal() is triggered
+  detections.forEach(evaluateRocketmanForEntry);
+  
   return detections;
+}
+
+/**
+ * Evaluates Rocketman pattern for entry signals
+ * Canonical structure: emits BUY/SHORT signals for momentum acceleration
+ * @param rocket - Rocketman detection object
+ */
+export function evaluateRocketmanForEntry(rocket: RocketmanDetection): void {
+  const { direction, confidence, peakTime, peakPrice, accelerationRate, signalStrength, adaptiveThreshold } = rocket;
+
+  // Confidence gate - Only emit strong momentum signals above threshold
+  if (confidence < 0.75 || accelerationRate < 0.02 || signalStrength !== 'STRONG') return;
+
+  // 🔴 CRITICAL FIX: INVERTED LOGIC - Contrarian entries at momentum extremes
+  // BULLISH momentum (price UP) = SHORT at the HIGH (fade the move)
+  // BEARISH momentum (price DOWN) = BUY at the LOW (fade the move)  
+  const action = direction === 'BULLISH' ? TradeAction.SHORT : TradeAction.BUY;
+  const signalType = direction === 'BULLISH' ? SignalType.SHORT_ENTRY : SignalType.LONG_ENTRY;
+
+  // Entry at momentum extremes for contrarian tactical trading
+  // BULLISH: SHORT at peak (momentum exhaustion)
+  // BEARISH: BUY at trough (momentum exhaustion)
+  const logicalEntryPrice = direction === 'BULLISH'
+    ? peakPrice  // SHORT at peak for BULLISH momentum exhaustion
+    : peakPrice; // BUY at trough for BEARISH momentum exhaustion
+  
+  // Use peak time as the logical entry timing (when momentum is confirmed)
+  // This is the earliest point where tactical entry should be considered
+  const logicalEntryTime = peakTime;
+
+  emitTradeSignal({
+    action,
+    signalType,
+    pattern: 'Rocketman',
+    confidence,
+    price: logicalEntryPrice,
+    timestamp: logicalEntryTime,
+    reason: `Rocketman momentum confirmed (Accel=${accelerationRate.toFixed(3)}, Strength=${signalStrength})`
+  });
+
+  // Enhanced debug logging for signal placement validation
+  if (DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Rocketman Entry] Signal emitted', {
+      action,
+      signalType,
+      confidence: (confidence * 100).toFixed(1) + '%',
+      accelerationRate: accelerationRate.toFixed(3),
+      signalStrength,
+      // Signal placement validation data
+      originalPeakPrice: peakPrice.toFixed(4),
+      logicalEntryPrice: logicalEntryPrice.toFixed(4),
+      adaptiveThreshold: adaptiveThreshold.toFixed(4),
+      signalAnchoredToConfirmation: true,
+      dickOLearyCompliant: true
+    });
+  }
+}
+
+/**
+ * Monitors Rocketman pattern for exit signals
+ * Canonical structure: emits SELL/COVER signals when momentum fails
+ * @param rocket - Rocketman detection object
+ * @param livePrice - Current market price
+ */
+export function monitorRocketmanForExit(rocket: RocketmanDetection, livePrice: number): void {
+  const { direction, confidence, peakTime, peakPrice, accelerationRate } = rocket;
+
+  // Confidence gate
+  if (confidence < 0.75) return;
+
+  // Check if momentum has failed (price reversal beyond threshold)
+  const momentumFailed = 
+    (direction === 'BULLISH' && livePrice < peakPrice * (1 - accelerationRate)) ||
+    (direction === 'BEARISH' && livePrice > peakPrice * (1 + accelerationRate));
+
+  if (momentumFailed) {
+    const action = direction === 'BULLISH' ? TradeAction.SELL : TradeAction.COVER;
+    const signalType = direction === 'BULLISH' ? SignalType.LONG_EXIT : SignalType.SHORT_EXIT;
+
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Rocketman',
+      confidence,
+      price: livePrice,
+      timestamp: peakTime,
+      reason: `Rocketman momentum failed (${direction})`
+    });
+
+    if (DEBUG_MODE) {
+      logDebug('DEBUG_PATTERN_DETECT', '[Rocketman Exit] Signal emitted', {
+        action,
+        signalType,
+        confidence: (confidence * 100).toFixed(1) + '%',
+        momentumFailed: true,
+        dickOLearyCompliant: true
+      });
+    }
+  }
 }

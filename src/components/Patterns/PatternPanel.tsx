@@ -151,7 +151,7 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   onChartHeightChange,
 }) => {
   // Access pattern context for preferences
-  const { preferences = { enabledPatternTypes: [] }, updatePreferences, goldmineQual, goldenCandleSettings, setGoldenCandleSettings } = usePatternContext();
+  const { preferences = { enabledPatternTypes: [] }, updatePreferences, goldmineQual, goldenCandleSettings, setGoldenCandleSettings, blackjackSettings, setBlackjackSettings } = usePatternContext();
   
   // Golden Candle filter state with localStorage persistence
   const [showOnlyGoldenCandles, setShowOnlyGoldenCandles] = useState(() => {
@@ -259,17 +259,6 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   };
   
   const [rocketmanSettings, setRocketmanSettings] = useState(getInitialRocketmanSettings());
-  
-  const [blackjackSettings, setBlackjackSettings] = useState({
-    enabled: true,
-    lookbackPeriods: 7,
-    minScore: 2,
-    showContextTimeframe: true,
-    contextTimeframeMultiplier: 5,
-    basePriceChangeThreshold: 0.1,
-    baseVolumeChangeThreshold: 0.5,
-    showLabels: false
-  });
   
   // Initialize escalator settings from localStorage
   const getInitialEscalatorSettings = () => {

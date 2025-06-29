@@ -6,9 +6,13 @@
 // DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
-import { ChannelDirection, ThrustDirection } from '../models/PatternTypes';
+import { ChannelDirection, ThrustDirection, GoldmineChannelPattern } from '../models/PatternTypes';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
+import { emitTradeSignal } from '../framework/tradeActionEmitter';
+import { TradeActionSignal, SignalType, TradeAction } from '../utils/trading/TradeActionSignal';
+import { AdaptiveGoldmineChannelDetector } from '../utils/patternDetection/AdaptiveGoldmineChannelDetector';
+import { MarketContext } from '../utils/patternDetection/core/MarketContext';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -256,4 +260,205 @@ export function validateChannelConsistency(
   // PLACEHOLDER: Implement consistency validation
   if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] STUB: Consistency validation not implemented');
   return 0.5; // Placeholder score
+}
+
+// ─────────────────────────────────────────────────────────────
+// TriSight Goldmine Channel → TradeAction Signal Integration
+// Pattern : Goldmine Channel  
+// Purpose : Emit BUY/SELL signals after validated cup-shaped breakout
+// Note    : Dick O'Leary compliant breakout continuation signals
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Detect Goldmine Channel patterns using AdaptiveGoldmineChannelDetector
+ */
+export function detectGoldmineChannelPatterns(candles: Candle[]): GoldmineChannelPattern[] {
+  // DICK O'LEARY COMPLIANCE: Use Heikin-Ashi candles exclusively
+  const haCandles = convertToHeikinAshi(candles);
+  
+  const detector = new AdaptiveGoldmineChannelDetector({
+    minimumConfidence: 0.35,
+    enableLogging: true
+  });
+  
+  // Create basic market context
+  const context: MarketContext = {
+    activeChannels: [],
+    channelWidthPercentage: 0.05, 
+    currentPositionInChannel: 0.5,
+    breakoutPotential: 0.3,
+    structure: 'TRENDING' as any,
+    timeframe: '5min' as any,
+    volatility: 0.02,
+    volumeProfile: { highVolume: [], lowVolume: [] } as any,
+    phase: 'TRENDING' as any,
+    detectedPatternDensity: new Map(),
+    recentPatterns: [],
+    getVolatilityFactor: () => 1.0
+  };
+  
+  const patterns = detector.detect(haCandles.map(candle => ({
+    datetime: new Date(candle.timestamp).toISOString(),
+    timestamp: candle.timestamp,
+    open: candle.open,
+    high: candle.high,
+    low: candle.low,
+    close: candle.close,
+    volume: candle.volume || 1000
+  })), context);
+  
+  if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_GOLDMINE_CHANNEL_SIGNALS) {
+    console.log(`[GoldmineChannel:Detection] Found ${patterns.length} channel patterns`);
+    patterns.forEach((pattern, idx) => {
+      console.log(`[GoldmineChannel:${idx}] ${pattern.direction} | Confidence: ${(pattern.confidence * 100).toFixed(1)}% | Width: ${((pattern.upperBoundary - pattern.lowerBoundary) / pattern.lowerBoundary * 100).toFixed(1)}%`);
+    });
+  }
+  
+  // 🔗 Pattern Detector Signal Evaluation Hook - Ensure emitTradeSignal() is triggered
+  patterns.forEach(evaluateGoldmineChannelForEntry);
+  
+  return patterns;
+}
+
+/**
+ * Emit BUY/SHORT trade signals for validated Goldmine Channel breakout continuation
+ */
+export function detectGoldmineChannelTradeSignals(candles: Candle[]): void {
+  if (!candles.length) return;
+  
+  const patterns = detectGoldmineChannelPatterns(candles);
+  
+  patterns.forEach(channel => {
+    evaluateGoldmineChannelForEntry(channel);
+  });
+}
+
+/**
+ * Evaluate Goldmine Channel pattern for entry signal after validated breakout
+ * Canonical structure: emits BUY/SHORT signals for cup-shaped consolidation breakout
+ */
+export function evaluateGoldmineChannelForEntry(channel: GoldmineChannelPattern): void {
+  const { direction, upperBoundary, lowerBoundary, confidence, touchPoints, startTime, endTime } = channel;
+
+  // Confidence gate — Dick doesn't want low-confidence breakout signals
+  if (confidence < 0.6 || !touchPoints || touchPoints.length < 4) {
+    return;
+  }
+
+  // 🔴 CRITICAL FIX: Tactical channel entry logic (NOT breakout chasing)
+  // BUY at channel LOWS (lower boundary) - buy support
+  // SHORT at channel HIGHS (upper boundary) - short resistance
+  let action: TradeAction;
+  let signalType: SignalType;
+  let price: number;
+  
+  if (direction === ChannelDirection.ASCENDING || direction === ChannelDirection.HORIZONTAL) {
+    // Ascending/Horizontal channel - BUY at lower boundary (support)
+    action = TradeAction.BUY;
+    signalType = SignalType.LONG_ENTRY;
+    price = lowerBoundary; // Entry at lower boundary (support)
+  } else if (direction === ChannelDirection.DESCENDING) {
+    // Descending channel - SHORT at upper boundary (resistance)
+    action = TradeAction.SHORT;
+    signalType = SignalType.SHORT_ENTRY;
+    price = upperBoundary; // Entry at upper boundary (resistance)
+  } else {
+    // Default: BUY at support
+    action = TradeAction.BUY;
+    signalType = SignalType.LONG_ENTRY;
+    price = lowerBoundary;
+  }
+  
+  // Use pattern detection timestamp, not current time (no lookahead)
+  const patternTimestamp = endTime || startTime || new Date();
+
+  // Canonical signal emission - only core fields needed
+  emitTradeSignal({
+    action,
+    signalType,
+    pattern: 'Goldmine Channel',
+    confidence,
+    price,
+    timestamp: patternTimestamp,
+    reason: `Cup-shaped consolidation breakout (${direction})`
+  });
+
+
+  
+  if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_GOLDMINE_CHANNEL_SIGNALS) {
+    console.log(`[GoldmineChannel:ENTRY] ${action} signal emitted:`, {
+      direction: direction,
+      confidence: `${(confidence * 100).toFixed(1)}%`,
+      touchPoints: touchPoints.length,
+      price: price.toFixed(4),
+      upperBoundary: upperBoundary.toFixed(4),
+      lowerBoundary: lowerBoundary.toFixed(4),
+      reason: `Cup-shaped consolidation breakout (${direction})`
+    });
+  }
+}
+
+/**
+ * Monitor active Goldmine Channel patterns for exit signals (channel re-entry)
+ */
+export function monitorGoldmineChannelExitSignals(
+  candles: Candle[], 
+  activeChannels: GoldmineChannelPattern[]
+): void {
+  if (!candles.length || !activeChannels.length) return;
+  
+  const currentPrice = candles[candles.length - 1].close;
+  const currentTime = new Date(candles[candles.length - 1].timestamp);
+
+  activeChannels.forEach(channel => {
+    monitorGoldmineChannelForExit(channel, currentPrice, currentTime);
+  });
+}
+
+/**
+ * Monitor individual Goldmine Channel for exit signal (re-entry into channel)
+ * Canonical structure: emits SELL/COVER signals when breakout fails
+ */
+export function monitorGoldmineChannelForExit(
+  channel: GoldmineChannelPattern, 
+  livePrice: number, 
+  currentTime: Date
+): void {
+  const { direction, confidence, upperBoundary, lowerBoundary } = channel;
+
+  if (confidence < 0.6) return;
+
+  // Check if price has re-entered the channel (breakout failure)
+  const isBullishBreakout = direction === ChannelDirection.ASCENDING || direction === ChannelDirection.HORIZONTAL;
+  const channelReEntry = isBullishBreakout 
+    ? livePrice < upperBoundary  // Bullish breakout failed - price back below upper boundary
+    : livePrice > lowerBoundary; // Bearish breakout failed - price back above lower boundary
+
+  if (channelReEntry) {
+    const action = isBullishBreakout ? TradeAction.SELL : TradeAction.COVER;
+    const signalType = isBullishBreakout ? SignalType.LONG_EXIT : SignalType.SHORT_EXIT;
+
+    // Canonical signal emission - only core fields needed
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Goldmine Channel',
+      confidence,
+      price: livePrice,
+      timestamp: currentTime,
+      reason: `Breakout failed - price re-entered channel (${direction})`
+    });
+    
+    if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_GOLDMINE_CHANNEL_SIGNALS) {
+      console.log(`[GoldmineChannel:EXIT] ${action} signal emitted:`, {
+        direction: direction,
+        confidence: `${(confidence * 100).toFixed(1)}%`, 
+        reEntryPrice: livePrice.toFixed(4),
+        upperBoundary: upperBoundary.toFixed(4),
+        lowerBoundary: lowerBoundary.toFixed(4),
+        reason: `Breakout failed - price re-entered channel (${direction})`
+      });
+    }
+
+  }
 }

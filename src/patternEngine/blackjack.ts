@@ -9,6 +9,7 @@ import { Candle, BlackjackScore } from '../types/pattern';
 import { BJ_GOLD_THRESHOLD_LONG, BJ_GOLD_THRESHOLD_SHORT } from '../constants/pattern';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only scoring
+import { emitTradeSignal } from '../utils/trading/TradeActionSignal';
 
 /**
  * Calculate the intrinsic score for a single candle based on price and volume
@@ -241,4 +242,102 @@ export function getBlackjackSignal(cumulativeScore: number): 'LONG' | 'SHORT' | 
     return 'SHORT';
   }
   return 'NEUTRAL';
+}
+
+// ─────────────────────────────────────────────────────────────
+// TriSight Blackjack → TradeAction Signal Integration
+// Pattern : Blackjack
+// Purpose : Emit BUY/SHORT signals based on cumulative score logic
+// Note    : Self-contained signal emitter with momentum-based thresholds
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Emit BUY/SHORT trade signals for Blackjack momentum patterns
+ */
+export function detectBlackjackTradeSignals(candles: Candle[]) {
+  if (!candles || candles.length < 5) return [];
+  
+  // Convert to Heikin-Ashi for Dick O'Leary methodology compliance
+  const heikinAshiCandles = convertToHeikinAshi(candles);
+  
+  // Calculate rolling Blackjack scores using existing function
+  const rollingScores = computeRollingBlackjackScores(heikinAshiCandles, 5);
+  
+  const signals: any[] = [];
+  
+  // Deduplication state tracking
+  let lastBuySignalIndex = -1;
+  let lastShortSignalIndex = -1;
+  const minSignalGap = 5; // Minimum 5 candles between signals
+  
+  // Detect signals based on cumulative score thresholds
+  for (let i = 1; i < Math.min(heikinAshiCandles.length, rollingScores.length); i++) {
+    const candle = heikinAshiCandles[i];
+    const cumulativeScore = rollingScores[i].score;
+    
+    // 🔴 CRITICAL FIX: Inverted Blackjack signal logic for tactical entries
+    // Strong bullish momentum (score >= 3) = SHORT at momentum peak (fade the strength)
+    // Strong bearish momentum (score <= -3) = BUY at momentum trough (fade the weakness)
+    
+    // SHORT signal: Cumulative score >= 3 (strong bullish momentum - fade at peak)
+    if (cumulativeScore >= 3 && (i - lastShortSignalIndex) >= minSignalGap) {
+      const confidence = Math.min(0.8 + (cumulativeScore - 3) * 0.05, 0.95);
+      const stopLoss = candle.high * 1.02; // 2% stop loss
+      const targetPrice = candle.low * 0.94; // 6% target
+      
+      signals.push(emitTradeSignal(
+        'SHORT' as any,
+        'SHORT_ENTRY' as any,
+        'BLACKJACK',
+        confidence,
+        candle.close,
+        new Date(candle.timestamp),
+        `BJ Score: ${cumulativeScore} (FADE BULLISH)`,
+        { 
+          stopLoss,
+          targetPrice
+        }
+      ));
+      
+      lastShortSignalIndex = i; // Update deduplication tracker
+      
+      if (process.env.DEBUG_BLACKJACK_SIGNALS) {
+        logDebug(`🎯 Blackjack SHORT Signal: Score=${cumulativeScore}, Confidence=${confidence.toFixed(2)}, Price=${candle.close}, Index=${i}, GapFromLast=${i - (lastShortSignalIndex - minSignalGap)}`);
+      }
+    }
+    
+    // BUY signal: Cumulative score <= -3 (strong bearish momentum - fade at trough)
+    if (cumulativeScore <= -3 && (i - lastBuySignalIndex) >= minSignalGap) {
+      const confidence = Math.min(0.8 + Math.abs(cumulativeScore + 3) * 0.05, 0.95);
+      const stopLoss = candle.low * 0.98; // 2% stop loss
+      const targetPrice = candle.high * 1.06; // 6% target
+      
+      signals.push(emitTradeSignal(
+        'BUY' as any,
+        'LONG_ENTRY' as any,
+        'BLACKJACK',
+        confidence,
+        candle.close,
+        new Date(candle.timestamp),
+        `BJ Score: ${cumulativeScore} (FADE BEARISH)`,
+        { 
+          stopLoss,
+          targetPrice
+        }
+      ));
+      
+      lastBuySignalIndex = i; // Update deduplication tracker
+      
+      if (process.env.DEBUG_BLACKJACK_SIGNALS) {
+        logDebug(`🎯 Blackjack BUY Signal: Score=${cumulativeScore}, Confidence=${confidence.toFixed(2)}, Price=${candle.close}, Index=${i}, GapFromLast=${i - (lastBuySignalIndex - minSignalGap)}`);
+      }
+    }
+  }
+  
+  // Enhanced debug logging for signal placement validation
+  if (process.env.DEBUG_BLACKJACK_SIGNALS && signals.length > 0) {
+    logDebug(`🔍 Blackjack Signal Summary: ${signals.length} signals emitted, Deduplication active (${minSignalGap} candle gap), Signal anchoring: momentum confirmation`);
+  }
+  
+  return signals;
 }

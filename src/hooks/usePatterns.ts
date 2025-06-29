@@ -201,6 +201,55 @@ export function usePatterns(data: CandlestickData[]) {
     }
   }, [goldenCandleSettings]);
   
+  // BlackJack settings with localStorage persistence
+  const [blackjackSettings, setBlackjackSettings] = useState<{
+    enabled: boolean;
+    showLabels: boolean;
+    lookbackPeriods: number;
+    minScore: number;
+    showContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+  }>(() => {
+    // Default values
+    const defaults = {
+      enabled: true,
+      showLabels: true,
+      lookbackPeriods: 7,
+      minScore: 3,
+      showContextTimeframe: false,
+      contextTimeframeMultiplier: 4,
+      basePriceChangeThreshold: 0.1,
+      baseVolumeChangeThreshold: 0.5
+    };
+    
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem('blackjackSettings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('[usePatterns] Loaded BlackJack settings from localStorage:', parsed);
+        return { ...defaults, ...parsed };
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading BlackJack settings:', error);
+    }
+    
+    // Return defaults if no localStorage or error
+    return defaults;
+  });
+
+  // Persist BlackJack settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('blackjackSettings', JSON.stringify(blackjackSettings));
+      console.log('[usePatterns] Saved BlackJack settings to localStorage:', blackjackSettings);
+    } catch (error) {
+      console.error('[usePatterns] Error saving BlackJack settings:', error);
+    }
+  }, [blackjackSettings]);
+  
   // Initialize preferences from service (which loads from localStorage)
   const [preferences, setPreferences] = useState<Partial<PatternDetectionPreferences>>(() => {
     // Get current preferences from service (already loaded from localStorage in constructor)
@@ -543,6 +592,8 @@ export function usePatterns(data: CandlestickData[]) {
     setGoldenNearMisses,
     goldenCandleSettings,
     setGoldenCandleSettings,
+    blackjackSettings,
+    setBlackjackSettings,
     
     // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT arrays
     goldenCandleEntries,

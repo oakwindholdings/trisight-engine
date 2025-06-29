@@ -10,6 +10,8 @@ import React from 'react';
 import { Pattern, PatternType, patternStyles } from '../../models/PatternTypes';
 import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
 import { logDebugHAAlignmentMismatch } from '../../utils/debug';
+import { renderTradeActionSignals, renderSignalCandleAction } from './SignalRenderer';
+import { TradeActionSignal } from '../../utils/trading/TradeActionSignal';
 
 // Direction arrow symbols for unified labeling
 const DIRECTION_ARROWS = {
@@ -129,7 +131,9 @@ const PatternRendererImpl = {
     blackjackSettings: { showLabels: boolean } = { showLabels: true },
     goldenNearMisses: boolean[] = [], // Add goldenNearMisses parameter for Dick O'Leary compliance
     goldenCandleEntries: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: ENTRY events
-    goldenCandleExits: any[] = [] // TriSight Detection Input Refactor Patch v1.3.3: EXIT events
+    goldenCandleExits: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: EXIT events
+    tradeActionSignals: TradeActionSignal[] = [], // 🔗 TradeActionSignal Rendering Integration
+    tradeActionSettings: { showLabels: boolean; showIcons: boolean } = { showLabels: true, showIcons: true } // 🔗 TradeActionSignal Settings
   ) {
     if (!ctx) return;
     
@@ -244,6 +248,41 @@ const PatternRendererImpl = {
           this.renderGoldenExitLabel(ctx, pattern, timeScale, priceScale, dimensions, goldenCandleSettings.showEntryExitLabels);
         }
       });
+    }
+    
+    // 🔗 Injected: TradeActionSignal Rendering
+    // Debug logging for TradeActionSignals validation
+    console.log(`[PatternRenderer] render() called with:`, {
+      signalsReceived: tradeActionSignals ? tradeActionSignals.length : 0,
+      candlesReceived: candles ? candles.length : 0,
+      signalsArray: tradeActionSignals
+    });
+    
+    // Render TradeActionSignals after pattern labels
+    if (tradeActionSignals && tradeActionSignals.length > 0) {
+      console.log(`[PatternRenderer] Rendering ${tradeActionSignals.length} TradeActionSignals`);
+      
+      renderTradeActionSignals(
+        ctx,
+        tradeActionSignals,
+        timeScale,
+        priceScale,
+        dimensions,
+        tradeActionSettings
+      );
+      
+      // Render TradeActionCandle rendering (black candles with leader lines)
+      renderSignalCandleAction(
+        ctx,
+        tradeActionSignals,
+        candles, // Pass candle data for OHLC values
+        timeScale,
+        priceScale,
+        dimensions,
+        0.6 // Confidence threshold
+      );
+    } else {
+      console.log(`[PatternRenderer] No TradeActionSignals to render (array is ${tradeActionSignals ? 'empty' : 'null/undefined'})`);
     }
   },
   

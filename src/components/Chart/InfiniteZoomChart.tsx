@@ -25,6 +25,10 @@ import { useHeikinAshiTransform } from '../../hooks/useHeikinAshiTransform';
 import { useChartSettings } from '../../contexts/ChartSettingsContext';
 import './InfiniteZoomChart.css';
 
+// TradeActionSignal Integration
+import { TradeActionBus } from '../../utils/trading/TradeActionSignal';
+import { getTradeActionSignals } from '../../framework/tradeActionEmitter';
+
 interface InfiniteZoomChartProps {
   symbol: string;
   patterns?: Pattern[];
@@ -840,6 +844,35 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] visibleEscalatorSteps sample (with BJ):', visibleEscalatorSteps.slice(0,3).map(s => ({ stepRef: s.stepRef, bj: s.blackjackScore, gm: s.qualifiesForGoldmine })));
     }
 
+    // Get TradeActionSignals from both bus implementations for debugging
+    const classBasedSignals = TradeActionBus.getSignals();
+    const arrayBasedSignals = getTradeActionSignals();
+    
+    // Debug logging to identify which bus has signals
+    console.log(`[InfiniteZoomChart] TradeActionSignal sources:`, {
+      classBasedCount: classBasedSignals.length,
+      arrayBasedCount: arrayBasedSignals.length,
+      classSignals: classBasedSignals.slice(0, 2), // First 2 for debugging
+      arraySignals: arrayBasedSignals.slice(0, 2)   // First 2 for debugging
+    });
+    
+    // Use whichever bus has signals (prefer class-based for consistency)
+    // Convert readonly array to mutable array to match expected type
+    const allSignals = classBasedSignals.length > 0 ? classBasedSignals : [...arrayBasedSignals];
+    
+    // 🔴 CRITICAL FIX: Filter to ENTRY signals ONLY (exclude exit signals)
+    const tradeActionSignals = allSignals.filter(signal => 
+      signal.signalType === 'LONG_ENTRY' || signal.signalType === 'SHORT_ENTRY'
+    );
+    
+    // Debug logging for signal filtering
+    console.log(`[InfiniteZoomChart] Signal filtering:`, {
+      totalSignals: allSignals.length,
+      entrySignals: tradeActionSignals.length,
+      exitSignalsFiltered: allSignals.length - tradeActionSignals.length,
+      entrySignalTypes: tradeActionSignals.map(s => ({ pattern: s.pattern, action: s.action, type: s.signalType }))
+    });
+    
     renderChart({
       mainCanvasRef,
       bufferCanvasRef,
@@ -861,6 +894,9 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       blackjackSettings: patternContext.blackjackSettings, // Add BlackJack settings for label toggle
       goldenCandleSettings: patternContext.goldenCandleSettings, // Golden Candle settings with near-miss toggle
       goldenNearMisses: patternContext.goldenNearMisses || [], // Golden Candle near-miss overlays
+      // 🔗 TradeActionSignal Integration - CRITICAL FIX
+      tradeActionSignals: tradeActionSignals,
+      tradeActionSettings: { showLabels: true, showIcons: true },
       chartSettings: {
         isHeikinAshi: candleType === 'heikin_ashi',
         showVolume: showVolume,

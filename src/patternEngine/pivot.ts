@@ -10,6 +10,9 @@ import { Candle } from '../types/pattern';
 import { PivotType } from '../models/PatternTypes';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
+import AdaptivePivotDetector from '../utils/patternDetection/AdaptivePivotDetector';
+import { emitTradeSignal } from '../framework/tradeActionEmitter';
+import { TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -180,7 +183,95 @@ export function detectPivots(
 
   if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Detection complete. Found', pivots.length, 'valid pivots');
   
+  // 🔗 Pattern Detector Signal Evaluation Hook - Ensure emitTradeSignal() is triggered
+  pivots.forEach(evaluatePivotForEntry);
+  
   return pivots;
+}
+
+/**
+ * Evaluates Pivot pattern for entry signals
+ * Canonical structure: emits BUY/SHORT signals at pivot levels
+ * @param pivot - Pivot detection object
+ */
+export function evaluatePivotForEntry(pivot: PivotDetection): void {
+  const { pivotType, pivotLevel, strengthScore, touchCount, confidence, timestamp } = pivot;
+
+  // Confidence gate - Only emit signals for strong pivots
+  if (strengthScore < 0.65 || touchCount < 3) return;
+
+  // ✅ CORRECT LOGIC: SUPPORT = BUY at LOW, RESISTANCE = SHORT at HIGH
+  const action = pivotType === PivotType.SUPPORT ? TradeAction.BUY : TradeAction.SHORT;
+  const signalType = pivotType === PivotType.SUPPORT ? SignalType.LONG_ENTRY : SignalType.SHORT_ENTRY;
+
+  emitTradeSignal({
+    action,
+    signalType,
+    pattern: 'Pivot',
+    confidence,
+    price: pivotLevel,
+    timestamp,
+    reason: `${pivotType} pivot @ ${pivotLevel.toFixed(2)} with ${touchCount} touches`
+  });
+
+  if (DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Pivot Entry] Signal emitted', {
+      action,
+      signalType,
+      pivotType,
+      pivotLevel: pivotLevel.toFixed(2),
+      confidence: (confidence * 100).toFixed(1) + '%',
+      strengthScore: strengthScore.toFixed(2),
+      touchCount,
+      dickOLearyCompliant: true
+    });
+  }
+}
+
+/**
+ * Monitors Pivot pattern for exit signals
+ * Canonical structure: emits SELL/COVER signals when pivot levels are breached
+ * @param pivot - Pivot detection object
+ * @param livePrice - Current market price
+ */
+export function monitorPivotForExit(pivot: PivotDetection, livePrice: number): void {
+  const { pivotType, pivotLevel, strengthScore, confidence, timestamp } = pivot;
+
+  // Confidence gate
+  if (strengthScore < 0.6) return;
+
+  // Check for pivot level breach
+  const breached = 
+    (pivotType === PivotType.SUPPORT && livePrice < pivotLevel) ||
+    (pivotType === PivotType.RESISTANCE && livePrice > pivotLevel);
+
+  if (breached) {
+    const action = pivotType === PivotType.SUPPORT ? TradeAction.SELL : TradeAction.COVER;
+    const signalType = pivotType === PivotType.SUPPORT ? SignalType.LONG_EXIT : SignalType.SHORT_EXIT;
+    const exitConfidence = 0.85; // High confidence on level breach
+
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Pivot',
+      confidence: exitConfidence,
+      price: livePrice,
+      timestamp,
+      reason: `${pivotType} breach @ ${pivotLevel.toFixed(2)}`
+    });
+
+    if (DEBUG_MODE) {
+      logDebug('DEBUG_PATTERN_DETECT', '[Pivot Exit] Signal emitted', {
+        action,
+        signalType,
+        pivotType,
+        pivotLevel: pivotLevel.toFixed(2),
+        breachPrice: livePrice.toFixed(2),
+        confidence: (exitConfidence * 100).toFixed(1) + '%',
+        dickOLearyCompliant: true
+      });
+    }
+  }
 }
 
 /**

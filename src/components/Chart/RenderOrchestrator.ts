@@ -18,6 +18,7 @@ import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import TimeAxis from './TimeAxis';
 import PriceAxis from './PriceAxis';
 import { convertToHeikinAshi } from '../../utils/candleTransform'; // HA Infrastructure Alignment Patch v1.0.0
+import { TradeActionSignal } from '../../utils/trading/TradeActionSignal'; // 🔗 TradeActionSignal Integration
 
 interface RenderArgs {
   mainCanvasRef: RefObject<HTMLCanvasElement | null>;
@@ -41,6 +42,9 @@ interface RenderArgs {
   goldmineQual?: boolean[]; // Golden Candle indicators
   goldenCandleSettings?: { showLabels: boolean; showNearMiss: boolean }; // Golden Candle settings including near-miss toggle
   goldenNearMisses?: boolean[]; // Golden Candle near-miss overlays
+  // 🔗 TradeActionSignal Integration
+  tradeActionSignals?: TradeActionSignal[]; // Trade action signals for rendering
+  tradeActionSettings?: { showLabels: boolean; showIcons: boolean }; // Trade action signal settings
   // Chart settings for Heikin-Ashi and display options
   chartSettings?: {
     isHeikinAshi: boolean;
@@ -72,6 +76,8 @@ export function renderChart(args: RenderArgs) {
     goldmineQual = [],
     goldenCandleSettings = { showLabels: false, showNearMiss: false },
     goldenNearMisses = [],
+    tradeActionSignals = [], // 🔗 TradeActionSignal Integration
+    tradeActionSettings = { showLabels: true, showIcons: true }, // 🔗 TradeActionSignal Settings
     chartSettings = { isHeikinAshi: false, showVolume: true, showGrid: true }
   } = args;
 
@@ -170,7 +176,11 @@ export function renderChart(args: RenderArgs) {
     { showLabels: false }, // goldmineChannelSettings  
     goldenCandleSettings, // goldenCandleSettings with near-miss toggle
     blackjackSettings, // blackjackSettings - BlackJack label toggle from UI
-    goldenNearMisses // goldenNearMisses - will be populated by pattern detection
+    goldenNearMisses, // goldenNearMisses - will be populated by pattern detection
+    [], // goldenCandleEntries - placeholder
+    [], // goldenCandleExits - placeholder
+    tradeActionSignals, // 🔗 TradeActionSignal Integration
+    tradeActionSettings // 🔗 TradeActionSignal Settings
   );
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });

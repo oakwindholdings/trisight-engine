@@ -5,7 +5,9 @@
 // DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
+import { TradeActionSignal, TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
 import { logDebug } from '../utils/debug';
+import { emitTradeSignal } from '../framework/tradeActionEmitter';
 import { convertToHeikinAshi } from '../utils/candleTransform';
 import { isNearMissGoldenCandle } from '../utils/patternQualifiers';
 
@@ -168,6 +170,9 @@ export function detectGoldenCandle(
   }
 
   if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldenCandle] Detection complete. Found', goldenCandles.length, 'golden candles');
+  
+  // 🔗 Pattern Detector Signal Evaluation Hook - Ensure emitTradeSignal() is triggered
+  goldenCandles.forEach(evaluateGoldenCandleForEntry);
   
   return goldenCandles;
 }
@@ -374,150 +379,61 @@ export function detectGoldenNearMisses(
 }
 
 /**
- * Checks if trailing stop has been triggered for a Golden Candle entry
- * DICK O'LEARY COMPLIANCE: Uses HA candles exclusively for exit trigger logic
- * // TODO: SOURCE_VERIFIED_FROM_DECKS - Trailing stop logic should be verified against Dick O'Leary source decks
- * @param entryCandle - The candle where Golden Candle was detected
- * @param currentCandle - The current candle to evaluate for stop trigger
- * @param direction - The direction of the Golden Candle ('LONG' | 'SHORT')
- * @param trailingStopPercent - Trailing stop threshold as percentage (default: 2.0%)
- * @returns boolean indicating if trailing stop has been triggered
+ * Evaluate Golden Candle pattern for entry signals
+ * @param goldenCandle - Detected Golden Candle pattern
  */
+export function evaluateGoldenCandleForEntry(goldenCandle: GoldenCandlePattern): void {
+  const { direction, confidence, candlePrice, timestamp } = goldenCandle;
+  
+  // Confidence gate — only trade high-confidence Golden Candles
+  if (confidence < 0.7) return;
+  
+  const action = direction === 'LONG' ? TradeAction.BUY : TradeAction.SHORT;
+  const signalType = direction === 'LONG' ? SignalType.LONG_ENTRY : SignalType.SHORT_ENTRY;
+  
+  emitTradeSignal({
+    action,
+    signalType,
+    pattern: 'Golden Candle',
+    confidence,
+    price: candlePrice,
+    timestamp,
+    reason: `Golden Candle confirmed (${direction})`
+  });
+}
+
 /**
- * Detects Golden Candle ENTRY and EXIT PatternEvents for lifecycle visualization
- * TriSight Detection Input Refactor Patch v1.3.3: Complete lifecycle PatternEvent emission
- * @param candles - Array of candlestick data
- * @param stepIntrinsicCounts - Array of step intrinsic counts per candle
- * @param stepBreakoutCounts - Array of step breakout counts per candle
- * @param stepContinuanceCounts - Array of step continuance counts per candle
- * @param bjIntrinsic - Array of blackjack intrinsic scores per candle
- * @param bjCumulative - Array of blackjack cumulative scores per candle
- * @param trailingStopPercent - Trailing stop threshold percentage (default: 2.0%)
- * @param stopLossPercent - Stop-loss threshold percentage (default: 2.0%)
- * @returns Array of PatternEvents with type 'GOLDEN_CANDLE_ENTRY' and 'GOLDEN_CANDLE_EXIT'
+ * Monitor Golden Candle pattern for exit signals
+ * @param goldenCandle - Active Golden Candle pattern
+ * @param livePrice - Current market price
  */
-export function detectGoldenCandleEntryExit(
-  candles: Candle[],
-  stepIntrinsicCounts: number[] = [],
-  stepBreakoutCounts: number[] = [],
-  stepContinuanceCounts: number[] = [],
-  bjIntrinsic: number[] = [],
-  bjCumulative: number[] = [],
-  trailingStopPercent: number = 2.0,
-  stopLossPercent: number = 2.0
-): Array<{type: 'GOLDEN_CANDLE_ENTRY' | 'GOLDEN_CANDLE_EXIT', data: any, index: number, timestamp: Date}> {
-  if (DEBUG_MODE) logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[HA GoldenCandle ENTRY/EXIT] Starting lifecycle detection on', candles.length, 'candles');
+export function monitorGoldenCandleForExit(goldenCandle: GoldenCandlePattern, livePrice: number): void {
+  const { direction, confidence, candlePrice, stepBoxFloor, stepBoxCeiling } = goldenCandle;
   
-  const events: Array<{type: 'GOLDEN_CANDLE_ENTRY' | 'GOLDEN_CANDLE_EXIT', data: any, index: number, timestamp: Date}> = [];
+  if (confidence < 0.7) return;
   
-  if (!candles || candles.length === 0) {
-    return events;
-  }
-
-  // First, detect all Golden Candle patterns (ENTRY points)
-  const goldenCandles = detectGoldenCandle(
-    candles,
-    stepIntrinsicCounts,
-    stepBreakoutCounts,
-    stepContinuanceCounts,
-    bjIntrinsic,
-    bjCumulative
+  // Define stop levels based on step box boundaries
+  const stopLoss = direction === 'LONG' ? stepBoxFloor : stepBoxCeiling;
+  
+  const broken = stopLoss && (
+    (direction === 'LONG' && livePrice < stopLoss) ||
+    (direction === 'SHORT' && livePrice > stopLoss)
   );
-
-  // Convert Golden Candle patterns to ENTRY events
-  goldenCandles.forEach(gc => {
-    events.push({
-      type: 'GOLDEN_CANDLE_ENTRY',
-      data: {
-        ...gc,
-        entryCandle: candles[gc.index],
-        peakIndex: gc.index,
-        isEntry: true
-      },
-      index: gc.index,
-      timestamp: gc.timestamp
-    });
-
-    if (DEBUG_MODE) {
-      logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[GOLDEN_CANDLE_ENTRY] Entry confirmed', {
-        index: gc.index,
-        timestamp: gc.timestamp.toISOString(),
-        direction: gc.direction,
-        confidence: gc.confidence,
-        goldenScore: gc.goldenScore,
-        dickOLearyCompliant: true
-      });
-    }
-  });
-
-  // Detect EXIT points using trailing stop and stop-loss logic
-  goldenCandles.forEach(entryGc => {
-    const entryCandle = candles[entryGc.index];
+  
+  if (broken) {
+    const action = direction === 'LONG' ? TradeAction.SELL : TradeAction.COVER;
+    const signalType = direction === 'LONG' ? SignalType.LONG_EXIT : SignalType.SHORT_EXIT;
     
-    // Look for EXIT triggers in subsequent candles
-    for (let i = entryGc.index + 1; i < candles.length; i++) {
-      const currentCandle = candles[i];
-      
-      // Check if trailing stop is triggered
-      const trailingStopTriggered = isTrailingStopTriggered(
-        entryCandle,
-        currentCandle,
-        entryGc.direction,
-        trailingStopPercent
-      );
-      
-      // Check if stop-loss is triggered (similar logic but with stopLossPercent)
-      const stopLossTriggered = isTrailingStopTriggered(
-        entryCandle,
-        currentCandle,
-        entryGc.direction,
-        stopLossPercent
-      );
-      
-      if (trailingStopTriggered || stopLossTriggered) {
-        events.push({
-          type: 'GOLDEN_CANDLE_EXIT',
-          data: {
-            ...entryGc,
-            exitCandle: currentCandle,
-            entryCandle: entryCandle,
-            exitIndex: i,
-            exitReason: trailingStopTriggered ? 'TRAILING_STOP' : 'STOP_LOSS',
-            triggeredStopPercent: trailingStopTriggered ? trailingStopPercent : stopLossPercent,
-            isExit: true
-          },
-          index: i,
-          timestamp: new Date(currentCandle.datetime)
-        });
-
-        if (DEBUG_MODE) {
-          logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[GOLDEN_CANDLE_EXIT] Exit confirmed', {
-            entryIndex: entryGc.index,
-            exitIndex: i,
-            entryTimestamp: entryCandle.datetime,
-            exitTimestamp: currentCandle.datetime,
-            direction: entryGc.direction,
-            exitReason: trailingStopTriggered ? 'TRAILING_STOP' : 'STOP_LOSS',
-            triggeredStopPercent: trailingStopTriggered ? trailingStopPercent : stopLossPercent,
-            dickOLearyCompliant: true
-          });
-        }
-        
-        // Only emit one EXIT per ENTRY
-        break;
-      }
-    }
-  });
-
-  if (DEBUG_MODE) {
-    logDebug('DEBUG_GOLDEN_ENTRY_EXIT', '[HA GoldenCandle ENTRY/EXIT] Lifecycle detection complete', {
-      totalEvents: events.length,
-      entryEvents: events.filter(e => e.type === 'GOLDEN_CANDLE_ENTRY').length,
-      exitEvents: events.filter(e => e.type === 'GOLDEN_CANDLE_EXIT').length
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Golden Candle',
+      confidence,
+      price: livePrice,
+      timestamp: new Date(),
+      reason: `Golden Candle step box breached (${direction})`
     });
   }
-
-  return events;
 }
 
 export function isTrailingStopTriggered(
@@ -543,34 +459,10 @@ export function isTrailingStopTriggered(
     // LONG: current HA low < entry HA open - (trailingStop %)
     const stopLevel = haEntryCandle.open - trailingStopValue;
     isTriggered = haCurrentCandle.low < stopLevel;
-
-    if (DEBUG_MODE && isTriggered) {
-      logDebug('DEBUG_GOLDEN_TRAIL_EXIT', '[TRAILING STOP TRIGGERED - LONG]', {
-        entryPrice: haEntryCandle.open.toFixed(4),
-        currentLow: haCurrentCandle.low.toFixed(4),
-        stopLevel: stopLevel.toFixed(4),
-        trailingStopPercent,
-        direction,
-        timestamp: currentCandle.datetime,
-        dickOLearyCompliant: true
-      });
-    }
   } else if (direction === 'SHORT') {
     // SHORT: current HA high > entry HA open + (trailingStop %)
     const stopLevel = haEntryCandle.open + trailingStopValue;
     isTriggered = haCurrentCandle.high > stopLevel;
-
-    if (DEBUG_MODE && isTriggered) {
-      logDebug('DEBUG_GOLDEN_TRAIL_EXIT', '[TRAILING STOP TRIGGERED - SHORT]', {
-        entryPrice: haEntryCandle.open.toFixed(4),
-        currentHigh: haCurrentCandle.high.toFixed(4),
-        stopLevel: stopLevel.toFixed(4),
-        trailingStopPercent,
-        direction,
-        timestamp: currentCandle.datetime,
-        dickOLearyCompliant: true
-      });
-    }
   }
 
   return isTriggered;

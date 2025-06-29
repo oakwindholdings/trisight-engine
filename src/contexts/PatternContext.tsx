@@ -146,6 +146,27 @@ interface PatternContextType {
   // BreakoutBox independent settings
   breakoutBoxSettings: BreakoutBoxSettings;
   setBreakoutBoxSettings: (settings: BreakoutBoxSettings) => void;
+  // BlackJack settings for label visibility
+  blackjackSettings: {
+    enabled: boolean;
+    showLabels: boolean;
+    lookbackPeriods: number;
+    minScore: number;
+    showContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+  };
+  setBlackjackSettings: (settings: {
+    enabled: boolean;
+    showLabels: boolean;
+    lookbackPeriods: number;
+    minScore: number;
+    showContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+  }) => void;
   // Golden Candle settings with near-miss toggle
   goldenCandleSettings: {
     enabled: boolean;
@@ -296,6 +317,17 @@ const initialPatternContext: PatternContextType = {
   setEscalatorSettings: () => {},
   breakoutBoxSettings: {} as BreakoutBoxSettings,
   setBreakoutBoxSettings: () => {},
+  blackjackSettings: {
+    enabled: true,
+    showLabels: true,
+    lookbackPeriods: 7,
+    minScore: 3,
+    showContextTimeframe: false,
+    contextTimeframeMultiplier: 4,
+    basePriceChangeThreshold: 0.1,
+    baseVolumeChangeThreshold: 0.5
+  },
+  setBlackjackSettings: () => {},
   goldenCandleSettings: {
     enabled: true,
     showLabels: true,
@@ -343,7 +375,9 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     goldenNearMisses: patternHook.goldenNearMisses,
     setGoldenNearMisses: patternHook.setGoldenNearMisses,
     goldenCandleSettings: patternHook.goldenCandleSettings,
-    setGoldenCandleSettings: patternHook.setGoldenCandleSettings
+    setGoldenCandleSettings: patternHook.setGoldenCandleSettings,
+    blackjackSettings: patternHook.blackjackSettings,
+    setBlackjackSettings: patternHook.setBlackjackSettings
   }), [
     patternHook.patterns,
     patternHook.visiblePatterns,
@@ -416,7 +450,9 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     patternHook.goldenNearMisses,
     patternHook.setGoldenNearMisses,
     patternHook.goldenCandleSettings,
-    patternHook.setGoldenCandleSettings
+    patternHook.setGoldenCandleSettings,
+    patternHook.blackjackSettings,
+    patternHook.setBlackjackSettings
   ]);
   
   // Log when provider renders
