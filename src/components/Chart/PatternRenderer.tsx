@@ -12,6 +12,7 @@ import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
 import { logDebugHAAlignmentMismatch } from '../../utils/debug';
 import { renderTradeActionSignals, renderSignalCandleAction } from './SignalRenderer';
 import { TradeActionSignal } from '../../utils/trading/TradeActionSignal';
+import { renderConvictionCloud, ConvictionCloudItem, defaultConvictionCloudSettings } from './ConvictionCloudRenderer';
 
 // Direction arrow symbols for unified labeling
 const DIRECTION_ARROWS = {
@@ -133,7 +134,10 @@ const PatternRendererImpl = {
     goldenCandleEntries: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: ENTRY events
     goldenCandleExits: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: EXIT events
     tradeActionSignals: TradeActionSignal[] = [], // 🔗 TradeActionSignal Rendering Integration
-    tradeActionSettings: { showLabels: boolean; showIcons: boolean } = { showLabels: true, showIcons: true } // 🔗 TradeActionSignal Settings
+    tradeActionSettings: { showLabels: boolean; showIcons: boolean } = { showLabels: true, showIcons: true }, // 🔗 TradeActionSignal Settings
+    convictionCloudItems: ConvictionCloudItem[] = [], // Conviction Cloud data
+    convictionCloudSettings = defaultConvictionCloudSettings, // Conviction Cloud settings
+    hoveredConvictionItem: ConvictionCloudItem | null = null // Currently hovered conviction item
   ) {
     if (!ctx) return;
     
@@ -283,6 +287,39 @@ const PatternRendererImpl = {
       );
     } else {
       console.log(`[PatternRenderer] No TradeActionSignals to render (array is ${tradeActionSignals ? 'empty' : 'null/undefined'})`);
+    }
+
+    // 🌟 Conviction Cloud Rendering Layer (Top-most layer for anchored positioning)
+    // Render conviction cloud above all other chart elements for maximum visibility
+    if (convictionCloudItems && convictionCloudItems.length > 0) {
+      console.log(`[PatternRenderer] Rendering ${convictionCloudItems.length} Conviction Cloud items`);
+      
+      renderConvictionCloud(
+        ctx,
+        convictionCloudItems,
+        dimensions,
+        convictionCloudSettings,
+        hoveredConvictionItem
+      );
+    } else {
+      console.log('[PatternRenderer] No Conviction Cloud items to render');
+    }
+
+    // 🔗 CRITICAL FIX: Render TradeActionSignals (including STOP_EXIT labels)
+    // This was the missing piece - signals were being cleared but not redrawn!
+    if (tradeActionSignals && tradeActionSignals.length > 0 && tradeActionSettings) {
+      console.log(`🚀 [PatternRenderer] Rendering ${tradeActionSignals.length} TradeActionSignals`);
+      
+      renderTradeActionSignals(
+        ctx,
+        tradeActionSignals,
+        timeScale,
+        priceScale,
+        dimensions,
+        tradeActionSettings
+      );
+    } else {
+      console.log('⚠️ [PatternRenderer] No TradeActionSignals to render or settings disabled');
     }
   },
   

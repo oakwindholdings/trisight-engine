@@ -20,7 +20,7 @@ import { InfiniteZoomChartRef } from './components/Chart/InfiniteZoomChart';
 import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithContext';
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
-import { SymbolRankingTable } from './components/SymbolRankingTable'; // Add import for SymbolRankingTable component
+import { TargetReportTable } from './components/TargetReportTable'; // Dick's TriSight Target Report Table with actual formulas
 
 // Import components
 import ContextBar from './components/Navigation/ContextBar';
@@ -42,6 +42,9 @@ import { isFeatureEnabled } from './utils/featureFlags';
 
 // Import types
 import { Pattern } from './models/PatternTypes';
+import { TradeActionBus, emitBuySignal, emitSellSignal, TradeAction, SignalType, TradeActionSignal } from './utils/trading/TradeActionSignal';
+import { StepBox } from './types/pattern';
+import { evaluateAllPatterns } from './utils/patternHydration';
 
 // Import hooks
 import useTwelveDataApiKey from './hooks/useTwelveDataApiKey';
@@ -804,6 +807,16 @@ function AppContent() {
     }
   }, [setSelectedPattern]);
 
+  // Auto-hydrate TradeActionBus when candle data changes
+  useEffect(() => {
+    if (data.length > 0) {
+      console.debug('[App] Auto-hydrating TradeActionBus with', data.length, 'candles');
+      evaluateAllPatterns(data);
+      const signalCount = TradeActionBus.getSignals().length;
+      console.debug('[App] TradeActionBus now contains', signalCount, 'signals');
+    }
+  }, [data]);
+
   // Update URL when pattern is selected
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -905,12 +918,14 @@ function AppContent() {
               backgroundColor: '#ffffff',
               overflow: 'hidden'
             }}>
-              <SymbolRankingTable
-                rankings={symbolRankings}
+              <TargetReportTable
+                signals={TradeActionBus.getSignals()}
+                patterns={filteredPatterns || []}
+                escalatorSteps={[]}
                 selectedSymbol={selectedSymbol}
                 onSymbolSelect={(symbol) => {
                   setSelectedSymbol(symbol);
-                  logDebug('DEBUG_UI', '[App] Symbol selected from ranking table:', symbol);
+                  logDebug('DEBUG_UI', '[App] Symbol selected from target report table:', symbol);
                 }}
                 loading={false}
               />
@@ -918,7 +933,7 @@ function AppContent() {
           )}
           
           <div className={mainGridStyles.footer}>
-            TriSight Pattern Training Interface v2025.06.28.10.48 &copy; {new Date().getFullYear()}
+            TriSight Pattern Training Interface v2025.07.04.12.09 &copy; {new Date().getFullYear()}
           </div>
         </>
       ) : (
@@ -1012,7 +1027,7 @@ function AppContent() {
             </>
           </ContentArea>
           <Footer>
-            TriSight Pattern Training Interface v2025.06.28.10.48 &copy; {new Date().getFullYear()}
+            TriSight Pattern Training Interface v2025.07.04.12.09 &copy; {new Date().getFullYear()}
           </Footer>
         </AppContainer>
       )}

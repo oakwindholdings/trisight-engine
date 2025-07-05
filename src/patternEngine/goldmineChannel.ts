@@ -10,9 +10,10 @@ import { ChannelDirection, ThrustDirection, GoldmineChannelPattern } from '../mo
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
-import { TradeActionSignal, SignalType, TradeAction } from '../utils/trading/TradeActionSignal';
+import { TradeActionSignal, SignalType, TradeAction, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { AdaptiveGoldmineChannelDetector } from '../utils/patternDetection/AdaptiveGoldmineChannelDetector';
 import { MarketContext } from '../utils/patternDetection/core/MarketContext';
+import { canEmitSignal } from '../utils/patternDebounceManager';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -345,6 +346,21 @@ export function evaluateGoldmineChannelForEntry(channel: GoldmineChannelPattern)
     return;
   }
 
+  // Debounce check - prevent rapid repeat emissions for channel patterns
+  const now = Date.now();
+  const canEmitTradeSignal = canEmitSignal('GOLDMINE_CHANNEL', now);
+  
+  if (!canEmitTradeSignal && DEBUG_MODE) {
+    // Calculate channel width from available boundary properties
+    const calculatedChannelWidth = Math.abs(upperBoundary - lowerBoundary);
+    logDebug('DEBUG_PATTERN_DETECT', '[Goldmine Channel] Trade signal debounced (but pattern will still render)', {
+      pattern: 'GOLDMINE_CHANNEL',
+      timestamp: new Date(now).toISOString(),
+      breakoutDirection: direction,
+      channelWidth: calculatedChannelWidth.toFixed(4)
+    });
+  }
+
   // 🔴 CRITICAL FIX: Tactical channel entry logic (NOT breakout chasing)
   // BUY at channel LOWS (lower boundary) - buy support
   // SHORT at channel HIGHS (upper boundary) - short resistance
@@ -372,16 +388,32 @@ export function evaluateGoldmineChannelForEntry(channel: GoldmineChannelPattern)
   // Use pattern detection timestamp, not current time (no lookahead)
   const patternTimestamp = endTime || startTime || new Date();
 
-  // Canonical signal emission - only core fields needed
-  emitTradeSignal({
-    action,
-    signalType,
-    pattern: 'Goldmine Channel',
-    confidence,
-    price,
-    timestamp: patternTimestamp,
-    reason: `Cup-shaped consolidation breakout (${direction})`
-  });
+  // CRITICAL FIX: Only emit trade signals when debounce allows
+  // Pattern detection and rendering continues regardless of debounce
+  if (canEmitTradeSignal) {
+    // Canonical signal emission - only core fields needed
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Goldmine Channel',
+      confidence,
+      price,
+      timestamp: patternTimestamp,
+      reason: `Cup-shaped consolidation breakout (${direction})`
+    });
+
+    // Emit TRADE_BIAS signal for channel directional bias indication
+    const bias = (direction === ChannelDirection.ASCENDING || action === TradeAction.BUY) ? 'LONG' : 'SHORT';
+    emitTradeBiasSignal(
+      'GOLDMINE_CHANNEL',
+      confidence,
+      price,
+      patternTimestamp,
+      bias,
+      `Goldmine Channel breakout bias: ${direction}`,
+      { riskLevel: 'MEDIUM' }
+    );
+  }
 
 
   

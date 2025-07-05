@@ -10,6 +10,11 @@ import { Candle } from '../types/pattern';
 import { debugLog, summaryLog, DEBUG_MODE, logDebug } from '../utils/debug';
 import { calcStepBlackjack } from './blackjack';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only detection
+import { TradeActionSignal, TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
+import { emitTradeSignal } from '../framework/tradeActionEmitter';
+import { emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
+import { canEmitSignal, setPatternState, getPatternState } from '../utils/patternDebounceManager';
+import { PatternState } from '../config/debounceConfig';
 
 /**
  * Detects breakout boxes (floor-ceiling zones) in candlestick data
@@ -247,6 +252,17 @@ function isWithinBox(candle: Candle, floor: number, ceiling: number): boolean {
   return bodyHigh <= ceiling && bodyLow >= floor;
 }
 
+/**
+ * Breakout Box state management for staging control
+ */
+export enum BreakoutBoxState {
+  FORMED = 'FORMED',         // Box detected but not confirmed
+  TRIGGERED = 'TRIGGERED',   // Box breakout confirmed and ready for signals
+  STAGED = 'STAGED',         // Box waiting for confirmation
+  EXITED = 'EXITED',         // Box completed or invalidated
+  SUPPRESSED = 'SUPPRESSED'  // Box temporarily suppressed
+}
+
 export interface BreakoutBox {
   startIndex: number;
   endIndex: number;
@@ -259,4 +275,205 @@ export interface BreakoutBox {
   blackjackScore?: number;
   blackjackComponents?: number[];
   qualifiesForGoldmine?: boolean;
+  // Dynamic exit confidence properties
+  breakoutTimestamp?: number;
+  breakoutVolume?: number;
+  breakoutScore?: number;
+  // Staging state management
+  state?: BreakoutBoxState;
+  patternKey?: string;  // Unique identifier for state tracking
+}
+
+/**
+ * Calculates dynamic exit confidence for Breakout Box re-entry scenarios
+ * Based on Dick O'Leary compliance: exits governed by precision, not assumptions
+ * @param params - Exit confidence calculation parameters
+ * @returns Confidence score between 0.4 and 1.0
+ */
+function calculateBoxExitConfidence({
+  breakoutScore,
+  reEntryVelocity,
+  timeSinceBreakoutMs,
+  volumeChangePct
+}: {
+  breakoutScore: number;
+  reEntryVelocity: number;
+  timeSinceBreakoutMs: number;
+  volumeChangePct: number;
+}): number {
+  // Time decay factor: confidence degrades over 10 minutes
+  const decayFactor = Math.min(1, timeSinceBreakoutMs / (10 * 60 * 1000));
+  
+  // Multi-factor confidence calculation
+  const confidence =
+    0.5 * breakoutScore +                                    // Original breakout strength (50%)
+    0.3 * Math.max(0, Math.min(1, reEntryVelocity)) +       // Re-entry velocity (30%)
+    0.1 * (volumeChangePct < 0 ? 1 : 0) +                   // Volume drop reward (10%)
+    0.1 * (1 - decayFactor);                                // Time freshness (10%)
+  
+  // Clamp between 0.4 (minimum exit confidence) and 1.0 (maximum)
+  return Math.min(1, Math.max(0.4, confidence));
+}
+
+/**
+ * Evaluates BreakoutBox pattern for entry signals
+ * Canonical structure: emits BUY/SHORT signals for qualified breakout box patterns
+ * @param box - BreakoutBox detection object
+ */
+export function evaluateBreakoutBoxForEntry(box: BreakoutBox): void {
+  const { direction, blackjackScore, qualifiesForGoldmine, breakoutCandle, floor, ceiling, state, patternKey } = box;
+
+  // Confidence gate - Only emit signals for goldmine-qualified boxes
+  if (!qualifiesForGoldmine || !blackjackScore || Math.abs(blackjackScore) < 2.0) {
+    return;
+  }
+
+  // Generate unique pattern key if not provided
+  const boxKey = patternKey || `breakout_${direction}_${floor.toFixed(2)}_${ceiling.toFixed(2)}`;
+  
+  // Staging state check - Only emit signals for TRIGGERED boxes
+  const currentState = state || getPatternState(boxKey);
+  if (currentState !== BreakoutBoxState.TRIGGERED && currentState !== PatternState.TRIGGERED) {
+    if (DEBUG_MODE) {
+      logDebug('DEBUG_PATTERN_DETECT', '[BreakoutBox] Signal blocked by state', {
+        pattern: 'BREAKOUT_BOX',
+        patternKey: boxKey,
+        currentState,
+        requiredState: 'TRIGGERED',
+        direction
+      });
+    }
+    return;
+  }
+
+  // Debounce check - prevent rapid repeat emissions for breakout patterns
+  const now = Date.now();
+  // CRITICAL FIX: Separate pattern detection from trade signal emission
+  // Pattern detection and rendering should NEVER be debounced
+  const canEmitTradeSignal = canEmitSignal('BREAKOUT_BOX', now);
+  
+  if (!canEmitTradeSignal && DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Breakout Box] Trade signal debounced (but pattern will still render)', {
+      pattern: 'BREAKOUT_BOX',
+      timestamp: new Date(now).toISOString(),
+      breakoutDirection: direction,
+      boxWidth: (ceiling - floor).toFixed(4)
+    });
+  }
+
+  // Calculate confidence based on blackjack score strength
+  const confidence = Math.min(0.9, 0.6 + (Math.abs(blackjackScore) - 2.0) * 0.1);
+  
+  // Entry logic: BUY on RISING breakout, SHORT on FALLING breakout
+  const action = direction === 'RISING' ? TradeAction.BUY : TradeAction.SHORT;
+  const signalType = direction === 'RISING' ? SignalType.LONG_ENTRY : SignalType.SHORT_ENTRY;
+  
+  // Use breakout candle price or ceiling/floor as entry price
+  const entryPrice = breakoutCandle ? 
+    (direction === 'RISING' ? breakoutCandle.high : breakoutCandle.low) :
+    (direction === 'RISING' ? ceiling : floor);
+  
+  // Calculate timestamp from breakout candle or current time
+  const timestamp = breakoutCandle ? new Date(breakoutCandle.datetime) : new Date();
+  
+  // CRITICAL FIX: Only emit trade signals when debounce allows
+  // Pattern detection and rendering continues regardless of debounce
+  if (canEmitTradeSignal) {
+    // Emit the trade signal
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Breakout Box',
+      confidence,
+      price: entryPrice,
+      timestamp,
+      reason: `${direction} breakout (BJ: ${blackjackScore.toFixed(1)})`,
+      riskLevel: confidence >= 0.8 ? 'LOW' : confidence >= 0.7 ? 'MEDIUM' : 'HIGH'
+    });
+  }
+
+  // Emit TRADE_BIAS signal for directional bias indication
+  const bias = direction === 'RISING' ? 'LONG' : 'SHORT';
+  emitTradeBiasSignal(
+    'BREAKOUT_BOX',
+    confidence,
+    entryPrice,
+    timestamp,
+    bias,
+    `Breakout box ${direction.toLowerCase()} bias`,
+    {
+      riskLevel: confidence >= 0.8 ? 'LOW' : 'MEDIUM'
+    }
+  );
+
+  if (DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[BreakoutBox Entry] Signal emitted', {
+      action,
+      signalType,
+      direction,
+      confidence: (confidence * 100).toFixed(1) + '%',
+      blackjackScore: blackjackScore.toFixed(1),
+      entryPrice: entryPrice.toFixed(4),
+      stepRef: box.stepRef,
+      dickOLearyCompliant: true
+    });
+  }
+}
+
+/**
+ * Monitors BreakoutBox pattern for exit signals
+ * Canonical structure: emits SELL/COVER signals when box re-entry occurs
+ * @param box - BreakoutBox detection object
+ * @param livePrice - Current market price
+ */
+export function monitorBreakoutBoxForExit(box: BreakoutBox, livePrice: number, currentCandle?: Candle): void {
+  const { direction, floor, ceiling, qualifiesForGoldmine } = box;
+
+  // Only monitor qualified boxes
+  if (!qualifiesForGoldmine) return;
+
+  // Calculate dynamic exit confidence based on market context
+  const reEntryLevel = direction === 'RISING' ? ceiling : floor;
+  const reEntryVelocity = Math.abs((livePrice - reEntryLevel) / reEntryLevel);
+  const timeSinceBreakout = box.breakoutTimestamp ? Date.now() - box.breakoutTimestamp : 5 * 60 * 1000; // Default 5 min
+  const volumeChange = (currentCandle && box.breakoutVolume) ? 
+    (currentCandle.volume - box.breakoutVolume) / box.breakoutVolume : 0;
+
+  const confidence = calculateBoxExitConfidence({
+    breakoutScore: box.breakoutScore || 0.6,
+    reEntryVelocity,
+    timeSinceBreakoutMs: timeSinceBreakout,
+    volumeChangePct: volumeChange
+  });
+
+  // Check for box re-entry (breakout failure)
+  const boxReEntry = (direction === 'RISING' && livePrice < ceiling) ||
+                     (direction === 'FALLING' && livePrice > floor);
+
+  if (boxReEntry) {
+    const action = direction === 'RISING' ? TradeAction.SELL : TradeAction.COVER;
+    const signalType = direction === 'RISING' ? SignalType.LONG_EXIT : SignalType.SHORT_EXIT;
+
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Breakout Box',
+      confidence,
+      price: livePrice,
+      timestamp: new Date(),
+      reason: `Breakout failed - price re-entered box (${direction})`
+    });
+
+    if (DEBUG_MODE) {
+      logDebug('DEBUG_PATTERN_DETECT', '[BreakoutBox Exit] Signal emitted', {
+        action,
+        signalType,
+        direction,
+        reEntryPrice: livePrice.toFixed(4),
+        floor: floor.toFixed(4),
+        ceiling: ceiling.toFixed(4),
+        dickOLearyCompliant: true
+      });
+    }
+  }
 }

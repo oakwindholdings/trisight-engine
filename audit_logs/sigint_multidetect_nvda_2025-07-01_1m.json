@@ -1,0 +1,1599 @@
+{
+  "auditId": "multidetect_sigint_nvda_1751468595366",
+  "auditName": "SIGINT Audit: Full Detection + Multi-Emission Mode",
+  "auditSpec": {
+    "id": "full.sigint.multidetect",
+    "allowMultipleDetectionsPerEngine": true,
+    "allowMultipleEmissions": true,
+    "maxDetectionsPerEngine": 1000,
+    "maxEmissionsPerPattern": 1000
+  },
+  "scope": [
+    "ESCALATOR",
+    "ROCKETMAN",
+    "GOLDEN_CANDLE",
+    "BLACKJACK",
+    "PIVOT",
+    "GOLDMINE_CHANNEL",
+    "GOLDMINE_SHAFT"
+  ],
+  "timeframe": "1m",
+  "timestamp": "2025-07-02T15:03:15.366Z",
+  "stages": {
+    "detection": [
+      {
+        "patternId": "ESCALATOR_0",
+        "matchStartDatetime": "2025-07-01T13:45:00.000Z",
+        "matchEndDatetime": "2025-07-01T13:55:00.000Z",
+        "detectionConfidence": 0.395,
+        "engineInvoked": true,
+        "detected": false,
+        "scanPosition": 20,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ESCALATOR_1",
+        "matchStartDatetime": "2025-07-01T13:50:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:00:00.000Z",
+        "detectionConfidence": 0.554,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 25,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ESCALATOR_2",
+        "matchStartDatetime": "2025-07-01T14:00:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:10:00.000Z",
+        "detectionConfidence": 0.721,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 35,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ESCALATOR_3",
+        "matchStartDatetime": "2025-07-01T14:05:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:15:00.000Z",
+        "detectionConfidence": 0.734,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 40,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ESCALATOR_4",
+        "matchStartDatetime": "2025-07-01T14:20:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:30:00.000Z",
+        "detectionConfidence": 0.409,
+        "engineInvoked": true,
+        "detected": false,
+        "scanPosition": 55,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ROCKETMAN_0",
+        "matchStartDatetime": "2025-07-01T13:45:00.000Z",
+        "matchEndDatetime": "2025-07-01T13:55:00.000Z",
+        "detectionConfidence": 0.546,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 20,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ROCKETMAN_1",
+        "matchStartDatetime": "2025-07-01T13:50:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:00:00.000Z",
+        "detectionConfidence": 0.507,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 25,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ROCKETMAN_2",
+        "matchStartDatetime": "2025-07-01T14:10:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:20:00.000Z",
+        "detectionConfidence": 0.493,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 45,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ROCKETMAN_3",
+        "matchStartDatetime": "2025-07-01T14:20:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:30:00.000Z",
+        "detectionConfidence": 0.662,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 55,
+        "windowSize": 10
+      },
+      {
+        "patternId": "ROCKETMAN_4",
+        "matchStartDatetime": "2025-07-01T14:25:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:35:00.000Z",
+        "detectionConfidence": 0.635,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 60,
+        "windowSize": 10
+      },
+      {
+        "patternId": "GOLDEN_CANDLE_0",
+        "matchStartDatetime": "2025-07-01T13:45:00.000Z",
+        "matchEndDatetime": "2025-07-01T13:55:00.000Z",
+        "detectionConfidence": 0.435,
+        "engineInvoked": true,
+        "detected": false,
+        "scanPosition": 20,
+        "windowSize": 10
+      },
+      {
+        "patternId": "GOLDEN_CANDLE_1",
+        "matchStartDatetime": "2025-07-01T13:50:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:00:00.000Z",
+        "detectionConfidence": 0.579,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 25,
+        "windowSize": 10
+      },
+      {
+        "patternId": "GOLDEN_CANDLE_2",
+        "matchStartDatetime": "2025-07-01T13:55:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:05:00.000Z",
+        "detectionConfidence": 0.764,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 30,
+        "windowSize": 10
+      },
+      {
+        "patternId": "GOLDEN_CANDLE_3",
+        "matchStartDatetime": "2025-07-01T14:15:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:25:00.000Z",
+        "detectionConfidence": 0.657,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 50,
+        "windowSize": 10
+      },
+      {
+        "patternId": "GOLDEN_CANDLE_4",
+        "matchStartDatetime": "2025-07-01T14:20:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:30:00.000Z",
+        "detectionConfidence": 0.676,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 55,
+        "windowSize": 10
+      },
+      {
+        "patternId": "BLACKJACK_0",
+        "matchStartDatetime": "2025-07-01T13:45:00.000Z",
+        "matchEndDatetime": "2025-07-01T13:55:00.000Z",
+        "detectionConfidence": 0.73,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 20,
+        "windowSize": 10
+      },
+      {
+        "patternId": "BLACKJACK_1",
+        "matchStartDatetime": "2025-07-01T13:50:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:00:00.000Z",
+        "detectionConfidence": 0.212,
+        "engineInvoked": true,
+        "detected": false,
+        "scanPosition": 25,
+        "windowSize": 10
+      },
+      {
+        "patternId": "BLACKJACK_2",
+        "matchStartDatetime": "2025-07-01T13:55:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:05:00.000Z",
+        "detectionConfidence": 0.464,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 30,
+        "windowSize": 10
+      },
+      {
+        "patternId": "BLACKJACK_3",
+        "matchStartDatetime": "2025-07-01T14:00:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:10:00.000Z",
+        "detectionConfidence": 0.745,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 35,
+        "windowSize": 10
+      },
+      {
+        "patternId": "BLACKJACK_4",
+        "matchStartDatetime": "2025-07-01T14:10:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:20:00.000Z",
+        "detectionConfidence": 0.659,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 45,
+        "windowSize": 10
+      },
+      {
+        "patternId": "PIVOT_0",
+        "matchStartDatetime": "2025-07-01T13:45:00.000Z",
+        "matchEndDatetime": "2025-07-01T13:55:00.000Z",
+        "detectionConfidence": 0.214,
+        "engineInvoked": true,
+        "detected": false,
+        "scanPosition": 20,
+        "windowSize": 10
+      },
+      {
+        "patternId": "PIVOT_1",
+        "matchStartDatetime": "2025-07-01T13:50:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:00:00.000Z",
+        "detectionConfidence": 0.487,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 25,
+        "windowSize": 10
+      },
+      {
+        "patternId": "PIVOT_2",
+        "matchStartDatetime": "2025-07-01T13:55:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:05:00.000Z",
+        "detectionConfidence": 0.505,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 30,
+        "windowSize": 10
+      },
+      {
+        "patternId": "PIVOT_3",
+        "matchStartDatetime": "2025-07-01T14:05:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:15:00.000Z",
+        "detectionConfidence": 0.679,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 40,
+        "windowSize": 10
+      },
+      {
+        "patternId": "PIVOT_4",
+        "matchStartDatetime": "2025-07-01T14:10:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:20:00.000Z",
+        "detectionConfidence": 0.686,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 45,
+        "windowSize": 10
+      },
+      {
+        "patternId": "GOLDMINE_CHANNEL_0",
+        "matchStartDatetime": "2025-07-01T13:38:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:02:00.000Z",
+        "detectionConfidence": 0.582,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 20,
+        "windowSize": 25
+      },
+      {
+        "patternId": "GOLDMINE_CHANNEL_1",
+        "matchStartDatetime": "2025-07-01T13:43:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:07:00.000Z",
+        "detectionConfidence": 0.228,
+        "engineInvoked": true,
+        "detected": false,
+        "scanPosition": 25,
+        "windowSize": 25
+      },
+      {
+        "patternId": "GOLDMINE_CHANNEL_2",
+        "matchStartDatetime": "2025-07-01T14:08:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:32:00.000Z",
+        "detectionConfidence": 0.505,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 50,
+        "windowSize": 25
+      },
+      {
+        "patternId": "GOLDMINE_CHANNEL_3",
+        "matchStartDatetime": "2025-07-01T14:33:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:57:00.000Z",
+        "detectionConfidence": 0.508,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 75,
+        "windowSize": 25
+      },
+      {
+        "patternId": "GOLDMINE_CHANNEL_4",
+        "matchStartDatetime": "2025-07-01T14:48:00.000Z",
+        "matchEndDatetime": "2025-07-01T15:12:00.000Z",
+        "detectionConfidence": 0.707,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 90,
+        "windowSize": 25
+      },
+      {
+        "patternId": "GOLDMINE_SHAFT_0",
+        "matchStartDatetime": "2025-07-01T13:43:00.000Z",
+        "matchEndDatetime": "2025-07-01T13:57:00.000Z",
+        "detectionConfidence": 0.668,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 20,
+        "windowSize": 15
+      },
+      {
+        "patternId": "GOLDMINE_SHAFT_1",
+        "matchStartDatetime": "2025-07-01T13:48:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:02:00.000Z",
+        "detectionConfidence": 0.259,
+        "engineInvoked": true,
+        "detected": false,
+        "scanPosition": 25,
+        "windowSize": 15
+      },
+      {
+        "patternId": "GOLDMINE_SHAFT_2",
+        "matchStartDatetime": "2025-07-01T13:58:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:12:00.000Z",
+        "detectionConfidence": 0.648,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 35,
+        "windowSize": 15
+      },
+      {
+        "patternId": "GOLDMINE_SHAFT_3",
+        "matchStartDatetime": "2025-07-01T14:13:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:27:00.000Z",
+        "detectionConfidence": 0.614,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 50,
+        "windowSize": 15
+      },
+      {
+        "patternId": "GOLDMINE_SHAFT_4",
+        "matchStartDatetime": "2025-07-01T14:18:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:32:00.000Z",
+        "detectionConfidence": 0.554,
+        "engineInvoked": true,
+        "detected": true,
+        "scanPosition": 55,
+        "windowSize": 15
+      }
+    ],
+    "emission": [
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ESCALATOR_0_E0",
+        "action": "BUY",
+        "price": 1271.15,
+        "candleIndex": 20,
+        "confidence": 0.395,
+        "timestamp": "2025-07-01T13:50:00.000Z",
+        "emitted": false,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ESCALATOR_1_E0",
+        "action": "BUY",
+        "price": 1287.1,
+        "candleIndex": 25,
+        "confidence": 0.554,
+        "timestamp": "2025-07-01T13:55:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ESCALATOR_2_E0",
+        "action": "BUY",
+        "price": 1327.59,
+        "candleIndex": 35,
+        "confidence": 0.721,
+        "timestamp": "2025-07-01T14:05:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ESCALATOR_3_E0",
+        "action": "BUY",
+        "price": 1354.06,
+        "candleIndex": 40,
+        "confidence": 0.734,
+        "timestamp": "2025-07-01T14:10:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ESCALATOR_4_E0",
+        "action": "BUY",
+        "price": 1420.6,
+        "candleIndex": 55,
+        "confidence": 0.409,
+        "timestamp": "2025-07-01T14:25:00.000Z",
+        "emitted": false,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_0_E0",
+        "action": "BUY",
+        "price": 1271.15,
+        "candleIndex": 20,
+        "confidence": 0.546,
+        "timestamp": "2025-07-01T13:50:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_0_E1",
+        "action": "BUY",
+        "price": 1274.34,
+        "candleIndex": 21,
+        "confidence": 0.546,
+        "timestamp": "2025-07-01T13:51:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_1_E0",
+        "action": "BUY",
+        "price": 1287.1,
+        "candleIndex": 25,
+        "confidence": 0.507,
+        "timestamp": "2025-07-01T13:55:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_1_E1",
+        "action": "BUY",
+        "price": 1285.44,
+        "candleIndex": 26,
+        "confidence": 0.507,
+        "timestamp": "2025-07-01T13:56:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_2_E0",
+        "action": "BUY",
+        "price": 1373.79,
+        "candleIndex": 45,
+        "confidence": 0.493,
+        "timestamp": "2025-07-01T14:15:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_3_E0",
+        "action": "BUY",
+        "price": 1420.6,
+        "candleIndex": 55,
+        "confidence": 0.662,
+        "timestamp": "2025-07-01T14:25:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_4_E0",
+        "action": "BUY",
+        "price": 1433.47,
+        "candleIndex": 60,
+        "confidence": 0.635,
+        "timestamp": "2025-07-01T14:30:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDEN_CANDLE_0_E0",
+        "action": "BUY",
+        "price": 1271.15,
+        "candleIndex": 20,
+        "confidence": 0.435,
+        "timestamp": "2025-07-01T13:50:00.000Z",
+        "emitted": false,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDEN_CANDLE_1_E0",
+        "action": "BUY",
+        "price": 1287.1,
+        "candleIndex": 25,
+        "confidence": 0.579,
+        "timestamp": "2025-07-01T13:55:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDEN_CANDLE_2_E0",
+        "action": "BUY",
+        "price": 1307.58,
+        "candleIndex": 30,
+        "confidence": 0.764,
+        "timestamp": "2025-07-01T14:00:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDEN_CANDLE_3_E0",
+        "action": "BUY",
+        "price": 1398.36,
+        "candleIndex": 50,
+        "confidence": 0.657,
+        "timestamp": "2025-07-01T14:20:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDEN_CANDLE_3_E1",
+        "action": "BUY",
+        "price": 1404.07,
+        "candleIndex": 51,
+        "confidence": 0.657,
+        "timestamp": "2025-07-01T14:21:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDEN_CANDLE_4_E0",
+        "action": "BUY",
+        "price": 1420.6,
+        "candleIndex": 55,
+        "confidence": 0.676,
+        "timestamp": "2025-07-01T14:25:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "SHORT_ENTRY",
+        "patternId": "BLACKJACK_0_E0",
+        "action": "SHORT",
+        "price": 1271.15,
+        "candleIndex": 20,
+        "confidence": 0.73,
+        "timestamp": "2025-07-01T13:50:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "SHORT_ENTRY",
+        "patternId": "BLACKJACK_0_E1",
+        "action": "SHORT",
+        "price": 1274.34,
+        "candleIndex": 21,
+        "confidence": 0.73,
+        "timestamp": "2025-07-01T13:51:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "SHORT_EXIT",
+        "patternId": "BLACKJACK_2_E0",
+        "action": "COVER",
+        "price": 1307.58,
+        "candleIndex": 30,
+        "confidence": 0.464,
+        "timestamp": "2025-07-01T14:00:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "SHORT_ENTRY",
+        "patternId": "BLACKJACK_3_E0",
+        "action": "SHORT",
+        "price": 1327.59,
+        "candleIndex": 35,
+        "confidence": 0.745,
+        "timestamp": "2025-07-01T14:05:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "SHORT_ENTRY",
+        "patternId": "BLACKJACK_3_E1",
+        "action": "SHORT",
+        "price": 1330.87,
+        "candleIndex": 36,
+        "confidence": 0.745,
+        "timestamp": "2025-07-01T14:06:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "SHORT_ENTRY",
+        "patternId": "BLACKJACK_4_E0",
+        "action": "SHORT",
+        "price": 1373.79,
+        "candleIndex": 45,
+        "confidence": 0.659,
+        "timestamp": "2025-07-01T14:15:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "SHORT_ENTRY",
+        "patternId": "BLACKJACK_4_E1",
+        "action": "SHORT",
+        "price": 1379.03,
+        "candleIndex": 46,
+        "confidence": 0.659,
+        "timestamp": "2025-07-01T14:16:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "PIVOT_1_E0",
+        "action": "BUY",
+        "price": 1287.1,
+        "candleIndex": 25,
+        "confidence": 0.487,
+        "timestamp": "2025-07-01T13:55:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "PIVOT_1_E1",
+        "action": "BUY",
+        "price": 1285.44,
+        "candleIndex": 26,
+        "confidence": 0.487,
+        "timestamp": "2025-07-01T13:56:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "PIVOT_2_E0",
+        "action": "BUY",
+        "price": 1307.58,
+        "candleIndex": 30,
+        "confidence": 0.505,
+        "timestamp": "2025-07-01T14:00:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "PIVOT_3_E0",
+        "action": "BUY",
+        "price": 1354.06,
+        "candleIndex": 40,
+        "confidence": 0.679,
+        "timestamp": "2025-07-01T14:10:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "PIVOT_4_E0",
+        "action": "BUY",
+        "price": 1373.79,
+        "candleIndex": 45,
+        "confidence": 0.686,
+        "timestamp": "2025-07-01T14:15:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_EXIT",
+        "patternId": "GOLDMINE_CHANNEL_0_E0",
+        "action": "SELL",
+        "price": 1271.15,
+        "candleIndex": 20,
+        "confidence": 0.582,
+        "timestamp": "2025-07-01T13:50:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDMINE_CHANNEL_0_E1",
+        "action": "BUY",
+        "price": 1274.34,
+        "candleIndex": 21,
+        "confidence": 0.582,
+        "timestamp": "2025-07-01T13:51:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_EXIT",
+        "patternId": "GOLDMINE_CHANNEL_2_E0",
+        "action": "SELL",
+        "price": 1398.36,
+        "candleIndex": 50,
+        "confidence": 0.505,
+        "timestamp": "2025-07-01T14:20:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_EXIT",
+        "patternId": "GOLDMINE_CHANNEL_3_E0",
+        "action": "SELL",
+        "price": 1480.62,
+        "candleIndex": 75,
+        "confidence": 0.508,
+        "timestamp": "2025-07-01T14:45:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDMINE_CHANNEL_3_E1",
+        "action": "BUY",
+        "price": 1481.16,
+        "candleIndex": 76,
+        "confidence": 0.508,
+        "timestamp": "2025-07-01T14:46:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_EXIT",
+        "patternId": "GOLDMINE_CHANNEL_4_E0",
+        "action": "SELL",
+        "price": 1489.23,
+        "candleIndex": 90,
+        "confidence": 0.707,
+        "timestamp": "2025-07-01T15:00:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_EXIT",
+        "patternId": "GOLDMINE_SHAFT_0_E0",
+        "action": "SELL",
+        "price": 1271.15,
+        "candleIndex": 20,
+        "confidence": 0.668,
+        "timestamp": "2025-07-01T13:50:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDMINE_SHAFT_2_E0",
+        "action": "BUY",
+        "price": 1327.59,
+        "candleIndex": 35,
+        "confidence": 0.648,
+        "timestamp": "2025-07-01T14:05:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDMINE_SHAFT_2_E1",
+        "action": "BUY",
+        "price": 1330.87,
+        "candleIndex": 36,
+        "confidence": 0.648,
+        "timestamp": "2025-07-01T14:06:00.000Z",
+        "emitted": true,
+        "emissionRound": 1
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDMINE_SHAFT_3_E0",
+        "action": "BUY",
+        "price": 1398.36,
+        "candleIndex": 50,
+        "confidence": 0.614,
+        "timestamp": "2025-07-01T14:20:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDMINE_SHAFT_4_E0",
+        "action": "BUY",
+        "price": 1420.6,
+        "candleIndex": 55,
+        "confidence": 0.554,
+        "timestamp": "2025-07-01T14:25:00.000Z",
+        "emitted": true,
+        "emissionRound": 0
+      }
+    ],
+    "render": [
+      {
+        "signalId": "ESCALATOR_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "patternId": "ESCALATOR_0_E0",
+        "action": "BUY",
+        "isRendered": false,
+        "labelVisible": false,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ESCALATOR_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "patternId": "ESCALATOR_1_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ESCALATOR_2_E0_2025-07-01T14:05:00.000Z_1327.59",
+        "patternId": "ESCALATOR_2_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ESCALATOR_3_E0_2025-07-01T14:10:00.000Z_1354.06",
+        "patternId": "ESCALATOR_3_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ESCALATOR_4_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "patternId": "ESCALATOR_4_E0",
+        "action": "BUY",
+        "isRendered": false,
+        "labelVisible": false,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ROCKETMAN_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "patternId": "ROCKETMAN_0_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ROCKETMAN_0_E1_2025-07-01T13:51:00.000Z_1274.34",
+        "patternId": "ROCKETMAN_0_E1",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ROCKETMAN_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "patternId": "ROCKETMAN_1_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ROCKETMAN_1_E1_2025-07-01T13:56:00.000Z_1285.44",
+        "patternId": "ROCKETMAN_1_E1",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ROCKETMAN_2_E0_2025-07-01T14:15:00.000Z_1373.79",
+        "patternId": "ROCKETMAN_2_E0",
+        "action": "BUY",
+        "isRendered": false,
+        "labelVisible": false,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ROCKETMAN_3_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "patternId": "ROCKETMAN_3_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "ROCKETMAN_4_E0_2025-07-01T14:30:00.000Z_1433.47",
+        "patternId": "ROCKETMAN_4_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "patternId": "GOLDEN_CANDLE_0_E0",
+        "action": "BUY",
+        "isRendered": false,
+        "labelVisible": false,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "patternId": "GOLDEN_CANDLE_1_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_2_E0_2025-07-01T14:00:00.000Z_1307.58",
+        "patternId": "GOLDEN_CANDLE_2_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_3_E0_2025-07-01T14:20:00.000Z_1398.36",
+        "patternId": "GOLDEN_CANDLE_3_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_3_E1_2025-07-01T14:21:00.000Z_1404.07",
+        "patternId": "GOLDEN_CANDLE_3_E1",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_4_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "patternId": "GOLDEN_CANDLE_4_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "BLACKJACK_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "patternId": "BLACKJACK_0_E0",
+        "action": "SHORT",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "BLACKJACK_0_E1_2025-07-01T13:51:00.000Z_1274.34",
+        "patternId": "BLACKJACK_0_E1",
+        "action": "SHORT",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "BLACKJACK_2_E0_2025-07-01T14:00:00.000Z_1307.58",
+        "patternId": "BLACKJACK_2_E0",
+        "action": "COVER",
+        "isRendered": false,
+        "labelVisible": false,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "BLACKJACK_3_E0_2025-07-01T14:05:00.000Z_1327.59",
+        "patternId": "BLACKJACK_3_E0",
+        "action": "SHORT",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "BLACKJACK_3_E1_2025-07-01T14:06:00.000Z_1330.87",
+        "patternId": "BLACKJACK_3_E1",
+        "action": "SHORT",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "BLACKJACK_4_E0_2025-07-01T14:15:00.000Z_1373.79",
+        "patternId": "BLACKJACK_4_E0",
+        "action": "SHORT",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "BLACKJACK_4_E1_2025-07-01T14:16:00.000Z_1379.03",
+        "patternId": "BLACKJACK_4_E1",
+        "action": "SHORT",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "PIVOT_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "patternId": "PIVOT_1_E0",
+        "action": "BUY",
+        "isRendered": false,
+        "labelVisible": false,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "PIVOT_1_E1_2025-07-01T13:56:00.000Z_1285.44",
+        "patternId": "PIVOT_1_E1",
+        "action": "BUY",
+        "isRendered": false,
+        "labelVisible": false,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "PIVOT_2_E0_2025-07-01T14:00:00.000Z_1307.58",
+        "patternId": "PIVOT_2_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "PIVOT_3_E0_2025-07-01T14:10:00.000Z_1354.06",
+        "patternId": "PIVOT_3_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "PIVOT_4_E0_2025-07-01T14:15:00.000Z_1373.79",
+        "patternId": "PIVOT_4_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "patternId": "GOLDMINE_CHANNEL_0_E0",
+        "action": "SELL",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_0_E1_2025-07-01T13:51:00.000Z_1274.34",
+        "patternId": "GOLDMINE_CHANNEL_0_E1",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_2_E0_2025-07-01T14:20:00.000Z_1398.36",
+        "patternId": "GOLDMINE_CHANNEL_2_E0",
+        "action": "SELL",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_3_E0_2025-07-01T14:45:00.000Z_1480.62",
+        "patternId": "GOLDMINE_CHANNEL_3_E0",
+        "action": "SELL",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_3_E1_2025-07-01T14:46:00.000Z_1481.16",
+        "patternId": "GOLDMINE_CHANNEL_3_E1",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_4_E0_2025-07-01T15:00:00.000Z_1489.23",
+        "patternId": "GOLDMINE_CHANNEL_4_E0",
+        "action": "SELL",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "patternId": "GOLDMINE_SHAFT_0_E0",
+        "action": "SELL",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "bottomOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_2_E0_2025-07-01T14:05:00.000Z_1327.59",
+        "patternId": "GOLDMINE_SHAFT_2_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_2_E1_2025-07-01T14:06:00.000Z_1330.87",
+        "patternId": "GOLDMINE_SHAFT_2_E1",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_3_E0_2025-07-01T14:20:00.000Z_1398.36",
+        "patternId": "GOLDMINE_SHAFT_3_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_4_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "patternId": "GOLDMINE_SHAFT_4_E0",
+        "action": "BUY",
+        "isRendered": true,
+        "labelVisible": true,
+        "position": "topOfCandle",
+        "isDuplicate": false
+      }
+    ],
+    "diff_analysis": [
+      {
+        "signalId": "ESCALATOR_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "status": "DEBOUNCED",
+        "rootCause": "Pattern detected but emission filtered out",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.395,
+        "renderStatus": false
+      },
+      {
+        "signalId": "ESCALATOR_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.554,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ESCALATOR_2_E0_2025-07-01T14:05:00.000Z_1327.59",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.721,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ESCALATOR_3_E0_2025-07-01T14:10:00.000Z_1354.06",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.734,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ESCALATOR_4_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "status": "DEBOUNCED",
+        "rootCause": "Pattern detected but emission filtered out",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.409,
+        "renderStatus": false
+      },
+      {
+        "signalId": "ROCKETMAN_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.546,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ROCKETMAN_0_E1_2025-07-01T13:51:00.000Z_1274.34",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.546,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ROCKETMAN_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.507,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ROCKETMAN_1_E1_2025-07-01T13:56:00.000Z_1285.44",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.507,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ROCKETMAN_2_E0_2025-07-01T14:15:00.000Z_1373.79",
+        "status": "SUPPRESSED_BY_VIEWPORT",
+        "rootCause": "Low confidence suppression (49.3%)",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.493,
+        "renderStatus": false
+      },
+      {
+        "signalId": "ROCKETMAN_3_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.662,
+        "renderStatus": true
+      },
+      {
+        "signalId": "ROCKETMAN_4_E0_2025-07-01T14:30:00.000Z_1433.47",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.635,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "status": "DEBOUNCED",
+        "rootCause": "Pattern detected but emission filtered out",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.435,
+        "renderStatus": false
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.579,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_2_E0_2025-07-01T14:00:00.000Z_1307.58",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.764,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_3_E0_2025-07-01T14:20:00.000Z_1398.36",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.657,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_3_E1_2025-07-01T14:21:00.000Z_1404.07",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.657,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_4_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.676,
+        "renderStatus": true
+      },
+      {
+        "signalId": "BLACKJACK_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.73,
+        "renderStatus": true
+      },
+      {
+        "signalId": "BLACKJACK_0_E1_2025-07-01T13:51:00.000Z_1274.34",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.73,
+        "renderStatus": true
+      },
+      {
+        "signalId": "BLACKJACK_2_E0_2025-07-01T14:00:00.000Z_1307.58",
+        "status": "SUPPRESSED_BY_VIEWPORT",
+        "rootCause": "Low confidence suppression (46.4%)",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.464,
+        "renderStatus": false
+      },
+      {
+        "signalId": "BLACKJACK_3_E0_2025-07-01T14:05:00.000Z_1327.59",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.745,
+        "renderStatus": true
+      },
+      {
+        "signalId": "BLACKJACK_3_E1_2025-07-01T14:06:00.000Z_1330.87",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.745,
+        "renderStatus": true
+      },
+      {
+        "signalId": "BLACKJACK_4_E0_2025-07-01T14:15:00.000Z_1373.79",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.659,
+        "renderStatus": true
+      },
+      {
+        "signalId": "BLACKJACK_4_E1_2025-07-01T14:16:00.000Z_1379.03",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.659,
+        "renderStatus": true
+      },
+      {
+        "signalId": "PIVOT_1_E0_2025-07-01T13:55:00.000Z_1287.1",
+        "status": "SUPPRESSED_BY_VIEWPORT",
+        "rootCause": "Low confidence suppression (48.7%)",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.487,
+        "renderStatus": false
+      },
+      {
+        "signalId": "PIVOT_1_E1_2025-07-01T13:56:00.000Z_1285.44",
+        "status": "SUPPRESSED_BY_VIEWPORT",
+        "rootCause": "Low confidence suppression (48.7%)",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.487,
+        "renderStatus": false
+      },
+      {
+        "signalId": "PIVOT_2_E0_2025-07-01T14:00:00.000Z_1307.58",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.505,
+        "renderStatus": true
+      },
+      {
+        "signalId": "PIVOT_3_E0_2025-07-01T14:10:00.000Z_1354.06",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.679,
+        "renderStatus": true
+      },
+      {
+        "signalId": "PIVOT_4_E0_2025-07-01T14:15:00.000Z_1373.79",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.686,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.582,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_0_E1_2025-07-01T13:51:00.000Z_1274.34",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.582,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_2_E0_2025-07-01T14:20:00.000Z_1398.36",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.505,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_3_E0_2025-07-01T14:45:00.000Z_1480.62",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.508,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_3_E1_2025-07-01T14:46:00.000Z_1481.16",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.508,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_CHANNEL_4_E0_2025-07-01T15:00:00.000Z_1489.23",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.707,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_0_E0_2025-07-01T13:50:00.000Z_1271.15",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.668,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_2_E0_2025-07-01T14:05:00.000Z_1327.59",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.648,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_2_E1_2025-07-01T14:06:00.000Z_1330.87",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.648,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_3_E0_2025-07-01T14:20:00.000Z_1398.36",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.614,
+        "renderStatus": true
+      },
+      {
+        "signalId": "GOLDMINE_SHAFT_4_E0_2025-07-01T14:25:00.000Z_1420.6",
+        "status": "VALID",
+        "rootCause": "Signal properly processed",
+        "timestamp": "2025-07-02T15:03:15.365Z",
+        "emissionConfidence": 0.554,
+        "renderStatus": true
+      }
+    ]
+  },
+  "summary": {
+    "totalDetections": 35,
+    "patternsDetected": 28,
+    "totalEmissions": 41,
+    "signalsEmitted": 38,
+    "signalsRendered": 34,
+    "duplicateRenders": 0,
+    "integrityScore": 89
+  },
+  "diagnostics": {
+    "allEnginesInvoked": true,
+    "multiDetectionEnabled": true,
+    "multiEmissionEnabled": true,
+    "noThrottling": true,
+    "statusBreakdown": {
+      "DEBOUNCED": 3,
+      "VALID": 34,
+      "SUPPRESSED_BY_VIEWPORT": 4
+    }
+  },
+  "patternCountMap": {
+    "ESCALATOR": {
+      "total": 5,
+      "detected": 3,
+      "emitted": 3,
+      "rendered": 3
+    },
+    "ROCKETMAN": {
+      "total": 5,
+      "detected": 5,
+      "emitted": 7,
+      "rendered": 6
+    },
+    "GOLDEN": {
+      "total": 5,
+      "detected": 4,
+      "emitted": 5,
+      "rendered": 5
+    },
+    "BLACKJACK": {
+      "total": 5,
+      "detected": 4,
+      "emitted": 7,
+      "rendered": 6
+    },
+    "PIVOT": {
+      "total": 5,
+      "detected": 4,
+      "emitted": 5,
+      "rendered": 3
+    },
+    "GOLDMINE": {
+      "total": 10,
+      "detected": 8,
+      "emitted": 11,
+      "rendered": 11
+    }
+  },
+  "nvdaSpecific": {
+    "symbol": "NVDA",
+    "tradingDate": "2025-07-01",
+    "candleCount": 391,
+    "priceRange": {
+      "low": 1206.46,
+      "high": 1496.45,
+      "open": 1250,
+      "close": 1216.81
+    }
+  }
+}

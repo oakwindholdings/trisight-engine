@@ -1,11 +1,12 @@
 // src/components/Dashboard/LearningDashboard.tsx
-// Legacy learning dashboard component
-// Shows metrics in table form
+// Enhanced learning dashboard with live pattern health
+// Integrates SIGINT audit visualization
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { PatternType, patternStyles } from '../../models/PatternTypes';
 import { useLearningContext } from '../../contexts/LearningContext';
 import DataExportImport from '../Settings/DataExportImport';
+import PatternHealthPanel from './PatternHealthPanel';
 
 const DashboardContainer = styled.div`
   background-color: white;
@@ -257,44 +258,43 @@ const LearningDashboard: React.FC = () => {
         </EmptyState>
       )}
       
+      {/* Live Pattern Health Panel - Replaces Pattern Grid */}
+      <PatternHealthPanel 
+        auditPath="/audit_logs/sigint_multidetect_nvda_2025-07-01_1m.json"
+        showConfidenceThresholds={true}
+        includeSuppressionStats={true}
+        chartOptions={{
+          type: "bar",
+          groupBy: "pattern",
+          metrics: ["detected", "emitted", "rendered", "debounced", "suppressed"]
+        }}
+        highlight={{
+          thresholds: {
+            detectionRate: 0.7,
+            emissionRate: 0.8,
+            renderRate: 0.9
+          },
+          dangerColor: "red",
+          warningColor: "orange",
+          healthyColor: "green"
+        }}
+        style={{
+          background: "#fff",
+          border: "1px solid #ccc",
+          padding: "1rem",
+          marginTop: "1rem",
+          borderRadius: "0.5rem"
+        }}
+      />
+      
       {metrics && (
         <DashboardGrid>
-          {/* Accuracy by Pattern Type */}
+          {/* Legacy Pattern Metrics - Kept for Reference */}
           <MetricCard>
-            <MetricTitle>Pattern Detection Accuracy</MetricTitle>
+            <MetricTitle>Legacy Pattern Detection Accuracy</MetricTitle>
             <ChartContainer>
               <AccuracyChart data={metrics.accuracyByPatternType} />
             </ChartContainer>
-          </MetricCard>
-          
-          {/* Feedback Volume */}
-          <MetricCard>
-            <MetricTitle>Pattern Feedback Volume</MetricTitle>
-            <TableContainer>
-              <Table>
-                <thead>
-                  <tr>
-                    <TableHeader>Pattern Type</TableHeader>
-                    <TableHeader>Feedback Count</TableHeader>
-                    <TableHeader>Accuracy</TableHeader>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(metrics.feedbackCountByPatternType)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([type, count]) => (
-                      <tr key={type}>
-                        <TableCell>{formatPatternType(type)}</TableCell>
-                        <TableCell>{count}</TableCell>
-                        <TableCell>
-                          {(metrics.accuracyByPatternType[type as PatternType] * 100).toFixed(0)}%
-                        </TableCell>
-                      </tr>
-                    ))
-                  }
-                </tbody>
-              </Table>
-            </TableContainer>
           </MetricCard>
           
           {/* Pattern Corrections */}

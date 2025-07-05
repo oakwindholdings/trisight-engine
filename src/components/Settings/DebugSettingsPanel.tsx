@@ -55,12 +55,25 @@ const DebugSettingsPanel: React.FC = () => {
   const [settings, setSettings] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState(true);
   const [showHAComparisons, setShowHAComparisons] = useState(false);
+  const [signalFidelityMode, setSignalFidelityMode] = useState(false);
+  const [showEngineHUD, setShowEngineHUD] = useState(false);
+  const [renderDiagnostics, setRenderDiagnostics] = useState(false);
 
   useEffect(() => {
     setSettings(getDebugSettings());
     // Check for HA comparison setting in localStorage
     const haComparison = localStorage.getItem('trisight_ha_comparisons');
     setShowHAComparisons(haComparison === 'true');
+    
+    // Check for signal fidelity mode settings
+    const fidelityMode = localStorage.getItem('signalFidelityMode');
+    setSignalFidelityMode(fidelityMode === 'true');
+    
+    const hudEnabled = localStorage.getItem('signalEngineHUD');
+    setShowEngineHUD(hudEnabled === 'true');
+    
+    const renderLogs = localStorage.getItem('renderLogsEnabled');
+    setRenderDiagnostics(renderLogs === 'true');
   }, []);
 
   const handleToggle = (channel: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,6 +124,56 @@ const DebugSettingsPanel: React.FC = () => {
             onChange={handleHAToggle}
           />
           <span>HA Comparisons</span>
+        </ChannelRow>
+        
+        <div style={{ marginTop: ThemeTokens.spacing.medium, marginBottom: ThemeTokens.spacing.xsmall, fontWeight: 600 }}>🛠 Signal Engine Controls</div>
+        
+        <ChannelRow htmlFor="dbg-signal-fidelity">
+          <input
+            id="dbg-signal-fidelity"
+            type="checkbox"
+            checked={signalFidelityMode}
+            onChange={(e) => {
+              const enabled = e.target.checked;
+              setSignalFidelityMode(enabled);
+              localStorage.setItem('signalFidelityMode', enabled.toString());
+              if ((window as any).signalFidelityPatch) {
+                (window as any).signalFidelityPatch.setFidelityMode(enabled);
+              }
+              logDebug('DEBUG_UI', '[DebugSettingsPanel] Signal Fidelity Mode:', enabled);
+            }}
+          />
+          <span>Signal Fidelity Mode</span>
+        </ChannelRow>
+        
+        <ChannelRow htmlFor="dbg-engine-hud">
+          <input
+            id="dbg-engine-hud"
+            type="checkbox"
+            checked={showEngineHUD}
+            onChange={(e) => {
+              const enabled = e.target.checked;
+              setShowEngineHUD(enabled);
+              localStorage.setItem('signalEngineHUD', enabled.toString());
+              logDebug('DEBUG_UI', '[DebugSettingsPanel] Engine HUD:', enabled);
+            }}
+          />
+          <span>Show Engine HUD</span>
+        </ChannelRow>
+        
+        <ChannelRow htmlFor="dbg-render-diagnostics">
+          <input
+            id="dbg-render-diagnostics"
+            type="checkbox"
+            checked={renderDiagnostics}
+            onChange={(e) => {
+              const enabled = e.target.checked;
+              setRenderDiagnostics(enabled);
+              localStorage.setItem('renderLogsEnabled', enabled.toString());
+              logDebug('DEBUG_UI', '[DebugSettingsPanel] Render Diagnostics:', enabled);
+            }}
+          />
+          <span>Render Diagnostics</span>
         </ChannelRow>
         <InfoLabel>Logs are developer-facing and stored locally.</InfoLabel>
       </Content>

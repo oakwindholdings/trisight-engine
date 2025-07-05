@@ -5,11 +5,12 @@
 // DICK O'LEARY COMPLIANCE: Uses HA candles exclusively
 
 import { Candle } from '../types/pattern';
-import { TradeActionSignal, TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
-import { logDebug } from '../utils/debug';
+import { TradeActionSignal, TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
 import { convertToHeikinAshi } from '../utils/candleTransform';
 import { isNearMissGoldenCandle } from '../utils/patternQualifiers';
+import { logDebug } from '../utils/debug';
+import { canEmitSignal } from '../utils/patternDebounceManager';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -388,18 +389,48 @@ export function evaluateGoldenCandleForEntry(goldenCandle: GoldenCandlePattern):
   // Confidence gate — only trade high-confidence Golden Candles
   if (confidence < 0.7) return;
   
+  // Debounce check - prevent rapid repeat emissions for high-confidence signals
+  const now = Date.now();
+  // CRITICAL FIX: Separate pattern detection from trade signal emission
+  // Pattern detection and rendering should NEVER be debounced
+  const canEmitTradeSignal = canEmitSignal('GOLDEN_CANDLE', now);
+  
+  if (!canEmitTradeSignal && DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Golden Candle] Trade signal debounced (but pattern will still render)', {
+      pattern: 'GOLDEN_CANDLE',
+      timestamp: new Date(now).toISOString(),
+      entryPrice: candlePrice.toFixed(4)
+    });
+  }
+  
   const action = direction === 'LONG' ? TradeAction.BUY : TradeAction.SHORT;
   const signalType = direction === 'LONG' ? SignalType.LONG_ENTRY : SignalType.SHORT_ENTRY;
   
-  emitTradeSignal({
-    action,
-    signalType,
-    pattern: 'Golden Candle',
-    confidence,
-    price: candlePrice,
-    timestamp,
-    reason: `Golden Candle confirmed (${direction})`
-  });
+  // CRITICAL FIX: Only emit trade signals when debounce allows
+  // Pattern detection and rendering continues regardless of debounce
+  if (canEmitTradeSignal) {
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Golden Candle',
+      confidence,
+      price: candlePrice,
+      timestamp,
+      reason: `Golden Candle confirmed (${direction})`
+    });
+
+    // Emit TRADE_BIAS signal for Golden Candle breakout bias indication
+    const bias = direction === 'LONG' ? 'LONG' : 'SHORT';
+    emitTradeBiasSignal(
+      'GOLDEN_CANDLE',
+      confidence,
+      candlePrice,
+      timestamp,
+      bias,
+      `Golden Candle breakout bias: ${direction}`,
+      { riskLevel: 'LOW' }
+    );
+  }
 }
 
 /**

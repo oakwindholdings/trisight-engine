@@ -47,6 +47,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --watchAll=false",
+    "audit:sigint": "ts-node src/utils/audit/SignalIntegrityAuditDemo.ts",
     "test:charts": "react-scripts test --watchAll=false --testNamePattern=\"Pattern Rendering\"",
     "lint": "eslint src --ext .ts,.tsx",
     "eject": "react-scripts eject"

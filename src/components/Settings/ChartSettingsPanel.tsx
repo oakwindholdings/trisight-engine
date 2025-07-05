@@ -2,7 +2,7 @@
 // Chart display settings panel including candle type selection
 // NOTE: TriSight uses Canvas, not SVG. This panel controls chart rendering options.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useChartSettings } from '../../contexts/ChartSettingsContext';
 import { CandleType } from '../../hooks/useHeikinAshiTransform';
@@ -135,6 +135,8 @@ interface ChartSettingsPanelProps {
 
 export function ChartSettingsPanel({ className }: ChartSettingsPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showConvictionCloud, setShowConvictionCloud] = useState(false);
+  
   const {
     candleType,
     showVolume,
@@ -145,6 +147,18 @@ export function ChartSettingsPanel({ className }: ChartSettingsPanelProps) {
     resetToDefaults,
     isHeikinAshiMode
   } = useChartSettings();
+
+  // Load ConvictionCloud visibility from localStorage on mount
+  useEffect(() => {
+    const savedSetting = localStorage.getItem('trisight.chart.showConvictionCloud');
+    if (savedSetting !== null) {
+      const isVisible = JSON.parse(savedSetting);
+      setShowConvictionCloud(isVisible);
+      logDebug('DEBUG_UI', '[ChartSettingsPanel] Loaded ConvictionCloud visibility from localStorage:', isVisible);
+    } else {
+      logDebug('DEBUG_UI', '[ChartSettingsPanel] ConvictionCloud visibility defaulting to false (off)');
+    }
+  }, []);
 
   const handleCandleTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newType = event.target.value as CandleType;
@@ -163,9 +177,32 @@ export function ChartSettingsPanel({ className }: ChartSettingsPanelProps) {
     setShowGrid(event.target.checked);
   };
 
+  const handleShowConvictionCloudChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const isVisible = event.target.checked;
+    setShowConvictionCloud(isVisible);
+    
+    // Save to localStorage
+    localStorage.setItem('trisight.chart.showConvictionCloud', JSON.stringify(isVisible));
+    logDebug('DEBUG_UI', '[ChartSettingsPanel] ConvictionCloud visibility changed:', isVisible);
+    
+    // Emit a custom event to notify other components
+    window.dispatchEvent(new CustomEvent('convictionCloudVisibilityChanged', {
+      detail: { visible: isVisible }
+    }));
+  };
+
   const handleReset = () => {
     logDebug('DEBUG_UI', '[ChartSettingsPanel] Resetting chart settings to defaults');
     resetToDefaults();
+    
+    // Reset ConvictionCloud visibility to default (off)
+    setShowConvictionCloud(false);
+    localStorage.setItem('trisight.chart.showConvictionCloud', JSON.stringify(false));
+    
+    // Notify other components
+    window.dispatchEvent(new CustomEvent('convictionCloudVisibilityChanged', {
+      detail: { visible: false }
+    }));
   };
 
   return (
@@ -217,6 +254,20 @@ export function ChartSettingsPanel({ className }: ChartSettingsPanelProps) {
             type="checkbox"
             checked={showGrid}
             onChange={handleShowGridChange}
+          />
+        </SettingRow>
+
+        {/* ConvictionCloud Display Toggle */}
+        <SettingRow>
+          <SettingLabel htmlFor="show-conviction-cloud-checkbox">
+            Show ConvictionCloud
+            <HelpText>Display pattern conviction scores as an interactive cloud overlay on the chart canvas.</HelpText>
+          </SettingLabel>
+          <Checkbox
+            id="show-conviction-cloud-checkbox"
+            type="checkbox"
+            checked={showConvictionCloud}
+            onChange={handleShowConvictionCloudChange}
           />
         </SettingRow>
 

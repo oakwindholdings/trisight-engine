@@ -227,25 +227,27 @@ export function logGoldenMissReasons(candle: any, reasons: string[], qualifyingF
  * @param expected - Expected HA candle data or description
  * @param actual - Actual data found or description of mismatch
  */
-export const logDebugHAAlignmentMismatch = (
-  index: number, 
-  source: string, 
-  expected: any, 
-  actual?: any
-): void => {
-  logDebug('DEBUG_HA_INDEX_ALIGNMENT', `[HA ALIGNMENT MISMATCH] ${source} at index ${index}:`, {
-    index,
-    source,
-    expected: expected || 'undefined',
-    actual: actual || 'undefined',
-    timestamp: new Date().toISOString(),
-    alignmentIssue: true,
-    dickOLearyCompliance: false,
-    requiresFixing: true,
-    troubleshooting: {
-      checkContextArrayLength: 'Verify context arrays match haCandles.length',
-      verifyHADetection: 'Confirm HA detection completed before UI render',
-      validateIndexMapping: 'Ensure no OHLC->HA index transformation occurring'
-    }
-  });
-};
+export function logDebugHAAlignmentMismatch(
+  candleIndex: number,
+  context: string,
+  expected: string,
+  actual: string
+): void {
+  if (isChannelEnabled('DEBUG_HA_ALIGNMENT')) {
+    logDebug('DEBUG_HA_ALIGNMENT', `[HA-MISMATCH] ${context} at candle ${candleIndex}: expected ${expected}, got ${actual}`);
+  }
+}
+
+/**
+ * Debug logger specifically for hover events and canvas-DOM bridge functionality
+ * Part of Phase 2 Cognitive Hover Spec implementation
+ */
+export function logDebugHover(
+  component: string,
+  event: string,
+  data: any
+): void {
+  if (isChannelEnabled('DEBUG_HOVER_EVENTS')) {
+    logDebug('DEBUG_HOVER_EVENTS', `[HOVER] ${component} - ${event}:`, data);
+  }
+}

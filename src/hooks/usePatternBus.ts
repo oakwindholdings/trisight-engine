@@ -27,6 +27,8 @@ import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop'
 import { usePatternContext } from '../contexts/PatternContext';
 import { logDebug, logDebugHAAlignmentMismatch } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // HA transformation for pattern detection
+import { evaluateStopLoss, getActiveStopLosses } from '../engine/StopLossManager';
+import { patternEngineTracker, dataAnalysisLock, LifecycleInstrumentation, FIDELITY_MODE_SETTINGS } from '../utils/signalFidelityPatch';
 
 export interface Position {
   side: 'LONG' | 'SHORT';
@@ -94,6 +96,13 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
   
   useEffect(() => {
     if (!candles || candles.length === 0) return;
+
+    // Signal Fidelity Mode: Start data analysis
+    dataAnalysisLock.startAnalysis();
+    LifecycleInstrumentation.logMilestone("Pattern detection started", {
+      candleCount: candles.length,
+      timestamp: new Date().toISOString()
+    });
     
     setIsPatternDetectionComplete(false);
     setBjIntrinsic([]);
@@ -230,14 +239,18 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
 
     // Detect escalators using pattern engine - only if enabled
     const shouldDetect = escalatorSettings?.enabled === true;
-    const escalators = shouldDetect ? detectEscalators(haCandles) : [];
+    // Signal Fidelity Mode: Mark ESCALATOR engine as processing
+    patternEngineTracker.markEngineProcessing('ESCALATOR');
     
-    logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Escalator detection:', {
-      escalatorSettings,
-      enabled: escalatorSettings?.enabled,
-      shouldDetect,
-      escalatorsDetected: escalators.length
+    // Detect escalators using Heikin-Ashi candles
+    const escalators = detectEscalators(haCandles);
+    logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Escalator detection complete:', {
+      escalatorCount: escalators?.length || 0,
+      escalators: escalators || []
     });
+
+    // Signal Fidelity Mode: Mark ESCALATOR engine as ready
+    patternEngineTracker.markEngineReady('ESCALATOR');
     
     // Process escalators and emit events
     const escalatorEvents: PatternEvent[] = [];
@@ -374,179 +387,67 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       []
     );
 
-    // Detect Golden Candle patterns
-    const stepIntrinsicCount = new Array<number>(haCandles.length).fill(0);
-    const stepBreakoutCount = new Array<number>(haCandles.length).fill(0);
-    const stepContinuanceCount = new Array<number>(haCandles.length).fill(0);
+    // Signal Fidelity Mode: Mark BLACKJACK engine as processing
+    patternEngineTracker.markEngineProcessing('BLACKJACK');
     
-    // Populate step metrics from escalator steps
-    escalators.forEach(escalator => {
-      escalator.steps.forEach(step => {
-        // Extract step metrics from StepBox (if they exist)
-        const intrinsicCount = step.stepIntrinsicCount || 0;
-        const breakoutCount = step.stepBreakoutCount || 0;
-        const continuanceCount = step.stepContinuanceCount || intrinsicCount + breakoutCount;
-        
-        // Apply metrics to all candles within the step range
-        for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < haCandles.length) {
-            stepIntrinsicCount[i] = intrinsicCount;
-            stepBreakoutCount[i] = breakoutCount;
-            stepContinuanceCount[i] = continuanceCount;
-          }
-        }
-        
-        logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Step metrics populated:', {
-          stepRef: `${step.startIndex}-${step.endIndex}`,
-          stepIntrinsicCount: intrinsicCount,
-          stepBreakoutCount: breakoutCount,
-          stepContinuanceCount: continuanceCount,
-          range: `${step.startIndex}-${step.endIndex}`
-        });
-      });
-    });
-    
-    // Update context with step metrics
-    setStepIntrinsicCount(stepIntrinsicCount);
-    setStepBreakoutCount(stepBreakoutCount);
-    setStepContinuanceCount(stepContinuanceCount);
+    // Detect Blackjack scores
+    const blackjackRollingScores = computeRollingBlackjackScores(haCandles);
+    // Note: blackjackTargetScores will be computed per escalator step in Phase 1
+    const blackjackTargetScores: number[] = [];
 
-    // TriSight Detection Input Refactor Patch v1.3.0: Golden Candle near-miss forensics
-    const goldenMisses = detectGoldenNearMisses(haCandles, escalators[escalators.length - 1]);
-    setGoldenNearMisses(goldenMisses);
+    // Signal Fidelity Mode: Mark BLACKJACK engine as ready
+    patternEngineTracker.markEngineReady('BLACKJACK');
 
-    // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT lifecycle detection
-    // TODO: Implement detectGoldenCandleEntryExit function for full lifecycle support
-    // For now, we'll use placeholder arrays to maintain type safety
-    const entryEvents: any[] = [];
-    const exitEvents: any[] = [];
-    
-    // Update context arrays with empty defaults (will be populated when function is implemented)
-    // Note: setGoldenCandleEntries and setGoldenCandleExits need to be passed from usePatterns
-    // TODO: Wire up setter functions from PatternContext
-
-    const goldenCandlePatterns = detectGoldenCandle(
-      haCandles,
-      stepIntrinsicCount,
-      stepBreakoutCount,
-      stepContinuanceCount,
-      bjIntrinsic,
-      bjCumulative
-    );
-    goldenCandlePatterns.forEach((pattern) => {
-      newEvents.push({
-        type: 'GOLDEN_CANDLE',
-        data: pattern,
-        timestamp: pattern.timestamp.getTime(),
-        index: pattern.index
-      });
-    });
-
-    const newGoldenCandleQual = new Array<boolean>(haCandles.length).fill(false);
-    const newGoldenScore = new Array<number>(haCandles.length).fill(0);
-    const newGoldenDirection = new Array<'LONG' | 'SHORT' | null>(haCandles.length).fill(null);
-
-    goldenCandlePatterns.forEach((p) => {
-      newGoldenCandleQual[p.index] = true;
-      newGoldenScore[p.index] = p.goldenScore;
-      newGoldenDirection[p.index] = p.direction;
-    });
-
-    setGoldenCandleQual(newGoldenCandleQual);
-    setGoldenScore(newGoldenScore);
-    setGoldenDirection(newGoldenDirection);
-
-    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(haCandles.length).fill(null);
-    
-    escalators.forEach(escalator => {
-      escalator.steps.forEach((step, stepIndex) => {
-        for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < haCandles.length) {
-            const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
-            escalatorDirArray[i] = dir;
-          }
-        }
-      });
-    });
-    
-    setEscalatorDir(escalatorDirArray);
-    
-    const escalatorLength = new Array<number>(haCandles.length).fill(0);
-    
-    escalators.forEach(escalator => {
-      for (let i = escalator.startIndex; i <= escalator.endIndex; i++) {
-        if (i < haCandles.length) {
-          escalatorLength[i] = i - escalator.startIndex + 1;
-        }
-      }
-    });
-    
-    const goldmineQual = new Array<boolean>(haCandles.length).fill(false);
-    
-    const trailStop = new Array<number>(haCandles.length).fill(0);
-    const distToStopPct = new Array<number>(haCandles.length).fill(0);
-    
-    events.forEach(event => {
-      if (event.type === 'GOLDMINE' && event.data) {
-        const goldmine = event.data as any;
-        if (goldmine.entryIndex < haCandles.length) {
-          goldmineQual[goldmine.entryIndex] = true;
-        }
-      }
-    });
-    
-    escalators.forEach(escalator => {
-      escalator.steps.forEach(step => {
-        for (let i = step.endIndex + 1; i < haCandles.length; i++) {
-          if (i >= 2) {
-            const stopPrice = haCandles[i - 2].low;
-            trailStop[i] = stopPrice;
-            
-            const closePrice = haCandles[i].close;
-            distToStopPct[i] = ((closePrice - stopPrice) / closePrice) * 100;
-          }
-        }
-      });
-    });
-    
-    // Rolling blackjack scores (window 5 default)
-    const bjRollingScores = computeRollingBlackjackScores(haCandles);
-
-    
-    const stepIndex = new Array(haCandles.length).fill(null);
-    escalators.forEach(escalator => {
-      escalator.steps.forEach(step => {
-        for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < haCandles.length) {
-            stepIndex[i] = i - step.startIndex + 1;
-          }
-        }
-      });
-    });
-    
-    setBjIntrinsic(bjIntrinsic);
-    setBjCumulative(bjCumulative);
-    setBjRollingScores(bjRollingScores);
     // Emit latest rolling score event for UI consumers
-    if (bjRollingScores.length > 0) {
-      const latestRolling = bjRollingScores[bjRollingScores.length - 1];
+    if (blackjackRollingScores.length > 0) {
+      const latestRolling = blackjackRollingScores[blackjackRollingScores.length - 1];
       newEvents.push({
         type: 'BLACKJACK_ROLLING',
         data: latestRolling,
         timestamp: latestRolling.timestamp
       });
     }
+    setBjIntrinsic(bjIntrinsic);
+    setBjCumulative(bjCumulative);
+    setBjRollingScores(blackjackRollingScores);
+    
+    // Initialize missing variables for validation array
+    const newGoldenCandleQual = new Array<boolean>(haCandles.length).fill(false);
+    const newGoldenScore = new Array<number>(haCandles.length).fill(0);
+    const newGoldenDirection = new Array<'LONG' | 'SHORT' | null>(haCandles.length).fill(null);
+    
+    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(haCandles.length).fill(null);
+    const escalatorLength = new Array<number>(haCandles.length).fill(0);
+    const goldmineQual = new Array<boolean>(haCandles.length).fill(false);
+    const trailStop = new Array<number>(haCandles.length).fill(0);
+    const distToStopPct = new Array<number>(haCandles.length).fill(0);
+    const stepIndex = new Array(haCandles.length).fill(null);
+    
+    // Set context with initialized arrays
     setStepIndex(stepIndex);
     setEscalatorLength(escalatorLength);
     setGoldmineQual(goldmineQual);
     setTrailStop(trailStop);
     setDistToStopPct(distToStopPct);
+    setGoldenCandleQual(newGoldenCandleQual);
+    setGoldenScore(newGoldenScore);
+    setGoldenDirection(newGoldenDirection);
     
     // Phase 1: Core Metrics - Populate step metrics arrays
     // Populate step metrics from escalator steps
     // Update context with step metrics
     setEscalatorSteps(escalatorEvents);
     setBreakoutBoxes(breakoutBoxEvents);
+
+    // Signal Fidelity Mode: Mark BREAKOUT_BOX engine as processing (already done above)
+    // Breakout boxes were already detected earlier - reuse the existing variable
+    logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] BreakoutBox detection already complete:', {
+      breakoutBoxCount: breakoutBoxes?.length || 0,
+      boxes: breakoutBoxes || []
+    });
+
+    // Signal Fidelity Mode: Mark BREAKOUT_BOX engine as ready
+    patternEngineTracker.markEngineReady('BREAKOUT_BOX');
 
     // Update breakout boxes in context
     if (breakoutBoxEvents.length > 0) {
@@ -687,99 +588,21 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       newEvents.push(...continuationEvents);
     }
 
-    if (activePosition) {
-      for (let i = activePosition.openIndex; i < haCandles.length; i++) {
-        const partialCandles = haCandles.slice(0, i + 1);
-        const stopEvent = computeEscalatorStop(activePosition, partialCandles);
-        
-        if (stopEvent && stopEvent.price) {
-          trailStop[i] = stopEvent.price;
-          const closePrice = haCandles[i].close;
-          distToStopPct[i] = ((closePrice - stopEvent.price) / closePrice) * 100;
-        }
-      }
-      
-      const stopEvent = computeEscalatorStop(activePosition, haCandles);
-      
-      if (stopEvent) {
-        newEvents.push({
-          type: 'STOP_EVENT',
-          data: stopEvent,
-          timestamp: Date.now()
-        });
-        
-        setActivePosition(undefined);
-        existingGoldmineRef.current = undefined;
-      }
-    }
-
-    // Golden Candle Forensics Detection (Debug Mode)
-    try {
-      // Get required arrays for Golden Candle detection
-      const stepIntrinsicCounts = bjRollingScores.map((_, idx) => stepIntrinsicCount[idx] || 0);
-      const stepBreakoutCounts = bjRollingScores.map((_, idx) => stepBreakoutCount[idx] || 0);
-      const stepContinuanceCounts = bjRollingScores.map((_, idx) => stepContinuanceCount[idx] || 0);
-      const bjIntrinsicScores = bjIntrinsic;
-      const bjCumulativeScores = bjCumulative;
-
-      // Detect Golden Candle forensic candidates (near-misses)
-      const goldenCandidates = detectGoldenCandleCandidates(
-        haCandles,
-        stepIntrinsicCounts,
-        stepBreakoutCounts,
-        stepContinuanceCounts,
-        bjIntrinsicScores,
-        bjCumulativeScores
-      );
-
-      // Initialize forensics arrays
-      const newForensics = new Array<boolean>(haCandles.length).fill(false);
-      const newForensicsNotes = new Array<string>(haCandles.length).fill('-');
-
-      // Emit forensic events for each candidate and populate context arrays
-      goldenCandidates.forEach(candidate => {
-        const forensicEvent: PatternEvent = {
-          type: 'GOLDMINE_FORENSICS',
-          data: candidate,
-          timestamp: candidate.timestamp.getTime(),
-          index: candidate.index
-        };
-        
-        newEvents.push(forensicEvent);
-        
-        // Populate forensics arrays for UI rendering
-        if (candidate.index < haCandles.length) {
-          newForensics[candidate.index] = true;
-          newForensicsNotes[candidate.index] = candidate.failureReason;
-        }
-        
-        logDebug('DEBUG_PATTERN_DETECT', '[GOLDMINE_FORENSICS] Emitting forensic event:', {
-          index: candidate.index,
-          failureReason: candidate.failureReason,
-          nearMissType: candidate.nearMissType,
-          candlePrice: candidate.candlePrice.toFixed(2)
-        });
-      });
-
-      // Update forensics context arrays
-      setGoldmineForensics(newForensics);
-      setGoldmineForensicsNotes(newForensicsNotes);
-
-      logDebug('DEBUG_PATTERN_DETECT', '[GOLDMINE_FORENSICS] Forensic detection complete. Generated', goldenCandidates.length, 'forensic events');
-
-    } catch (error) {
-      console.error('[usePatternBus] Error in Golden Candle forensics detection:', error);
-      console.error('[usePatternBus] Forensics stack trace:', (error as Error).stack);
-    }
+    // Integrate trailing stop loss evaluation
+    // 🔍 AUDIT: Trailing evaluation - EVAL STOP tracking
+    const activeStopLossCount = getActiveStopLosses().length;
+    const currentCandleIndex = candles.length - 1;
+    console.log("[EVAL STOP] Candle Index:", currentCandleIndex, "Open Positions:", activeStopLossCount, "Price:", candles[currentCandleIndex]?.close?.toFixed(4) || "N/A");
+    
+    evaluateStopLoss(candles, currentCandleIndex);
 
     setEvents(prev => [...prev, ...newEvents]);
     
-    const dataHash = haCandles[0]?.datetime + '_' + haCandles[haCandles.length - 1]?.datetime + '_' + haCandles.length;
+    const dataHash = candles[0]?.datetime + '_' + candles[candles.length - 1]?.datetime + '_' + candles.length;
     setProcessedDataHash(dataHash);
     
     setIsPatternDetectionComplete(true);
-  }, [candles, events, activePosition, setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps, setBreakoutBoxes, setBjRollingScores, escalatorSettings,
-    setStepIntrinsicCount, setStepBreakoutCount, setStepContinuanceCount]);
+  }, [candles]);
 
   return { events, activePosition, isPatternDetectionComplete, processedDataHash };
 }

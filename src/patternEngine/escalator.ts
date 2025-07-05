@@ -8,18 +8,22 @@
 import { MIN_ESCALATOR_LENGTH, MAX_STEP_DURATION } from '../constants';
 import { Candle, EscalatorRun, StepBox } from '../types';
 import { ThrustDirection } from '../models/PatternTypes';
-import { debugLog, summaryLog, DEBUG_MODE } from '../utils/debug';
-import { logDebug } from '../utils/debug';
+import { debugLog, summaryLog, DEBUG_MODE, logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only detection
 import { 
-  TradeActionSignal, 
-  emitBuySignal, 
+  TradeAction, 
+  SignalType, 
+  TradeActionSignal,
+  emitBuySignal,
   emitShortSignal,
   emitSellSignal,
   emitCoverSignal,
+  emitTradeBiasSignal,
   calculateRiskLevel 
 } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
+import { registerStopLoss } from '../engine/StopLossManager';
+import { canEmitSignal } from '../utils/patternDebounceManager';
 
 /**
  * Detects escalator patterns in candlestick data based on body-only higher highs/higher lows
@@ -115,6 +119,20 @@ export function evaluateEscalatorForEntry(escalatorRun: EscalatorRun): void {
   const confidence = consistency;
   if (confidence < 0.6) return;
   
+  // CRITICAL FIX: Separate pattern detection from trade signal emission
+  // Pattern detection and rendering should NEVER be debounced
+  // Only trade signal emission should be debounced
+  const now = Date.now();
+  const canEmitTradeSignal = canEmitSignal('ESCALATOR', now);
+  
+  if (!canEmitTradeSignal && DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Escalator] Trade signal debounced (but pattern will still render)', {
+      pattern: 'ESCALATOR',
+      timestamp: new Date(now).toISOString(),
+      direction: direction === ThrustDirection.BULLISH ? 'BULLISH' : 'BEARISH'
+    });
+  }
+  
   // Get the latest step for entry price
   const latestStep = steps[steps.length - 1];
   if (!latestStep) return;
@@ -125,15 +143,52 @@ export function evaluateEscalatorForEntry(escalatorRun: EscalatorRun): void {
   const action = direction === ThrustDirection.BULLISH ? 'SHORT' : 'BUY';
   const signalType = direction === ThrustDirection.BULLISH ? 'SHORT_ENTRY' : 'LONG_ENTRY';
   
-  emitTradeSignal({
-    action: action as any,
-    signalType: signalType as any,
-    pattern: 'Escalator',
-    confidence,
-    price: latestStep.level,
-    timestamp: latestStep.endTime,
-    reason: `Escalator confirmed (${direction === ThrustDirection.BULLISH ? 'BULLISH' : 'BEARISH'})`
-  });
+  // CRITICAL FIX: Only emit trade signals when debounce allows
+  // Pattern detection and rendering continues regardless of debounce
+  if (canEmitTradeSignal) {
+    // 🔍 AUDIT: Pattern instrumentation - EMIT tracking
+    console.log("[EMIT]", "ESCALATOR", signalType, latestStep.level.toFixed(4), "Confidence:", (confidence * 100).toFixed(1) + "%");
+    
+    emitTradeSignal({
+      action: action as any,
+      signalType: signalType as any,
+      pattern: 'Escalator',
+      confidence,
+      price: latestStep.level,
+      timestamp: latestStep.endTime,
+      reason: `Escalator confirmed (${direction === ThrustDirection.BULLISH ? 'BULLISH' : 'BEARISH'})`,
+      riskLevel: 'MEDIUM'
+    });
+
+    // Register stop loss for this entry position
+    const positionId = `ESCALATOR_${latestStep.startIndex}_${direction}`;
+    const stopLossType = direction === ThrustDirection.BULLISH ? 'SHORT' : 'LONG';
+    
+    // 🔍 AUDIT: Pattern instrumentation - REGISTER STOP tracking
+    console.log("[REGISTER STOP]", "ESCALATOR", stopLossType, latestStep.endIndex, "Trail:2", "Price:", latestStep.level.toFixed(4));
+    
+    registerStopLoss(
+      positionId,
+      stopLossType,
+      latestStep.endIndex,
+      2, // Trail 2 candles back
+      latestStep.level,
+      'ESCALATOR',
+      confidence
+    );
+
+    // Emit TRADE_BIAS signal for directional bias indication
+    const biasDirection = direction === ThrustDirection.BULLISH ? 'LONG' : 'SHORT';
+    emitTradeBiasSignal(
+      'ESCALATOR',
+      confidence,
+      latestStep.level,
+      latestStep.endTime,
+      biasDirection,
+      `Escalator directional bias: ${direction === ThrustDirection.BULLISH ? 'BULLISH' : 'BEARISH'}`,
+      { riskLevel: 'MEDIUM' }
+    );
+  }
 }
 
 /**

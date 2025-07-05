@@ -19,8 +19,10 @@ import {
 } from '../constants/pattern';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only detection
-import { TradeActionSignal, SignalType, TradeAction } from '../utils/trading/TradeActionSignal';
+import { TradeActionSignal, TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
+import { registerStopLoss } from '../engine/StopLossManager';
+import { canEmitSignal } from '../utils/patternDebounceManager';
 import { AdaptiveGoldmineShaftDetector } from '../utils/patternDetection/AdaptiveGoldmineShaftDetector';
 import { GoldmineShaftPattern, ThrustDirection } from '../models/PatternTypes';
 import { MarketContext } from '../utils/patternDetection/core/MarketContext';
@@ -246,6 +248,18 @@ export function evaluateGoldmineShaftForEntry(shaft: GoldmineShaftPattern): void
     return;
   }
 
+  // Debounce check - prevent rapid repeat emissions for retracement patterns
+  const now = Date.now();
+  const canEmitTradeSignal = canEmitSignal('GOLDMINE_SHAFT', now);
+  
+  if (!canEmitTradeSignal && process.env.NODE_ENV !== 'production' && process.env.DEBUG_GOLDMINE_SHAFT_SIGNALS) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Goldmine Shaft] Trade signal debounced (but pattern will still render)', {
+      pattern: 'GOLDMINE_SHAFT',
+      timestamp: new Date(now).toISOString(),
+      direction: direction === ThrustDirection.BULLISH ? 'BULLISH' : 'BEARISH'
+    });
+  }
+
   // 🔴 CRITICAL FIX: Inverted logic for tactical retracement entries
   // BULLISH thrust + retracement = SHORT at retracement resistance (high)
   // BEARISH thrust + retracement = BUY at retracement support (low)
@@ -271,16 +285,53 @@ export function evaluateGoldmineShaftForEntry(shaft: GoldmineShaftPattern): void
     ? thrustHighPrice * 1.03  // 3% above thrust high  
     : thrustLowPrice * 0.97;  // 3% below thrust low
 
-  // Emit to TradeActionBus using correct single object parameter
-  emitTradeSignal({
-    action,
-    signalType,
-    pattern: 'Goldmine Shaft',
-    confidence,
-    price: logicalEntryPrice,
-    timestamp: logicalEntryTime,
-    reason: `Fibonacci retracement bounce confirmed (${retracementPercentage.toFixed(1)}%)`
-  });
+  // CRITICAL FIX: Only emit trade signals when debounce allows
+  // Pattern detection and rendering continues regardless of debounce
+  if (canEmitTradeSignal) {
+    // 🔍 AUDIT: Pattern instrumentation - EMIT tracking
+    console.log("[EMIT]", "GOLDMINE", signalType, logicalEntryPrice.toFixed(4), "Confidence:", (confidence * 100).toFixed(1) + "%", "Retracement:", retracementPercentage.toFixed(1) + "%");
+    
+    // Emit to TradeActionBus using correct single object parameter
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Goldmine Shaft',
+      confidence,
+      price: logicalEntryPrice,
+      timestamp: logicalEntryTime,
+      reason: `Fibonacci retracement bounce confirmed (${retracementPercentage.toFixed(1)}%)`,
+      riskLevel: 'MEDIUM'
+    });
+
+    // Register stop loss for this goldmine shaft entry position
+    const positionId = `GOLDMINE_${logicalEntryTime.getTime()}_${direction}_${logicalEntryPrice.toFixed(2)}`;
+    const stopLossType = direction === ThrustDirection.BULLISH ? 'SHORT' : 'LONG'; // Inverted for retracement entries
+    
+    // 🔍 AUDIT: Pattern instrumentation - REGISTER STOP tracking
+    console.log("[REGISTER STOP]", "GOLDMINE", stopLossType, "0", "Trail:2", "Price:", logicalEntryPrice.toFixed(4), "Direction:", direction, "(Retracement)");
+    
+    registerStopLoss(
+      positionId,
+      stopLossType,
+      0, // Will be updated by StopLossManager with actual candle index
+      2, // Trail 2 candles back
+      logicalEntryPrice,
+      'GOLDMINE_SHAFT',
+      confidence
+    );
+
+    // Emit TRADE_BIAS signal for retracement directional bias indication
+    const bias = direction === ThrustDirection.BULLISH ? 'SHORT' : 'LONG';
+    emitTradeBiasSignal(
+      'GOLDMINE_SHAFT',
+      confidence,
+      logicalEntryPrice,
+      logicalEntryTime,
+      bias,
+      `Goldmine retracement directional bias: ${direction === ThrustDirection.BULLISH ? 'BULLISH' : 'BEARISH'} thrust`,
+      { riskLevel: 'MEDIUM' }
+    );
+  }
   
   if (process.env.NODE_ENV !== 'production' && process.env.DEBUG_GOLDMINE_SHAFT_SIGNALS) {
     console.log(`[GoldmineShaft:ENTRY] ${action} signal emitted:`, {

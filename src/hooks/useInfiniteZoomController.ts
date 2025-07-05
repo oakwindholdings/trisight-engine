@@ -17,7 +17,7 @@ interface UseInfiniteZoomControllerOptions {
   margin: { top: number; right: number; bottom: number; left: number };
   symbol: string;
   timeframe?: string;
-  onDataUpdate: (data: CandlestickData[], resolution: ResolutionConfig) => void;
+  onDataUpdate: (data: CandlestickData[], resolution: ResolutionConfig, fullData?: CandlestickData[]) => void;
   onZoomChange: (state: InfiniteZoomState) => void;
   setPanState: React.Dispatch<React.SetStateAction<PanState>>;
   startDate?: Date;

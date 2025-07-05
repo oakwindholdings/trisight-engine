@@ -1,9 +1,10 @@
 // src/components/Chart/ChartWithContext.tsx
 // Wrapper around InfiniteZoomChart with context
 // Handles data fetching and loading overlay
-import React, { useEffect, useMemo, forwardRef } from 'react';
+import React, { useEffect, useMemo, forwardRef, useState } from 'react';
 import InfiniteZoomChart from './InfiniteZoomChart';
 import { InfiniteZoomChartRef } from './InfiniteZoomChart';
+import { SignalEngineHUD } from './SignalEngineHUD';
 import { useMarketDataContext } from '../../contexts/MarketDataContext';
 import { usePatternContext } from '../../contexts/PatternContext';
 import { Pattern } from '../../models/PatternTypes';
@@ -38,6 +39,22 @@ export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContex
 }, ref) => {
   const { data, fetchSpecificDay, fetchDateRange, loading, error, setIsUsingCustomRange } = useMarketDataContext();
   const { patterns } = usePatternContext();
+  const [showEngineHUD, setShowEngineHUD] = useState(false);
+  
+  // Check if Signal Engine HUD should be shown
+  useEffect(() => {
+    const hudEnabled = localStorage.getItem('signalEngineHUD') === 'true';
+    setShowEngineHUD(hudEnabled);
+    
+    // Listen for changes to HUD setting
+    const handleStorageChange = () => {
+      const enabled = localStorage.getItem('signalEngineHUD') === 'true';
+      setShowEngineHUD(enabled);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // CRITICAL DIAGNOSTIC: Log data immediately after getting from context
   console.log('[DIAGNOSTIC] ChartWithContext - Data from useMarketDataContext:', {
@@ -351,6 +368,12 @@ export const ChartWithContext = forwardRef<InfiniteZoomChartRef, ChartWithContex
               date: new Date(data[data.length - 1].timestamp).toISOString()
             } : null
           })}
+          
+          {/* Signal Engine HUD Overlay */}
+          <SignalEngineHUD 
+            show={showEngineHUD} 
+            onHide={() => setShowEngineHUD(false)}
+          />
           
           <InfiniteZoomChart
             ref={ref}

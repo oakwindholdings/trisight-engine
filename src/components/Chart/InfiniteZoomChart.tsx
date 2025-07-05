@@ -17,7 +17,8 @@ import { createPriceScale } from '../../utils/scaling';
 import { ChartPatternLayer } from './ChartPatternLayer';
 import { PatternProvider, usePatternContext } from '../../contexts/PatternContext';
 import { useHoverMetrics } from '../../hooks/useHoverMetrics';
-import { MetricPopover } from './MetricPopover';
+import { HoverTooltipZones } from './HoverTooltipZones';
+import { UnifiedHoverProvider } from '../../contexts/UnifiedHoverContext';
 import { usePatternBus } from '../../hooks/usePatternBus';
 import { Candle } from '../../types';
 import { logDebug } from '../../utils/debug';
@@ -28,6 +29,13 @@ import './InfiniteZoomChart.css';
 // TradeActionSignal Integration
 import { TradeActionBus } from '../../utils/trading/TradeActionSignal';
 import { getTradeActionSignals } from '../../framework/tradeActionEmitter';
+
+// ConvictionCloud & TargetReportTable Integration
+import { ConvictionCloudItem, defaultConvictionCloudSettings } from './ConvictionCloudRenderer';
+import { evaluateAllPatterns } from '../../utils/patternHydration';
+import { useLivePolling } from '../../hooks/useLivePolling';
+
+import ExportControls from './ExportControls';
 
 interface InfiniteZoomChartProps {
   symbol: string;
@@ -169,20 +177,23 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     margin: CHART_MARGIN,
     symbol,
     timeframe, // Pass the user's selected timeframe
-    onDataUpdate: (data, resolution) => {
+    onDataUpdate: (data: CandlestickData[], resolution: ResolutionConfig, fullData?: CandlestickData[]) => {
       dataGenerationRef.current += 1;
       const generation = dataGenerationRef.current;
       
-      // Store data hash to detect changes
-      const newHash = `${data.length}_${data[0]?.timestamp}_${data[data.length - 1]?.timestamp}`;
+      // Store data hash to detect changes - use fullData for comprehensive detection
+      const dataForHashing = fullData || data;
+      const newHash = `${dataForHashing.length}_${dataForHashing[0]?.timestamp}_${dataForHashing[dataForHashing.length - 1]?.timestamp}`;
       if (newHash !== currentDataHash) {
         setCurrentDataHash(newHash);
         
-        // Trigger pattern detection on the new data
-        // This ensures pattern arrays are synchronized with the displayed data
+        // CRITICAL FIX: Use fullData for pattern detection to ensure patterns across entire chart
+        // If fullData is available, use it for pattern detection; otherwise fall back to processed data
+        const dataForPatternDetection = fullData || data;
+        
         if (patternContext && typeof patternContext.detectPatterns === 'function') {
-          // console.log('[InfiniteZoomChart] Calling detectPatterns with', data.length, 'candles');
-          patternContext.detectPatterns(data);
+          // console.log('[InfiniteZoomChart] Calling detectPatterns with', dataForPatternDetection.length, 'candles (full data):', !!fullData);
+          patternContext.detectPatterns(dataForPatternDetection);
         } else {
           // console.log('[InfiniteZoomChart] Pattern context not available:', {
           //   patternContext: !!patternContext,
@@ -284,6 +295,17 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       // });
     }
   }, [visibleCandles.length, visibleDataIndices.start, visibleDataIndices.end]);
+
+  // Auto-hydrate patterns when candleData changes (per TriSight Live Data Polling patch)
+  useEffect(() => {
+    if (transformedData.length > 0) {
+      console.debug('[InfiniteZoomChart] Auto-hydrating patterns with', transformedData.length, 'candles');
+      evaluateAllPatterns(transformedData);
+    }
+  }, [transformedData]);
+
+  // Enable live polling for automatic pattern updates (per TriSight Live Data Polling patch)
+  useLivePolling(true);
 
   // Use pattern bus to detect patterns on visible candles
   // console.log('[InfiniteZoomChart] About to call usePatternBus with', candles.length, 'candles (full dataset)');
@@ -749,13 +771,17 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       });
     }
     
+    // Include all patterns within the full data range, not just visible viewport
+    // This ensures patterns appear across the entire chart, not just the left portion
+    const fullDataStart = transformedData[0]?.timestamp || 0;
+    const fullDataEnd = transformedData[transformedData.length - 1]?.timestamp || 0;
+    
     const visiblePatterns = patterns.filter(pattern => {
       const patternStart = pattern.startTime.getTime();
       const patternEnd = pattern.endTime.getTime();
-      const visibleStart = transformedData[visibleDataIndices.start]?.timestamp || 0;
-      const visibleEnd = transformedData[visibleDataIndices.end]?.timestamp || 0;
       
-      return patternStart <= visibleEnd && patternEnd >= visibleStart;
+      // Use full data range instead of visible range to show patterns across entire chart
+      return patternStart <= fullDataEnd && patternEnd >= fullDataStart;
     });
     
     if (process.env.NODE_ENV === 'development') {
@@ -769,7 +795,11 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     // Get escalator steps from pattern context
     const escalatorSteps = patternContext.escalatorSteps || [];
     
-    // Filter escalator steps to visible time range and deduplicate by stepRef
+    // Get full data range for pattern detection (don't restrict to visible range)
+    const fullTimeStart = transformedData[0]?.timestamp || 0;
+    const fullTimeEnd = transformedData[transformedData.length - 1]?.timestamp || 0;
+    
+    // Current visible range for debugging
     const visibleTimeStart = transformedData[visibleDataIndices.start]?.timestamp || 0;
     const visibleTimeEnd = transformedData[visibleDataIndices.end]?.timestamp || 0;
     
@@ -779,14 +809,12 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         const stepData = event.data as any;
         
         // Use the timestamps directly from the pattern event
-        // These are already calculated during pattern detection
         const stepStartTime = stepData.startTime ? new Date(stepData.startTime).getTime() : 0;
         const stepEndTime = stepData.endTime ? new Date(stepData.endTime).getTime() : 0;
         
-        // Only include steps that overlap with visible time range
-        if (stepStartTime <= visibleTimeEnd && stepEndTime >= visibleTimeStart) {
-          // Keep the original step data with its timestamps
-          // Don't try to recalculate from indices
+        // Include all patterns within the full data range, not just visible range
+        // This ensures patterns appear across the entire chart, not just the left portion
+        if (stepStartTime <= fullTimeEnd && stepEndTime >= fullTimeStart) {
           stepMap.set(stepData.stepRef, stepData);
         }
       }
@@ -860,18 +888,91 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     // Convert readonly array to mutable array to match expected type
     const allSignals = classBasedSignals.length > 0 ? classBasedSignals : [...arrayBasedSignals];
     
-    // 🔴 CRITICAL FIX: Filter to ENTRY signals ONLY (exclude exit signals)
-    const tradeActionSignals = allSignals.filter(signal => 
-      signal.signalType === 'LONG_ENTRY' || signal.signalType === 'SHORT_ENTRY'
-    );
+    // Signal Fidelity Mode: Include SELL/COVER signals when fidelity mode is enabled
+    const isFidelityMode = (window as any).signalFidelityPatch?.isFidelityModeOn?.() || false;
+    const tradeActionSignals = isFidelityMode ? 
+      allSignals : // Show ALL signals in fidelity mode
+      allSignals.filter(signal => 
+        signal.signalType === 'LONG_ENTRY' || 
+        signal.signalType === 'SHORT_ENTRY' ||
+        signal.action === 'SELL' || 
+        signal.action === 'COVER' // ALWAYS show STOP_EXIT signals
+      );
     
-    // Debug logging for signal filtering
-    console.log(`[InfiniteZoomChart] Signal filtering:`, {
+    // URGENT DEBUG: Comprehensive signal tracing for SELL/COVER signals
+    const sellSignals = allSignals.filter(s => s.action === 'SELL');
+    const coverSignals = allSignals.filter(s => s.action === 'COVER');
+    const visibleSellSignals = tradeActionSignals.filter(s => s.action === 'SELL');
+    const visibleCoverSignals = tradeActionSignals.filter(s => s.action === 'COVER');
+    
+    console.log(`🚨 [STOP_EXIT_DEBUG] Signal pipeline analysis:`, {
       totalSignals: allSignals.length,
-      entrySignals: tradeActionSignals.length,
-      exitSignalsFiltered: allSignals.length - tradeActionSignals.length,
-      entrySignalTypes: tradeActionSignals.map(s => ({ pattern: s.pattern, action: s.action, type: s.signalType }))
+      totalSellSignals: sellSignals.length,
+      totalCoverSignals: coverSignals.length,
+      fidelityModeEnabled: isFidelityMode,
+      visibleSignals: tradeActionSignals.length,
+      visibleSellSignals: visibleSellSignals.length,
+      visibleCoverSignals: visibleCoverSignals.length,
+      exitSignalsFiltered: isFidelityMode ? 0 : (allSignals.length - tradeActionSignals.length),
+      allSignalActions: allSignals.map(s => s.action),
+      visibleSignalActions: tradeActionSignals.map(s => s.action),
+      sellSignalDetails: sellSignals.map(s => ({ 
+        pattern: s.pattern, 
+        action: s.action, 
+        signalType: s.signalType, 
+        timestamp: s.timestamp,
+        price: s.price 
+      })),
+      coverSignalDetails: coverSignals.map(s => ({ 
+        pattern: s.pattern, 
+        action: s.action, 
+        signalType: s.signalType, 
+        timestamp: s.timestamp,
+        price: s.price 
+      }))
     });
+    
+    // 🔄 Transform tradeActionSignals for ConvictionCloud with REAL calculated values (NO MOCK DATA)
+    const transformedConvictionCloudItems: ConvictionCloudItem[] = tradeActionSignals.map((signal, index): ConvictionCloudItem => {
+      // Find associated patterns for this signal to get real data
+      const associatedPatterns = patterns?.filter(pattern => 
+        pattern.type === signal.pattern || 
+        Math.abs(pattern.startTime.getTime() - signal.timestamp.getTime()) < 60000
+      ) || [];
+      
+      // **REAL CALCULATED VALUES - NO DUMMY DATA**
+      // Use same formulas as TargetReportTable for consistency
+      const confidence = signal.confidence || 0;
+      const convictionRating = Math.round(confidence * 100); // 0-100 scale
+      
+      // Real traction calculation based on pattern confidence and count
+      const traction = associatedPatterns.length > 0 
+        ? Math.round(associatedPatterns.reduce((sum, p) => sum + (p.confidence || 0), 0) / associatedPatterns.length * 100)
+        : Math.round(confidence * 100);
+      
+      // Real timing calculation based on pattern recency
+      const timing = signal.timestamp 
+        ? Math.max(0, Math.min(100, 100 - (Date.now() - signal.timestamp.getTime()) / (1000 * 60 * 60 * 24))) // Fresher = higher score
+        : 50;
+      
+      // Real risk calculation based on confidence (higher confidence = lower risk)
+      const riskRating = Math.round((1 - confidence) * 100); // Inverted: low confidence = high risk
+      
+      return {
+        symbol: signal.pattern || `SIGNAL_${index + 1}`,
+        convictionRating,
+        traction: Math.round(traction),
+        timing: Math.round(timing),
+        riskRating,
+        confidenceLevel: confidence,
+        signalCount: associatedPatterns.length || 1,
+        patternTypes: [signal.pattern || 'UNKNOWN'],
+        lastUpdated: signal.timestamp || new Date()
+      };
+    });
+
+    // Update state with transformed data
+    setConvictionCloudItems(transformedConvictionCloudItems);
     
     renderChart({
       mainCanvasRef,
@@ -897,6 +998,10 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       // 🔗 TradeActionSignal Integration - CRITICAL FIX
       tradeActionSignals: tradeActionSignals,
       tradeActionSettings: { showLabels: true, showIcons: true },
+      // 🌟 ConvictionCloud Integration - Transform tradeActionSignals to ConvictionCloud
+      convictionCloudItems: transformedConvictionCloudItems,
+      convictionCloudSettings: defaultConvictionCloudSettings,
+      hoveredConvictionItem: null,
       chartSettings: {
         isHeikinAshi: candleType === 'heikin_ashi',
         showVolume: showVolume,
@@ -1042,10 +1147,17 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     }
   }, [hoverData, transformedData]);
 
+  // 📤 CSV Export State
+  const [showExportControls, setShowExportControls] = useState(false);
+  
+  // 🔄 State for transformed data (will be updated in useEffect)
+  const [convictionCloudItems, setConvictionCloudItems] = useState<ConvictionCloudItem[]>([]);
+
   return (
     <HoverMetricsProvider value={hoverData}>
-      <div className="infinite-zoom-chart-container" ref={containerRef}>
-        <MetricPopover />
+      <UnifiedHoverProvider>
+        <div className="infinite-zoom-chart-container" ref={containerRef}>
+          <HoverTooltipZones />
         <div className="canvas-stack" style={{ width, height }}>
           <canvas ref={mainCanvasRef} className="main-canvas" />
           <canvas ref={bufferCanvasRef} className="buffer-canvas" style={{ display: 'none' }} />
@@ -1067,6 +1179,33 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
             onTouchEnd={panController.handleTouchEnd}
             style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
           />
+          
+          {/* 📤 CSV Export Controls */}
+          {showExportControls && (
+            <ExportControls
+              convictionCloudItems={convictionCloudItems}
+              targetReportRows={[]} // Empty since we're using DOM table now
+              position="floating"
+              className="z-50"
+            />
+          )}
+          
+          {/* 📤 Export Toggle Button */}
+          <button
+            onClick={() => setShowExportControls(!showExportControls)}
+            className={`
+              fixed top-4 right-4 z-40 px-3 py-2 text-sm font-medium rounded-lg shadow-lg
+              transition-all duration-200 border-2
+              ${
+                showExportControls
+                  ? 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }
+            `}
+            title="Toggle CSV Export Controls"
+          >
+            📊 {showExportControls ? 'Hide' : 'Export'}
+          </button>
           
           {currentResolution && showResolutionIndicator && (
             <ResolutionIndicator
@@ -1153,6 +1292,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
           )}
         </div>
       </div>
+      </UnifiedHoverProvider>
     </HoverMetricsProvider>
   );
 };

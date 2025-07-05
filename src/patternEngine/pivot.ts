@@ -10,9 +10,10 @@ import { Candle } from '../types/pattern';
 import { PivotType } from '../models/PatternTypes';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
-import AdaptivePivotDetector from '../utils/patternDetection/AdaptivePivotDetector';
+import { TradeActionSignal, TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
-import { TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
+import { registerStopLoss } from '../engine/StopLossManager';
+import { canEmitSignal } from '../utils/patternDebounceManager';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -200,19 +201,71 @@ export function evaluatePivotForEntry(pivot: PivotDetection): void {
   // Confidence gate - Only emit signals for strong pivots
   if (strengthScore < 0.65 || touchCount < 3) return;
 
+  // Debounce check - prevent rapid repeat emissions for pivot levels
+  const now = Date.now();
+  // CRITICAL FIX: Separate pattern detection from trade signal emission
+  // Pattern detection and rendering should NEVER be debounced
+  const canEmitTradeSignal = canEmitSignal('PIVOT', now);
+  
+  if (!canEmitTradeSignal && DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Pivot] Trade signal debounced (but pattern will still render)', {
+      pattern: 'PIVOT',
+      timestamp: new Date(now).toISOString(),
+      pivotType: pivotType,
+      pivotLevel: pivotLevel.toFixed(4)
+    });
+  }
+
   // ✅ CORRECT LOGIC: SUPPORT = BUY at LOW, RESISTANCE = SHORT at HIGH
   const action = pivotType === PivotType.SUPPORT ? TradeAction.BUY : TradeAction.SHORT;
   const signalType = pivotType === PivotType.SUPPORT ? SignalType.LONG_ENTRY : SignalType.SHORT_ENTRY;
 
-  emitTradeSignal({
-    action,
-    signalType,
-    pattern: 'Pivot',
-    confidence,
-    price: pivotLevel,
-    timestamp,
-    reason: `${pivotType} pivot @ ${pivotLevel.toFixed(2)} with ${touchCount} touches`
-  });
+  // CRITICAL FIX: Only emit trade signals when debounce allows
+  // Pattern detection and rendering continues regardless of debounce
+  if (canEmitTradeSignal) {
+    // 🔍 AUDIT: Pattern instrumentation - EMIT tracking
+    console.log("[EMIT]", "PIVOT", signalType, pivotLevel.toFixed(4), "Confidence:", (confidence * 100).toFixed(1) + "%", "Type:", pivotType);
+    
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Pivot',
+      confidence,
+      price: pivotLevel,
+      timestamp,
+      reason: `${pivotType} pivot @ ${pivotLevel.toFixed(2)} with ${touchCount} touches`,
+      riskLevel: 'MEDIUM'
+    });
+
+    // Register stop loss for this pivot entry position
+    const positionId = `PIVOT_${pivotType}_${timestamp.getTime()}_${pivotLevel.toFixed(2)}`;
+    const stopLossType = pivotType === PivotType.SUPPORT ? 'LONG' : 'SHORT';
+    
+    // 🔍 AUDIT: Pattern instrumentation - REGISTER STOP tracking
+    console.log("[REGISTER STOP]", "PIVOT", stopLossType, "0", "Trail:2", "Price:", pivotLevel.toFixed(4), "PivotType:", pivotType);
+    
+    registerStopLoss(
+      positionId,
+      stopLossType,
+      0, // Use 0 as entry candle index (will be updated by StopLossManager)
+      2, // Trail 2 candles back
+      pivotLevel,
+      'PIVOT',
+      confidence
+    );
+
+    // Emit TRADE_BIAS signal for pivot directional bias indication
+    const bias = pivotType === PivotType.SUPPORT ? 'LONG' : 'SHORT';
+    emitTradeBiasSignal(
+      'PIVOT',
+      confidence,
+      pivotLevel,
+      timestamp,
+      bias,
+      `Pivot directional bias: ${pivotType} level`,
+      { riskLevel: 'MEDIUM' }
+    );
+  }
 
   if (DEBUG_MODE) {
     logDebug('DEBUG_PATTERN_DETECT', '[Pivot Entry] Signal emitted', {
@@ -250,14 +303,29 @@ export function monitorPivotForExit(pivot: PivotDetection, livePrice: number): v
     const signalType = pivotType === PivotType.SUPPORT ? SignalType.LONG_EXIT : SignalType.SHORT_EXIT;
     const exitConfidence = 0.85; // High confidence on level breach
 
+    // 🎯 CRITICAL FIX: Use current timestamp for signal emission, not fixed timestamp
+    // This ensures each COVER signal has a unique timestamp for correct chart positioning
+    const currentTimestamp = new Date();
+    
     emitTradeSignal({
       action,
       signalType,
       pattern: 'Pivot',
       confidence: exitConfidence,
       price: livePrice,
-      timestamp,
-      reason: `${pivotType} breach @ ${pivotLevel.toFixed(2)}`
+      timestamp: currentTimestamp, // 🎯 Use current time instead of fixed timestamp
+      reason: `${pivotType} breach @ ${pivotLevel.toFixed(2)} (pivot detected: ${timestamp.toISOString()})`
+    });
+    
+    // 🔍 DEBUG: Show timestamp fix in action
+    console.log("🎯 [PIVOT_TIMESTAMP_FIX] COVER signal emitted with current timestamp", {
+      action,
+      pattern: 'Pivot',
+      price: livePrice.toFixed(4),
+      pivotType,
+      oldTimestamp: timestamp.toISOString(),
+      newTimestamp: currentTimestamp.toISOString(),
+      timestampFixed: true
     });
 
     if (DEBUG_MODE) {

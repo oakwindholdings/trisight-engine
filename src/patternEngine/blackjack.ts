@@ -9,7 +9,7 @@ import { Candle, BlackjackScore } from '../types/pattern';
 import { BJ_GOLD_THRESHOLD_LONG, BJ_GOLD_THRESHOLD_SHORT } from '../constants/pattern';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only scoring
-import { emitTradeSignal } from '../utils/trading/TradeActionSignal';
+import { emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 
 /**
  * Calculate the intrinsic score for a single candle based on price and volume
@@ -245,14 +245,41 @@ export function getBlackjackSignal(cumulativeScore: number): 'LONG' | 'SHORT' | 
 }
 
 // ─────────────────────────────────────────────────────────────
-// TriSight Blackjack → TradeAction Signal Integration
-// Pattern : Blackjack
-// Purpose : Emit BUY/SHORT signals based on cumulative score logic
-// Note    : Self-contained signal emitter with momentum-based thresholds
+// TriSight Blackjack → TRADE_BIAS Signal Integration
+// Pattern : Blackjack  
+// Purpose : Emit non-executional TRADE_BIAS signals for downstream pattern qualification
+// Note    : Doctrinal directional bias signals without executional triggers
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Emit BUY/SHORT trade signals for Blackjack momentum patterns
+ * Emit TRADE_BIAS directional signals for Blackjack momentum patterns
+ * Provides non-executional directional bias for downstream pattern qualification
+ */
+export function emitBlackjackBiasSignal(
+  cumulativeScore: number,
+  candle: any,
+  confidence: number,
+  reason: string
+): any {
+  const bias = cumulativeScore > 0 ? 'LONG' : 'SHORT';
+  
+  return emitTradeBiasSignal(
+    'BLACKJACK',
+    confidence,
+    candle.close,
+    new Date(candle.timestamp),
+    bias,
+    reason,
+    {
+      candleIndex: candle.index,
+      riskLevel: 'MEDIUM'
+    }
+  );
+}
+
+/**
+ * Detect and emit TRADE_BIAS signals for Blackjack momentum patterns
+ * Replaces executional signals with doctrinal directional bias emissions
  */
 export function detectBlackjackTradeSignals(candles: Candle[]) {
   if (!candles || candles.length < 5) return [];
@@ -266,77 +293,40 @@ export function detectBlackjackTradeSignals(candles: Candle[]) {
   const signals: any[] = [];
   
   // Deduplication state tracking
-  let lastBuySignalIndex = -1;
-  let lastShortSignalIndex = -1;
-  const minSignalGap = 5; // Minimum 5 candles between signals
+  let lastBiasSignalIndex = -1;
+  const minSignalGap = 5; // Minimum 5 candles between bias signals
   
-  // Detect signals based on cumulative score thresholds
+  // Detect bias signals based on cumulative score thresholds
   for (let i = 1; i < Math.min(heikinAshiCandles.length, rollingScores.length); i++) {
     const candle = heikinAshiCandles[i];
     const cumulativeScore = rollingScores[i].score;
     
-    // 🔴 CRITICAL FIX: Inverted Blackjack signal logic for tactical entries
-    // Strong bullish momentum (score >= 3) = SHORT at momentum peak (fade the strength)
-    // Strong bearish momentum (score <= -3) = BUY at momentum trough (fade the weakness)
+    // Emit directional bias signals for strong momentum (doctrinal thresholds)
+    // Strong bullish momentum (score >= 3) = LONG bias for qualification
+    // Strong bearish momentum (score <= -3) = SHORT bias for qualification
     
-    // SHORT signal: Cumulative score >= 3 (strong bullish momentum - fade at peak)
-    if (cumulativeScore >= 3 && (i - lastShortSignalIndex) >= minSignalGap) {
-      const confidence = Math.min(0.8 + (cumulativeScore - 3) * 0.05, 0.95);
-      const stopLoss = candle.high * 1.02; // 2% stop loss
-      const targetPrice = candle.low * 0.94; // 6% target
+    if (Math.abs(cumulativeScore) >= 3 && (i - lastBiasSignalIndex) >= minSignalGap) {
+      const confidence = Math.min(0.7 + (Math.abs(cumulativeScore) - 3) * 0.05, 0.90);
+      const reason = `BJ Score: ${cumulativeScore} (${cumulativeScore > 0 ? 'BULLISH' : 'BEARISH'} BIAS)`;
       
-      signals.push(emitTradeSignal(
-        'SHORT' as any,
-        'SHORT_ENTRY' as any,
-        'BLACKJACK',
+      signals.push(emitBlackjackBiasSignal(
+        cumulativeScore,
+        { ...candle, index: i },
         confidence,
-        candle.close,
-        new Date(candle.timestamp),
-        `BJ Score: ${cumulativeScore} (FADE BULLISH)`,
-        { 
-          stopLoss,
-          targetPrice
-        }
+        reason
       ));
       
-      lastShortSignalIndex = i; // Update deduplication tracker
+      lastBiasSignalIndex = i; // Update deduplication tracker
       
       if (process.env.DEBUG_BLACKJACK_SIGNALS) {
-        logDebug(`🎯 Blackjack SHORT Signal: Score=${cumulativeScore}, Confidence=${confidence.toFixed(2)}, Price=${candle.close}, Index=${i}, GapFromLast=${i - (lastShortSignalIndex - minSignalGap)}`);
-      }
-    }
-    
-    // BUY signal: Cumulative score <= -3 (strong bearish momentum - fade at trough)
-    if (cumulativeScore <= -3 && (i - lastBuySignalIndex) >= minSignalGap) {
-      const confidence = Math.min(0.8 + Math.abs(cumulativeScore + 3) * 0.05, 0.95);
-      const stopLoss = candle.low * 0.98; // 2% stop loss
-      const targetPrice = candle.high * 1.06; // 6% target
-      
-      signals.push(emitTradeSignal(
-        'BUY' as any,
-        'LONG_ENTRY' as any,
-        'BLACKJACK',
-        confidence,
-        candle.close,
-        new Date(candle.timestamp),
-        `BJ Score: ${cumulativeScore} (FADE BEARISH)`,
-        { 
-          stopLoss,
-          targetPrice
-        }
-      ));
-      
-      lastBuySignalIndex = i; // Update deduplication tracker
-      
-      if (process.env.DEBUG_BLACKJACK_SIGNALS) {
-        logDebug(`🎯 Blackjack BUY Signal: Score=${cumulativeScore}, Confidence=${confidence.toFixed(2)}, Price=${candle.close}, Index=${i}, GapFromLast=${i - (lastBuySignalIndex - minSignalGap)}`);
+        logDebug(`🎯 Blackjack BIAS Signal: Score=${cumulativeScore}, Confidence=${confidence.toFixed(2)}, Price=${candle.close}, Index=${i}, Bias=${cumulativeScore > 0 ? 'LONG' : 'SHORT'}`);
       }
     }
   }
   
-  // Enhanced debug logging for signal placement validation
+  // Enhanced debug logging for bias signal validation
   if (process.env.DEBUG_BLACKJACK_SIGNALS && signals.length > 0) {
-    logDebug(`🔍 Blackjack Signal Summary: ${signals.length} signals emitted, Deduplication active (${minSignalGap} candle gap), Signal anchoring: momentum confirmation`);
+    logDebug(`🔍 Blackjack BIAS Summary: ${signals.length} bias signals emitted, Non-executional mode, Deduplication active (${minSignalGap} candle gap)`);
   }
   
   return signals;

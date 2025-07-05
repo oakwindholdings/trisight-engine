@@ -8,7 +8,9 @@ import { TradeSignalValidator, SignalValidationResult } from '../utils/signalVal
 import { CandlestickData } from '../models/ChartTypes';
 
 // Global TradeActionBus - single source of truth for all trade signals
-export const TradeActionBus: TradeActionSignal[] = [];
+// Import the class-based TradeActionBus to unify signal emission/rendering
+import { TradeActionBus as UnifiedTradeActionBus } from '../utils/trading/TradeActionSignal';
+export const TradeActionBus = UnifiedTradeActionBus;
 
 // Global signal validation results for rendering annotations
 export const SignalValidationResults: Map<string, SignalValidationResult> = new Map();
@@ -35,7 +37,7 @@ export function emitTradeSignal(signal: TradeActionSignal): void {
   // Validate signal quality if candle data is available
   let validationResult: SignalValidationResult | null = null;
   if (globalCandleData.length > 0) {
-    validationResult = TradeSignalValidator.validateSignal(signal, globalCandleData, TradeActionBus);
+    validationResult = TradeSignalValidator.validateSignal(signal, globalCandleData, TradeActionBus.getSignals());
     
     // Store validation result for rendering annotations
     const signalKey = `${signal.pattern}_${signal.timestamp.getTime()}_${signal.price}`;
@@ -57,7 +59,7 @@ export function emitTradeSignal(signal: TradeActionSignal): void {
     price: signal.price,
     timestamp: signal.timestamp,
     confidence: signal.confidence,
-    busLength: TradeActionBus.length
+    busLength: TradeActionBus.getSignals().length
   });
   
   // Use DEBUG_TRADE_SIGNALS channel for UI-controllable debug logging
@@ -70,7 +72,7 @@ export function emitTradeSignal(signal: TradeActionSignal): void {
       timestamp: signal.timestamp.toISOString(),
       confidence: `${(signal.confidence * 100).toFixed(1)}%`,
       reason: signal.reason,
-      busSize: TradeActionBus.length
+      busSize: TradeActionBus.getSignals().length
     };
     
     // Add validation results to debug output
@@ -106,12 +108,12 @@ export function getSignalValidation(signal: TradeActionSignal): SignalValidation
  * Clear all signals from the trade action bus (for testing/reset)
  */
 export function clearTradeActionBus(): void {
-  TradeActionBus.length = 0;
+  TradeActionBus.clear();
 }
 
 /**
  * Get all signals from the trade action bus
  */
 export function getTradeActionSignals(): readonly TradeActionSignal[] {
-  return [...TradeActionBus];
+  return TradeActionBus.getSignals();
 }

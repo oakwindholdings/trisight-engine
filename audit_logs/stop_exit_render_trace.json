@@ -1,0 +1,45 @@
+{
+  "audit": {
+    "id": "stoploss.render.trace",
+    "name": "STOP_EXIT Signal Render Trace",
+    "timestamp": "2025-07-03T15:23:15.000Z",
+    "scope": ["STOP_EXIT"],
+    "timeframes": ["1m"],
+    "status": "ACTIVE",
+    "stages": {
+      "EMISSION": {
+        "description": "Trace STOP_EXIT signal emission from StopLossManager",
+        "status": "ACTIVE",
+        "emit": ["patternId", "action", "price", "timestamp", "triggeredBy"],
+        "target": "StopLossManager.ts::emitStop",
+        "traces": []
+      },
+      "RENDER": {
+        "description": "Trace STOP_EXIT signal rendering in UI canvas",
+        "status": "ACTIVE", 
+        "emit": ["signalId", "labelVisible", "isRendered", "position"],
+        "target": "SignalRenderer.tsx::renderTradeActionSignals",
+        "traces": []
+      },
+      "DIFF_ANALYSIS": {
+        "description": "Analyze STOP_EXIT emission vs rendering gaps",
+        "status": "ACTIVE",
+        "emit": ["status", "rootCause", "timestamp"],
+        "target": "StopExitTraceAnalyzer.ts",
+        "traces": []
+      }
+    }
+  },
+  "output": {
+    "path": "./audit_logs/stop_exit_render_trace.json",
+    "format": "json",
+    "realtime": true,
+    "includeSummary": true
+  },
+  "metrics": {
+    "totalEmissions": 0,
+    "totalRenders": 0,
+    "renderGaps": 0,
+    "lastUpdate": "2025-07-03T15:23:15.000Z"
+  }
+}

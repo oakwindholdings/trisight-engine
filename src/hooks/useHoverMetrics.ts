@@ -4,6 +4,10 @@
 
 import { useEffect, useState, createContext, useContext } from 'react';
 import { usePatternContext } from '../contexts/PatternContext';
+import { getSignalAtPoint, getSignalTooltip } from '../components/Chart/SignalRenderer';
+import { TradeActionSignal } from '../utils/trading/TradeActionSignal';
+import { getSignalValidation } from '../framework/tradeActionEmitter';
+import { logDebugHover } from '../utils/debug';
 
 interface HoverMetrics {
   idx: number;
@@ -11,7 +15,14 @@ interface HoverMetrics {
   y: number;
   bj: number | string;
   candle?: any;
-  visibleIndex: number; 
+  visibleIndex: number;
+  // NEW: Canvas signal detection
+  signal?: {
+    tradeActionSignal: TradeActionSignal;
+    tooltip: string;
+    validation?: any;
+    isHovered: boolean;
+  };
 }
 
 const HoverMetricsContext = createContext<HoverMetrics | null>(null);
@@ -25,7 +36,11 @@ export function useHoverMetrics(
   timeScale?: { invert: (pixel: number) => Date },
   data?: any[],
   margin?: { left: number; top: number; right?: number; bottom?: number },
-  visibleDataIndices?: { start: number; end: number }
+  visibleDataIndices?: { start: number; end: number },
+  // NEW: Canvas signal detection parameters
+  signals?: TradeActionSignal[],
+  canvasTimeScale?: any,
+  canvasPriceScale?: any
 ) {
   const { bjCounts, escalatorDir } = usePatternContext();
   const [hoverData, setHoverData] = useState<HoverMetrics | null>(null);
@@ -67,13 +82,48 @@ export function useHoverMetrics(
       
       if (absoluteIndex >= 0 && absoluteIndex < data.length) {
         const bj = bjCounts[absoluteIndex] ?? 'n/a';
+        
+        // NEW: Canvas signal detection
+        let hoveredSignal = null;
+        if (signals && signals.length > 0 && canvasTimeScale && canvasPriceScale) {
+          try {
+            const signal = getSignalAtPoint(
+              signals,
+              x, // Use absolute mouse X coordinate
+              ev.clientY - rect.top, // Mouse Y relative to container
+              canvasTimeScale,
+              canvasPriceScale,
+              12 // Larger hit radius for better UX
+            );
+            
+            if (signal) {
+              const validation = getSignalValidation(signal);
+              hoveredSignal = {
+                tradeActionSignal: signal,
+                tooltip: getSignalTooltip(signal),
+                validation: validation,
+                isHovered: true
+              };
+              
+              logDebugHover?.('useHoverMetrics', 'signal_detected', {
+                action: signal.action,
+                price: signal.price,
+                validation: validation?.validationFlag
+              });
+            }
+          } catch (error) {
+            console.warn('[useHoverMetrics] Signal detection error:', error);
+          }
+        }
+        
         setHoverData({
           idx: absoluteIndex,
           x: ev.clientX,
           y: ev.clientY,
           bj,
           visibleIndex: clampedVisibleIndex, 
-          candle: data[absoluteIndex] 
+          candle: data[absoluteIndex],
+          signal: hoveredSignal || undefined
         });
       } else {
         setHoverData(null);

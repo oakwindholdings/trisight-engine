@@ -9,7 +9,8 @@ export enum TradeAction {
   BUY = 'BUY',
   SELL = 'SELL', 
   SHORT = 'SHORT',
-  COVER = 'COVER'
+  COVER = 'COVER',
+  TRADE_BIAS = 'TRADE_BIAS'
 }
 
 /**
@@ -19,7 +20,9 @@ export enum SignalType {
   LONG_ENTRY = 'LONG_ENTRY',
   LONG_EXIT = 'LONG_EXIT',
   SHORT_ENTRY = 'SHORT_ENTRY', 
-  SHORT_EXIT = 'SHORT_EXIT'
+  SHORT_EXIT = 'SHORT_EXIT',
+  BIAS_LONG = 'BIAS_LONG',
+  BIAS_SHORT = 'BIAS_SHORT'
 }
 
 /**
@@ -227,6 +230,30 @@ export function emitCoverSignal(
   return emitTradeSignal(
     TradeAction.COVER,
     SignalType.SHORT_EXIT,
+    pattern,
+    confidence,
+    price,
+    timestamp,
+    reason,
+    metadata
+  );
+}
+
+/**
+ * Helper function to create TRADE_BIAS signal (non-executional directional bias)
+ */
+export function emitTradeBiasSignal(
+  pattern: string,
+  confidence: number,
+  price: number,
+  timestamp: Date,
+  bias: 'LONG' | 'SHORT',
+  reason?: string,
+  metadata?: Partial<TradeActionSignal>
+): TradeActionSignal {
+  return emitTradeSignal(
+    TradeAction.TRADE_BIAS,
+    bias === 'LONG' ? SignalType.BIAS_LONG : SignalType.BIAS_SHORT,
     pattern,
     confidence,
     price,

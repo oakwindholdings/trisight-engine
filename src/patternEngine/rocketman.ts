@@ -12,8 +12,10 @@ import { convertToHeikinAshi } from '../utils/candleTransform';
 import AdaptiveRocketmanDetector from '../utils/patternDetection/AdaptiveRocketmanDetector';
 import { CandlestickData } from '../models/ChartTypes';
 import { RocketmanPattern } from '../models/PatternTypes';
+import { TradeActionSignal, TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
-import { TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
+import { registerStopLoss } from '../engine/StopLossManager';
+import { canEmitSignal } from '../utils/patternDebounceManager';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -132,6 +134,20 @@ export function evaluateRocketmanForEntry(rocket: RocketmanDetection): void {
   // Confidence gate - Only emit strong momentum signals above threshold
   if (confidence < 0.75 || accelerationRate < 0.02 || signalStrength !== 'STRONG') return;
 
+  // Debounce check - prevent rapid repeat emissions for momentum patterns
+  const now = Date.now();
+  // CRITICAL FIX: Separate pattern detection from trade signal emission
+  // Pattern detection and rendering should NEVER be debounced
+  const canEmitTradeSignal = canEmitSignal('ROCKETMAN', now);
+  
+  if (!canEmitTradeSignal && DEBUG_MODE) {
+    logDebug('DEBUG_PATTERN_DETECT', '[Rocketman] Trade signal debounced (but pattern will still render)', {
+      pattern: 'ROCKETMAN',
+      timestamp: new Date(now).toISOString(),
+      direction: direction === 'BULLISH' ? 'BULLISH' : 'BEARISH'
+    });
+  }
+
   // 🔴 CRITICAL FIX: INVERTED LOGIC - Contrarian entries at momentum extremes
   // BULLISH momentum (price UP) = SHORT at the HIGH (fade the move)
   // BEARISH momentum (price DOWN) = BUY at the LOW (fade the move)  
@@ -149,15 +165,52 @@ export function evaluateRocketmanForEntry(rocket: RocketmanDetection): void {
   // This is the earliest point where tactical entry should be considered
   const logicalEntryTime = peakTime;
 
-  emitTradeSignal({
-    action,
-    signalType,
-    pattern: 'Rocketman',
+  // CRITICAL FIX: Only emit trade signals when debounce allows
+  // Pattern detection and rendering continues regardless of debounce
+  if (canEmitTradeSignal) {
+    // 🔍 AUDIT: Pattern instrumentation - EMIT tracking
+    console.log("[EMIT]", "ROCKETMAN", signalType, logicalEntryPrice.toFixed(4), "Confidence:", (confidence * 100).toFixed(1) + "%", "Direction:", direction);
+    
+    emitTradeSignal({
+      action,
+      signalType,
+      pattern: 'Rocketman',
+      confidence,
+      price: logicalEntryPrice,
+      timestamp: logicalEntryTime,
+      reason: `Rocketman momentum confirmed (Accel=${accelerationRate.toFixed(3)}, Strength=${signalStrength})`,
+      riskLevel: 'HIGH'
+    });
+
+    // Register stop loss for this rocketman entry position
+    const positionId = `ROCKETMAN_${peakTime.getTime()}_${direction}_${logicalEntryPrice.toFixed(2)}`;
+    const stopLossType = direction === 'BULLISH' ? 'SHORT' : 'LONG'; // Inverted for contrarian entries
+    
+    // 🔍 AUDIT: Pattern instrumentation - REGISTER STOP tracking
+    console.log("[REGISTER STOP]", "ROCKETMAN", stopLossType, "0", "Trail:2", "Price:", logicalEntryPrice.toFixed(4), "Direction:", direction, "(Contrarian)");
+    
+    registerStopLoss(
+      positionId,
+      stopLossType,
+      0, // Will be updated by StopLossManager with actual candle index
+      2, // Trail 2 candles back
+      logicalEntryPrice,
+      'ROCKETMAN',
+      confidence
+    );
+  }
+
+  // Emit TRADE_BIAS signal for directional momentum bias indication
+  const bias = direction === 'BULLISH' ? 'LONG' : 'SHORT';
+  emitTradeBiasSignal(
+    'ROCKETMAN',
     confidence,
-    price: logicalEntryPrice,
-    timestamp: logicalEntryTime,
-    reason: `Rocketman momentum confirmed (Accel=${accelerationRate.toFixed(3)}, Strength=${signalStrength})`
-  });
+    logicalEntryPrice,
+    logicalEntryTime,
+    bias,
+    `Rocketman directional bias: ${direction} momentum`,
+    { riskLevel: 'HIGH' }
+  );
 
   // Enhanced debug logging for signal placement validation
   if (DEBUG_MODE) {
@@ -198,14 +251,28 @@ export function monitorRocketmanForExit(rocket: RocketmanDetection, livePrice: n
     const action = direction === 'BULLISH' ? TradeAction.SELL : TradeAction.COVER;
     const signalType = direction === 'BULLISH' ? SignalType.LONG_EXIT : SignalType.SHORT_EXIT;
 
+    // 🎯 CRITICAL FIX: Use current timestamp for signal emission, not fixed peakTime
+    // This ensures each COVER signal has a unique timestamp for correct chart positioning
+    const currentTimestamp = new Date();
+    
     emitTradeSignal({
       action,
       signalType,
       pattern: 'Rocketman',
       confidence,
       price: livePrice,
-      timestamp: peakTime,
-      reason: `Rocketman momentum failed (${direction})`
+      timestamp: currentTimestamp, // 🎯 Use current time instead of peakTime
+      reason: `Rocketman momentum failed (${direction}) at peak: ${peakTime.toISOString()}`
+    });
+    
+    // 🔍 DEBUG: Show timestamp fix in action
+    console.log("🎯 [ROCKETMAN_TIMESTAMP_FIX] COVER signal emitted with current timestamp", {
+      action,
+      pattern: 'Rocketman',
+      price: livePrice.toFixed(4),
+      oldTimestamp: peakTime.toISOString(),
+      newTimestamp: currentTimestamp.toISOString(),
+      timestampFixed: true
     });
 
     if (DEBUG_MODE) {
