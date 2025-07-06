@@ -8,8 +8,8 @@ import './App.css';
 import './styles/globals.css';
 import { logDebug } from './utils/debug';
 import { getApiKey } from './api/twelveDataApi';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import { ChartProvider } from './contexts/ChartContext';
+// Removed react-datepicker - using HTML5 date input instead
 import mainGridStyles from './styles/MainGrid.module.css';
 
 // Import components
@@ -21,6 +21,7 @@ import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithCon
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
 import { TargetReportTable } from './components/TargetReportTable'; // Dick's TriSight Target Report Table with actual formulas
+import TargetsPage from './pages/TargetsPage'; // Dedicated Targets page for independent mounting
 
 // Import components
 import ContextBar from './components/Navigation/ContextBar';
@@ -294,7 +295,7 @@ function AppContent() {
   
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
-  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets'>('chart');
   
   // Symbol selection state
   const [selectedSymbol, setSelectedSymbol] = useState(() => {
@@ -413,7 +414,7 @@ function AppContent() {
   }, [symbolRankings]);
   
   // Type-safe tab change handler
-  const handleTabChange = (tab: 'chart' | 'dashboard') => {
+  const handleTabChange = (tab: 'chart' | 'dashboard' | 'targets') => {
     setActiveTab(tab);
   };
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -832,7 +833,8 @@ function AppContent() {
   }, [selectedPattern]);
 
   return (
-    <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}>
+    <ChartProvider>
+      <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}>
       {isFeatureEnabled('NEW_LAYOUT') ? (
         // New UI using wrapper components
         <>
@@ -905,6 +907,8 @@ function AppContent() {
                   )}
                 </div>
               </>
+            ) : activeTab === 'targets' ? (
+              <TargetsPage />
             ) : (
               <LearningDashboard />
             )}
@@ -919,7 +923,6 @@ function AppContent() {
               overflow: 'hidden'
             }}>
               <TargetReportTable
-                signals={TradeActionBus.getSignals()}
                 patterns={filteredPatterns || []}
                 escalatorSteps={[]}
                 selectedSymbol={selectedSymbol}
@@ -928,6 +931,8 @@ function AppContent() {
                   logDebug('DEBUG_UI', '[App] Symbol selected from target report table:', symbol);
                 }}
                 loading={false}
+                customSymbols={[selectedSymbol].filter(Boolean)}
+                scanning={false}
               />
             </div>
           )}
@@ -956,6 +961,12 @@ function AppContent() {
             >
               Learning Dashboard
             </Tab>
+            <Tab 
+              $active={activeTab === 'targets'} 
+              onClick={() => setActiveTab('targets')}
+            >
+              Targets Analysis
+            </Tab>
           </TabBar>
           <ContentArea>
             <>
@@ -964,12 +975,19 @@ function AppContent() {
                   <ControlsContainer>
                     <ControlGroup>
                       <Label>Date:</Label>
-                      <DatePicker
-                        selected={selectedDate}
-                        onChange={handleDateChange}
-                        maxDate={new Date()} // Can't select future dates
-                        dateFormat="yyyy-MM-dd"
+                      <input
+                        type="date"
+                        value={selectedDate?.toISOString().split('T')[0] || ''}
+                        onChange={(e) => handleDateChange(new Date(e.target.value))}
+                        max={new Date().toISOString().split('T')[0]}
                         className="date-picker"
+                        style={{
+                          padding: '8px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          background: 'white'
+                        }}
                       />
                     </ControlGroup>
                     <ControlGroup>
@@ -1023,6 +1041,9 @@ function AppContent() {
               )}
               {activeTab === 'dashboard' && (
                 <LearningDashboard />
+              )}
+              {activeTab === 'targets' && (
+                <TargetsPage />
               )}
             </>
           </ContentArea>
@@ -1083,7 +1104,8 @@ function AppContent() {
           onClose={() => setShowSettingsPanel(false)}
         />
       </div>
-    </div>
+      </div>
+    </ChartProvider>
   );
 }
 

@@ -32,6 +32,7 @@ export interface TradeActionSignal {
   action: TradeAction;
   signalType: SignalType;
   pattern: string;
+  ticker?: string; // ← Added for symbol-aware signal tracking
   confidence: number; // 0-1 range
   price: number;
   timestamp: Date;
@@ -43,6 +44,21 @@ export interface TradeActionSignal {
   positionSize?: number;
   stopLoss?: number;
   targetPrice?: number;
+  
+  // TriSight Calculation Fields (Dick O'Leary Formulas)
+  escalatorStepCount?: number;      // Acceleration: Escalator Step Count
+  blackjackTrailing5?: number;      // Intrinsic Strength: Blackjack Trailing 5
+  blackjackScore?: number;          // Current Blackjack score (+/-)
+  blackjackContinuanceScore?: number; // Relative Strength: Blackjack Continuance Score
+  fiveDayGain?: number;             // 5-day percentage gain
+  tenDayGain?: number;              // 10-day percentage gain
+  triSightRating?: number;          // Calculated TriSight Rating (0-100)
+  successProfile?: number;          // TriSight Conviction Rating (AI Calculation)
+  acceleration?: number;            // Escalator Step Count
+  intrinsicStrength?: number;       // Blackjack Trailing 5
+  momentum?: number;                // sum(5 Day % Gain + 10 Day % Gain)/2
+  relativeStrength?: number;        // Blackjack Continuance Score
+  goldenCandle?: number;            // Step Breakout Candle indicator (0/1)
 }
 
 /**

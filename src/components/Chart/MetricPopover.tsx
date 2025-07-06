@@ -18,10 +18,10 @@ export function MetricPopover() {
   const patternContext = usePatternContext();
   const { data: candles } = useMarketDataContext();
   const pop = useHoverMetricsContext();
-  const { isDatePickerOpen } = useUIState();
+  // Removed isDatePickerOpen since we switched to HTML5 date input
   
-  // Hide popover when date picker is open or no hover data
-  if (!pop || isDatePickerOpen) return null;
+  // Hide popover when no hover data
+  if (!pop) return null;
   
   // HA Infrastructure Alignment Patch v1.0.0: Convert to HA candles for metric consistency
   const haCandles = candles ? convertToHeikinAshi(candles) : [];

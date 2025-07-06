@@ -20,7 +20,7 @@ export function HoverTooltipZones() {
   const unifiedHover = useUnifiedHover();
   const { data: candles } = useMarketDataContext();
   const pop = useHoverMetricsContext();
-  const { isDatePickerOpen } = useUIState();
+  // Removed isDatePickerOpen since we switched to HTML5 date input
   
   // Advanced interaction state
   const [isExpanded, setIsExpanded] = useState(false);
@@ -98,7 +98,7 @@ export function HoverTooltipZones() {
   }, [analytics]);
   
   // Hide tooltip when date picker is open or no hover data
-  if (!pop || isDatePickerOpen) return null;
+  if (!pop) return null;
   
   // HA Infrastructure Alignment: Convert to HA candles for metric consistency
   const haCandles = candles ? convertToHeikinAshi(candles) : [];

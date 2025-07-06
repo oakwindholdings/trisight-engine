@@ -130,8 +130,8 @@ const SummaryLabel = styled.div`
 interface ContextBarProps {
   selectedDate: Date;
   onDateChange: (date: Date | null) => void;
-  activeTab: 'chart' | 'dashboard';
-  onTabChange: (tab: 'chart' | 'dashboard') => void;
+  activeTab: 'chart' | 'dashboard' | 'targets';
+  onTabChange: (tab: 'chart' | 'dashboard' | 'targets') => void;
   onSettingsToggle: () => void;
   onSymbolSelect?: (symbol: string, name?: string, exchange?: string) => void;
   onToggleRightPanel?: () => void;
@@ -154,7 +154,7 @@ const ContextBar: React.FC<ContextBarProps> = ({
   showBottomTable = true,
   onCustomDateRange,
 }) => {
-  const { setIsDatePickerOpen } = useUIState();
+  // Removed setIsDatePickerOpen since we switched to HTML5 date input
   const { symbol, setTimeframe, setSymbol, fetchDateRange, timeframe, clearData } = useMarketDataContext();
   
   // State for symbol info
@@ -688,8 +688,8 @@ const TabButton = styled.button<TabButtonProps>`
 `;
 
 interface ViewModeToggleProps {
-  activeTab: 'chart' | 'dashboard';
-  onTabChange: (tab: 'chart' | 'dashboard') => void;
+  activeTab: 'chart' | 'dashboard' | 'targets';
+  onTabChange: (tab: 'chart' | 'dashboard' | 'targets') => void;
 }
 
 const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ activeTab, onTabChange }) => {
@@ -706,6 +706,12 @@ const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ activeTab, onTabChange 
         onClick={() => onTabChange('dashboard')}
       >
         Dashboard
+      </TabButton>
+      <TabButton
+        $active={activeTab === 'targets'}
+        onClick={() => onTabChange('targets')}
+      >
+        Targets
       </TabButton>
     </ViewModeToggleContainer>
   );

@@ -219,7 +219,7 @@ interface MarketStatusResponse {
 }
 
 // Convert TwelveData timeframe to API interval
-const timeframeToInterval = (timeframe: Timeframe): string => {
+export const timeframeToInterval = (timeframe: Timeframe): string => {
   switch (timeframe) {
     case '1min': return '1min';
     case '5min': return '5min';
