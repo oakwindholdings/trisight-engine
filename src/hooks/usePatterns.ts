@@ -398,13 +398,11 @@ export function usePatterns(data: CandlestickData[]) {
         const enabledTypes = preferences.enabledPatternTypes || [];
         const filteredPatterns = detectedPatterns.filter(p => enabledTypes.includes(p.type));
         
-        // PATCH L-6: Add symbol attribution to patterns for row gating
         const attributedPatterns = filteredPatterns.map(p => ({
           ...p,
           symbol: (p as any).symbol || (p as any).ticker?.toUpperCase() || 'UNKNOWN',
           ticker: (p as any).ticker || 'UNKNOWN',
         }));
-        
         setPatterns(attributedPatterns);
         // Update visible patterns based on active filter
         if (activeFilter) {

@@ -71,6 +71,10 @@ export interface TargetReportTableProps {
   customSymbols: string[];
   scanning: boolean;
   onScanComplete?: () => void;
+  rowHydration?: {
+    patternMap: Record<string, any[]>;
+    stepMap: Record<string, any[]>;
+  };
 }
 
 // Styled Components
@@ -526,7 +530,8 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
   loading = false,
   customSymbols,
   scanning,
-  onScanComplete
+  onScanComplete,
+  rowHydration = { patternMap: {}, stepMap: {} }
 }) => {
   const { setSymbol } = useChartContext();
   
@@ -567,11 +572,15 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
   const [newSymbol, setNewSymbol] = useState('');
   
   // Dynamic signal scanning based on custom symbols - only when scanning is explicitly triggered
-  const { signals: scannedSignals, isScanning: scannerIsScanning } = useSignalScanner(customSymbols, selectedTimeframe, scanning);
+  const { signals: scannedSignals, patterns: scannedPatterns, steps: scannedSteps, isScanning: scannerIsScanning } = useSignalScanner(customSymbols, selectedTimeframe, scanning);
 
   // Use scanned signals when available, regardless of scanning state
   // This ensures table populates after scan completes
   const signals = scannedSignals.length > 0 ? scannedSignals : [];
+  
+  // Use patterns and steps from the scanner instead of props
+  const actualPatterns = scannedPatterns.length > 0 ? scannedPatterns : patterns;
+  const actualSteps = scannedSteps.length > 0 ? scannedSteps : escalatorSteps;
   
   // Monitor scanning completion and call onScanComplete when done
   useEffect(() => {
@@ -774,8 +783,23 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
           fetchMultipleSymbolChanges(validSymbols, 10)
         ]);
         
-        setPriceGains5Day(gains5Day);
-        setPriceGains10Day(gains10Day);
+        // PATCH L11: Normalize symbol case in price gains maps to use uppercase keys
+        const normalizedGains5Day = Object.fromEntries(
+          Object.entries(gains5Day).map(([ticker, value]) => [ticker.toUpperCase(), value])
+        );
+        const normalizedGains10Day = Object.fromEntries(
+          Object.entries(gains10Day).map(([ticker, value]) => [ticker.toUpperCase(), value])
+        );
+        
+        console.log('[PriceGains] Normalized symbol case for price gains:', {
+          original5DayKeys: Object.keys(gains5Day),
+          normalized5DayKeys: Object.keys(normalizedGains5Day),
+          original10DayKeys: Object.keys(gains10Day),
+          normalized10DayKeys: Object.keys(normalizedGains10Day)
+        });
+        
+        setPriceGains5Day(normalizedGains5Day);
+        setPriceGains10Day(normalizedGains10Day);
         
         console.log('[TargetReportTable] Price data fetched successfully after scan:', {
           symbols: allAvailableSymbols.length,
@@ -792,6 +816,18 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
     
     fetchPriceGainData();
   }, [scannerIsScanning, scannedSignals.length, allAvailableSymbols]); // Only fetch after scan completion
+  
+  // PATCH L10: Memoize Grouped Signal Access with Proper Ticker Keys
+  const groupedSignalsMap = useMemo(() => {
+    const map: Record<string, TradeActionSignal[]> = {};
+    for (const sig of signals) {
+      const key = sig.ticker?.toUpperCase() || 'UNKNOWN';
+      if (!map[key]) map[key] = [];
+      map[key].push(sig);
+    }
+    console.log('[SignalGroup] Grouped signals:', map);
+    return map;
+  }, [signals]);
   
   // PATCH L-4: Row Emission Delay Until Price Gains Ready
   const targetReportRows: TargetReportRow[] = useMemo(() => {
@@ -812,27 +848,25 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
     
     console.log('[TargetReportTable] All price gains available, proceeding with row emission');
 
-    // Filter symbols to only those with complete data sets
+    // PATCH L8: Relax row emission gating and align symbol key usage
     const fullyQualifiedSymbols = customSymbols.filter(symbol => {
-      const signalCount = signals.filter(sig => sig.ticker?.toUpperCase() === symbol.toUpperCase()).length;
-      const patternCount = patterns.filter(p => 
-        ((p as any).symbol === symbol || (p as any).ticker === symbol)
-      ).length;
-      const stepCount = escalatorSteps.filter(s => 
-        ((s as any).symbol === symbol || (s as any).ticker === symbol)
-      ).length;
-      const gain5 = priceGains5Day[symbol] ?? null;
-      const gain10 = priceGains10Day[symbol] ?? null;
+      const key = symbol.toUpperCase();
+      const signalCount = signals.filter(sig => sig.ticker?.toUpperCase() === key).length;
+      const patternCount = rowHydration.patternMap?.[key]?.length || 0;
+      const stepCount = rowHydration.stepMap?.[key]?.length || 0;
+      console.log(`[L-22] ${key} rowHydration.patternMap length: ${patternCount}`);
+      console.log(`[L-22] ${key} rowHydration.stepMap length: ${stepCount}`);
+      const gain5 = priceGains5Day[key] ?? null;
+      const gain10 = priceGains10Day[key] ?? null;
+
+      // Relaxed gating: require price gains + at least one of: signals, patterns, or steps
+      const qualified = (signalCount > 0 || patternCount > 0 || stepCount > 0) && gain5 !== null && gain10 !== null;
       
-      const isFullyQualified = signalCount > 0 && patternCount > 0 && stepCount > 0 && gain5 !== null && gain10 !== null;
+      console.log(`[RowGate] ${key} qualification → ${qualified ? '✅' : '❌'}`, {
+        signalCount, patternCount, stepCount, gain5, gain10
+      });
       
-      if (!isFullyQualified) {
-        console.log(`[TargetReportTable] Symbol ${symbol} not fully qualified:`, {
-          signalCount, patternCount, stepCount, hasGain5: gain5 !== null, hasGain10: gain10 !== null
-        });
-      }
-      
-      return isFullyQualified;
+      return qualified;
     });
     
     console.log('[TargetReportTable] Strict gating results:', {
@@ -846,37 +880,15 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
       const tickerSignals = signals.filter(sig => sig.ticker?.toUpperCase() === ticker.toUpperCase());
       const latestSignal = tickerSignals.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
 
-      // Get associated patterns and steps with debug tracing
-      const associatedPatterns = patterns.filter(p => {
-        const symbolMatch = (p as any).symbol === ticker || (p as any).ticker === ticker;
-        const typeMatch = p.type === latestSignal.pattern;
-        const timeMatch = tickerSignals.some(sig => Math.abs(sig.timestamp.getTime() - p.startTime.getTime()) < 60000);
-        const match = symbolMatch && typeMatch && timeMatch;
-        if (match) {
-          console.log(`[DEBUG] Matched pattern for ${ticker}:`, {
-            patternType: p.type,
-            patternSymbol: (p as any).symbol,
-            patternTicker: (p as any).ticker,
-            symbolMatch,
-            typeMatch,
-            timeMatch
-          });
-        }
+      const associatedPatterns = actualPatterns.filter(p => {
+        const match = (p as any).symbol === ticker || (p as any).ticker === ticker;
+        if (match) console.log(`[DEBUG] Matched pattern for ${ticker}:`, p);
         return match;
       });
 
-      const associatedSteps = escalatorSteps.filter(s => {
-        const symbolMatch = (s as any).symbol === ticker || (s as any).ticker === ticker;
-        const timeMatch = tickerSignals.some(sig => Math.abs(sig.timestamp.getTime() - (s as any).startTime?.getTime()) < 300000);
-        const match = symbolMatch && timeMatch;
-        if (match) {
-          console.log(`[DEBUG] Matched step for ${ticker}:`, {
-            stepSymbol: (s as any).symbol,
-            stepTicker: (s as any).ticker,
-            symbolMatch,
-            timeMatch
-          });
-        }
+      const associatedSteps = actualSteps.filter(s => {
+        const match = (s as any).symbol === ticker || (s as any).ticker === ticker;
+        if (match) console.log(`[DEBUG] Matched step for ${ticker}:`, s);
         return match;
       });
 

@@ -436,7 +436,16 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     // Phase 1: Core Metrics - Populate step metrics arrays
     // Populate step metrics from escalator steps
     // Update context with step metrics
-    setEscalatorSteps(escalatorEvents);
+    
+    const attributedSteps = escalatorEvents.map(s => ({
+      ...s,
+      data: {
+        ...s.data,
+        symbol: (s.data as any).symbol || (s.data as any).ticker?.toUpperCase() || 'UNKNOWN',
+        ticker: (s.data as any).ticker || 'UNKNOWN',
+      }
+    }));
+    setEscalatorSteps(attributedSteps);
     setBreakoutBoxes(breakoutBoxEvents);
 
     // Signal Fidelity Mode: Mark BREAKOUT_BOX engine as processing (already done above)

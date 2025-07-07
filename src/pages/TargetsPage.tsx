@@ -2,12 +2,13 @@
 // Dedicated Targets Tab with Independent TargetReportTable Mounting
 // Provides async isolation for symbol scanning and analysis
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TargetReportTable } from '../components/TargetReportTable/TargetReportTable';
 import { PatternBase } from '../models/PatternTypes';
 import { StepBox } from '../types/pattern';
 import * as XLSX from 'xlsx';
 import { useMarketDataContext } from '../contexts/MarketDataContext';
+import { TradeActionBus } from '../utils/trading/TradeActionSignal';
 
 const dummyPatterns: PatternBase[] = [];
 const dummySteps: StepBox[] = [];
@@ -20,6 +21,44 @@ const TargetsPage: React.FC = () => {
   });
 
   const [showScanner, setShowScanner] = useState(false);
+
+  useEffect(() => {
+    TradeActionBus.clear();
+    console.log('[L-17] TradeActionBus flushed on Targets tab mount');
+
+    return () => {
+      TradeActionBus.clear();
+      console.log('[L-17] TradeActionBus flushed on Targets tab unmount');
+    };
+  }, []);
+
+  function handleImportExcel(rows: any[]) {
+    TradeActionBus.clear();
+    console.log('[L-17] TradeActionBus flushed on Excel import');
+    
+    // Clean and validate symbols
+    const cleanedSymbols = rows
+      .map(r => {
+        let symbol = r.Symbol || '';
+        
+        // Extract ticker from "Company Name (TICKER)" format
+        const tickerMatch = symbol.match(/\(([A-Z]{1,5})\)/);
+        if (tickerMatch) {
+          symbol = tickerMatch[1];
+        }
+        
+        // Clean whitespace, quotes, and convert to uppercase
+        symbol = symbol.trim().replace(/['"]/g, '').toUpperCase();
+        
+        return symbol;
+      })
+      .filter(symbol => /^[A-Z]{1,5}$/.test(symbol)) // Only valid ticker formats
+      .filter((symbol, index, arr) => arr.indexOf(symbol) === index); // Remove duplicates
+    
+    console.log(`[TargetsPage] Imported ${rows.length} rows, cleaned to ${cleanedSymbols.length} valid symbols`);
+    setCustomSymbols(cleanedSymbols);
+  }
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -53,27 +92,7 @@ const TargetsPage: React.FC = () => {
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json<{ Symbol: string }>(ws);
                 
-                // Clean and validate symbols
-                const cleanedSymbols = rows
-                  .map(r => {
-                    let symbol = r.Symbol || '';
-                    
-                    // Extract ticker from "Company Name (TICKER)" format
-                    const tickerMatch = symbol.match(/\(([A-Z]{1,5})\)/);
-                    if (tickerMatch) {
-                      symbol = tickerMatch[1];
-                    }
-                    
-                    // Clean whitespace, quotes, and convert to uppercase
-                    symbol = symbol.trim().replace(/['"]/g, '').toUpperCase();
-                    
-                    return symbol;
-                  })
-                  .filter(symbol => /^[A-Z]{1,5}$/.test(symbol)) // Only valid ticker formats
-                  .filter((symbol, index, arr) => arr.indexOf(symbol) === index); // Remove duplicates
-                
-                console.log(`[TargetsPage] Imported ${rows.length} rows, cleaned to ${cleanedSymbols.length} valid symbols`);
-                setCustomSymbols(cleanedSymbols);
+                handleImportExcel(rows);
               };
               reader.readAsArrayBuffer(file);
             }}
