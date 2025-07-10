@@ -1,9 +1,9 @@
 // src/contexts/MarketDataContext.tsx
-// Context providing market data
-// Wraps useMarketData hook
+// Context providing market data with Supabase caching
+// Wraps useMarketDataWithSupabase hook for global cache-first strategy
 import React, { createContext, useContext, ReactNode } from 'react';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
-import useMarketData from '../hooks/useMarketData';
+import { useMarketDataWithSupabase } from '../hooks/useMarketDataWithSupabase';
 import useTwelveDataApiKey from '../hooks/useTwelveDataApiKey';
 
 // Define the context type
@@ -26,6 +26,9 @@ interface MarketDataContextType {
   };
   isUsingCustomRange: boolean;
   setIsUsingCustomRange: (value: boolean) => void;
+  // Supabase-specific additions
+  cachedSymbols: string[];
+  isUsingCache: boolean;
 }
 
 // Create the context with initial values
@@ -43,7 +46,10 @@ const initialMarketDataContext: MarketDataContextType = {
   clearData: () => {},
   marketStatus: { isOpen: false },
   isUsingCustomRange: false,
-  setIsUsingCustomRange: () => {}
+  setIsUsingCustomRange: () => {},
+  // Supabase-specific defaults
+  cachedSymbols: [],
+  isUsingCache: false
 };
 
 export const MarketDataContext = createContext<MarketDataContextType>(initialMarketDataContext);
@@ -62,7 +68,13 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
 }) => {
   // Hydrate TwelveData API key before market data hook triggers requests
   useTwelveDataApiKey();
-  const marketData = useMarketData(initialSymbol, initialTimeframe);
+  
+  // Use Supabase-integrated hook for cache-first data fetching
+  // This provides automatic caching, incremental updates, and better performance
+  const marketData = useMarketDataWithSupabase();
+  
+  // Note: initialSymbol and initialTimeframe are handled by the context consumer
+  // The hook uses the context values set by components like ContextBar
   
   return (
     <MarketDataContext.Provider value={marketData}>

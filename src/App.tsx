@@ -32,6 +32,7 @@ import AnalysisPanel from './components/Analysis/AnalysisPanel';
 import DebugSettingsPanel from './components/Settings/DebugSettingsPanel';
 import SettingsPanel from './components/Settings/SettingsPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
+import { SupabaseTestPanel } from './components/SupabaseTestPanel';
 
 // Import context providers
 import AppProviders from './components/AppProviders';
@@ -724,6 +725,7 @@ function AppContent() {
 
   // UI state for panels and modals
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showSupabaseTest, setShowSupabaseTest] = useState(false);
 
   // Refs
   const chartRef = useRef<InfiniteZoomChartRef>(null);
@@ -1066,36 +1068,74 @@ function AppContent() {
         )}
         {/* Debug overlay to visualize click blocking */}
         {process.env.NODE_ENV === 'development' && (
-          <div 
-            id="debug-click-test" 
-            style={{
-              position: 'fixed',
-              bottom: 10,
-              right: 10,
-              padding: '10px',
-              background: 'rgba(255, 0, 0, 0.8)',
-              color: 'white',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              zIndex: 9999,
-              pointerEvents: 'auto',
-            }}
-            onClick={() => {
-              console.log('Debug button clicked successfully!');
-              // Removed unused import: debugClickBlocking
-              // Force clear any blocking state
-              setSelectedPattern(null);
-              setShowFeedbackModal(false);
-              // Also check for any CSS issues
-              const appDiv = document.querySelector('.App');
-              if (appDiv) {
-                const computedStyle = window.getComputedStyle(appDiv);
-                console.log('App div pointer-events:', computedStyle.pointerEvents);
-              }
-            }}
-          >
-            Debug Click Issues
-          </div>
+          <>
+            <div 
+              id="debug-click-test" 
+              style={{
+                position: 'fixed',
+                bottom: 10,
+                right: 10,
+                padding: '10px',
+                background: 'rgba(255, 0, 0, 0.8)',
+                color: 'white',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                zIndex: 9999,
+                pointerEvents: 'auto',
+              }}
+              onClick={() => {
+                console.log('Debug button clicked successfully!');
+                // Removed unused import: debugClickBlocking
+                // Force clear any blocking state
+                setSelectedPattern(null);
+                setShowFeedbackModal(false);
+                // Also check for any CSS issues
+                const appDiv = document.querySelector('.App');
+                if (appDiv) {
+                  const computedStyle = window.getComputedStyle(appDiv);
+                  console.log('App div pointer-events:', computedStyle.pointerEvents);
+                }
+              }}
+            >
+              Debug Click Issues
+            </div>
+            
+            {/* Supabase Test Button */}
+            <div 
+              style={{
+                position: 'fixed',
+                bottom: 10,
+                right: 150,
+                padding: '10px',
+                background: '#10b981',
+                color: 'white',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                zIndex: 9999,
+                pointerEvents: 'auto',
+              }}
+              onClick={() => setShowSupabaseTest(!showSupabaseTest)}
+            >
+              {showSupabaseTest ? 'Hide' : 'Test'} Supabase
+            </div>
+            
+            {/* Supabase Test Panel */}
+            {showSupabaseTest && (
+              <div 
+                style={{
+                  position: 'fixed',
+                  bottom: 60,
+                  right: 10,
+                  width: '400px',
+                  maxHeight: '500px',
+                  overflow: 'auto',
+                  zIndex: 9999,
+                }}
+              >
+                <SupabaseTestPanel />
+              </div>
+            )}
+          </>
         )}
         
         {/* Settings Panel */}
@@ -1109,4 +1149,11 @@ function AppContent() {
   );
 }
 
-export default App;
+// Wrap App with AppProviders to provide all contexts
+const AppWithProviders = () => (
+  <AppProviders>
+    <App />
+  </AppProviders>
+);
+
+export default AppWithProviders;
