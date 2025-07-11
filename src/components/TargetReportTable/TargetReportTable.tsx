@@ -14,6 +14,7 @@ import { fetchMultipleSymbolChanges } from '../../utils/twelvedata';
 import { useSignalScanner } from '../../hooks/useSignalScanner';
 import { downloadAuditJSON } from '../../utils/auditLogger';
 import { computeTriSightMetrics } from '../../utils/scoring/scoreEngine';
+import { addSymbolSetChangeListener } from '../../contexts/SymbolSetContext';
 
 // Dick's TriSight Target Report Row Interface
 export interface TargetReportRow {
@@ -486,6 +487,42 @@ const SymbolCount = styled.div`
   font-weight: 500;
 `;
 
+const LoadingOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const LoadingText = styled.div`
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
 type SortField = keyof TargetReportRow;
 type SortDirection = 'asc' | 'desc';
 
@@ -568,8 +605,35 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
   const [priceGains10Day, setPriceGains10Day] = useState<Record<string, number>>({});
   const [priceDataLoading, setPriceDataLoading] = useState<boolean>(false);
   
+  // Symbol set loading state
+  const [symbolSetLoading, setSymbolSetLoading] = useState<boolean>(false);
+  
   // Custom symbol management state (now handled in TargetsPage)
   const [newSymbol, setNewSymbol] = useState('');
+  
+  // Listen for symbol set changes with debounce
+  useEffect(() => {
+    let debounceTimer: NodeJS.Timeout;
+    
+    const handleSymbolSetChange = (event: any) => {
+      console.log('[TargetReportTable] Symbol set changed, debouncing update...');
+      setSymbolSetLoading(true);
+      
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        console.log('[TargetReportTable] Applying symbol set change after debounce');
+        setSymbolSetLoading(false);
+        // The actual symbol update is handled by TargetsPage through customSymbols prop
+      }, 250);
+    };
+    
+    const removeListener = addSymbolSetChangeListener(handleSymbolSetChange);
+    
+    return () => {
+      clearTimeout(debounceTimer);
+      removeListener();
+    };
+  }, []);
   
   // Dynamic signal scanning based on custom symbols - only when scanning is explicitly triggered
   const { signals: scannedSignals, patterns: scannedPatterns, steps: scannedSteps, isScanning: scannerIsScanning } = useSignalScanner(customSymbols, selectedTimeframe, scanning);
@@ -1130,11 +1194,22 @@ export const TargetReportTable: React.FC<TargetReportTableProps> = ({
             </ExportButton>
           </ImportExportGroup>
           <SymbolCount>
-            Showing {customSymbols.length} of {customSymbols.length} symbols
+            Showing {sortedRows.length} of {customSymbols.length} symbols
+            {sortedRows.length < customSymbols.length && (
+              <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '8px' }}>
+                ({customSymbols.length - sortedRows.length} pending data)
+              </span>
+            )}
           </SymbolCount>
         </ImportExportContainer>
       </SymbolManagementContainer>
       <TableWrapper isFullscreen={isFullscreen}>
+        {symbolSetLoading && (
+          <LoadingOverlay>
+            <LoadingSpinner />
+            <LoadingText>Loading symbol set...</LoadingText>
+          </LoadingOverlay>
+        )}
         <Table>
           <TableHeader>
             <tr>

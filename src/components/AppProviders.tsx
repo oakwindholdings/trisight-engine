@@ -8,6 +8,7 @@ import { FeedbackProvider } from '../contexts/FeedbackContext';
 import { LearningProvider } from '../contexts/LearningContext';
 import { UIStateProvider } from '../contexts/UIStateContext';
 import { ChartSettingsProvider } from '../contexts/ChartSettingsContext';
+import { SymbolSetProvider } from '../contexts/SymbolSetContext';
 import { Timeframe } from '../models/ChartTypes';
 
 // localStorage keys (same as in ContextBar)
@@ -62,13 +63,15 @@ function AppProviders({ children }: AppProvidersProps) {
           initialSymbol={initialSymbol}
           initialTimeframe={initialTimeframe}
         >
-          <PatternProvider>
-            <FeedbackProvider>
-              <LearningProvider>
-                {children}
-              </LearningProvider>
-            </FeedbackProvider>
-          </PatternProvider>
+          <SymbolSetProvider>
+            <PatternProvider>
+              <FeedbackProvider>
+                <LearningProvider>
+                  {children}
+                </LearningProvider>
+              </FeedbackProvider>
+            </PatternProvider>
+          </SymbolSetProvider>
         </MarketDataProvider>
       </ChartSettingsProvider>
     </UIStateProvider>

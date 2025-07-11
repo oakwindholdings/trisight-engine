@@ -2,19 +2,23 @@
 // Dedicated Targets Tab with Independent TargetReportTable Mounting
 // Provides async isolation for symbol scanning and analysis
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TargetReportTable } from '../components/TargetReportTable/TargetReportTable';
 import { PatternBase } from '../models/PatternTypes';
 import { StepBox } from '../types/pattern';
 import * as XLSX from 'xlsx';
 import { useMarketDataContext } from '../contexts/MarketDataContext';
 import { TradeActionBus } from '../utils/trading/TradeActionSignal';
+import { useSymbolSet } from '../contexts/SymbolSetContext';
+import SymbolTabs from '../components/SymbolTabs';
+import './TargetsPage.css';
 
 const dummyPatterns: PatternBase[] = [];
 const dummySteps: StepBox[] = [];
 
 const TargetsPage: React.FC = () => {
   const { symbol } = useMarketDataContext();
+  const { currentSet, symbols: symbolSetSymbols, loading: symbolSetLoading } = useSymbolSet();
 
   const [customSymbols, setCustomSymbols] = useState<string[]>(() => {
     return symbol ? [symbol.toUpperCase()] : [];
@@ -31,6 +35,19 @@ const TargetsPage: React.FC = () => {
       console.log('[L-17] TradeActionBus flushed on Targets tab unmount');
     };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      setCustomSymbols([]);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (currentSet && symbolSetSymbols.length > 0 && !symbolSetLoading) {
+      console.log(`[TargetsPage] Loading ${symbolSetSymbols.length} symbols from ${currentSet}`);
+      setCustomSymbols(symbolSetSymbols);
+    }
+  }, [currentSet, symbolSetSymbols, symbolSetLoading]);
 
   function handleImportExcel(rows: any[]) {
     TradeActionBus.clear();
@@ -154,6 +171,7 @@ const TargetsPage: React.FC = () => {
           }}
         />
       </div>
+      <SymbolTabs />
     </div>
   );
 };
