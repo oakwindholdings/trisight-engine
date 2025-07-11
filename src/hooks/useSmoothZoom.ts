@@ -3,6 +3,7 @@
 // Handles both discrete scroll and continuous zoom gestures
 
 import { useRef, useCallback, useEffect } from 'react';
+import { debounce, GESTURE_THROTTLE_CONFIG } from '../utils/gestureThrottle';
 
 interface SmoothZoomOptions {
   minZoom: number;
@@ -28,8 +29,9 @@ export const useSmoothZoom = (
   const targetZoomRef = useRef(currentZoom);
   const animatedZoomRef = useRef(currentZoom);
   const animationFrameRef = useRef<number | null>(null);
-  const lastWheelTimeRef = useRef(0);
   const accumulatedDeltaRef = useRef(0);
+  const lastWheelTimeRef = useRef(Date.now());
+  const zoomOriginRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
 
   // Initialize refs only once
@@ -58,15 +60,19 @@ export const useSmoothZoom = (
     const newZoom = current + diff * smoothingFactor;
     animatedZoomRef.current = newZoom;
     
-    // Call the zoom change handler
-    onZoomChange(newZoom);
+    // Call the zoom change handler with origin if available
+    if (zoomOriginRef.current !== null) {
+      onZoomChange(newZoom, zoomOriginRef.current);
+    } else {
+      onZoomChange(newZoom);
+    }
 
     // Continue animation
     animationFrameRef.current = requestAnimationFrame(animate);
   }, [smoothingFactor, onZoomChange]);
 
-  // Handle wheel events with smooth zoom
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+  // Raw wheel handler implementation
+  const _handleWheelImpl = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     
     const currentTime = Date.now();
@@ -98,18 +104,32 @@ export const useSmoothZoom = (
     const rect = e.currentTarget.getBoundingClientRect();
     const originX = e.clientX - rect.left;
     
+    // Store zoom origin for the entire animation
+    zoomOriginRef.current = originX;
+    
     // Start animation if not already running
     if (!animationFrameRef.current) {
-      animationFrameRef.current = requestAnimationFrame(() => {
-        animate();
-        // Pass origin for first frame
-        onZoomChange(animatedZoomRef.current, originX);
-      });
+      animationFrameRef.current = requestAnimationFrame(animate);
     }
     
     // Decay accumulated delta
     accumulatedDeltaRef.current *= 0.95;
   }, [minZoom, maxZoom, zoomSensitivity, animate, onZoomChange]);
+
+  // Debounced wheel handler using configurable delay
+  const _debouncedZoomComplete = useRef(
+    debounce(() => {
+      // Reset accumulated delta and zoom origin when zoom gesture completes
+      accumulatedDeltaRef.current = 0;
+      zoomOriginRef.current = null;
+    }, GESTURE_THROTTLE_CONFIG.ZOOM_DEBOUNCE_MS)
+  ).current;
+
+  // Wrapped wheel handler with debounce
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+    _handleWheelImpl(e);
+    _debouncedZoomComplete();
+  }, [_handleWheelImpl, _debouncedZoomComplete]);
 
   // Cleanup animation on unmount
   useEffect(() => {

@@ -3,6 +3,7 @@
 // Manages momentum-based scrolling and boundary constraints
 
 import { useCallback, useRef, useEffect } from 'react';
+import { throttle, GESTURE_THROTTLE_CONFIG } from '../utils/gestureThrottle';
 
 export interface PanState {
   isPanning: boolean;
@@ -64,8 +65,8 @@ export const usePanController = (
     }));
   }, [setPanState]);
 
-  // Update pan position
-  const updatePan = useCallback((clientX: number) => {
+  // Raw pan update logic
+  const _updatePanImpl = useCallback((clientX: number) => {
     if (!panState.isPanning) return;
 
     const currentTime = Date.now();
@@ -91,6 +92,11 @@ export const usePanController = (
 
     onPanUpdate(newTranslateX);
   }, [panState.isPanning, panState.startX, panState.previousTranslateX, setPanState, onPanUpdate, targetCandles]);
+
+  // Throttled pan update using configurable delay
+  const updatePan = useRef(
+    throttle(_updatePanImpl, GESTURE_THROTTLE_CONFIG.PAN_DEBOUNCE_MS)
+  ).current;
 
   // End panning
   const endPan = useCallback(() => {

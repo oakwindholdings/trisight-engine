@@ -2,12 +2,13 @@
 // Hook to track mouse hover position and display corresponding metrics
 // Returns hover data including index, coordinates, and blackjack count
 
-import { useEffect, useState, createContext, useContext } from 'react';
+import { useEffect, useState, createContext, useContext, useRef, useCallback, useMemo } from 'react';
 import { usePatternContext } from '../contexts/PatternContext';
 import { getSignalAtPoint, getSignalTooltip } from '../components/Chart/SignalRenderer';
 import { TradeActionSignal } from '../utils/trading/TradeActionSignal';
 import { getSignalValidation } from '../framework/tradeActionEmitter';
 import { logDebugHover } from '../utils/debug';
+import { throttle } from '../utils/gestureThrottle';
 
 interface HoverMetrics {
   idx: number;
@@ -45,11 +46,14 @@ export function useHoverMetrics(
   const { bjCounts, escalatorDir } = usePatternContext();
   const [hoverData, setHoverData] = useState<HoverMetrics | null>(null);
   
-  useEffect(() => {
+  // Use refs for high-frequency updates to avoid React re-renders
+  const hoverDataRef = useRef<HoverMetrics | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastUpdateTime = useRef<number>(0);
+  
+  // Raw mouse move handler for immediate updates
+  const _handleMouseMoveImpl = useCallback((ev: MouseEvent) => {
     const node = ref.current;
-    if (!node || !timeScale || !data) return;
-    
-    const handleMouseMove = (ev: MouseEvent) => {
       if (!node || !timeScale || !data?.length || !visibleDataIndices) return;
       
       const rect = node.getBoundingClientRect();
@@ -61,7 +65,14 @@ export function useHoverMetrics(
       
       // If outside chart area, clear hover
       if (x < chartLeft || x > chartRight) {
-        setHoverData(null);
+        hoverDataRef.current = null;
+        // Schedule state update
+        if (animationFrameRef.current === null) {
+          animationFrameRef.current = requestAnimationFrame(() => {
+            setHoverData(null);
+            animationFrameRef.current = null;
+          });
+        }
         return;
       }
       
@@ -116,7 +127,8 @@ export function useHoverMetrics(
           }
         }
         
-        setHoverData({
+        // Update ref immediately for responsive feedback
+        const newHoverData = {
           idx: absoluteIndex,
           x: ev.clientX,
           y: ev.clientY,
@@ -124,13 +136,49 @@ export function useHoverMetrics(
           visibleIndex: clampedVisibleIndex, 
           candle: data[absoluteIndex],
           signal: hoveredSignal || undefined
-        });
+        };
+        
+        hoverDataRef.current = newHoverData;
+        
+        // Throttle React state updates using animation frames
+        if (animationFrameRef.current === null) {
+          animationFrameRef.current = requestAnimationFrame(() => {
+            const now = performance.now();
+            // Update at max 60fps (16.67ms)
+            if (now - lastUpdateTime.current > 16.67) {
+              setHoverData(hoverDataRef.current);
+              lastUpdateTime.current = now;
+            }
+            animationFrameRef.current = null;
+          });
+        }
       } else {
-        setHoverData(null);
+        hoverDataRef.current = null;
+        if (animationFrameRef.current === null) {
+          animationFrameRef.current = requestAnimationFrame(() => {
+            setHoverData(null);
+            animationFrameRef.current = null;
+          });
+        }
       }
-    };
+  }, [ref, timeScale, data, margin, visibleDataIndices, bjCounts, signals, canvasTimeScale, canvasPriceScale]);
+  
+  // Throttled mouse move handler for better performance
+  const handleMouseMove = useMemo(
+    () => throttle(_handleMouseMoveImpl, 8), // ~120Hz for smooth tracking
+    [_handleMouseMoveImpl]
+  );
+  
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || !timeScale || !data) return;
     
     const handleMouseLeave = () => {
+      hoverDataRef.current = null;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
       setHoverData(null);
     };
     
@@ -139,8 +187,11 @@ export function useHoverMetrics(
     return () => {
       node.removeEventListener('mousemove', handleMouseMove);
       node.removeEventListener('mouseleave', handleMouseLeave);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
-  }, [ref, bjCounts, timeScale, data, margin, escalatorDir, visibleDataIndices]);
+  }, [handleMouseMove]);
   
   return { hoverData, HoverMetricsProvider: HoverMetricsContext.Provider };
 }

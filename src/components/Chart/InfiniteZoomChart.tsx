@@ -24,6 +24,7 @@ import { Candle } from '../../types';
 import { logDebug } from '../../utils/debug';
 import { useHeikinAshiTransform } from '../../hooks/useHeikinAshiTransform';
 import { useChartSettings } from '../../contexts/ChartSettingsContext';
+import { getPatternAtPoint } from '../../utils/patternHitDetection';
 import './InfiniteZoomChart.css';
 
 // TradeActionSignal Integration
@@ -36,6 +37,7 @@ import { evaluateAllPatterns } from '../../utils/patternHydration';
 import { useLivePolling } from '../../hooks/useLivePolling';
 
 import ExportControls from './ExportControls';
+import DevHUD from './DevHUD';
 
 interface InfiniteZoomChartProps {
   symbol: string;
@@ -165,6 +167,9 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
   const [error, setError] = useState<Error | null>(null);
   const dataGenerationRef = useRef(0);
   const [currentDataHash, setCurrentDataHash] = useState<string>('');
+  
+  // DevHUD visibility state
+  const [showDevHUD, setShowDevHUD] = useState(false);
 
   // Get pattern context to trigger detection
   const patternContext = usePatternContext();
@@ -224,6 +229,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     zoomToFit: zoomToFitController,
     resetZoom: resetZoomController
   } = controller;
+
+  // Note: panController will be instantiated after transformedData is available
 
   // Combine the data source - prefer dataProp from parent over chartData
   const dataToUse = dataProp || chartData;
@@ -666,6 +673,21 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       // console.log('InfiniteZoomChart - Canvas clicked at:', { x, y });
     }
     
+    // Check if a pattern was clicked using hit detection
+    const hitPattern = getPatternAtPoint(x, y, CHART_MARGIN);
+    
+    if (hitPattern && patternContext) {
+      logDebug('chart.interaction', 'Pattern clicked via hit detection:', {
+        pattern: hitPattern,
+        type: hitPattern.type,
+        confidence: hitPattern.confidence
+      });
+      
+      // Set selected pattern to open modal
+      patternContext.setSelectedPattern(hitPattern);
+      return; // Exit early if pattern was clicked
+    }
+    
     if (transformedData.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         // console.log('InfiniteZoomChart - No chart data available');
@@ -997,7 +1019,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       goldenNearMisses: patternContext.goldenNearMisses || [], // Golden Candle near-miss overlays
       // 🔗 TradeActionSignal Integration - CRITICAL FIX
       tradeActionSignals: tradeActionSignals,
-      tradeActionSettings: { showLabels: true, showIcons: true },
+      tradeActionSettings: { showAggressive: true, showLabels: true, showIcons: true },
       // 🌟 ConvictionCloud Integration - Transform tradeActionSignals to ConvictionCloud
       convictionCloudItems: transformedConvictionCloudItems,
       convictionCloudSettings: defaultConvictionCloudSettings,
@@ -1052,6 +1074,19 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       }
     }
   }), [controller]);
+
+  // Keyboard handler for F12 to toggle DevHUD
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F12') {
+        e.preventDefault();
+        setShowDevHUD(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Auto-scale when data is first loaded or changes significantly
   useEffect(() => {
@@ -1157,6 +1192,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     <HoverMetricsProvider value={hoverData}>
       <UnifiedHoverProvider>
         <div className="infinite-zoom-chart-container" ref={containerRef}>
+          <DevHUD visible={showDevHUD} />
           <HoverTooltipZones />
         <div className="canvas-stack" style={{ width, height }}>
           <canvas ref={mainCanvasRef} className="main-canvas" />

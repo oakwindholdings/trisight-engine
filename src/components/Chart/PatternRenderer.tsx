@@ -13,6 +13,7 @@ import { logDebugHAAlignmentMismatch } from '../../utils/debug';
 import { renderTradeActionSignals, renderSignalCandleAction } from './SignalRenderer';
 import { TradeActionSignal } from '../../utils/trading/TradeActionSignal';
 import { renderConvictionCloud, ConvictionCloudItem, defaultConvictionCloudSettings } from './ConvictionCloudRenderer';
+import { registerPatternHitBox, clearPatternHitBoxes, getPatternHitBoxDimensions } from '../../utils/patternHitDetection';
 
 // Direction arrow symbols for unified labeling
 const DIRECTION_ARROWS = {
@@ -121,24 +122,26 @@ const PatternRendererImpl = {
     dimensions: ChartDimensions,
     selectedPattern: Pattern | null,
     escalatorSteps: any[] = [],
-    escalatorSettings: { enabled: boolean; showLabels: boolean; showBreakoutBoxes: boolean } = { enabled: true, showLabels: true, showBreakoutBoxes: true },
-    breakoutBoxes: any[] = [], // Add breakoutBoxes parameter
-    candles: any[] = [], // Original OHLC candles for compatibility
-    haCandles: any[] = [], // HA Infrastructure Alignment Patch v1.0.0: Add HA candles for overlay rendering
-    breakoutBoxSettings?: { enabled: boolean; showBreakoutBoxes: boolean; minStallLength: number; breakoutMultiplier: number; stallThreshold: number }, // Add independent breakoutBoxSettings
+    breakoutBoxes: any[] = [],
+    goldenNearMisses: boolean[] = [],
+    haCandles: any[] = [], // HA Infrastructure Alignment Patch v1.0.0: Now uses HA candles
+    blackjackSettings: { showLabels: boolean } = { showLabels: true },
     pivotSettings: { showLabels: boolean } = { showLabels: false },
     goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
-    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean; showEntryExitLabels?: boolean } = { showLabels: false, showNearMiss: false, showEntryExitLabels: true },
-    blackjackSettings: { showLabels: boolean } = { showLabels: true },
-    goldenNearMisses: boolean[] = [], // Add goldenNearMisses parameter for Dick O'Leary compliance
-    goldenCandleEntries: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: ENTRY events
-    goldenCandleExits: any[] = [], // TriSight Detection Input Refactor Patch v1.3.3: EXIT events
-    tradeActionSignals: TradeActionSignal[] = [], // 🔗 TradeActionSignal Rendering Integration
-    tradeActionSettings: { showLabels: boolean; showIcons: boolean } = { showLabels: true, showIcons: true }, // 🔗 TradeActionSignal Settings
-    convictionCloudItems: ConvictionCloudItem[] = [], // Conviction Cloud data
+    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean; showEntryExitLabels?: boolean } = { 
+      showLabels: false, 
+      showNearMiss: false,
+      showEntryExitLabels: false // Golden Exit Event capability
+    },
+    candles: any[] = [], // Original (non-HA) candles for fresh timestamp lookup
+    signals: TradeActionSignal[] = [], // Trade action signals
+    signalSettings = { showAggressive: true, showLabels: true, showIcons: true }, // Signal visibility settings
+    convictionItems: ConvictionCloudItem[] = [], // Conviction cloud items
     convictionCloudSettings = defaultConvictionCloudSettings, // Conviction Cloud settings
     hoveredConvictionItem: ConvictionCloudItem | null = null // Currently hovered conviction item
   ) {
+    // Clear hitboxes from previous render cycle
+    clearPatternHitBoxes();
     if (!ctx) return;
     
     // HA Infrastructure Alignment Patch v1.0.0: Validate HA array lengths
@@ -149,64 +152,6 @@ const PatternRendererImpl = {
         `haCandles.length=${candles.length}`, 
         `actual=${haCandles.length}`
       );
-    }
-    
-    if (goldenNearMisses.length > 0 && haCandles.length > 0 && goldenNearMisses.length !== haCandles.length) {
-      logDebugHAAlignmentMismatch(
-        0, 
-        'PatternRenderer.goldenNearMisses', 
-        `goldenNearMisses.length=${haCandles.length}`, 
-        `actual=${goldenNearMisses.length}`
-      );
-    }
-    
-    // Clear the canvas
-    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-    
-    // Debug escalator steps
-    if (escalatorSteps.length > 0) {
-      console.log('[PatternRenderer] Rendering escalator steps:', {
-        stepCount: escalatorSteps.length,
-        steps: escalatorSteps.map((step, i) => ({
-          index: i,
-          direction: step.direction,
-          startIndex: step.startIndex,
-          endIndex: step.endIndex,
-          startTime: step.startTime,
-          endTime: step.endTime,
-          isCompleted: step.isCompleted
-        })),
-        canvasSize: { width: dimensions.width, height: dimensions.height }
-      });
-    }
-    
-    // NOTE: BreakoutBox now has independent settings, not tied to Escalator
-    // Debug breakout boxes with independent settings
-    const shouldShowBreakoutBoxes = breakoutBoxSettings?.enabled && breakoutBoxSettings?.showBreakoutBoxes;
-    if (breakoutBoxes && breakoutBoxes.length > 0 && shouldShowBreakoutBoxes) {
-      console.log('[DEBUG_UI] BreakoutBox visibility enabled via independent settings, rendering boxes');
-      console.log('[DIAGNOSTIC] [PatternRenderer] Rendering breakout boxes:', {
-        boxCount: breakoutBoxes.length,
-        breakoutBoxSettings,
-        boxes: breakoutBoxes.slice(0, 3).map(box => ({
-          startIndex: box.data.startIndex,
-          endIndex: box.data.endIndex,
-          high: box.data.high,
-          low: box.data.low,
-          boxType: box.data.boxType
-        }))
-      });
-      
-      // Render each breakout box
-      let renderedCount = 0;
-      breakoutBoxes.forEach((box) => {
-        console.log(`[DIAGNOSTIC] [PatternRenderer] Calling renderBreakoutBox for box ${renderedCount + 1}/${breakoutBoxes.length}`);
-        this.renderBreakoutBox(ctx, box, dimensions, timeScale, priceScale);
-        renderedCount++;
-      });
-      console.log(`[DIAGNOSTIC] [PatternRenderer] Finished rendering ${renderedCount} breakout boxes`);
-    } else if (breakoutBoxes && breakoutBoxes.length > 0 && !shouldShowBreakoutBoxes) {
-      console.log('[DEBUG_UI] BreakoutBox visibility disabled, skipping rendering of', breakoutBoxes.length, 'boxes');
     }
     
     // Filter patterns that are in the visible range
@@ -226,10 +171,10 @@ const PatternRendererImpl = {
     });
     
     // Render escalator steps only if enabled
-    if (escalatorSettings.enabled) {
+    if (escalatorSteps.length > 0) {
       escalatorSteps.forEach((step, index) => {
         if (step.startIndex !== undefined && step.endIndex !== undefined) {
-          this.renderEscalatorStep(ctx, step, timeScale, priceScale, dimensions, escalatorSettings.showLabels, haCandles);
+          this.renderEscalatorStep(ctx, step, timeScale, priceScale, dimensions, true, haCandles);
         }
       });
     }
@@ -257,28 +202,28 @@ const PatternRendererImpl = {
     // 🔗 Injected: TradeActionSignal Rendering
     // Debug logging for TradeActionSignals validation
     console.log(`[PatternRenderer] render() called with:`, {
-      signalsReceived: tradeActionSignals ? tradeActionSignals.length : 0,
+      signalsReceived: signals ? signals.length : 0,
       candlesReceived: candles ? candles.length : 0,
-      signalsArray: tradeActionSignals
+      signalsArray: signals
     });
     
     // Render TradeActionSignals after pattern labels
-    if (tradeActionSignals && tradeActionSignals.length > 0) {
-      console.log(`[PatternRenderer] Rendering ${tradeActionSignals.length} TradeActionSignals`);
+    if (signals && signals.length > 0) {
+      console.log(`[PatternRenderer] Rendering ${signals.length} TradeActionSignals`);
       
       renderTradeActionSignals(
         ctx,
-        tradeActionSignals,
+        signals,
         timeScale,
         priceScale,
         dimensions,
-        tradeActionSettings
+        signalSettings
       );
       
       // Render TradeActionCandle rendering (black candles with leader lines)
       renderSignalCandleAction(
         ctx,
-        tradeActionSignals,
+        signals,
         candles, // Pass candle data for OHLC values
         timeScale,
         priceScale,
@@ -286,17 +231,17 @@ const PatternRendererImpl = {
         0.6 // Confidence threshold
       );
     } else {
-      console.log(`[PatternRenderer] No TradeActionSignals to render (array is ${tradeActionSignals ? 'empty' : 'null/undefined'})`);
+      console.log(`[PatternRenderer] No TradeActionSignals to render (array is ${signals ? 'empty' : 'null/undefined'})`);
     }
 
     // 🌟 Conviction Cloud Rendering Layer (Top-most layer for anchored positioning)
     // Render conviction cloud above all other chart elements for maximum visibility
-    if (convictionCloudItems && convictionCloudItems.length > 0) {
-      console.log(`[PatternRenderer] Rendering ${convictionCloudItems.length} Conviction Cloud items`);
+    if (convictionItems && convictionItems.length > 0) {
+      console.log(`[PatternRenderer] Rendering ${convictionItems.length} Conviction Cloud items`);
       
       renderConvictionCloud(
         ctx,
-        convictionCloudItems,
+        convictionItems,
         dimensions,
         convictionCloudSettings,
         hoveredConvictionItem
@@ -307,16 +252,16 @@ const PatternRendererImpl = {
 
     // 🔗 CRITICAL FIX: Render TradeActionSignals (including STOP_EXIT labels)
     // This was the missing piece - signals were being cleared but not redrawn!
-    if (tradeActionSignals && tradeActionSignals.length > 0 && tradeActionSettings) {
-      console.log(`🚀 [PatternRenderer] Rendering ${tradeActionSignals.length} TradeActionSignals`);
+    if (signals && signals.length > 0 && signalSettings) {
+      console.log(`🚀 [PatternRenderer] Rendering ${signals.length} TradeActionSignals`);
       
       renderTradeActionSignals(
         ctx,
-        tradeActionSignals,
+        signals,
         timeScale,
         priceScale,
         dimensions,
-        tradeActionSettings
+        signalSettings
       );
     } else {
       console.log('⚠️ [PatternRenderer] No TradeActionSignals to render or settings disabled');
@@ -332,6 +277,12 @@ const PatternRendererImpl = {
     isSelected: boolean,
     blackjackSettings: { showLabels: boolean } = { showLabels: true }
   ) {
+    // Register hitbox for click detection
+    const hitBox = getPatternHitBoxDimensions(pattern, timeScale.scale, priceScale.scale);
+    if (hitBox) {
+      registerPatternHitBox(pattern, hitBox.x, hitBox.y, hitBox.width, hitBox.height);
+    }
+    
     // Save current context state
     ctx.save();
     

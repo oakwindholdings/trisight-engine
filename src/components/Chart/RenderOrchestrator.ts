@@ -21,7 +21,7 @@ import { convertToHeikinAshi } from '../../utils/candleTransform'; // HA Infrast
 import { TradeActionSignal } from '../../utils/trading/TradeActionSignal'; // 🔗 TradeActionSignal Integration
 import { renderConvictionCloud, ConvictionCloudItem, defaultConvictionCloudSettings } from './ConvictionCloudRenderer';
 import { renderTargetReportTable, TargetReportRow, TargetReportTableSettings, defaultTargetReportTableSettings } from './TargetReportTableRenderer';
-import { logRenderOrchestrationStatus, initializeRenderDiagnostics } from './RenderDiagnostics';
+import { logRenderOrchestrationStatus, initializeRenderDiagnostics, measureRenderPerformance } from './RenderDiagnostics';
 import { SignalFidelityValidator, FIDELITY_MODE_SETTINGS, LifecycleInstrumentation, dataAnalysisLock, patternEngineTracker } from '../../utils/signalFidelityPatch';
 
 interface RenderArgs {
@@ -48,7 +48,7 @@ interface RenderArgs {
   goldenNearMisses?: boolean[]; // Golden Candle near-miss overlays
   // 🔗 TradeActionSignal Integration
   tradeActionSignals?: TradeActionSignal[]; // Trade action signals for rendering
-  tradeActionSettings?: { showLabels: boolean; showIcons: boolean }; // Trade action signal settings
+  tradeActionSettings?: { showAggressive: boolean; showLabels: boolean; showIcons: boolean }; // Trade action signal settings
   // 🌟 Conviction Cloud Integration
   convictionCloudItems?: ConvictionCloudItem[]; // Conviction cloud data for rendering
   convictionCloudSettings?: typeof defaultConvictionCloudSettings; // 🌟 Conviction Cloud Settings
@@ -65,7 +65,8 @@ interface RenderArgs {
   };
 }
 
-export function renderChart({
+// Original renderChart implementation wrapped for performance monitoring
+function _renderChartImpl({
   mainCanvasRef,
   bufferCanvasRef,
   patternsCanvasRef,
@@ -80,19 +81,19 @@ export function renderChart({
   timeframe,
   showOnlyTradingHours,
   escalatorSteps = [],
-  escalatorSettings = { enabled: true, showLabels: true, showBreakoutBoxes: true },
+  escalatorSettings = { enabled: true, showLabels: false, showBreakoutBoxes: false },
   breakoutBoxes = [],
-  breakoutBoxSettings = { enabled: true, showBreakoutBoxes: true, minStallLength: 3, breakoutMultiplier: 2, stallThreshold: 0.5 },
-  blackjackSettings = { showLabels: true },
-  goldmineQual = [],
+  breakoutBoxSettings = { enabled: true, showBreakoutBoxes: true, minStallLength: 3, breakoutMultiplier: 1.5, stallThreshold: 0.001 },
+  blackjackSettings = { showLabels: false },
+  goldmineQual,
   goldenCandleSettings = { showLabels: false, showNearMiss: false },
-  goldenNearMisses = [],
-  tradeActionSignals = [], // 🔗 TradeActionSignal Integration
-  tradeActionSettings = { showLabels: true, showIcons: true }, // 🔗 TradeActionSignal Settings
-  convictionCloudItems = [], // 🌟 Conviction Cloud Integration
-  convictionCloudSettings = defaultConvictionCloudSettings, // 🌟 Conviction Cloud Settings
-  hoveredConvictionItem = null, // 🌟 Hovered Conviction Item
-  targetReportRows = [], // 📊 Target Report Table Integration
+  goldenNearMisses,
+  tradeActionSignals,
+  tradeActionSettings = { showAggressive: true, showLabels: true, showIcons: true },
+  convictionCloudItems = [],
+  convictionCloudSettings = defaultConvictionCloudSettings,
+  hoveredConvictionItem = null,
+  targetReportRows = [], // 📊 Target Report Table Data
   targetReportSettings = defaultTargetReportTableSettings, // 📊 Target Report Table Settings
   hoveredTableCell = null, // 📊 Hovered Table Cell
   chartSettings = { isHeikinAshi: false, showVolume: true, showGrid: true }
@@ -214,24 +215,20 @@ export function renderChart({
     priceScale, 
     { width, height, margin }, 
     selectedPattern || null, 
-    escalatorSteps, 
-    escalatorSettings, 
-    breakoutBoxes, 
-    filteredData, 
-    convertToHeikinAshi(filteredData), 
-    breakoutBoxSettings,
-    { showLabels: false }, // pivotSettings
-    { showLabels: false }, // goldmineChannelSettings  
-    goldenCandleSettings, // goldenCandleSettings with near-miss toggle
-    blackjackSettings, // blackjackSettings - BlackJack label toggle from UI
-    goldenNearMisses, // goldenNearMisses - will be populated by pattern detection
-    [], // goldenCandleEntries - placeholder
-    [], // goldenCandleExits - placeholder
-    tradeActionSignals, // 🔗 TradeActionSignal Integration
-    tradeActionSettings, // 🔗 TradeActionSignal Settings
-    convictionCloudItems, // 🌟 Conviction Cloud Integration
-    convictionCloudSettings, // 🌟 Conviction Cloud Settings
-    hoveredConvictionItem // 🌟 Hovered Conviction Item
+    escalatorSteps, // param 7
+    breakoutBoxes, // param 8
+    goldenNearMisses, // param 9 - goldenNearMisses
+    convertToHeikinAshi(filteredData), // param 10 - haCandles
+    blackjackSettings, // param 11 - blackjackSettings
+    { showLabels: false }, // param 12 - pivotSettings
+    { showLabels: false }, // param 13 - goldmineChannelSettings  
+    goldenCandleSettings, // param 14 - goldenCandleSettings
+    filteredData, // param 15 - candles (original non-HA)
+    tradeActionSignals, // param 16 - signals
+    tradeActionSettings, // param 17 - signalSettings
+    convictionCloudItems, // param 18 - convictionItems
+    convictionCloudSettings, // param 19 - convictionCloudSettings
+    hoveredConvictionItem // param 20 - hoveredConvictionItem
   );
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });
@@ -270,5 +267,65 @@ export function renderChart({
     );
   } else {
     console.log('[RenderOrchestrator] No Target Report Table data to render');
+  }
+}
+
+// Performance telemetry tracking
+let renderMetrics = {
+  frameCount: 0,
+  totalRenderTime: 0,
+  droppedFrames: 0,
+  lastFrameTime: performance.now(),
+  fps: 0,
+  avgRenderTime: 0
+};
+
+// Export performance metrics for Dev HUD
+export function getChartPerformanceMetrics() {
+  return {
+    fps: renderMetrics.fps.toFixed(1),
+    avgRenderTime: renderMetrics.avgRenderTime.toFixed(2),
+    droppedFrames: renderMetrics.droppedFrames,
+    droppedFramePercentage: ((renderMetrics.droppedFrames / Math.max(1, renderMetrics.frameCount)) * 100).toFixed(1)
+  };
+}
+
+// Wrapped renderChart with performance monitoring
+export function renderChart(args: RenderArgs): void {
+  const startTime = performance.now();
+  
+  // Execute the actual render
+  measureRenderPerformance('Chart Render', () => {
+    _renderChartImpl(args);
+  });
+  
+  // Update performance metrics
+  const endTime = performance.now();
+  const renderTime = endTime - startTime;
+  const timeSinceLastFrame = endTime - renderMetrics.lastFrameTime;
+  
+  renderMetrics.frameCount++;
+  renderMetrics.totalRenderTime += renderTime;
+  renderMetrics.avgRenderTime = renderMetrics.totalRenderTime / renderMetrics.frameCount;
+  
+  // Calculate FPS (frames per second)
+  if (timeSinceLastFrame > 0) {
+    renderMetrics.fps = 1000 / timeSinceLastFrame;
+  }
+  
+  // Track dropped frames (render time > 16.67ms for 60fps)
+  if (renderTime > 16.67) {
+    renderMetrics.droppedFrames++;
+  }
+  
+  renderMetrics.lastFrameTime = endTime;
+  
+  // Log performance warning if render is slow
+  if (renderTime > 33.33) { // More than 2 frames at 60fps
+    console.warn(`⚠️ [RenderOrchestrator] Slow render detected: ${renderTime.toFixed(2)}ms`, {
+      candles: args.filteredData.length,
+      patterns: args.visiblePatterns.length,
+      signals: args.tradeActionSignals?.length || 0
+    });
   }
 }
