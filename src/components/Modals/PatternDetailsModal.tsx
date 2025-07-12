@@ -3,10 +3,11 @@
 // Used in legacy UI
 import React from 'react';
 import styled from 'styled-components';
-import { Pattern, PatternType, BlackjackPattern, EscalatorPattern, PivotPattern } from '../../models/PatternTypes';
+import { Pattern, PatternType, BlackjackPattern, EscalatorPattern, PivotPattern, RocketmanPattern } from '../../models/PatternTypes';
 import BlackjackPatternDetails from '../PatternDetails/BlackjackPatternDetails';
 import EscalatorPatternDetails from '../PatternDetails/EscalatorPatternDetails';
 import PivotPatternDetails from '../PatternDetails/PivotPatternDetails';
+import RocketmanPatternDetails from '../PatternDetails/RocketmanPatternDetails';
 import { usePatternContext } from '../../contexts/PatternContext';
 
 const ModalOverlay = styled.div`
@@ -82,6 +83,30 @@ const PatternDetailsModal: React.FC = () => {
           <PivotPatternDetails 
             pattern={selectedPattern as PivotPattern}
           />
+        ) : selectedPattern.type === PatternType.ROCKETMAN ? (
+          <RocketmanPatternDetails 
+            pattern={selectedPattern as RocketmanPattern}
+          />
+        ) : selectedPattern.type === PatternType.GOLDMINE_CHANNEL ? (
+          <PatternPlaceholder>
+            Goldmine Channel Pattern Details
+            <p>Channel depth: {(selectedPattern as any).channelWidth ? ((selectedPattern as any).channelWidth * 100).toFixed(1) + '%' : 'N/A'}</p>
+            <p>Touch points: {(selectedPattern as any).touchPointCount || 'N/A'}</p>
+            <p>Confidence: {(selectedPattern as any).confidence ? (selectedPattern as any).confidence.toFixed(2) : 'N/A'}</p>
+            <p>Direction: {(selectedPattern as any).direction || 'N/A'}</p>
+            <button onClick={() => setSelectedPattern(null)}>Close</button>
+          </PatternPlaceholder>
+        ) : selectedPattern.type === PatternType.GOLDEN_CANDLE ? (
+          <PatternPlaceholder>
+            Golden Candle Pattern Details
+            <p>Direction: {(selectedPattern as any).direction || 'N/A'}</p>
+            <p>Golden Score: {(selectedPattern as any).goldenScore ? (selectedPattern as any).goldenScore.toFixed(2) : 'N/A'}</p>
+            <p>Intrinsic Score: {(selectedPattern as any).intrinsicScore || 'N/A'}</p>
+            <p>Cumulative Score: {(selectedPattern as any).cumulativeScore || 'N/A'}</p>
+            <p>Continuance Count: {(selectedPattern as any).stepContinuanceCount || 'N/A'}</p>
+            <p>Confidence: {(selectedPattern as any).confidence ? (selectedPattern as any).confidence.toFixed(2) : 'N/A'}</p>
+            <button onClick={() => setSelectedPattern(null)}>Close</button>
+          </PatternPlaceholder>
         ) : (
           <PatternPlaceholder>
             {selectedPattern.type} Pattern Details

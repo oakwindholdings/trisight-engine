@@ -7,6 +7,8 @@ import { ThrustDirection } from '../../models/PatternTypes';
 
 interface EscalatorSettings {
   enabled: boolean;
+  showLabels: boolean;
+  showBreakoutBoxes: boolean;
   minSteps: number;
   minStepSize: number;
   maxConsolidationVolatility: number;
@@ -76,19 +78,6 @@ export const EscalatorSettingsPanel: React.FC<EscalatorSettingsPanelProps> = ({
   settings,
   onSettingsChange
 }) => {
-  // Load settings from localStorage on component mount
-  useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem('escalatorSettings');
-      if (savedSettings) {
-        const parsedSettings = JSON.parse(savedSettings);
-        onSettingsChange(parsedSettings);
-      }
-    } catch (error) {
-      console.error('Error loading Escalator settings from localStorage', error);
-    }
-  }, [onSettingsChange]);
-  
   // Save settings to localStorage when they change
   useEffect(() => {
     try {
@@ -100,6 +89,14 @@ export const EscalatorSettingsPanel: React.FC<EscalatorSettingsPanelProps> = ({
 
   const handleEnableChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onSettingsChange({ ...settings, enabled: e.target.checked });
+  };
+  
+  const handleShowLabelsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSettingsChange({ ...settings, showLabels: e.target.checked });
+  };
+  
+  const handleShowBreakoutBoxesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSettingsChange({ ...settings, showBreakoutBoxes: e.target.checked });
   };
   
   const handleMinStepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,6 +150,33 @@ export const EscalatorSettingsPanel: React.FC<EscalatorSettingsPanelProps> = ({
           onChange={handleEnableChange}
         />
         <SettingsLabel htmlFor="enableEscalator">Enable Escalator Detection</SettingsLabel>
+      </SettingsRow>
+      
+      <SettingsRow>
+        <SettingsToggle 
+          type="checkbox" 
+          id="showEscalatorLabels"
+          checked={settings.showLabels}
+          onChange={handleShowLabelsChange}
+          disabled={!settings.enabled}
+        />
+        <SettingsLabel htmlFor="showEscalatorLabels" style={{ opacity: settings.enabled ? 1 : 0.5 }}>
+          Show Step Labels (STEP ↑/↓)
+        </SettingsLabel>
+      </SettingsRow>
+      
+      {/* NOTE: UI control for toggling breakout boxes */}
+      <SettingsRow>
+        <SettingsToggle 
+          type="checkbox" 
+          id="showBreakoutBoxes"
+          checked={settings.showBreakoutBoxes}
+          onChange={handleShowBreakoutBoxesChange}
+          disabled={!settings.enabled}
+        />
+        <SettingsLabel htmlFor="showBreakoutBoxes" style={{ opacity: settings.enabled ? 1 : 0.5 }}>
+          Show Breakout Boxes
+        </SettingsLabel>
       </SettingsRow>
       
       <SettingsRow>

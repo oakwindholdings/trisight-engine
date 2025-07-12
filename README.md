@@ -54,6 +54,19 @@ Detection and visualization of six key pattern types:
 - Canvas-based rendering for optimal performance
 - Local storage for model and feedback persistence
 
+### Pattern Detection System
+
+TriSight uses an **Adaptive Pattern Detection Architecture** with the following components:
+
+- **AdaptiveBlackjackDetector** - Adaptive price-volume correlation analysis
+- **AdaptiveEscalatorDetector** - Adaptive step formation detection with market context
+- **AdaptiveGoldmineChannelDetector** - Adaptive parallel channel detection
+- **AdaptiveGoldmineShaftDetector** - Adaptive thrust direction analysis
+- **AdaptivePivotDetector** - Adaptive support/resistance level detection
+- **AdaptiveRocketmanDetector** - Adaptive acceleration pattern detection
+
+All pattern detectors extend `BasePatternDetector` and integrate with market context thresholds for improved accuracy and reduced false positives.
+
 ## Getting Started
 
 ### Prerequisites

@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Pattern Constants should match constant values snapshot 1`] = `
+Object {
+  "BJ_GOLD_THRESHOLD_LONG": 2,
+  "BJ_GOLD_THRESHOLD_SHORT": -2,
+  "GAP_MAX_RISK_DEFAULT": 0.04,
+  "MAX_STEP_DURATION": 60,
+  "MIN_ESCALATOR_LENGTH": 2,
+  "MIN_PATTERN_CONFIDENCE": 0.5,
+  "MIN_TOUCH_POINTS": 2,
+  "MOMENTUM_THRESHOLD": 0.02,
+  "PATTERN_LOOKBACK_PERIODS": Object {
+    "BLACKJACK": 50,
+    "ESCALATOR": 100,
+    "GOLDMINE_CHANNEL": 100,
+    "GOLDMINE_SHAFT": 50,
+    "PIVOT": 200,
+    "ROCKETMAN": 20,
+  },
+  "PATTERN_OVERLAP_TOLERANCE": 0.8,
+  "PATTERN_STRENGTH_THRESHOLDS": Object {
+    "MODERATE": 0.5,
+    "STRONG": 0.7,
+    "VERY_STRONG": 0.85,
+    "WEAK": 0.3,
+  },
+  "VOLUME_CONFIRMATION_THRESHOLD": 1.2,
+}
+`;

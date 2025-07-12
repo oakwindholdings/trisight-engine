@@ -38,12 +38,16 @@ export function usePanController(
     if (!panState.isPanning) return;
     const x = e.clientX;
     const dx = x - panState.startX;
-    currentTranslateXRef.current = panState.previousTranslateX + dx;
+    // Apply damping factor to reduce sensitivity
+    const dampingFactor = 0.3;
+    const dampedDx = dx * dampingFactor;
+    currentTranslateXRef.current = panState.previousTranslateX + dampedDx;
     const now = Date.now();
     const dt = now - panTimeStamp.current;
     if (dt > 0) {
       const velocity = (x - previousPanX.current) / dt;
-      currentMomentumRef.current = velocity * 15;
+      // Reduce momentum sensitivity with damping
+      currentMomentumRef.current = velocity * 15 * dampingFactor;
     }
     panTimeStamp.current = now;
     previousPanX.current = x;
@@ -82,12 +86,14 @@ export function usePanController(
     if (!panState.isPanning) return;
     const x = e.clientX;
     const dx = x - panState.startX;
-    currentTranslateXRef.current = panState.previousTranslateX + dx;
+    const dampingFactor = 0.3;
+    const dampedDx = dx * dampingFactor;
+    currentTranslateXRef.current = panState.previousTranslateX + dampedDx;
     const now = Date.now();
     const dt = now - panTimeStamp.current;
     if (dt > 0) {
       const velocity = (x - previousPanX.current) / dt;
-      currentMomentumRef.current = velocity * 15;
+      currentMomentumRef.current = velocity * 15 * dampingFactor;
     }
     panTimeStamp.current = now;
     previousPanX.current = x;

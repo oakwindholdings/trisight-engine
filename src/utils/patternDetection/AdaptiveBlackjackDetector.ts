@@ -165,7 +165,10 @@ export class AdaptiveBlackjackDetector extends BasePatternDetector<BlackjackPatt
     data: CandlestickData[],
     context: MarketContext
   ): BlackjackPattern[] {
+    console.log(`[BlackjackDetector] Invoked with ${data.length} candles`);
+    
     if (data.length < (this.options.minPatternLength || 20)) {
+      console.log(`[BlackjackDetector] Not enough data: ${data.length} < ${this.options.minPatternLength || 20}`);
       return [];
     }
     
@@ -271,11 +274,19 @@ export class AdaptiveBlackjackDetector extends BasePatternDetector<BlackjackPatt
       }
     }
     
+    console.log(`[BlackjackDetector] Found ${patterns.length} raw patterns before filtering`);
+    
     // Filter out overlapping patterns, keeping the strongest ones
     const filteredPatterns = this.filterOverlappingPatterns(patterns);
     
+    console.log(`[BlackjackDetector] ${filteredPatterns.length} patterns after overlap filtering`);
+    
     // Apply post-processing
-    return this.postProcessPatterns(filteredPatterns, context);
+    const finalPatterns = this.postProcessPatterns(filteredPatterns, context);
+    
+    console.log(`[BlackjackDetector] Returning ${finalPatterns.length} final patterns`);
+    
+    return finalPatterns;
   }
   
   /**

@@ -5,7 +5,6 @@
  * Registry for pattern detectors
  * Allows registration and retrieval of detector factories by pattern type
  */
-import { PatternType } from '../../../models/PatternTypes';
 import { BasePatternDetector } from './BasePatternDetector';
 
 type DetectorFactoryFunction = (...args: any[]) => BasePatternDetector<any>;

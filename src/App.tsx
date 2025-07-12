@@ -1,24 +1,27 @@
 // src/App.tsx
 // Main application component
+// NOTE: supports DEBUG_UI channel
 // Composes TriSight interface
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import './App.css';
 import './styles/globals.css';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-// Removed unused import: mainLayoutStyles
+import { logDebug } from './utils/debug';
+import { getApiKey } from './api/twelveDataApi';
+import { ChartProvider } from './contexts/ChartContext';
+// Removed react-datepicker - using HTML5 date input instead
 import mainGridStyles from './styles/MainGrid.module.css';
 
 // Import components
 import SymbolSearch from './components/SymbolSearch';
 import PatternSelector from './components/Patterns/PatternSelector';
 import ChartWithContext from './components/Chart/ChartWithContext';
-import InfiniteZoomChartWithContext from './components/Chart/InfiniteZoomChartWithContext';
 import { InfiniteZoomChartRef } from './components/Chart/InfiniteZoomChart';
 import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithContext';
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
+import { TargetReportTable } from './components/TargetReportTable'; // Dick's TriSight Target Report Table with actual formulas
+import TargetsPage from './pages/TargetsPage'; // Dedicated Targets page for independent mounting
 
 // Import components
 import ContextBar from './components/Navigation/ContextBar';
@@ -26,24 +29,37 @@ import ChartWorkspace from './components/Chart/ChartWorkspace';
 import ChartControlBar from './components/Chart/ChartControlBar';
 import PatternPanel from './components/Patterns/PatternPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
+import DebugSettingsPanel from './components/Settings/DebugSettingsPanel';
+import SettingsPanel from './components/Settings/SettingsPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
-import { debugClickBlocking } from './utils/debugClickBlocking';
+import { SupabaseTestPanel } from './components/SupabaseTestPanel';
 
 // Import context providers
 import AppProviders from './components/AppProviders';
 import { useMarketDataContext } from './contexts/MarketDataContext';
 import { usePatternContext } from './contexts/PatternContext';
-import { useFeedbackContext } from './contexts/FeedbackContext';
 
 // Import feature flags
 import { isFeatureEnabled } from './utils/featureFlags';
 
 // Import types
 import { Pattern } from './models/PatternTypes';
-import { PatternFeedback } from './models/FeedbackTypes';
+import { TradeActionBus, emitBuySignal, emitSellSignal, TradeAction, SignalType, TradeActionSignal } from './utils/trading/TradeActionSignal';
+import { StepBox } from './types/pattern';
+import { evaluateAllPatterns } from './utils/patternHydration';
 
 // Import hooks
 import useTwelveDataApiKey from './hooks/useTwelveDataApiKey';
+
+// Import mock data
+import { mockSymbolRankings } from './utils/mockData/symbolRankings';
+import { SymbolRanking } from './types/SymbolRanking';
+
+// Styled components
+const SymbolRankingContainer = styled.div`
+  margin-top: 16px;
+  width: 100%;
+`;
 
 // Constants for localStorage keys
 const STORAGE_KEY_DATE = 'trisight_selected_date';
@@ -51,6 +67,10 @@ const STORAGE_KEY_CHART_HEIGHT = 'trisight_chart_height';
 const STORAGE_KEY_TRADING_HOURS = 'trisight_trading_hours_only';
 const STORAGE_KEY_TIMEFRAME = 'selectedTimeframe';
 const STORAGE_KEY_TIME_RANGE = 'selectedTimeRange';
+const STORAGE_KEY_SYMBOL = 'selectedSymbol';
+const STORAGE_KEY_SHOW_RIGHT_PANEL = 'trisight_show_right_panel';
+const STORAGE_KEY_SHOW_BOTTOM_TABLE = 'trisight_show_bottom_table';
+const STORAGE_KEY_GOLDEN_CANDLE_FILTER = 'trisight_golden_candle_filter';
 
 // Helper function to get saved date from localStorage
 const getSavedDate = (): Date => {
@@ -104,6 +124,17 @@ const getSavedChartHeight = (): number => {
   return 500; // Default height if no saved height or error
 };
 
+// Helper function to get saved Golden Candle filter state from localStorage
+const getSavedGoldenCandleFilter = (): boolean => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_GOLDEN_CANDLE_FILTER);
+    return saved === 'true';
+  } catch (e) {
+    console.error('Error loading saved Golden Candle filter from localStorage:', e);
+  }
+  return false; // Default to false if no saved state or error
+};
+
 // Helper function to save chart height to localStorage
 const saveChartHeight = (height: number): void => {
   try {
@@ -113,8 +144,12 @@ const saveChartHeight = (height: number): void => {
   }
 };
 
-
-
+// Debug API key presence
+const debugApiKey = () => {
+  const key = process.env.REACT_APP_TWELVE_DATA_API_KEY;
+  logDebug('DEBUG_UI', 'API Key present:', key ? `Yes (${key.length} chars)` : 'NOT SET!');
+  logDebug('DEBUG_UI', '[App] Starting TriSight with API key:', getApiKey() ? 'CONFIGURED' : 'NOT SET');
+};
 
 // Legacy styled components - will be transitioned to CSS modules
 const AppContainer = styled.div`
@@ -237,51 +272,191 @@ const Footer = styled.footer`
   color: #757575;
 `;
 
+// Main App component with layout and routing
+const App: React.FC = () => {
+  // Check API key on app load
+  React.useEffect(() => {
+    debugApiKey();
+  }, []);
+
+  return (
+    <AppProviders>
+      <AppContent />
+    </AppProviders>
+  );
+};
+
+// Main App content component
 function AppContent() {
   // Initialize API key from localStorage
   const { apiKey } = useTwelveDataApiKey();
   
-  const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay } = useMarketDataContext(); // Removed unused variables: setSymbol, loading
-  const { patterns, patternCounts, selectedPattern, setSelectedPattern, detectPatterns } = usePatternContext();
-  // Removed unused variable: submitFeedback
-
+  const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay, timeframe, setTimeframe } = useMarketDataContext(); 
+  const { patterns, patternCounts, selectedPattern, setSelectedPattern, detectPatterns, goldmineQual } = usePatternContext();
+  
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
-  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets'>('chart');
+  
+  // Symbol selection state
+  const [selectedSymbol, setSelectedSymbol] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_SYMBOL);
+    return saved || 'AAPL';
+  });
+  
+  // State for symbol rankings - initialize with mock data
+  const [symbolRankings, setSymbolRankings] = useState<SymbolRanking[]>(mockSymbolRankings);
+  
+  // UI panel visibility state with localStorage persistence
+  const [showRightPanel, setShowRightPanel] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_SHOW_RIGHT_PANEL);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  
+  const [showBottomTable, setShowBottomTable] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_SHOW_BOTTOM_TABLE);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  
+  // Custom date range state to track UI-selected dates
+  const [customDateRange, setCustomDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
+  
+  // Debug: Log when customDateRange changes
+  useEffect(() => {
+    console.log('[App] customDateRange changed:', customDateRange ? {
+      startDate: customDateRange.startDate.toISOString(),
+      endDate: customDateRange.endDate.toISOString()
+    } : 'null');
+  }, [customDateRange]);
+  
+  // Calculate dynamic dimensions based on panel visibility
+  const [dimensions, setDimensions] = useState(() => ({
+    width: window.innerWidth - (showRightPanel ? 284 : 48),
+    height: window.innerHeight - (showBottomTable ? 400 : 200) // Adjust for header and optional bottom table
+  }));
+  
+  // Update dimensions when panels toggle or window resizes
+  useEffect(() => {
+    const updateDimensions = () => {
+      const newWidth = window.innerWidth - (showRightPanel ? 284 : 48);
+      const newHeight = window.innerHeight - (showBottomTable ? 400 : 200);
+      setDimensions({ width: newWidth, height: newHeight });
+      logDebug('DEBUG_UI', '[UI] Updated chart dimensions:', { width: newWidth, height: newHeight });
+    };
+    
+    // Update immediately
+    updateDimensions();
+    
+    // Handle window resize
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, [showRightPanel, showBottomTable]);
+  
+  // Handle right panel toggle
+  const handleToggleRightPanel = useCallback(() => {
+    setShowRightPanel((prev: boolean) => {
+      const newValue = !prev;
+      localStorage.setItem(STORAGE_KEY_SHOW_RIGHT_PANEL, JSON.stringify(newValue));
+      console.log('[UI] Toggled Right Panel:', newValue);
+      
+      // Force chart redraw by triggering resize event
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        console.log('[UI] Dispatched resize event for chart redraw');
+      }, 0);
+      
+      return newValue;
+    });
+  }, []);
+  
+  // Handle bottom table toggle
+  const handleToggleBottomTable = useCallback(() => {
+    setShowBottomTable((prev: boolean) => {
+      const newValue = !prev;
+      localStorage.setItem(STORAGE_KEY_SHOW_BOTTOM_TABLE, JSON.stringify(newValue));
+      console.log('[UI] Toggled Bottom Table:', newValue);
+      
+      // Force chart redraw by triggering resize event
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        console.log('[UI] Dispatched resize event for chart redraw');
+      }, 0);
+      
+      return newValue;
+    });
+  }, []);
+  
+  // Handle symbol select
+  const handleSymbolSelect = useCallback((symbol: string) => {
+    console.log('[App] handleSymbolSelect called with:', symbol);
+    setSelectedSymbol(symbol);
+    localStorage.setItem(STORAGE_KEY_SYMBOL, symbol);
+    
+    // Check if symbol already exists in rankings
+    const symbolExists = symbolRankings.some(ranking => ranking.symbol === symbol);
+    
+    if (!symbolExists) {
+      logDebug('DEBUG_UI', '[App] Adding new symbol to rankings:', symbol);
+      // Create a new ranking entry for the symbol with default values
+      const newRanking: SymbolRanking = {
+        symbol: symbol,
+        riskRating: Math.floor(Math.random() * 60) + 20, // Random between 20-80
+        tractionRating: Math.floor(Math.random() * 60) + 20,
+        strengthRating: Math.floor(Math.random() * 60) + 20,
+        timingRating: Math.floor(Math.random() * 60) + 20,
+        businessModelRatio: Math.round((Math.random() * 2 + 1) * 10) / 10, // 1.0-3.0
+        acceleration: Math.round((Math.random() * 5 + 1) * 10) / 10, // 1.0-6.0
+        sectorRating: Math.floor(Math.random() * 60) + 20,
+        currentPrice: Math.round(Math.random() * 900 * 100) / 100 + 10 // 10-910
+      };
+      
+      setSymbolRankings(prevRankings => [...prevRankings, newRanking]);
+    }
+  }, [symbolRankings]);
   
   // Type-safe tab change handler
-  const handleTabChange = (tab: 'chart' | 'dashboard') => {
+  const handleTabChange = (tab: 'chart' | 'dashboard' | 'targets') => {
     setActiveTab(tab);
   };
-  const [showFeedbackModal, setShowFeedbackModal] = useState<boolean>(false);
-  const [chartHeight, setChartHeight] = useState<number>(getSavedChartHeight());
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(getSavedDate());
-  const [useInfiniteZoom, setUseInfiniteZoom] = useState<boolean>(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [chartHeight, setChartHeight] = useState(getSavedChartHeight());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(getSavedDate());
   
   // Initialize selectedDate to the last trading day
   useEffect(() => {
     const today = new Date();
     
-    // If today is Sunday, go back to Friday
-    if (today.getDay() === 0) {
-      const friday = new Date(today);
-      friday.setDate(today.getDate() - 2);
-      setSelectedDate(friday);
+    // Clear any lingering selected pattern on mount
+    console.log('[App] Clearing selectedPattern on mount');
+    setSelectedPattern(null);
+    setShowFeedbackModal(false);
+    
+    // Check if today is Saturday or Sunday
+    const dayOfWeek = today.getDay();
+    if (dayOfWeek === 0) { // Sunday
+      // Go back to Friday
+      today.setDate(today.getDate() - 2);
+    } else if (dayOfWeek === 6) { // Saturday
+      // Go back to Friday
+      today.setDate(today.getDate() - 1);
     }
     
-    // If today is Saturday, go back to Friday
-    if (today.getDay() === 6) {
-      const friday = new Date(today);
-      friday.setDate(today.getDate() - 1);
-      setSelectedDate(friday);
+    // Set time to 4 PM ET (end of trading day)
+    today.setHours(16, 0, 0, 0);
+    
+    // Only update if different from current selectedDate
+    if (selectedDate.getTime() !== today.getTime()) {
+      setSelectedDate(today);
     }
-  }, []);
+  }, []); // Empty dependency array - run only on mount
   
   // Handle pattern selection
   const handlePatternSelect = (pattern: Pattern | null) => {
+    logDebug('DEBUG_UI', '[App] handlePatternSelect called with pattern:', pattern);
     setSelectedPattern(pattern);
     if (pattern) {
+      logDebug('DEBUG_UI', '[App] Setting showFeedbackModal to true');
       setShowFeedbackModal(true);
     }
   };
@@ -306,7 +481,9 @@ function AppContent() {
   
   // Handle feedback modal close
   const handleFeedbackModalClose = () => {
+    logDebug('DEBUG_UI', '[App] Closing feedback modal and clearing selectedPattern');
     setShowFeedbackModal(false);
+    setSelectedPattern(null); // Clear selected pattern when closing modal
   };
   
   // Refresh pattern detection
@@ -328,23 +505,13 @@ function AppContent() {
   );
   
   // State for UI interactions specific to new components
-  const [showTradingHoursOnly, setShowTradingHoursOnly] = useState<boolean>(() => {
+  const [showTradingHoursOnly, setShowTradingHoursOnly] = useState(() => {
     try {
       const savedSetting = localStorage.getItem(STORAGE_KEY_TRADING_HOURS);
       return savedSetting === null ? true : savedSetting === 'true';
     } catch (e) {
       console.error('Failed to load trading hours setting from localStorage:', e);
       return true; // Default to true if there's an error
-    }
-  });
-  // Initialize timeframe from localStorage or default to 1min
-  const [timeframe, setTimeframe] = useState<string>(() => {
-    try {
-      const savedTimeframe = localStorage.getItem(STORAGE_KEY_TIMEFRAME);
-      return savedTimeframe || '1min';
-    } catch (e) {
-      console.error('Failed to load timeframe from localStorage:', e);
-      return '1min';
     }
   });
   
@@ -359,13 +526,13 @@ function AppContent() {
     }
   });
   
-  console.log(`AppContent render - activeTimeRange: ${activeTimeRange}, useInfiniteZoom: ${useInfiniteZoom}, activeTab: ${activeTab}`);
+  console.log(`AppContent render - activeTimeRange: ${activeTimeRange}, activeTab: ${activeTab}`);
   console.log(`About to check activeTab === 'chart': ${activeTab === 'chart'}`);
-  console.log(`Chart should render: ${activeTab === 'chart' && !useInfiniteZoom}`);
+  console.log(`Chart should render: ${activeTab === 'chart'}`);
   
   // Debug which chart component will render
   if (activeTab === 'chart') {
-    console.log(`Chart tab is active. Will render ${useInfiniteZoom ? 'InfiniteZoomChartWithContext' : 'ChartWithContext'}`);
+    console.log(`Chart tab is active. Will render ChartWithContext`);
   }
   
   // Viewport state for chart controls
@@ -378,24 +545,65 @@ function AppContent() {
   const [patternFilters, setPatternFilters] = useState({
     successRate: 0,
     timeframe: 'all',
-    patternType: 'all'
+    patternType: 'all',
+    showOnlyGoldenCandles: getSavedGoldenCandleFilter()
   });
+  
+  // Apply Golden Candle filter to patterns
+  const filteredPatterns = useMemo(() => {
+    if (!patternFilters.showOnlyGoldenCandles || !goldmineQual?.length || !data?.length) {
+      return patterns;
+    }
+    
+    // Filter patterns to only show those that correspond to Golden Candles
+    return patterns.filter(pattern => {
+      // Find the candle index that corresponds to this pattern's start time
+      const patternStartTime = pattern.startTime.getTime();
+      const candleIndex = data.findIndex(candle => 
+        new Date(candle.timestamp).getTime() >= patternStartTime
+      );
+      
+      // Check if the pattern corresponds to a Golden Candle
+      if (candleIndex >= 0 && candleIndex < goldmineQual.length) {
+        return goldmineQual[candleIndex];
+      }
+      return false;
+    });
+  }, [patterns, patternFilters.showOnlyGoldenCandles, goldmineQual, data]);
   
   // Handle timeframe change
   const handleTimeframeChange = (newTimeframe: string) => {
-    console.log(`Changing timeframe to: ${newTimeframe}`);
-    // Save to localStorage for persistence across sessions
-    try {
-      localStorage.setItem(STORAGE_KEY_TIMEFRAME, newTimeframe);
-    } catch (e) {
-      console.error('Failed to save timeframe to localStorage:', e);
-    }
-    setTimeframe(newTimeframe);
+    logDebug('DEBUG_UI', `[App] handleTimeframeChange: ${newTimeframe}`);
     
-    if (newTimeframe === 'daily' || newTimeframe === 'weekly' || newTimeframe === 'monthly') {
-      // For larger timeframes, we might want to fetch a bigger date range
-      // This is optional - our current approach aggregates the existing data
+    // Map the dropdown value to the correct timeframe
+    const timeframeMap: { [key: string]: string } = {
+      '1m': '1min',
+      '5m': '5min',
+      '15m': '15min',
+      '30m': '30min',
+      '1h': '1hour',
+      '1D': '1day'
+    };
+    
+    const mappedTimeframe = timeframeMap[newTimeframe] || newTimeframe;
+    setTimeframe(mappedTimeframe as any); // Use setTimeframe from MarketDataContext
+    localStorage.setItem(STORAGE_KEY_TIMEFRAME, mappedTimeframe);
+  };
+  
+  // Handle filter change
+  const handleFilterChange = (filters: any) => {
+    setPatternFilters(filters);
+    
+    // Save Golden Candle filter state to localStorage for persistence
+    if (filters.hasOwnProperty('showOnlyGoldenCandles')) {
+      try {
+        localStorage.setItem(STORAGE_KEY_GOLDEN_CANDLE_FILTER, filters.showOnlyGoldenCandles.toString());
+      } catch (e) {
+        console.error('Error saving Golden Candle filter to localStorage:', e);
+      }
     }
+    
+    logDebug('DEBUG_UI', 'Pattern filters updated:', filters);
   };
   
   // Handle trading hours toggle
@@ -413,32 +621,32 @@ function AppContent() {
   
   // Handle auto-scale
   const handleAutoScale = () => {
-    // Toggle state to trigger auto-scale in chart
-    setViewportState(prev => ({
-      ...prev,
-      autoScaled: !prev.autoScaled
-    }));
+    logDebug('DEBUG_UI', '[App] Auto-scale triggered');
+    if (chartRef.current?.autoScale) {
+      chartRef.current.autoScale();
+    }
   };
   
   // Handle reset view
   const handleResetView = () => {
-    // Toggle state to trigger reset view in chart
-    setViewportState(prev => ({
-      ...prev,
-      resetView: !prev.resetView
-    }));
+    logDebug('DEBUG_UI', '[App] Reset view triggered');
+    if (chartRef.current?.resetView) {
+      chartRef.current.resetView();
+    }
   };
   
   // Handle time range selection
   const handleTimeRangeSelect = (range: TimeRangeOption, startDate: Date, endDate: Date) => {
-    console.log(`Changing time range to: ${range}`, { startDate, endDate });
+    logDebug('DEBUG_UI', `Changing time range to: ${range}`, { startDate, endDate });
     
     // Adjust end date to last trading day if it's a weekend
     const adjustedEndDate = new Date(endDate);
     const dayOfWeek = adjustedEndDate.getDay();
     if (dayOfWeek === 0) { // Sunday
+      // Go back to Friday
       adjustedEndDate.setDate(adjustedEndDate.getDate() - 2); // Go back to Friday
     } else if (dayOfWeek === 6) { // Saturday
+      // Go back to Friday
       adjustedEndDate.setDate(adjustedEndDate.getDate() - 1); // Go back to Friday
     }
     
@@ -487,11 +695,11 @@ function AppContent() {
     
     // Fetch data based on the selected time range
     if (range === '1D') {
-      console.log('App - Fetching data for 1D range');
+      logDebug('DEBUG_UI', 'App - Fetching data for 1D range');
       setIsUsingCustomRange(false);
       fetchSpecificDay(startDate);
     } else {
-      console.log(`App - Fetching data for ${range} range`, { startDate, endDate: adjustedEndDate, intervalForFetch });
+      logDebug('DEBUG_UI', `App - Fetching data for ${range} range`, { startDate, endDate: adjustedEndDate, intervalForFetch });
       // Ensure we fetch date range data for multi-day ranges
       const fetchDataForRange = async () => {
         await fetchDateRange(startDate, adjustedEndDate, intervalForFetch);
@@ -502,21 +710,22 @@ function AppContent() {
   
   // Handle settings toggle
   const handleSettingsToggle = () => {
-    // Implement settings panel toggle logic here
-    console.log('Settings toggled');
+    setShowSettingsPanel(!showSettingsPanel);
+    logDebug('DEBUG_UI', 'Settings toggled:', !showSettingsPanel);
   };
-  
+
   // Handle save pattern
   const handleSavePattern = () => {
-    // Implement save pattern logic here
-    console.log('Pattern saved', selectedPattern);
+    if (selectedPattern) {
+      logDebug('DEBUG_UI', 'Saving pattern:', selectedPattern);
+      // TODO: Implement pattern saving logic
+      console.log('Pattern saved:', selectedPattern);
+    }
   };
-  
-  // Handle pattern filter changes
-  const handleFilterChange = (newFilters: any) => {
-    setPatternFilters(newFilters);
-    // Additional logic for filtering patterns
-  };
+
+  // UI state for panels and modals
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showSupabaseTest, setShowSupabaseTest] = useState(false);
 
   // Refs
   const chartRef = useRef<InfiniteZoomChartRef>(null);
@@ -551,7 +760,7 @@ function AppContent() {
     
     // Add a global click listener to debug
     const debugClickHandler = (e: MouseEvent) => {
-      console.log('Global click detected:', {
+      logDebug('DEBUG_UI', 'Global click detected:', {
         target: e.target,
         currentTarget: e.currentTarget,
         clientX: e.clientX,
@@ -565,7 +774,7 @@ function AppContent() {
     
     // Run click blocking diagnostic
     setTimeout(() => {
-      debugClickBlocking();
+      // Removed unused import: debugClickBlocking
     }, 1000);
     
     return () => {
@@ -586,8 +795,48 @@ function AppContent() {
     console.log('App mounted - cleared any stale selections');
   }, []);
 
+  // Handle pattern selection from URL on component mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const patternParam = params.get('pattern');
+    
+    if (patternParam) {
+      try {
+        const pattern = JSON.parse(decodeURIComponent(patternParam));
+        setSelectedPattern(pattern);
+      } catch (error) {
+        console.error('Failed to parse pattern from URL:', error);
+      }
+    }
+  }, [setSelectedPattern]);
+
+  // Auto-hydrate TradeActionBus when candle data changes
+  useEffect(() => {
+    if (data.length > 0) {
+      console.debug('[App] Auto-hydrating TradeActionBus with', data.length, 'candles');
+      evaluateAllPatterns(data);
+      const signalCount = TradeActionBus.getSignals().length;
+      console.debug('[App] TradeActionBus now contains', signalCount, 'signals');
+    }
+  }, [data]);
+
+  // Update URL when pattern is selected
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    
+    if (selectedPattern) {
+      params.set('pattern', encodeURIComponent(JSON.stringify(selectedPattern)));
+    } else {
+      params.delete('pattern');
+    }
+    
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [selectedPattern]);
+
   return (
-    <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}>
+    <ChartProvider>
+      <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}>
       {isFeatureEnabled('NEW_LAYOUT') ? (
         // New UI using wrapper components
         <>
@@ -598,63 +847,100 @@ function AppContent() {
               activeTab={activeTab}
               onTabChange={handleTabChange}
               onSettingsToggle={handleSettingsToggle}
+              onSymbolSelect={handleSymbolSelect}
+              onToggleRightPanel={handleToggleRightPanel}
+              onToggleBottomTable={handleToggleBottomTable}
+              showRightPanel={showRightPanel}
+              showBottomTable={showBottomTable}
+              onCustomDateRange={(start, end) => {
+                console.log('[App] onCustomDateRange called with:', { start, end });
+                setCustomDateRange({ startDate: start, endDate: end });
+              }}
             />
           </div>
-          
           <div className={mainGridStyles.content}>
             {activeTab === 'chart' ? (
-              <div className={mainGridStyles.chartGrid}>
-                
-                <div className={mainGridStyles.chartArea}>
-                  <ChartWorkspace
-                    data={data}
-                    patterns={patterns}
-                    width={window.innerWidth - 284} // Adjusting for PatternPanel width 
-                    height={chartHeight}
-                    onPatternSelect={handlePatternSelect}
-                    selectedPattern={selectedPattern}
-                    timeframe={timeframe}
-                    onTimeframeChange={handleTimeframeChange}
-                    showTradingHoursOnly={showTradingHoursOnly}
-                    onTradingHoursToggle={handleTradingHoursToggle}
-                    onAutoScale={handleAutoScale}
-                    onResetView={handleResetView}
-                    autoScale={viewportState.autoScaled}
-                    activeTimeRange={activeTimeRange}
-                    onTimeRangeSelect={handleTimeRangeSelect}
-                  />
-                </div>
-                
-                <div className={mainGridStyles.panel}>
-                  {selectedPattern ? (
-                    <AnalysisPanel
-                      selectedPattern={selectedPattern}
-                      onFeedbackClick={() => setShowFeedbackModal(true)}
-                      onSaveClick={handleSavePattern}
-                    />
-                  ) : (
-                    <PatternPanel
-                      patterns={patterns}
-                      selectedPattern={selectedPattern}
+              <>
+                <div className={`${mainGridStyles.chartGrid} ${!showRightPanel ? mainGridStyles.chartGridNoPanel : ''}`}>
+                  <div className={mainGridStyles.chartArea}>
+                    <ChartWorkspace
+                      key={`chart-${showRightPanel}-${showBottomTable}`} // Force re-render when panels toggle
+                      data={data}
+                      patterns={filteredPatterns}
+                      width={dimensions.width}
+                      height={dimensions.height}
                       onPatternSelect={handlePatternSelect}
-                      patternFilters={patternFilters}
-                      onFilterChange={handleFilterChange}
-                      chartHeight={chartHeight}
-                      onChartHeightChange={(newHeight) => {
-                        setChartHeight(newHeight);
-                        saveChartHeight(newHeight); // Save to localStorage
-                      }}
+                      selectedPattern={selectedPattern}
+                      timeframe={timeframe}
+                      onTimeframeChange={handleTimeframeChange}
+                      showTradingHoursOnly={showTradingHoursOnly}
+                      onTradingHoursToggle={handleTradingHoursToggle}
+                      onAutoScale={handleAutoScale}
+                      onResetView={handleResetView}
+                      autoScale={viewportState.autoScaled}
+                      activeTimeRange={activeTimeRange}
+                      onTimeRangeSelect={handleTimeRangeSelect}
+                      selectedSymbol={selectedSymbol}
                     />
+                  </div>
+                  {showRightPanel && (
+                    <div className={mainGridStyles.panel}>
+                      {selectedPattern ? (
+                        <AnalysisPanel
+                          selectedPattern={selectedPattern}
+                          onFeedbackClick={() => setShowFeedbackModal(true)}
+                          onSaveClick={handleSavePattern}
+                        />
+                      ) : (
+                        <PatternPanel
+                          patterns={filteredPatterns}
+                          selectedPattern={selectedPattern}
+                          onPatternSelect={handlePatternSelect}
+                          patternFilters={patternFilters}
+                          onFilterChange={handleFilterChange}
+                          chartHeight={chartHeight}
+                          onChartHeightChange={(newHeight) => {
+                            setChartHeight(newHeight);
+                            saveChartHeight(newHeight); // Save to localStorage
+                          }}
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
-              </div>
+              </>
+            ) : activeTab === 'targets' ? (
+              <TargetsPage />
             ) : (
               <LearningDashboard />
             )}
           </div>
           
+          {/* Bottom Table - conditionally rendered based on showBottomTable state */}
+          {showBottomTable && (
+            <div style={{ 
+              height: '200px', 
+              borderTop: '1px solid #e5e7eb', 
+              backgroundColor: '#ffffff',
+              overflow: 'hidden'
+            }}>
+              <TargetReportTable
+                patterns={filteredPatterns || []}
+                escalatorSteps={[]}
+                selectedSymbol={selectedSymbol}
+                onSymbolSelect={(symbol) => {
+                  setSelectedSymbol(symbol);
+                  logDebug('DEBUG_UI', '[App] Symbol selected from target report table:', symbol);
+                }}
+                loading={false}
+                customSymbols={[selectedSymbol].filter(Boolean)}
+                scanning={false}
+              />
+            </div>
+          )}
+          
           <div className={mainGridStyles.footer}>
-            TriSight Pattern Training Interface &copy; {new Date().getFullYear()}
+            TriSight Pattern Training Interface v2025.07.04.12.09 &copy; {new Date().getFullYear()}
           </div>
         </>
       ) : (
@@ -664,7 +950,6 @@ function AppContent() {
             <Title>TriSight Pattern Training Interface</Title>
             <SymbolSearch />
           </Header>
-          
           <TabBar>
             <Tab 
               $active={activeTab === 'chart'} 
@@ -678,8 +963,13 @@ function AppContent() {
             >
               Learning Dashboard
             </Tab>
+            <Tab 
+              $active={activeTab === 'targets'} 
+              onClick={() => setActiveTab('targets')}
+            >
+              Targets Analysis
+            </Tab>
           </TabBar>
-          
           <ContentArea>
             <>
               {activeTab === 'chart' && (
@@ -687,15 +977,21 @@ function AppContent() {
                   <ControlsContainer>
                     <ControlGroup>
                       <Label>Date:</Label>
-                      <DatePicker
-                        selected={selectedDate}
-                        onChange={handleDateChange}
-                        maxDate={new Date()} // Can't select future dates
-                        dateFormat="yyyy-MM-dd"
+                      <input
+                        type="date"
+                        value={selectedDate?.toISOString().split('T')[0] || ''}
+                        onChange={(e) => handleDateChange(new Date(e.target.value))}
+                        max={new Date().toISOString().split('T')[0]}
                         className="date-picker"
+                        style={{
+                          padding: '8px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          background: 'white'
+                        }}
                       />
                     </ControlGroup>
-                    
                     <ControlGroup>
                       <Label>Chart Height:</Label>
                       <HeightInput
@@ -706,25 +1002,15 @@ function AppContent() {
                         max="2000"
                         step="50"
                       />
-                      
                       <RefreshButton
                         onClick={handleRefreshPatterns}
                         disabled={isRefreshing || data.length === 0}
                       >
                         {isRefreshing ? 'Detecting...' : `Refresh (${totalPatterns})`}
                       </RefreshButton>
-                      
-                      <RefreshButton
-                        onClick={() => setUseInfiniteZoom(!useInfiniteZoom)}
-                        style={{ marginLeft: '10px' }}
-                      >
-                        {useInfiniteZoom ? 'Standard Chart' : 'Infinite Zoom'}
-                      </RefreshButton>
                     </ControlGroup>
                   </ControlsContainer>
-                  
                   <PatternSelector />
-                  
                   <ChartContainer $chartHeight={chartHeight}>
                     {/* Add ChartControlBar component above the chart */}
                     <ChartControlBar 
@@ -734,112 +1020,140 @@ function AppContent() {
                       onTradingHoursToggle={handleTradingHoursToggle}
                       onAutoScale={handleAutoScale}
                       onResetView={handleResetView}
-                      onZoomToFit={useInfiniteZoom ? handleZoomToFit : undefined}
+                      onZoomToFit={handleZoomToFit}
                       activeTimeRange={activeTimeRange}
                       onTimeRangeSelect={handleTimeRangeSelect}
                     />
-                    {useInfiniteZoom ? (
-                      <>
-                        {console.log('Rendering InfiniteZoomChartWithContext')}
-                        <InfiniteZoomChartWithContext 
-                          ref={chartRef}
-                          width={window.innerWidth - 48} 
-                          height={chartHeight}
-                          onPatternSelect={handlePatternSelect}
-                          selectedPattern={selectedPattern}
-                          selectedDate={selectedDate}
-                          timeframe={timeframe}
-                          activeTimeRange={activeTimeRange}
-                          onTimeRangeSelect={handleTimeRangeSelect}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        {console.log('Rendering ChartWithContext')}
-                        <ChartWithContext 
-                          width={window.innerWidth - 48} 
-                          height={chartHeight}
-                          onPatternSelect={handlePatternSelect}
-                          selectedPattern={selectedPattern}
-                          selectedDate={selectedDate}
-                          timeframe={timeframe}
-                          activeTimeRange={activeTimeRange}
-                          onTimeRangeSelect={handleTimeRangeSelect}
-                        />
-                      </>
-                    )}
+                    <ChartWithContext 
+                      ref={chartRef}
+                      width={window.innerWidth - 48} 
+                      height={chartHeight}
+                      onPatternSelect={handlePatternSelect}
+                      selectedPattern={selectedPattern}
+                      selectedDate={selectedDate}
+                      timeframe={timeframe}
+                      activeTimeRange={activeTimeRange}
+                      selectedSymbol={selectedSymbol}
+                      showTradingHoursOnly={showTradingHoursOnly}
+                      startDate={customDateRange?.startDate}
+                      endDate={customDateRange?.endDate}
+                    />
                   </ChartContainer>
                 </>
               )}
               {activeTab === 'dashboard' && (
                 <LearningDashboard />
               )}
+              {activeTab === 'targets' && (
+                <TargetsPage />
+              )}
             </>
           </ContentArea>
-          
           <Footer>
-            TriSight Pattern Training Interface &copy; {new Date().getFullYear()}
+            TriSight Pattern Training Interface v2025.07.04.12.09 &copy; {new Date().getFullYear()}
           </Footer>
         </AppContainer>
       )}
-      
-      {showFeedbackModal && selectedPattern && (
-        <FeedbackModalWithContext 
-          pattern={selectedPattern}
-          onClose={handleFeedbackModalClose}
-          userId={userId}
+      <div>
+        {showFeedbackModal && selectedPattern && (
+          <FeedbackModalWithContext 
+            pattern={selectedPattern}
+            onClose={handleFeedbackModalClose}
+            userId={userId}
+          />
+        )}
+        {/* Pattern Details Modal - shown only in legacy mode */}
+        {!isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal && (
+          <PatternDetailsModal />
+        )}
+        {/* Debug overlay to visualize click blocking */}
+        {process.env.NODE_ENV === 'development' && (
+          <>
+            <div 
+              id="debug-click-test" 
+              style={{
+                position: 'fixed',
+                bottom: 10,
+                right: 10,
+                padding: '10px',
+                background: 'rgba(255, 0, 0, 0.8)',
+                color: 'white',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                zIndex: 9999,
+                pointerEvents: 'auto',
+              }}
+              onClick={() => {
+                console.log('Debug button clicked successfully!');
+                // Removed unused import: debugClickBlocking
+                // Force clear any blocking state
+                setSelectedPattern(null);
+                setShowFeedbackModal(false);
+                // Also check for any CSS issues
+                const appDiv = document.querySelector('.App');
+                if (appDiv) {
+                  const computedStyle = window.getComputedStyle(appDiv);
+                  console.log('App div pointer-events:', computedStyle.pointerEvents);
+                }
+              }}
+            >
+              Debug Click Issues
+            </div>
+            
+            {/* Supabase Test Button */}
+            <div 
+              style={{
+                position: 'fixed',
+                bottom: 10,
+                right: 150,
+                padding: '10px',
+                background: '#10b981',
+                color: 'white',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                zIndex: 9999,
+                pointerEvents: 'auto',
+              }}
+              onClick={() => setShowSupabaseTest(!showSupabaseTest)}
+            >
+              {showSupabaseTest ? 'Hide' : 'Test'} Supabase
+            </div>
+            
+            {/* Supabase Test Panel */}
+            {showSupabaseTest && (
+              <div 
+                style={{
+                  position: 'fixed',
+                  bottom: 60,
+                  right: 10,
+                  width: '400px',
+                  maxHeight: '500px',
+                  overflow: 'auto',
+                  zIndex: 9999,
+                }}
+              >
+                <SupabaseTestPanel />
+              </div>
+            )}
+          </>
+        )}
+        
+        {/* Settings Panel */}
+        <SettingsPanel 
+          isOpen={showSettingsPanel}
+          onClose={() => setShowSettingsPanel(false)}
         />
-      )}
-      
-      {/* Pattern Details Modal - shown only in legacy mode */}
-      {!isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal && (
-        <PatternDetailsModal />
-      )}
-      
-      {/* Debug overlay to visualize click blocking */}
-      {process.env.NODE_ENV === 'development' && (
-        <div 
-          id="debug-click-test" 
-          style={{
-            position: 'fixed',
-            bottom: 10,
-            right: 10,
-            padding: '10px',
-            background: 'rgba(255, 0, 0, 0.8)',
-            color: 'white',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            zIndex: 9999,
-            pointerEvents: 'auto',
-          }}
-          onClick={() => {
-            console.log('Debug button clicked successfully!');
-            debugClickBlocking();
-            // Force clear any blocking state
-            setSelectedPattern(null);
-            setShowFeedbackModal(false);
-            // Also check for any CSS issues
-            const appDiv = document.querySelector('.App');
-            if (appDiv) {
-              const computedStyle = window.getComputedStyle(appDiv);
-              console.log('App div pointer-events:', computedStyle.pointerEvents);
-            }
-          }}
-        >
-          Debug Click Issues
-        </div>
-      )}
-    </div>
+      </div>
+      </div>
+    </ChartProvider>
   );
 }
 
-// Main App component with all context providers
-export function App() {
-  return (
-    <AppProviders>
-      <AppContent />
-    </AppProviders>
-  );
-}
+// Wrap App with AppProviders to provide all contexts
+const AppWithProviders = () => (
+  <AppProviders>
+    <App />
+  </AppProviders>
+);
 
-export default App;
+export default AppWithProviders;

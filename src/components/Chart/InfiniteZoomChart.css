@@ -29,6 +29,15 @@
   cursor: grabbing;
 }
 
+/* Pattern overlay */
+.pattern-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* Loading overlay */
 .loading-overlay {
   position: absolute;

@@ -1,0 +1,174 @@
+{
+  "auditId": "sigint_nvda_1751466257490",
+  "auditName": "SIGINT Audit: Detection → Emission → Render",
+  "scope": "ALL_PATTERNS",
+  "timeframe": "1m",
+  "timestamp": "2025-07-02T14:24:17.490Z",
+  "stages": {
+    "detection": [
+      {
+        "patternId": "ESCALATOR_0",
+        "matchStartDatetime": "2025-07-01T14:20:00.000Z",
+        "matchEndDatetime": "2025-07-01T14:35:00.000Z",
+        "detectionConfidence": 0.75,
+        "detected": true,
+        "engineInvoked": true
+      },
+      {
+        "patternId": "ROCKETMAN_0",
+        "matchStartDatetime": "2025-07-01T15:30:00.000Z",
+        "matchEndDatetime": "2025-07-01T15:35:00.000Z",
+        "detectionConfidence": 0.82,
+        "detected": true,
+        "engineInvoked": true
+      },
+      {
+        "patternId": "PIVOT_NONE",
+        "matchStartDatetime": "2025-07-01T13:30:00.000Z",
+        "matchEndDatetime": "2025-07-01T20:00:00.000Z",
+        "detectionConfidence": 0,
+        "detected": false,
+        "engineInvoked": true
+      },
+      {
+        "patternId": "GOLDMINE_CHANNEL_NONE",
+        "matchStartDatetime": "2025-07-01T13:30:00.000Z",
+        "matchEndDatetime": "2025-07-01T20:00:00.000Z",
+        "detectionConfidence": 0,
+        "detected": false,
+        "engineInvoked": true
+      },
+      {
+        "patternId": "GOLDEN_CANDLE_0",
+        "matchStartDatetime": "2025-07-01T16:50:00.000Z",
+        "matchEndDatetime": "2025-07-01T16:50:00.000Z",
+        "detectionConfidence": 0.68,
+        "detected": true,
+        "engineInvoked": true
+      },
+      {
+        "patternId": "BREAKOUT_BOX_NONE",
+        "matchStartDatetime": "2025-07-01T13:30:00.000Z",
+        "matchEndDatetime": "2025-07-01T20:00:00.000Z",
+        "detectionConfidence": 0,
+        "detected": false,
+        "engineInvoked": true
+      }
+    ],
+    "emission": [
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ESCALATOR_0",
+        "action": "BUY",
+        "price": 1485.93,
+        "candleIndex": 236,
+        "confidence": 0.75,
+        "emitted": true,
+        "timestamp": "2025-07-01T17:26:00.000Z"
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "ROCKETMAN_0",
+        "action": "BUY",
+        "price": 1515.02,
+        "candleIndex": 255,
+        "confidence": 0.82,
+        "emitted": true,
+        "timestamp": "2025-07-01T17:45:00.000Z"
+      },
+      {
+        "signalType": "LONG_ENTRY",
+        "patternId": "GOLDEN_CANDLE_0",
+        "action": "BUY",
+        "price": 1485.93,
+        "candleIndex": 236,
+        "confidence": 0.68,
+        "emitted": true,
+        "timestamp": "2025-07-01T17:26:00.000Z"
+      }
+    ],
+    "render": [
+      {
+        "patternId": "ESCALATOR_0",
+        "action": "BUY",
+        "isRendered": true,
+        "position": "topOfCandle",
+        "labelVisible": true,
+        "signalId": "ESCALATOR_0_2025-07-01T17:26:00.000Z_1485.93"
+      },
+      {
+        "patternId": "ROCKETMAN_0",
+        "action": "BUY",
+        "isRendered": true,
+        "position": "topOfCandle",
+        "labelVisible": true,
+        "signalId": "ROCKETMAN_0_2025-07-01T17:45:00.000Z_1515.02"
+      },
+      {
+        "patternId": "GOLDEN_CANDLE_0",
+        "action": "BUY",
+        "isRendered": true,
+        "position": "topOfCandle",
+        "labelVisible": true,
+        "signalId": "GOLDEN_CANDLE_0_2025-07-01T17:26:00.000Z_1485.93"
+      }
+    ],
+    "diff_analysis": [
+      {
+        "signalId": "ESCALATOR_0_2025-07-01T17:26:00.000Z_1485.93",
+        "status": "VALID",
+        "rootCause": "Signal properly emitted and rendered",
+        "timestamp": "2025-07-02T14:24:17.490Z"
+      },
+      {
+        "signalId": "ROCKETMAN_0_2025-07-01T17:45:00.000Z_1515.02",
+        "status": "VALID",
+        "rootCause": "Signal properly emitted and rendered",
+        "timestamp": "2025-07-02T14:24:17.490Z"
+      },
+      {
+        "signalId": "GOLDEN_CANDLE_0_2025-07-01T17:26:00.000Z_1485.93",
+        "status": "VALID",
+        "rootCause": "Signal properly emitted and rendered",
+        "timestamp": "2025-07-02T14:24:17.490Z"
+      }
+    ]
+  },
+  "summary": {
+    "totalPatterns": 6,
+    "patternsDetected": 3,
+    "signalsEmitted": 3,
+    "signalsRendered": 3,
+    "mismatches": 0,
+    "integrityScore": 100
+  },
+  "diagnostics": {
+    "detectionEngineStatus": {
+      "ESCALATOR": true,
+      "ROCKETMAN": true,
+      "PIVOT": true,
+      "GOLDMINE_CHANNEL": true,
+      "GOLDEN_CANDLE": true,
+      "BREAKOUT_BOX": true
+    },
+    "emissionChainStatus": true,
+    "renderPipelineStatus": true,
+    "suppressionReasons": []
+  },
+  "nvdaSpecific": {
+    "symbol": "NVDA",
+    "tradingDate": "2025-07-01",
+    "candleCount": 391,
+    "priceRange": {
+      "low": 1249.81,
+      "high": 1594.9,
+      "open": 1250,
+      "close": 1590.52
+    },
+    "volumeStats": {
+      "total": 13522268,
+      "average": 34584,
+      "peak": 59936
+    }
+  }
+}

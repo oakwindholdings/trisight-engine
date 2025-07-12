@@ -70,7 +70,11 @@ const LoadingIndicator = styled.div`
   text-align: center;
 `;
 
-const SymbolSearch: React.FC = () => {
+interface SymbolSearchProps {
+  onSymbolSelect?: (symbol: string, name?: string, exchange?: string) => void;
+}
+
+const SymbolSearch: React.FC<SymbolSearchProps> = ({ onSymbolSelect }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Array<{
     symbol: string;
@@ -152,10 +156,28 @@ const SymbolSearch: React.FC = () => {
   }, []);
   
   // Handle symbol selection
-  const handleSelectSymbol = (selectedSymbol: string) => {
+  const handleSelectSymbol = (selectedSymbol: string, name?: string, exchange?: string) => {
+    console.log('[SymbolSearch] handleSelectSymbol called with:', selectedSymbol, name, exchange);
+    console.log('[SymbolSearch] onSymbolSelect prop exists:', !!onSymbolSelect);
+    
     setSymbol(selectedSymbol);
     setQuery(selectedSymbol);
     setShowResults(false);
+    
+    // Store the full symbol info in localStorage
+    if (name && exchange) {
+      localStorage.setItem('trisight_navbar_symbol_info', JSON.stringify({
+        symbol: selectedSymbol,
+        name,
+        exchange
+      }));
+    }
+    
+    // Call the optional callback
+    if (onSymbolSelect) {
+      console.log('[SymbolSearch] Calling onSymbolSelect callback');
+      onSymbolSelect(selectedSymbol, name, exchange);
+    }
   };
   
   return (
@@ -176,7 +198,7 @@ const SymbolSearch: React.FC = () => {
             results.map((result) => (
               <ResultItem 
                 key={`${result.symbol}-${result.exchange}`}
-                onClick={() => handleSelectSymbol(result.symbol)}
+                onClick={() => handleSelectSymbol(result.symbol, result.name, result.exchange)}
               >
                 <SymbolName>{result.symbol}</SymbolName>
                 <SymbolDetails>

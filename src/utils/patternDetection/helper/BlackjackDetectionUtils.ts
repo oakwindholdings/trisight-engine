@@ -4,13 +4,6 @@
 import { CandlestickData } from '../../../models/ChartTypes';
 
 /**
- * Convert datetime string to Date object
- */
-function parseDatetime(datetime: string): Date {
-  return new Date(datetime);
-}
-
-/**
  * Utility class with helper methods for BlackJack signal detection
  */
 export class BlackjackDetectionUtils {
@@ -226,7 +219,6 @@ export class BlackjackDetectionUtils {
     
     const prices = data.map(d => d.close);
     
-    let sumSquares = 0;
     let sumX = 0;
     let sumY = 0;
     let sumXY = 0;

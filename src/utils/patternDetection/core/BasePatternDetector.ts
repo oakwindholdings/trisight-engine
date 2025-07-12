@@ -4,6 +4,7 @@
 import { CandlestickData } from '../../../models/ChartTypes';
 import { Pattern, PatternType } from '../../../models/PatternTypes';
 import { MarketContext, ThresholdConfig } from './MarketContext';
+import { logDebug } from '../../debug';
 
 /**
  * Detection statistics for diagnostic and performance tracking
@@ -30,6 +31,7 @@ export interface DetectionOptions {
 /**
  * Base class for all pattern detectors that implements adaptive threshold management
  * and context-aware pattern detection
+ * NOTE: TriSight uses Canvas, not SVG. Supports DEBUG_PATTERN_DETECT channel via logDebug.
  */
 export abstract class BasePatternDetector<T extends Pattern> {
   protected detectionStats: DetectionStats;
@@ -71,7 +73,7 @@ export abstract class BasePatternDetector<T extends Pattern> {
     this.detectionStats.thresholds = thresholds;
     
     if (this.options.enableLogging) {
-      console.log(`[${this.getPatternType()}] Detecting with thresholds:`, thresholds);
+      logDebug('DEBUG_PATTERN_DETECT', `[${this.getPatternType()}] Detecting with thresholds:`, thresholds);
     }
     
     // Perform the actual pattern detection (implemented by specific detectors)
@@ -89,7 +91,7 @@ export abstract class BasePatternDetector<T extends Pattern> {
       : 0;
     
     if (this.options.enableLogging) {
-      console.log(`[${this.getPatternType()}] Detected ${processedPatterns.length} patterns. `
+      logDebug('DEBUG_PATTERN_DETECT', `[${this.getPatternType()}] Detected ${processedPatterns.length} patterns. `
        + `Avg confidence: ${this.detectionStats.avgConfidence.toFixed(2)}`);
     }
     
@@ -114,7 +116,7 @@ export abstract class BasePatternDetector<T extends Pattern> {
     };
     
     if (this.options.enableLogging) {
-      console.log(`[${this.getPatternType()}] Options updated:`, this.options);
+      logDebug('DEBUG_PATTERN_DETECT', `[${this.getPatternType()}] Options updated:`, this.options);
     }
   }
   

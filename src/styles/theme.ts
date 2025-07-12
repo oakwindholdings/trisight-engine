@@ -4,38 +4,38 @@
 export const ThemeTokens = {
   colors: {
     // Primary color palette
-    primary: '#0A2647',        // Deep blue for app chrome/framework
-    primaryHover: '#0D3359',
-    primaryActive: '#061A33',
+    primary: '#2196f3',        // Blue for app chrome/framework
+    primaryHover: '#1976d2',
+    primaryActive: '#1565c0',
     
     // Secondary palette
-    secondary: '#144272',      // Cerulean for interaction elements
-    secondaryHover: '#1A5494',
-    secondaryActive: '#0E3155',
+    secondary: '#757575',      // Grey for interaction elements
+    secondaryHover: '#616161',
+    secondaryActive: '#424242',
     
     // Accent palette
     accent: '#FFA500',         // Gold for highlighting patterns/selections
     accentHover: '#FFB124',
     accentActive: '#E69500',
     
-    // Neutral palette (dark mode)
-    background: '#121212',
-    surface: '#1E1E1E',
-    surfaceHover: '#2A2A2A',
-    surfaceActive: '#323232',
+    // Neutral palette (light mode)
+    background: '#f5f5f5',
+    surface: '#ffffff',
+    surfaceHover: '#f9f9f9',
+    surfaceActive: '#e0e0e0',
     
     // Text colors
-    textPrimary: '#EFEFEF',
-    textSecondary: '#A0A0A0',
-    textDisabled: '#666666',
+    textPrimary: '#212121',
+    textSecondary: '#757575',
+    textDisabled: '#9e9e9e',
     textOnAccent: '#000000',
     
     // Border and dividers
-    border: '#333333',
-    divider: '#292929',
+    border: '#e0e0e0',
+    divider: '#e0e0e0',
     
     // Form elements
-    inputBackground: '#2A2A2A',
+    inputBackground: '#ffffff',
     white: '#FFFFFF',
     
     // Alert colors

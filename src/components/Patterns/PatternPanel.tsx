@@ -1,7 +1,8 @@
 // src/components/Patterns/PatternPanel.tsx
 // Side panel listing patterns
 // Includes adaptive controls
-import React, { useState } from 'react';
+// NOTE: supports DEBUG_UI channel
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { ThemeTokens } from '../../styles/theme';
 import { Pattern, PatternType, ThrustDirection, ChannelDirection } from '../../models/PatternTypes';
@@ -12,16 +13,22 @@ import GoldmineShaftSettingsPanel from './GoldmineShaftSettingsPanel';
 import RocketmanSettingsPanel from './RocketmanSettingsPanel';
 import BlackjackSettingsPanel from './BlackjackSettingsPanel';
 import EscalatorSettingsPanel from './EscalatorSettingsPanel';
+import BreakoutBoxSettingsPanel from './BreakoutBoxSettingsPanel';
 import PivotSettingsPanel from '../Settings/PivotSettingsPanel';
+import DebugSettingsPanel from '../Settings/DebugSettingsPanel';
+import ChartSettingsPanel from '../Settings/ChartSettingsPanel';
+import GoldenCandleSettingsPanel from './GoldenCandleSettingsPanel';
 import useTwelveDataApiKey from '../../hooks/useTwelveDataApiKey';
+import { logDebug } from '../../utils/debug';
 
 const PanelContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 280px;
-  height: 100%;
   background-color: ${ThemeTokens.colors.surface};
   border-left: 1px solid ${ThemeTokens.colors.border};
+  height: 100%;
+  overflow-y: auto;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
 `;
 
 const PanelHeader = styled.div`
@@ -72,6 +79,8 @@ const SectionContent = styled.div<{ $isOpen: boolean }>`
   transition: max-height 0.3s ease-in-out;
   padding-top: ${props => props.$isOpen ? ThemeTokens.spacing.small : '0'};
   padding-bottom: ${props => props.$isOpen ? ThemeTokens.spacing.small : '0'};
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 const ChevronIcon = styled.span<{ $isOpen: boolean }>`
@@ -142,11 +151,27 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
   onChartHeightChange,
 }) => {
   // Access pattern context for preferences
-  const { preferences = { enabledPatternTypes: [] }, updatePreferences } = usePatternContext();
+  const { preferences = { enabledPatternTypes: [] }, updatePreferences, goldmineQual, goldenCandleSettings, setGoldenCandleSettings, blackjackSettings, setBlackjackSettings } = usePatternContext();
+  
+  // Golden Candle filter state with localStorage persistence
+  const [showOnlyGoldenCandles, setShowOnlyGoldenCandles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trisight_golden_candle_filter');
+      return saved === 'true';
+    } catch (e) {
+      console.error('Error loading Golden Candle filter from localStorage:', e);
+      return false;
+    }
+  });
+  
+  // Golden Candle count with defensive fallback for accuracy
+  const goldenCandleCount = goldmineQual?.filter(Boolean).length || 0;
+  const isLoading = goldmineQual?.length === 0;
+  
   // Define section names as a type for type safety
   type SectionName = 'globalSettings' |
                   'goldmineChannelSettings' | 'goldmineShaftSettings' | 'rocketmanSettings' | 
-                  'blackjackSettings' | 'escalatorSettings' | 'pivotSettings';
+                  'blackjackSettings' | 'escalatorSettings' | 'breakoutBoxSettings' | 'pivotSettings' | 'chartSettings' | 'debugSettings' | 'goldenCandleSettings';
   
   // State to track which sections are open
   const [openSections, setOpenSections] = useState<Record<SectionName, boolean>>({
@@ -156,81 +181,189 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
     rocketmanSettings: false,
     blackjackSettings: false,
     escalatorSettings: false,
-    pivotSettings: false
+    breakoutBoxSettings: false,
+    pivotSettings: false,
+    chartSettings: false,
+    debugSettings: false,
+    goldenCandleSettings: false
   });
 
   const { apiKey, setApiKey } = useTwelveDataApiKey();
   
-  // State for pattern settings
-  const [goldmineChannelSettings, setGoldmineChannelSettings] = useState({
-    enabled: true,
-    minTouchPoints: 4,
-    priceTolerance: 0.2,
-    minChannelHeight: 1.5,
-    minChannelDuration: 20,
-    confidenceThreshold: 0.5,
-    preferredDirection: 'ALL' as 'ALL' | ChannelDirection
-  });
+  // State for pattern settings with localStorage persistence
+  const getInitialGoldmineChannelSettings = () => {
+    try {
+      const saved = localStorage.getItem('goldmineChannelSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading goldmine channel settings:', error);
+    }
+    return {
+      enabled: true,
+      minTouchPoints: 4,
+      priceTolerance: 0.2,
+      minChannelHeight: 1.5,
+      minChannelDuration: 20,
+      confidenceThreshold: 0.5,
+      preferredDirection: 'ALL' as 'ALL' | ChannelDirection,
+      showLabels: false
+    };
+  };
   
-  const [goldmineShaftSettings, setGoldmineShaftSettings] = useState({
-    enabled: true,
-    minThrustMagnitude: 1.5,
-    minRetracementPercentage: 30,
-    maxRetracementPercentage: 60,
-    thrustDurationRange: [5, 20] as [number, number],
-    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
-    confidenceThreshold: 0.5
-  });
+  const [goldmineChannelSettings, setGoldmineChannelSettings] = useState(getInitialGoldmineChannelSettings());
   
-  const [rocketmanSettings, setRocketmanSettings] = useState({
-    enabled: true,
-    minAccelerationRate: 0.2,
-    minIntensity: 0.5,
-    minMomentumScore: 0.6,
-    minVolumeConfirmation: 0.5,
-    lookbackPeriods: 5,
-    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection
-  });
+  const getInitialGoldmineShaftSettings = () => {
+    try {
+      const saved = localStorage.getItem('goldmineShaftSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading goldmine shaft settings:', error);
+    }
+    return {
+      enabled: true,
+      showLabels: false,
+      minThrustMagnitude: 1.5,
+      minRetracementPercentage: 30,
+      maxRetracementPercentage: 60,
+      thrustDurationRange: [5, 20] as [number, number],
+      preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
+      confidenceThreshold: 0.5
+    };
+  };
   
-  const [blackjackSettings, setBlackjackSettings] = useState({
-    enabled: true,
-    lookbackPeriods: 7,
-    minScore: 2,
-    showContextTimeframe: true,
-    contextTimeframeMultiplier: 5,
-    basePriceChangeThreshold: 0.1,
-    baseVolumeChangeThreshold: 0.5
-  });
+  const [goldmineShaftSettings, setGoldmineShaftSettings] = useState(getInitialGoldmineShaftSettings());
   
-  const [escalatorSettings, setEscalatorSettings] = useState({
-    enabled: true,
-    minSteps: 3,
-    minStepSize: 0.5,
-    maxConsolidationVolatility: 1.0,
-    basePriceChangeThreshold: 0.01,
-    baseVolumeChangeThreshold: 0.05,
-    useContextTimeframe: true,
-    contextTimeframeMultiplier: 3,
-    minScore: 2.0,
-    preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection
-  });
+  const getInitialRocketmanSettings = () => {
+    try {
+      const saved = localStorage.getItem('rocketmanSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading rocketman settings:', error);
+    }
+    return {
+      enabled: true,
+      minAccelerationRate: 0.2,
+      minIntensity: 0.5,
+      minMomentumScore: 0.6,
+      minVolumeConfirmation: 0.5,
+      lookbackPeriods: 5,
+      preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection,
+      showLabels: false
+    };
+  };
   
-  const [pivotSettings, setPivotSettings] = useState({
-    touchPointThreshold: 3,
-    priceTolerance: 0.3,
-    confidenceThreshold: 0.6,
-    volumeReactionThreshold: 1.2,
-    minimumTouchGap: 3,
-    detectSupport: true,
-    detectResistance: true
-  });
+  const [rocketmanSettings, setRocketmanSettings] = useState(getInitialRocketmanSettings());
+  
+  // Initialize escalator settings from localStorage
+  const getInitialEscalatorSettings = () => {
+    try {
+      const saved = localStorage.getItem('escalatorSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading escalator settings:', error);
+    }
+    return {
+      enabled: true,
+      showLabels: false,  // Changed from true to false
+      showBreakoutBoxes: true,  // Add missing field for breakout box visibility
+      minSteps: 3,
+      minStepSize: 0.5,
+      maxConsolidationVolatility: 1.0,
+      basePriceChangeThreshold: 0.01,
+      baseVolumeChangeThreshold: 0.05,
+      useContextTimeframe: true,
+      contextTimeframeMultiplier: 3,
+      minScore: 2.0,
+      preferredDirection: 'BOTH' as 'BOTH' | ThrustDirection
+    };
+  };
+  
+  const [escalatorSettings, setEscalatorSettings] = useState(getInitialEscalatorSettings());
+  
+  const getInitialPivotSettings = () => {
+    try {
+      const saved = localStorage.getItem('pivotSettings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading pivot settings:', error);
+    }
+    return {
+      touchPointThreshold: 3,
+      priceTolerance: 0.3,
+      confidenceThreshold: 0.6,
+      volumeReactionThreshold: 1.2,
+      minimumTouchGap: 3,
+      detectSupport: true,
+      detectResistance: true,
+      showLabels: false
+    };
+  };
+  
+  const [pivotSettings, setPivotSettings] = useState(getInitialPivotSettings());
+  
+  // Get pattern context to sync escalator settings
+  const patternContext = usePatternContext();
+  
+  // NOTE: localStorage persistence is handled in individual setting change handlers to avoid infinite loops
+  
+  // Sync escalator settings with preferences on mount and when preferences change
+  useEffect(() => {
+    const isEscalatorEnabled = preferences?.enabledPatternTypes?.includes(PatternType.ESCALATOR) || false;
+    
+    // Only update if there's a mismatch
+    if (escalatorSettings.enabled !== isEscalatorEnabled) {
+      const newSettings = {
+        ...escalatorSettings,
+        enabled: isEscalatorEnabled
+      };
+      handleEscalatorSettingsChange(newSettings);
+    }
+  }, [preferences?.enabledPatternTypes]); // Only depend on enabledPatternTypes to avoid infinite loops
+  
+  const handleEscalatorSettingsChange = (newSettings: typeof escalatorSettings) => {
+    logDebug('DEBUG_CONTEXT_UPDATE', '[PatternPanel] Escalator settings changed:', newSettings);
+    setEscalatorSettings(newSettings);
+    // Update pattern context with the full settings object
+    if (patternContext.setEscalatorSettings) {
+      patternContext.setEscalatorSettings(newSettings);
+    }
+  };
+  
+  const handleAnalysisComplete = () => {
+  };
   
   const toggleSection = (section: SectionName) => {
     setOpenSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
+    
+    // Trigger multiple resize events to ensure chart redraws properly
+    // First one immediately to catch any instant layout changes
+    window.dispatchEvent(new Event('resize'));
+    
+    // Second one after transition completes
+    setTimeout(() => {
+      logDebug('DEBUG_UI', '[PatternPanel] Dispatching resize event after section toggle');
+      window.dispatchEvent(new Event('resize'));
+    }, 350); // 300ms transition + 50ms buffer
+    
+    // Third one as a failsafe
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 500);
   };
+
   return (
     <PanelContainer>
       <PanelHeader>
@@ -245,6 +378,27 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
             <ChevronIcon $isOpen={openSections.globalSettings}>›</ChevronIcon>
           </SectionHeader>
           <SectionContent $isOpen={openSections.globalSettings}>
+            <FilterGroup>
+              <FilterLabel>TwelveData API Key</FilterLabel>
+              <input
+                type="text"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Enter API key"
+                style={{
+                  width: '100%',
+                  backgroundColor: ThemeTokens.colors.inputBackground,
+                  border: `1px solid ${ThemeTokens.colors.border}`,
+                  borderRadius: ThemeTokens.borderRadius.small,
+                  padding: ThemeTokens.spacing.small,
+                  color: ThemeTokens.colors.textPrimary,
+                }}
+              />
+              <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
+                Stored locally in your browser
+              </div>
+            </FilterGroup>
+
             <AdaptivePatternControls 
               preferences={preferences}
               updatePreferences={updatePreferences}
@@ -314,29 +468,10 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
                 Changes are automatically saved to your browser
               </div>
             </FilterGroup>
-
-            <FilterGroup>
-              <FilterLabel>TwelveData API Key</FilterLabel>
-              <input
-                type="text"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Enter API key"
-                style={{
-                  width: '100%',
-                  backgroundColor: ThemeTokens.colors.inputBackground,
-                  border: `1px solid ${ThemeTokens.colors.border}`,
-                  borderRadius: ThemeTokens.borderRadius.small,
-                  padding: ThemeTokens.spacing.small,
-                  color: ThemeTokens.colors.textPrimary,
-                }}
-              />
-              <div style={{ fontSize: '10px', color: ThemeTokens.colors.textSecondary, marginTop: '4px' }}>
-                Stored locally in your browser
-              </div>
-            </FilterGroup>
           </SectionContent>
         </Section>
+        
+
         
         {/* Goldmine Channel Pattern */}
         <Section>
@@ -496,6 +631,13 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
                       ...preferences,
                       enabledPatternTypes: updatedTypes
                     });
+                    
+                    // Also update escalator settings to sync enabled state
+                    const newEscalatorSettings = {
+                      ...escalatorSettings,
+                      enabled: e.target.checked
+                    };
+                    handleEscalatorSettingsChange(newEscalatorSettings);
                   }}
                   onClick={(e) => e.stopPropagation()}
                   style={{ marginRight: '8px' }}
@@ -508,7 +650,42 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
           <SectionContent $isOpen={openSections.escalatorSettings}>
             <EscalatorSettingsPanel 
               settings={escalatorSettings}
-              onSettingsChange={setEscalatorSettings}
+              onSettingsChange={handleEscalatorSettingsChange}
+            />
+          </SectionContent>
+        </Section>
+        
+        {/* Breakout Box Pattern */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('breakoutBoxSettings')}>
+            <SectionTitle>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type="checkbox" 
+                  id="enable-breakout-box"
+                  checked={preferences?.enabledPatternTypes?.includes(PatternType.BREAKOUTBOX) || false}
+                  onChange={(e) => {
+                    const currentTypes = preferences?.enabledPatternTypes || [];
+                    const updatedTypes = e.target.checked
+                      ? [...currentTypes, PatternType.BREAKOUTBOX]
+                      : currentTypes.filter((t: PatternType) => t !== PatternType.BREAKOUTBOX);
+                    updatePreferences({
+                      ...preferences,
+                      enabledPatternTypes: updatedTypes
+                    });
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ marginRight: '8px' }}
+                />
+                Breakout Box
+              </div>
+            </SectionTitle>
+            <ChevronIcon $isOpen={openSections.breakoutBoxSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.breakoutBoxSettings}>
+            <BreakoutBoxSettingsPanel 
+              settings={patternContext.breakoutBoxSettings}
+              onSettingsChange={patternContext.setBreakoutBoxSettings}
             />
           </SectionContent>
         </Section>
@@ -547,6 +724,71 @@ const PatternPanel: React.FC<PatternPanelProps> = ({
                 setPivotSettings(newSettings);
               }}
             />
+          </SectionContent>
+        </Section>
+        
+        {/* Golden Candle Pattern */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('goldenCandleSettings')}>
+            <SectionTitle>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type="checkbox" 
+                  id="enable-golden-candle"
+                  checked={preferences?.enabledPatternTypes?.includes(PatternType.GOLDEN_CANDLE) || false}
+                  onChange={(e) => {
+                    const currentTypes = preferences?.enabledPatternTypes || [];
+                    const updatedTypes = e.target.checked
+                      ? [...currentTypes, PatternType.GOLDEN_CANDLE]
+                      : currentTypes.filter((t: PatternType) => t !== PatternType.GOLDEN_CANDLE);
+                    updatePreferences({
+                      ...preferences,
+                      enabledPatternTypes: updatedTypes
+                    });
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ marginRight: '8px' }}
+                />
+                Golden Candle
+              </div>
+            </SectionTitle>
+            <ChevronIcon $isOpen={openSections.goldenCandleSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.goldenCandleSettings}>
+            <GoldenCandleSettingsPanel 
+              settings={goldenCandleSettings}
+              onSettingsChange={setGoldenCandleSettings}
+              showOnlyGoldenCandles={showOnlyGoldenCandles}
+              onShowOnlyGoldenCandlesChange={(show) => {
+                setShowOnlyGoldenCandles(show);
+                localStorage.setItem('trisight_golden_candle_filter', String(show));
+                onFilterChange({...patternFilters, showOnlyGoldenCandles: show});
+              }}
+              goldenCandleCount={goldenCandleCount}
+              isLoading={isLoading}
+            />
+          </SectionContent>
+        </Section>
+        
+        {/* Chart Settings */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('chartSettings')}>
+            <SectionTitle>Chart Settings</SectionTitle>
+            <ChevronIcon $isOpen={openSections.chartSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.chartSettings}>
+            <ChartSettingsPanel />
+          </SectionContent>
+        </Section>
+        
+        {/* Debug Settings */}
+        <Section>
+          <SectionHeader onClick={() => toggleSection('debugSettings')}>
+            <SectionTitle>Debug Settings</SectionTitle>
+            <ChevronIcon $isOpen={openSections.debugSettings}>›</ChevronIcon>
+          </SectionHeader>
+          <SectionContent $isOpen={openSections.debugSettings}>
+            <DebugSettingsPanel />
           </SectionContent>
         </Section>
         

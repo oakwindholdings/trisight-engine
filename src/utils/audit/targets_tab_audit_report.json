@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-07-05T20:44:14-04:00",
+  "auditType": "TriSight Targets Tab Pipeline Diagnostic",
+  "testSymbols": ["AAPL", "NVDA", "TSLA", "Meta Platforms Inc."],
+  "step1_symbolValidation": [
+    {
+      "original": "AAPL",
+      "cleaned": "AAPL", 
+      "isValid": true,
+      "issues": []
+    },
+    {
+      "original": "NVDA",
+      "cleaned": "NVDA",
+      "isValid": true, 
+      "issues": []
+    },
+    {
+      "original": "TSLA",
+      "cleaned": "TSLA",
+      "isValid": true,
+      "issues": []
+    },
+    {
+      "original": "Meta Platforms Inc.",
+      "cleaned": "META",
+      "isValid": false,
+      "issues": ["Invalid ticker format", "Original: \"Meta Platforms Inc.\" → Cleaned: \"META\""]
+    }
+  ],
+  "step2_scanExecution": [
+    {
+      "symbol": "EMERGENCY_MODE",
+      "success": false,
+      "apiResponse": "BLOCKED",
+      "candleCount": 0,
+      "patternsDetected": 0,
+      "signalsGenerated": 0,
+      "errors": ["EMERGENCY_MODE = true prevents scanning", "MAX_SYMBOLS_PER_SCAN = 3 enforced"]
+    }
+  ],
+  "step3_signalRendering": [
+    {
+      "symbol": "ALL",
+      "signalCount": 0,
+      "targetReportRow": null,
+      "calculations": {"triSightRating": 0, "successProfile": 0, "momentum": 0},
+      "errors": ["No signals available due to emergency mode", "scanning prop must be true for signals to populate"]
+    }
+  ],
+  "step4_tableUI": {
+    "headerRendered": true,
+    "rowCount": 0,
+    "filteringWorks": false,
+    "sortingWorks": false,
+    "notes": "Header renders but no data rows due to signal pipeline failure"
+  },
+  "step5_routeSync": {
+    "chartContextSet": true,
+    "routeNavigation": true,
+    "notes": "Row clicking works but no rows to click"
+  },
+  "breakagePoints": [
+    "CRITICAL: EMERGENCY_MODE = true in useSignalScanner.ts blocks all symbol scanning",
+    "Symbol validation: Invalid symbols not cleaned before scanning", 
+    "Signal rendering: scanning prop logic prevents table population",
+    "Table UI: No rows rendered due to upstream signal failure"
+  ],
+  "recommendations": [
+    "Set EMERGENCY_MODE = false in useSignalScanner.ts",
+    "Add symbol cleaning in TargetsPage.tsx before passing to scanner",
+    "Fix scanning prop logic in TargetReportTable.tsx",
+    "Add error handling for invalid symbols",
+    "Implement symbol validation in Excel import flow"
+  ],
+  "emergencyModeStatus": true,
+  "quotaLimitHit": false,
+  "fixesRequired": 4,
+  "severity": "CRITICAL"
+}

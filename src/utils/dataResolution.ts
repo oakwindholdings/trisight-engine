@@ -20,6 +20,7 @@ export interface InfiniteZoomState {
   resolution: ResolutionConfig;
   isTransitioning: boolean;
   targetCandles: number;
+  centerCandleRatio?: number; // Ratio (0-1) of where to center the view when zooming
 }
 
 export interface VisibleRange {

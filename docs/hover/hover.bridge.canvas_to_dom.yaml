@@ -1,0 +1,274 @@
+# TriSight Canvas-DOM Hover Bridge Patch
+# Phase 2: Unify DOM & Canvas Hover Infrastructure
+# Transforms SignalRenderer hover detection into main tooltip system
+
+patch_id: hover.bridge.canvas_to_dom
+version: 1.0.0
+phase: 2
+priority: high
+description: |
+  Bridges canvas-based signal hover detection (SignalRenderer.tsx) with DOM-based tooltip system (MetricPopover.tsx).
+  Enables TradeActionSignal hover integration with unified hover context.
+
+dependencies:
+  - SignalRenderer.tsx (getSignalAtPoint, isPointInSignal, getSignalTooltip functions)
+  - useHoverMetrics.ts (existing mouse tracking)
+  - MetricPopover.tsx (tooltip rendering)
+  - PatternContext.tsx (pattern data)
+
+implementation_strategy:
+  approach: "extend_existing_hover_metrics"
+  rationale: |
+    Rather than replacing the working useHoverMetrics system, we extend it to also detect
+    canvas-based signals while maintaining backward compatibility with existing pattern hover.
+
+tasks:
+  - task: 1
+    title: "Create Unified Hover Context"
+    file: src/contexts/UnifiedHoverContext.tsx
+    description: |
+      New context that combines pattern hover data with signal hover data.
+      Replaces the need for separate PatternContext + SignalContext integration.
+    interface: |
+      interface UnifiedHoverData {
+        // Existing hover metrics (from useHoverMetrics)
+        candle: {
+          idx: number;
+          x: number;
+          y: number;
+          data: CandlestickData;
+          visibleIndex: number;
+        };
+        
+        // Pattern data (from PatternContext)
+        patterns: {
+          bjCount: number | string;
+          escalatorStep?: EscalatorStepData;
+          breakoutBox?: BreakoutBoxData;
+          goldenCandle?: GoldenCandleData;
+          [key: string]: any;
+        };
+        
+        // NEW: Signal data (from SignalRenderer)
+        signal?: {
+          tradeActionSignal: TradeActionSignal;
+          tooltip: string;
+          validation: ValidationResults;
+          isHovered: boolean;
+        };
+        
+        // Hover state management
+        isActive: boolean;
+        lastUpdate: number;
+      }
+
+  - task: 2
+    title: "Extend useHoverMetrics with Canvas Detection"
+    file: src/hooks/useHoverMetrics.ts
+    description: |
+      Enhance existing useHoverMetrics hook to also detect canvas-based signals
+      using SignalRenderer functions while maintaining current pattern detection.
+    changes:
+      - add_import: "import { getSignalAtPoint, getSignalTooltip } from '../components/Chart/SignalRenderer';"
+      - add_import: "import { TradeActionSignal } from '../utils/trading/TradeActionSignal';"
+      - add_parameter: "signals?: TradeActionSignal[]"
+      - add_parameter: "timeScale?: any"
+      - add_parameter: "priceScale?: any"
+      - extend_interface: |
+          interface HoverMetrics {
+            // ... existing fields
+            signal?: {
+              tradeActionSignal: TradeActionSignal;
+              tooltip: string;
+              isHovered: boolean;
+            };
+          }
+      - extend_handleMouseMove: |
+          // After existing candle detection logic...
+          
+          // NEW: Canvas signal detection
+          let hoveredSignal = null;
+          if (signals && signals.length > 0 && timeScale && priceScale) {
+            const signal = getSignalAtPoint(
+              signals,
+              relativeX + chartLeft, // Convert back to absolute coordinates
+              ev.clientY - rect.top,  // Mouse Y relative to container
+              timeScale,
+              priceScale,
+              8 // Hit radius
+            );
+            
+            if (signal) {
+              hoveredSignal = {
+                tradeActionSignal: signal,
+                tooltip: getSignalTooltip(signal),
+                isHovered: true
+              };
+            }
+          }
+          
+          // Update hover data with both candle and signal info
+          setHoverData({
+            // ... existing fields
+            signal: hoveredSignal
+          });
+
+  - task: 3
+    title: "Update MetricPopover with Signal Display"
+    file: src/components/Chart/MetricPopover.tsx
+    description: |
+      Enhance MetricPopover to display signal information when hovering over TradeActionSignals.
+      Add this as Zone 1 (Entry Context) and Zone 2 (Validation) content.
+    changes:
+      - add_import: "import { getSignalValidation } from '../../framework/tradeActionEmitter';"
+      - extend_component: |
+          // After existing hover data extraction...
+          
+          // NEW: Signal hover detection
+          const hoveredSignal = pop.signal;
+          const signalValidation = hoveredSignal ? 
+            getSignalValidation(hoveredSignal.tradeActionSignal) : null;
+          
+          // ... existing JSX content
+          
+          {/* NEW: Zone 1 - Signal Entry Context */}
+          {hoveredSignal && (
+            <>
+              <div className="border-t border-gray-600 mt-2 pt-2 mb-1"></div>
+              <div className="flex items-center text-sm mb-2">
+                <span className="font-bold text-emerald-400 mr-2">
+                  SIGNAL: {hoveredSignal.tradeActionSignal.action}
+                </span>
+                <span className="text-white">
+                  {hoveredSignal.tradeActionSignal.price.toFixed(4)}
+                </span>
+              </div>
+              
+              {/* Zone 2 - Signal Validation */}
+              {signalValidation && (
+                <>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500">Validation:</span>
+                    <span className={signalValidation.validationFlag === '🟢 VALID' ? 'text-green-400' : 'text-red-400'}>
+                      {signalValidation.validationFlag}
+                    </span>
+                  </div>
+                  {signalValidation.issues.length > 0 && (
+                    <div className="text-xs text-red-400 mt-1">
+                      {signalValidation.issues[0]}
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {/* Signal Confidence */}
+              {hoveredSignal.tradeActionSignal.confidence && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500">Confidence:</span>
+                  <span className="text-gray-300">
+                    {Math.round(hoveredSignal.tradeActionSignal.confidence * 100)}%
+                  </span>
+                </div>
+              )}
+              
+              {/* Risk Level */}
+              {hoveredSignal.tradeActionSignal.riskLevel && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500">Risk Level:</span>
+                  <span className="text-yellow-400">
+                    {hoveredSignal.tradeActionSignal.riskLevel}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+
+  - task: 4
+    title: "Integrate Bridge with InfiniteZoomChart"
+    file: src/components/Chart/InfiniteZoomChart.tsx
+    description: |
+      Update InfiniteZoomChart to pass TradeActionSignals and scales to the enhanced useHoverMetrics hook.
+      This completes the canvas-DOM bridge integration.
+    changes:
+      - locate_hover_integration: |
+          // Find existing useHoverMetrics call
+          const { hoverData, HoverMetricsProvider } = useHoverMetrics(
+            containerRef,
+            timeScale?.scale ? { invert: timeScale.invert } : undefined,
+            transformedData,
+            margin,
+            visibleDataIndices
+          );
+      - extend_hover_integration: |
+          // NEW: Enhanced useHoverMetrics with signal detection
+          const { hoverData, HoverMetricsProvider } = useHoverMetrics(
+            containerRef,
+            timeScale?.scale ? { invert: timeScale.invert } : undefined,
+            transformedData,
+            margin,
+            visibleDataIndices,
+            // NEW PARAMETERS:
+            tradeActionSignals,  // Pass signals for canvas detection
+            timeScale,           // Pass scale for coordinate conversion
+            priceScale           // Pass scale for coordinate conversion
+          );
+
+  - task: 5
+    title: "Add Hover Debug Logging"
+    file: src/utils/debug.ts
+    description: |
+      Add debug logging specifically for hover events to trace canvas-DOM bridge functionality.
+    changes:
+      - extend_debug_channels: |
+          export const DEBUG_HOVER_EVENTS = process.env.NODE_ENV === 'development';
+          
+          export function logDebugHover(component: string, event: string, data: any) {
+            if (DEBUG_HOVER_EVENTS) {
+              console.log(`[HOVER] ${component} - ${event}:`, data);
+            }
+          }
+
+testing_strategy:
+  manual_tests:
+    - test: "Signal Hover Detection"
+      steps:
+        - "Load chart with TradeActionSignals visible"
+        - "Hover over signal dots/labels"
+        - "Verify tooltip shows signal information (action, price, validation)"
+        - "Verify existing pattern hover still works"
+      
+    - test: "Canvas-DOM Coordinate Mapping"
+      steps:
+        - "Hover over signals at different zoom levels"
+        - "Verify hover detection accuracy"
+        - "Test with different chart dimensions"
+      
+    - test: "Performance Impact"
+      steps:
+        - "Monitor hover response time"
+        - "Ensure no performance degradation"
+        - "Verify smooth mouse tracking"
+
+  automated_tests:
+    - "Unit tests for getSignalAtPoint integration"
+    - "Hover context state management tests"
+    - "Canvas coordinate conversion accuracy tests"
+
+success_criteria:
+  - "✅ Hovering over TradeActionSignals shows tooltip with signal details"
+  - "✅ Signal validation flags (VALID/LATE) appear in tooltip"
+  - "✅ Existing pattern hover functionality preserved"
+  - "✅ No performance degradation in hover response time"
+  - "✅ Accurate hover detection across different zoom levels"
+
+rollback_plan:
+  - "Conditional feature flag for canvas-DOM bridge"
+  - "Maintain backward compatibility with existing useHoverMetrics"
+  - "Quick disable via environment variable if issues arise"
+
+next_phase_dependencies:
+  phase_3_requirements:
+    - "UnifiedHoverData interface established"
+    - "Signal hover data available in tooltip context"
+    - "Canvas-DOM coordinate mapping functional"
+    - "Foundation for zone-based tooltip refactor ready"

@@ -1,0 +1,386 @@
+{
+  "cognitiveHoverSpecMapping": {
+    "version": "1.0.0",
+    "created": "2025-06-30T16:56:00-04:00",
+    "description": "Field mapping from TriSight hover contexts to Cognitive Spec zones",
+    "zones": {
+      "zone1_entry_context": {
+        "description": "Immediate pattern identification and entry point details",
+        "cognitiveLoad": "low",
+        "priority": "high",
+        "currentMappings": [
+          {
+            "field": "idx",
+            "source": "useHoverMetrics.hoverData.idx",
+            "description": "Absolute candle index",
+            "status": "complete",
+            "transformationNeeded": "styling_enhancement"
+          },
+          {
+            "field": "bjCount",
+            "source": "useHoverMetrics.hoverData.bj",
+            "description": "Blackjack count for current candle",
+            "status": "complete",
+            "transformationNeeded": "confidence_based_styling"
+          },
+          {
+            "field": "patternType",
+            "source": "PatternContext.escalatorSteps[].type",
+            "description": "Detected pattern type identification",
+            "status": "partial",
+            "transformationNeeded": "unified_pattern_detection"
+          }
+        ],
+        "missingMappings": [
+          {
+            "field": "entryPrice",
+            "requiredSource": "TradeActionSignal.price",
+            "description": "Signal entry price display",
+            "priority": "high",
+            "blockedBy": "canvas_dom_bridge"
+          },
+          {
+            "field": "patternDirection",
+            "requiredSource": "Pattern.direction",
+            "description": "Unified pattern direction indicator",
+            "priority": "medium",
+            "implementation": "pattern_type_consolidation"
+          },
+          {
+            "field": "confidenceBadge",
+            "requiredSource": "Pattern.confidence",
+            "description": "Visual confidence indicator",
+            "priority": "high",
+            "implementation": "confidence_styling_system"
+          }
+        ]
+      },
+      "zone2_confidence_validation": {
+        "description": "Risk assessment and signal quality indicators",
+        "cognitiveLoad": "medium",
+        "priority": "high",
+        "currentMappings": [
+          {
+            "field": "goldmineQualification",
+            "source": "PatternContext.breakoutBoxes[].qualifiesForGoldmine",
+            "description": "Goldmine pattern qualification status",
+            "status": "complete",
+            "transformationNeeded": "visual_enhancement"
+          },
+          {
+            "field": "blackjackScore",
+            "source": "PatternContext.bjTargetScores[].score",
+            "description": "Blackjack scoring for pattern validation",
+            "status": "complete",
+            "transformationNeeded": "confidence_correlation"
+          }
+        ],
+        "missingMappings": [
+          {
+            "field": "signalValidation",
+            "requiredSource": "ValidationResults.validationFlag",
+            "description": "VALID/LATE signal validation flags",
+            "priority": "high",
+            "blockedBy": "canvas_dom_bridge"
+          },
+          {
+            "field": "riskLevel",
+            "requiredSource": "TradeActionSignal.riskLevel",
+            "description": "Risk level indicators",
+            "priority": "medium",
+            "blockedBy": "canvas_dom_bridge"
+          },
+          {
+            "field": "patternConfidence",
+            "requiredSource": "Pattern.confidence",
+            "description": "Normalized confidence score display",
+            "priority": "high",
+            "implementation": "confidence_consolidation"
+          },
+          {
+            "field": "signalStrength",
+            "requiredSource": "TradeActionSignal.confidence",
+            "description": "Signal strength assessment",
+            "priority": "medium",
+            "blockedBy": "canvas_dom_bridge"
+          }
+        ]
+      },
+      "zone3_technical_stack_trace": {
+        "description": "Detailed pattern metrics and underlying calculations",
+        "cognitiveLoad": "high",
+        "priority": "medium",
+        "currentMappings": [
+          {
+            "field": "escalatorStepDetails",
+            "source": "PatternContext.escalatorSteps[]",
+            "description": "Complete escalator step analysis",
+            "status": "complete",
+            "fields": [
+              "stepRef", "direction", "floor", "ceiling", "height", "duration"
+            ]
+          },
+          {
+            "field": "breakoutBoxMetrics",
+            "source": "PatternContext.breakoutBoxes[]",
+            "description": "Breakout box technical details",
+            "status": "complete",
+            "fields": [
+              "stepRef", "floor", "ceiling", "blackjackScore", "qualifiesForGoldmine"
+            ]
+          },
+          {
+            "field": "metricRegistryValues",
+            "source": "MetricRegistry[].calc()",
+            "description": "All registered metric calculations",
+            "status": "complete",
+            "transformationNeeded": "performance_optimization"
+          },
+          {
+            "field": "haCandles",
+            "source": "convertToHeikinAshi(candles)",
+            "description": "Heikin-Ashi candle data for consistency",
+            "status": "complete",
+            "transformationNeeded": "memoization"
+          },
+          {
+            "field": "goldenCandleEvents",
+            "source": "PatternContext.goldenCandleEntries[], PatternContext.goldenCandleExits[]",
+            "description": "Golden candle ENTRY/EXIT event details",
+            "status": "complete",
+            "transformationNeeded": "event_consolidation"
+          }
+        ],
+        "missingMappings": [
+          {
+            "field": "signalTooltip",
+            "requiredSource": "SignalRenderer.getSignalTooltip()",
+            "description": "Detailed signal information",
+            "priority": "medium",
+            "blockedBy": "canvas_dom_bridge"
+          },
+          {
+            "field": "patternLifecycleTrace",
+            "requiredSource": "PatternEvent.history[]",
+            "description": "Pattern detection and lifecycle events",
+            "priority": "low",
+            "implementation": "pattern_history_tracking"
+          }
+        ]
+      },
+      "zone4_progressive_detail": {
+        "description": "On-demand access to full pattern context and history",
+        "cognitiveLoad": "variable",
+        "priority": "low",
+        "currentMappings": [],
+        "missingMappings": [
+          {
+            "field": "expandableAuditTrail",
+            "requiredSource": "PatternEvent.timeline[]",
+            "description": "Expandable pattern detection timeline",
+            "priority": "medium",
+            "implementation": "progressive_disclosure_ui"
+          },
+          {
+            "field": "sparklineCharts",
+            "requiredSource": "PatternContext.arrays[]",
+            "description": "Micro-visualizations of pattern metrics",
+            "priority": "low",
+            "implementation": "micro_chart_system"
+          },
+          {
+            "field": "historicalContext",
+            "requiredSource": "PatternHistory.events[]",
+            "description": "Historical pattern performance",
+            "priority": "low",
+            "implementation": "pattern_performance_tracking"
+          },
+          {
+            "field": "userControlledDetail",
+            "requiredSource": "HoverState.detailLevel",
+            "description": "User-configurable information density",
+            "priority": "medium",
+            "implementation": "detail_level_controls"
+          }
+        ]
+      },
+      "zone5_action_forecast": {
+        "description": "Forward-looking insights and actionable recommendations",
+        "cognitiveLoad": "strategic",
+        "priority": "optional",
+        "currentMappings": [],
+        "missingMappings": [
+          {
+            "field": "aiInsights",
+            "requiredSource": "CognitiveAnalysis.insights[]",
+            "description": "AI-powered pattern analysis",
+            "priority": "optional",
+            "implementation": "ai_analysis_layer"
+          },
+          {
+            "field": "forecastBias",
+            "requiredSource": "PredictiveModel.bias",
+            "description": "Directional bias forecasting",
+            "priority": "optional",
+            "implementation": "predictive_modeling"
+          },
+          {
+            "field": "anomalyFlags",
+            "requiredSource": "AnomalyDetection.flags[]",
+            "description": "Pattern anomaly detection",
+            "priority": "optional",
+            "implementation": "anomaly_detection_system"
+          },
+          {
+            "field": "actionRecommendations",
+            "requiredSource": "ActionEngine.suggestions[]",
+            "description": "Suggested trading actions",
+            "priority": "optional",
+            "implementation": "action_recommendation_engine"
+          },
+          {
+            "field": "metaConfidence",
+            "requiredSource": "ValidationHistory.metaScore",
+            "description": "Confidence in confidence calculations",
+            "priority": "optional",
+            "implementation": "meta_confidence_tracking"
+          }
+        ]
+      }
+    },
+    "contextSources": {
+      "useHoverMetrics": {
+        "file": "src/hooks/useHoverMetrics.ts",
+        "provides": ["idx", "x", "y", "bj", "candle", "visibleIndex"],
+        "status": "active",
+        "transformationPlan": "integrate_with_canvas_hover"
+      },
+      "PatternContext": {
+        "file": "src/contexts/PatternContext.tsx",
+        "provides": [
+          "bjIntrinsic", "bjCumulative", "bjRollingScores", "bjTargetScores",
+          "escalatorSteps", "breakoutBoxes", "rocketmanConfidence", 
+          "pivotDirection", "gmcDepthPercent", "goldenCandleQual",
+          "goldmineForensics", "goldenNearMisses"
+        ],
+        "status": "active",
+        "transformationPlan": "consolidate_into_unified_hover_context"
+      },
+      "MarketDataContext": {
+        "file": "src/contexts/MarketDataContext.tsx",
+        "provides": ["data", "candles"],
+        "status": "active",
+        "transformationPlan": "maintain_current_integration"
+      },
+      "SignalRenderer": {
+        "file": "src/components/Chart/SignalRenderer.tsx",
+        "provides": ["getSignalAtPoint", "getSignalTooltip", "isPointInSignal"],
+        "status": "unused",
+        "transformationPlan": "activate_canvas_hover_bridge"
+      },
+      "MetricRegistry": {
+        "file": "src/metrics/registry.ts",
+        "provides": ["calc() functions for all registered metrics"],
+        "status": "active",
+        "transformationPlan": "optimize_calculation_memoization"
+      }
+    },
+    "infrastructureRequirements": {
+      "canvasDomBridge": {
+        "description": "Bridge between canvas-based signal detection and DOM tooltip",
+        "priority": "high",
+        "dependencies": ["SignalRenderer.getSignalAtPoint", "useHoverMetrics"],
+        "implementation": "hover.bridge.canvas_to_dom.yaml"
+      },
+      "unifiedHoverContext": {
+        "description": "Consolidated hover state management",
+        "priority": "high",
+        "dependencies": ["PatternContext", "SignalContext", "HoverMetrics"],
+        "implementation": "unified_hover_context_provider"
+      },
+      "zoneLayoutSystem": {
+        "description": "Structured zone-based tooltip rendering",
+        "priority": "high",
+        "dependencies": ["React components", "Tailwind CSS"],
+        "implementation": "hover_tooltip_zones_component"
+      },
+      "performanceOptimization": {
+        "description": "Memoization and calculation efficiency",
+        "priority": "medium",
+        "dependencies": ["React.useMemo", "calculation caching"],
+        "implementation": "hover_performance_patches"
+      },
+      "animationSystem": {
+        "description": "Smooth transitions and interactions",
+        "priority": "medium",
+        "dependencies": ["Framer Motion or CSS transitions"],
+        "implementation": "hover_animation_layer"
+      },
+      "telemetrySystem": {
+        "description": "Hover usage analytics and optimization",
+        "priority": "low",
+        "dependencies": ["Analytics service", "Usage tracking"],
+        "implementation": "hover_telemetry_integration"
+      }
+    },
+    "phaseImplementationOrder": [
+      {
+        "phase": 1,
+        "status": "complete",
+        "deliverables": ["hoverFeatureMatrix.md", "mapping.json"]
+      },
+      {
+        "phase": 2,
+        "status": "pending",
+        "title": "Unify DOM & Canvas Hover Infrastructure",
+        "criticalPath": [
+          "hover.bridge.canvas_to_dom.yaml",
+          "activate_getSignalAtPoint",
+          "unified_hover_context"
+        ]
+      },
+      {
+        "phase": 3,
+        "status": "pending",
+        "title": "Refactor Tooltip Component to ZONE Layout",
+        "criticalPath": [
+          "MetricPopover_to_HoverTooltipZones",
+          "zone_layout_css",
+          "structured_rendering"
+        ]
+      },
+      {
+        "phase": 4,
+        "status": "pending",
+        "title": "Advanced Interactions and Progressive Detail",
+        "optional": true,
+        "criticalPath": [
+          "expand_collapse_ui",
+          "animation_system",
+          "hover_hold_states"
+        ]
+      },
+      {
+        "phase": 5,
+        "status": "pending",
+        "title": "AI-Aware Metrics",
+        "optional": true,
+        "criticalPath": [
+          "cognitive_analysis_layer",
+          "predictive_modeling",
+          "anomaly_detection"
+        ]
+      },
+      {
+        "phase": 6,
+        "status": "pending",  
+        "title": "Final Polish + Telemetry",
+        "criticalPath": [
+          "usage_analytics",
+          "performance_monitoring",
+          "ux_optimization"
+        ]
+      }
+    ]
+  }
+}

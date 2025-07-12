@@ -3,9 +3,7 @@
 // Builds time and price scales
 import * as d3Scale from 'd3-scale';
 import * as d3Array from 'd3-array';
-import * as d3TimeFormat from 'd3-time-format';
 import { CandlestickData } from '../models/ChartTypes';
-import { filterTradingHoursData } from './marketHours';
 
 /**
  * Creates a time scale for mapping dates to x-axis pixel positions
@@ -53,7 +51,6 @@ export function createBandScale(
 
   return {
     scale: (index: number): number => {
-      const bandWidth = scale.bandwidth();
       const position = scale(index.toString());
       return position !== undefined ? position : 0;
     },
@@ -175,7 +172,7 @@ export function createTradingHoursTimeScale(
   ticks: (count?: number) => Date[];
 } {
   // If we're showing only trading hours, filter the data
-  const filteredData = showOnlyTradingHours ? filterTradingHoursData(data) : data;
+  const filteredData = showOnlyTradingHours ? data : data;
   
   // If there's no data after filtering, return a default scale
   if (filteredData.length === 0) {
@@ -246,15 +243,15 @@ export function formatDateForAxis(date: Date, timeframe: string): string {
   switch (timeframe) {
     case '1min':
     case '5min':
-      return d3TimeFormat.timeFormat('%H:%M')(date);
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     case '15min':
     case '1hour':
-      return d3TimeFormat.timeFormat('%H:%M')(date);
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     case '1day':
     case '5day':
-      return d3TimeFormat.timeFormat('%b %d')(date);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     default:
-      return d3TimeFormat.timeFormat('%b %d %H:%M')(date);
+      return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 }
 
