@@ -26,3 +26,7 @@ yarn-error.log*
 *.zip
 *.exe
 *.asar
+
+# deployment
+.netlify/
+.vercel/
