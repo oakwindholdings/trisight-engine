@@ -210,7 +210,36 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       // Don't update indices here - let them be updated by the effect
     },
     onZoomChange: (state) => {
-      // Zoom state changes are now handled by the controller
+      // Handle zoom centering on the hovered candle
+      if (state.centerCandleRatio !== undefined && transformedData.length > 0) {
+        // Calculate which candle the cursor is over
+        const currentVisibleCandles = visibleDataIndices.end - visibleDataIndices.start + 1;
+        const hoveredCandleOffset = Math.floor(state.centerCandleRatio * currentVisibleCandles);
+        const hoveredCandleIndex = visibleDataIndices.start + hoveredCandleOffset;
+        
+        // Clamp to valid range
+        const centerCandleIndex = Math.max(0, Math.min(transformedData.length - 1, hoveredCandleIndex));
+        
+        // Calculate new range with the hovered candle at the CENTER
+        const newVisibleCandles = state.targetCandles;
+        const halfCandles = Math.floor(newVisibleCandles / 2);
+        
+        // Center the view on the hovered candle
+        let newStartIndex = centerCandleIndex - halfCandles;
+        let newEndIndex = centerCandleIndex + (newVisibleCandles - halfCandles - 1);
+        
+        // Adjust for boundaries
+        if (newStartIndex < 0) {
+          newStartIndex = 0;
+          newEndIndex = Math.min(transformedData.length - 1, newVisibleCandles - 1);
+        } else if (newEndIndex >= transformedData.length) {
+          newEndIndex = transformedData.length - 1;
+          newStartIndex = Math.max(0, newEndIndex - newVisibleCandles + 1);
+        }
+        
+        // Update visible indices to center on the hovered candle
+        setVisibleDataIndices({ start: newStartIndex, end: newEndIndex });
+      }
     },
     setPanState,
     startDate,
@@ -596,7 +625,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Update visible range from pan
   const updateVisibleRangeFromPan = useCallback((translateX: number) => {
-    const data = chartDataRef.current;
+    const data = transformedData;
     if (data.length === 0) return;
     
     const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
@@ -652,7 +681,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         });
       }
     }
-  }, [width, targetCandles, visibleDataIndices.start, visibleDataIndices.end]);
+  }, [width, targetCandles, visibleDataIndices.start, visibleDataIndices.end, transformedData, panState.isPanning]);
 
   // Initialize pan controller
   const panController = usePanController(

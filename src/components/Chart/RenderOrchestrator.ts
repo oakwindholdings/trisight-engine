@@ -134,17 +134,6 @@ function _renderChartImpl({
   const bufferCanvas = bufferCanvasRef.current;
   const patternsCanvas = patternsCanvasRef.current;
 
-  // Debug logging
-  console.log('[RenderOrchestrator] Starting render with:', {
-    dataLength: filteredData.length,
-    visibleDataIndices,
-    visibleRange,
-    width,
-    height,
-    hasCanvases: !!mainCanvas && !!bufferCanvas && !!patternsCanvas,
-    breakoutBoxCount: breakoutBoxes.length
-  });
-
   if (!mainCanvas || !bufferCanvas || !patternsCanvas || filteredData.length === 0) {
     console.warn('[RenderOrchestrator] Missing canvas or data, skipping render');
     return;
@@ -163,22 +152,9 @@ function _renderChartImpl({
   patternsCtx.clearRect(0, 0, width, height);
 
   const visibleData = filteredData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
-  console.log('[RenderOrchestrator] Rendering visible data:', {
-    visibleDataLength: visibleData.length,
-    firstCandle: visibleData[0],
-    lastCandle: visibleData[visibleData.length - 1]
-  });
 
   const timeScale = createSequentialTimeScale(width - margin.left - margin.right, visibleData, [margin.left, width - margin.right]);
   const priceScale = createPriceScale(height - margin.top - margin.bottom, [visibleRange.minPrice, visibleRange.maxPrice], [height - margin.bottom, margin.top]);
-
-  // Debug price scale
-  console.log('[RenderOrchestrator] Price scale info:', {
-    domain: [visibleRange.minPrice, visibleRange.maxPrice],
-    range: [height - margin.bottom, margin.top],
-    testLowPrice: priceScale.scale(visibleRange.minPrice),
-    testHighPrice: priceScale.scale(visibleRange.maxPrice)
-  });
 
   CandlestickRenderer.render(bufferCtx, visibleData, timeScale, priceScale, { 
     width, 
@@ -192,21 +168,6 @@ function _renderChartImpl({
     goldmineQual
   });
   mainCtx.drawImage(bufferCanvas, 0, 0);
-  
-  // Debug pattern rendering
-  console.log('[RenderOrchestrator] Rendering patterns:', {
-    patternCount: visiblePatterns.length,
-    escalatorStepCount: escalatorSteps.length,
-    breakoutBoxCount: breakoutBoxes.length,
-    patterns: visiblePatterns.map(p => ({
-      id: p.id,
-      type: p.type,
-      highPrice: p.highPrice,
-      lowPrice: p.lowPrice,
-      scaledHighY: priceScale.scale(p.highPrice),
-      scaledLowY: priceScale.scale(p.lowPrice)
-    }))
-  });
   
   PatternRenderer.render(
     patternsCtx, 
@@ -234,6 +195,7 @@ function _renderChartImpl({
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });
 
   // Signal Fidelity Mode: Log chart rendering completion
+  // Performance: Logging disabled during render
   LifecycleInstrumentation.logMilestone("Chart rendered after full signal processing", {
     patternCount: visiblePatterns.length,
     escalatorStepCount: escalatorSteps.length,
@@ -245,7 +207,7 @@ function _renderChartImpl({
   // 📊 Target Report Table Rendering (Bottom of chart)
   // Render table below the main chart area for signal ranking display
   if (targetReportRows && targetReportRows.length > 0 && targetReportSettings.enabled) {
-    console.log(`[RenderOrchestrator] Rendering Target Report Table with ${targetReportRows.length} rows`);
+    // Performance: Logging disabled during render
     
     const tableY = height - targetReportSettings.height - 10; // 10px margin from bottom
     const tableDimensions = {
@@ -266,7 +228,7 @@ function _renderChartImpl({
       hoveredTableCell
     );
   } else {
-    console.log('[RenderOrchestrator] No Target Report Table data to render');
+    // Performance: Logging disabled during render
   }
 }
 

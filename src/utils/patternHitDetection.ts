@@ -110,15 +110,23 @@ export function getPatternHitBoxDimensions(
 ): { x: number; y: number; width: number; height: number } | null {
   switch (pattern.type) {
     case PatternType.BLACKJACK: {
-      const x = timeScale(pattern.startTime);
-      const y = priceScale(pattern.highPrice);
-      return expandHitBox(x - 15, y - 25, 30, 30, 8);
+      // Blackjack patterns render at the center, not at start time
+      const centerTime = new Date((pattern.startTime.getTime() + pattern.endTime.getTime()) / 2);
+      const centerPrice = (pattern.highPrice + pattern.lowPrice) / 2;
+      const x = timeScale(centerTime);
+      const y = priceScale(centerPrice);
+      // Increase hitbox size to cover the score display and symbols
+      return expandHitBox(x - 20, y - 15, 40, 30, 10);
     }
     
     case PatternType.ESCALATOR: {
-      const x = timeScale(pattern.startTime);
+      // Escalator patterns typically span a range
+      const startX = timeScale(pattern.startTime);
+      const endX = timeScale(pattern.endTime);
+      const centerX = (startX + endX) / 2;
       const y = priceScale(pattern.lowPrice);
-      return expandHitBox(x - 20, y - 15, 40, 30, 5);
+      const width = Math.abs(endX - startX);
+      return expandHitBox(centerX - width/2, y - 15, width, 30, 8);
     }
     
     case PatternType.PIVOT: {
@@ -137,10 +145,12 @@ export function getPatternHitBoxDimensions(
     case PatternType.GOLDMINE_SHAFT: {
       const startX = timeScale(pattern.startTime);
       const endX = timeScale(pattern.endTime);
-      const y = priceScale(pattern.highPrice);
+      const topY = priceScale(pattern.highPrice);
+      const bottomY = priceScale(pattern.lowPrice);
       const width = Math.abs(endX - startX);
-      const height = Math.abs(priceScale(pattern.highPrice) - priceScale(pattern.lowPrice));
-      return expandHitBox(Math.min(startX, endX), y - height, width, height, 3);
+      const height = Math.abs(bottomY - topY);
+      // Position hitbox to cover the entire channel/shaft area
+      return expandHitBox(Math.min(startX, endX), Math.min(topY, bottomY), width, height, 5);
     }
     
     case PatternType.GOLDEN_CANDLE: {

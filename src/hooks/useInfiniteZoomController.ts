@@ -339,35 +339,16 @@ export const useInfiniteZoomController = (
     const dateRange = startDate && endDate ? { start: startDate, end: endDate } : undefined;
     const newResolution = getAppropriateResolution(newTargetCandles, dateRange);
     
-    // Calculate pan offset to keep cursor position stable
-    let panOffset = 0;
-    let debugInfo: any = { originX, panOffset: 0 };
+    // Calculate which candle to center on
+    let centerCandleRatio: number | undefined;
     
     if (originX !== undefined && width > 0) {
       const chartWidth = width - margin.left - margin.right;
       const cursorX = originX - margin.left;
       const cursorRatio = cursorX / chartWidth;
       
-      // Calculate how many candles we're zooming in/out by
-      const oldCandles = targetCandles;
-      const newCandles = newTargetCandles;
-      const candleDiff = oldCandles - newCandles;
-      
-      // Calculate pan offset in pixels to keep cursor position stable
-      // When zooming in (fewer candles), we need to pan to keep the cursor position
-      const candleWidth = chartWidth / newCandles;
-      panOffset = candleDiff * candleWidth * (cursorRatio - 0.5);
-      
-      debugInfo = {
-        originX,
-        panOffset,
-        candleDiff,
-        candleWidth,
-        cursorRatio,
-        oldCandles,
-        newCandles,
-        chartWidth
-      };
+      // Store the ratio of where the cursor is in the chart (0 to 1)
+      centerCandleRatio = cursorRatio;
       
       // Store zoom origin for maintaining focus
       zoomOrigin.current = {
@@ -385,22 +366,25 @@ export const useInfiniteZoomController = (
       fetchDataAtResolution(newResolution);
     }
     
-    // Update zoom state
+
+    
+    // Update zoom state with center candle information
     onZoomChange({
       zoomLevel: newZoom,
       resolution: newResolution,
       isTransitioning,
-      targetCandles: newTargetCandles
+      targetCandles: newTargetCandles,
+      centerCandleRatio // Pass the ratio of where to center
     });
     
-    // Apply pan offset to keep cursor position stable
+    // Reset pan state when zooming
     setPanState((prev: PanState) => { 
       const newState = {
         ...prev,
-        translateX: panOffset, 
+        translateX: 0, 
         momentum: 0,
         isPanning: false,
-        previousTranslateX: panOffset
+        previousTranslateX: 0
       };
       return newState;
     });
@@ -423,7 +407,7 @@ export const useInfiniteZoomController = (
   const { handleWheel: smoothHandleWheel, zoomTo: smoothZoomTo } = useSmoothZoom(zoomLevel, {
     minZoom: 0.1,
     maxZoom: 10,
-    zoomSensitivity: 0.002,
+    zoomSensitivity: 0.0008,  // Reduced from 0.002 for less sensitive zoom
     smoothingFactor: 0.15,
     onZoomChange: handleZoomChange
   });

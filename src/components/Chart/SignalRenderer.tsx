@@ -106,23 +106,8 @@ export function renderTradeActionSignals(
     // STOP_EXIT signals: ALWAYS render regardless of viewport or fidelity mode
     const isStopExitSignal = signal.action === TradeAction.SELL || signal.action === TradeAction.COVER;
     
-    // 🗺️ COORDINATE DEBUG: Track X positioning for STOP_EXIT signals
+    // STOP_EXIT signals: Track X positioning
     if (isStopExitSignal) {
-      console.log("🗺️ [COORDINATE_DEBUG] STOP_EXIT positioning", {
-        action: signal.action,
-        pattern: signal.pattern,
-        price: signal.price.toFixed(4),
-        timestamp: signal.timestamp.toISOString(),
-        calculatedX: centerX.toFixed(2),
-        calculatedY: centerY.toFixed(2),
-        chartDimensions: {
-          width: dimensions.width,
-          height: dimensions.height,
-          marginLeft: dimensions.margin.left,
-          marginRight: dimensions.margin.right
-        },
-        isOffCanvas: centerX < dimensions.margin.left || centerX > dimensions.width - dimensions.margin.right
-      });
     }
     
     // Skip signals outside viewport (zoom/pan filtering) - BUT NOT STOP_EXIT signals
@@ -132,13 +117,11 @@ export function renderTradeActionSignals(
       centerY < dimensions.margin.top ||
       centerY > dimensions.height - dimensions.margin.bottom
     )) {
-      console.log(`[VIEWPORT_FILTER] Skipping non-STOP_EXIT signal outside viewport: ${signal.action}`);
       return;
     }
     
     // Log STOP_EXIT signals that bypass viewport filtering
     if (isStopExitSignal) {
-      console.log(`🚨 [STOP_EXIT_BYPASS] STOP_EXIT signal rendered regardless of viewport: ${signal.action} at ${signal.price}`);
     }
 
     // Signal Fidelity Mode: Check if signal should be rendered (BUT NOT for STOP_EXIT)
@@ -160,7 +143,7 @@ export function renderTradeActionSignals(
       };
       drawSignalLabel(ctx, signal, centerX, centerY - 15, labelOptions, signals); // Pass signals array for BIAS correlation
       
-      // 🔍 AUDIT: Record STOP_EXIT render trace
+      // Record STOP_EXIT render trace
       if (signal.action === TradeAction.SELL || signal.action === TradeAction.COVER) {
         const signalId = `${signal.pattern}_${signal.timestamp.getTime()}_${signal.price.toFixed(4)}`;
         stopExitTraceAnalyzer.recordRender(
@@ -169,18 +152,6 @@ export function renderTradeActionSignals(
           true, // isRendered
           { x: centerX, y: centerY }
         );
-        
-        // 🕐 RENDER TIMING DEBUG: Track when and why STOP_EXIT labels are being rendered
-        const renderTimestamp = performance.now();
-        console.log("⏰ [RENDER_TIMING] STOP_EXIT", {
-          action: signal.action,
-          price: signal.price.toFixed(4),
-          pattern: signal.pattern,
-          timestamp: renderTimestamp.toFixed(2) + 'ms',
-          canvasSize: { width: ctx.canvas.width, height: ctx.canvas.height },
-          renderCall: 'renderTradeActionSignals',
-          stackTrace: new Error().stack?.split('\n').slice(1, 4).join(' -> ') || 'unknown'
-        });
       }
     }
 
@@ -280,8 +251,6 @@ function renderConsolidatedStopExitLabel(
   ctx.fillText(signals[0].price.toFixed(2), labelX + labelWidth / 2, labelY + labelHeight + 12);
   
   ctx.restore();
-  
-  console.log("[LABEL_RENDER] CONSOLIDATED_STOP_EXIT", labelText, signals[0].price, `Total: ${signals.length}`);
 }
 
 export function renderSignals(
@@ -307,13 +276,6 @@ export function renderSignals(
   // Deduplicate STOP_EXIT signals to prevent occlusion
   const { exitSignals, otherSignals } = deduplicateStopExitSignals(signals);
   
-  console.log("[SIGNAL_DEDUP] Stop-exit signal consolidation:", {
-    totalSignals: signals.length,
-    uniqueExitGroups: exitSignals.size,
-    otherSignals: otherSignals.length,
-    consolidatedExitSignals: Array.from(exitSignals.values()).reduce((total, group) => total + group.signals.length, 0)
-  });
-
   // Render non-STOP_EXIT signals normally
   otherSignals.forEach(signal => {
     const timestamp = new Date(signal.timestamp);
@@ -371,17 +333,11 @@ export function renderSignals(
       centerY < dimensions.margin.top ||
       centerY > dimensions.height - dimensions.margin.bottom
     )) {
-      console.log("[ZOOM_FILTER] STOP_EXIT signal outside viewport, but fidelity mode OFF, skipping", {
-        centerX, centerY, timestamp, price: firstSignal.price
-      });
       return;
     }
     
     // Log fidelity mode bypass for STOP_EXIT signals
     if (isFidelityMode) {
-      console.log("[ZOOM_FILTER] STOP_EXIT signal rendered (fidelity mode bypass)", {
-        centerX, centerY, timestamp, price: firstSignal.price, signalCount: group.signals.length
-      });
     }
 
     // Signal Fidelity Mode: Check if signal should be rendered
@@ -394,7 +350,7 @@ export function renderSignals(
       drawSignalDot(ctx, firstSignal, centerX, centerY, settings.iconSize || 4);
     }
 
-    // 🚫 DISABLED: Prevent duplicate STOP_EXIT rendering
+    // DISABLED: Prevent duplicate STOP_EXIT rendering
     // renderTradeActionSignals() already handles STOP_EXIT signals with correct large labels
     // This renderConsolidatedStopExitLabel() was overwriting them with tiny labels
     // renderConsolidatedStopExitLabel(
@@ -406,14 +362,7 @@ export function renderSignals(
     //   centerY
     // );
     
-    console.log("🚫 [DUPLICATE_PREVENTION] Skipping renderConsolidatedStopExitLabel to prevent overwriting correct STOP_EXIT labels", {
-      signalCount: group.signals.length,
-      sellCount: group.sellCount,
-      coverCount: group.coverCount,
-      centerX: centerX.toFixed(2),
-      centerY: centerY.toFixed(2)
-    });
-    
+    // Record STOP_EXIT render trace for consolidated signals
     // 🔍 AUDIT: Record STOP_EXIT render trace for consolidated signals
     group.signals.forEach(signal => {
       const signalId = `${signal.pattern}_${signal.timestamp.getTime()}_${signal.price.toFixed(4)}`;

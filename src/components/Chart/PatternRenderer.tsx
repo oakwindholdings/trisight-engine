@@ -140,9 +140,19 @@ const PatternRendererImpl = {
     convictionCloudSettings = defaultConvictionCloudSettings, // Conviction Cloud settings
     hoveredConvictionItem: ConvictionCloudItem | null = null // Currently hovered conviction item
   ) {
+    const perfStart = performance.now();
+    
     // Clear hitboxes from previous render cycle
     clearPatternHitBoxes();
     if (!ctx) return;
+    
+    // Early exit if no content to render
+    const hasContent = patterns.length > 0 || escalatorSteps.length > 0 || 
+                      breakoutBoxes.length > 0 || signals.length > 0 || 
+                      convictionItems.length > 0;
+    if (!hasContent) {
+      return;
+    }
     
     // HA Infrastructure Alignment Patch v1.0.0: Validate HA array lengths
     if (candles.length > 0 && haCandles.length !== candles.length) {
@@ -154,7 +164,8 @@ const PatternRendererImpl = {
       );
     }
     
-    // Filter patterns that are in the visible range
+    // Performance optimization: Filter patterns once
+    const filterStart = performance.now();
     const visiblePatterns = patterns.filter(pattern => {
       const patternStartX = timeScale.scale(pattern.startTime);
       const patternEndX = timeScale.scale(pattern.endTime);
@@ -164,8 +175,15 @@ const PatternRendererImpl = {
         patternStartX <= dimensions.width - dimensions.margin.right
       );
     });
+    const filterTime = performance.now() - filterStart;
+    
+    // Log performance warning if too many patterns
+    if (visiblePatterns.length > 100) {
+      console.warn(`⚠️ PatternRenderer: Rendering ${visiblePatterns.length} visible patterns (${patterns.length} total)`);
+    }
     
     // Render each pattern
+    const renderPatternsStart = performance.now();
     visiblePatterns.forEach(pattern => {
       this.renderPattern(ctx, pattern, timeScale, priceScale, dimensions, pattern.id === selectedPattern?.id, blackjackSettings);
     });

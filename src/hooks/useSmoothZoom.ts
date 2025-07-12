@@ -31,7 +31,7 @@ export const useSmoothZoom = (
   const animationFrameRef = useRef<number | null>(null);
   const accumulatedDeltaRef = useRef(0);
   const lastWheelTimeRef = useRef(Date.now());
-  const zoomOriginRef = useRef<number | null>(null);
+  const zoomOriginRef = useRef<{ x: number; y: number } | null>(null);
   const isInitializedRef = useRef(false);
 
   // Initialize refs only once
@@ -62,7 +62,7 @@ export const useSmoothZoom = (
     
     // Call the zoom change handler with origin if available
     if (zoomOriginRef.current !== null) {
-      onZoomChange(newZoom, zoomOriginRef.current);
+      onZoomChange(newZoom, zoomOriginRef.current.x);
     } else {
       onZoomChange(newZoom);
     }
@@ -75,46 +75,59 @@ export const useSmoothZoom = (
   const _handleWheelImpl = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     
-    const currentTime = Date.now();
-    const timeSinceLastWheel = currentTime - lastWheelTimeRef.current;
-    
-    // Reset accumulated delta if too much time has passed
-    if (timeSinceLastWheel > 100) {
-      accumulatedDeltaRef.current = 0;
-    }
-    
-    // Accumulate delta for smoother zoom on trackpads
-    accumulatedDeltaRef.current += e.deltaY;
-    lastWheelTimeRef.current = currentTime;
-    
-    // Apply zoom based on accumulated delta
-    const zoomDelta = -accumulatedDeltaRef.current * zoomSensitivity;
-    const zoomMultiplier = Math.exp(zoomDelta);
-    
-    // Calculate new target zoom
-    const newTargetZoom = Math.max(
-      minZoom,
-      Math.min(maxZoom, targetZoomRef.current * zoomMultiplier)
-    );
-    
-    // Update target zoom
-    targetZoomRef.current = newTargetZoom;
-    
-    // Get mouse position for zoom origin
+    // Track mouse position for zoom origin
     const rect = e.currentTarget.getBoundingClientRect();
     const originX = e.clientX - rect.left;
     
-    // Store zoom origin for the entire animation
-    zoomOriginRef.current = originX;
+    // Store the zoom origin immediately
+    zoomOriginRef.current = { x: originX, y: e.clientY - rect.top };
     
-    // Start animation if not already running
-    if (!animationFrameRef.current) {
-      animationFrameRef.current = requestAnimationFrame(animate);
+    // Accumulate zoom delta with sensitivity
+    const delta = -e.deltaY * zoomSensitivity;
+    accumulatedDeltaRef.current += delta;
+    
+    // Clear any existing animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
     }
     
-    // Decay accumulated delta
-    accumulatedDeltaRef.current *= 0.95;
-  }, [minZoom, maxZoom, zoomSensitivity, animate, onZoomChange]);
+    // Schedule smooth zoom update
+    animationFrameRef.current = requestAnimationFrame(() => {
+      if (Math.abs(accumulatedDeltaRef.current) > 0.001) {
+        const zoomFactor = 1 + accumulatedDeltaRef.current;
+        const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom * zoomFactor));
+        
+        if (newZoom !== currentZoom) {
+          // Always pass the current mouse position for proper centering
+          onZoomChange(newZoom, originX);
+        }
+        
+        // Apply damping
+        accumulatedDeltaRef.current *= 0.95;
+        
+        // Continue animation if delta is significant
+        if (Math.abs(accumulatedDeltaRef.current) > 0.001) {
+          animationFrameRef.current = requestAnimationFrame(() => {
+            // Don't recursively call handleWheel, just process the accumulated delta
+            const zoomFactor = 1 + accumulatedDeltaRef.current;
+            const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom * zoomFactor));
+            
+            if (newZoom !== currentZoom) {
+              onZoomChange(newZoom, zoomOriginRef.current?.x);
+            }
+            
+            accumulatedDeltaRef.current *= 0.95;
+            
+            if (Math.abs(accumulatedDeltaRef.current) <= 0.001) {
+              accumulatedDeltaRef.current = 0;
+            }
+          });
+        } else {
+          accumulatedDeltaRef.current = 0;
+        }
+      }
+    });
+  }, [currentZoom, minZoom, maxZoom, onZoomChange, zoomSensitivity]);
 
   // Debounced wheel handler using configurable delay
   const _debouncedZoomComplete = useRef(
