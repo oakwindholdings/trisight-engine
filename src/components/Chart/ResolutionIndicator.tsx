@@ -11,13 +11,15 @@ interface ResolutionIndicatorProps {
   zoomLevel: number;
   candleCount: number;
   isTransitioning: boolean;
+  onClose?: () => void;
 }
 
 const ResolutionIndicator: React.FC<ResolutionIndicatorProps> = ({
   resolution,
   zoomLevel,
   candleCount,
-  isTransitioning
+  isTransitioning,
+  onClose
 }) => {
   // Format zoom level as percentage
   const zoomPercentage = Math.round(zoomLevel * 100);
@@ -34,6 +36,16 @@ const ResolutionIndicator: React.FC<ResolutionIndicatorProps> = ({
 
   return (
     <div className={`resolution-indicator ${isTransitioning ? 'transitioning' : ''}`}>
+      {onClose && (
+        <button 
+          className="resolution-close-btn" 
+          onClick={onClose}
+          aria-label="Close resolution indicator"
+          title="Close"
+        >
+          ×
+        </button>
+      )}
       <div className="resolution-info">
         <span className="resolution-label">Resolution:</span>
         <span className="resolution-value">{resolution.label}</span>

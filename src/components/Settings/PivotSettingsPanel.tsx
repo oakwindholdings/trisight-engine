@@ -101,6 +101,7 @@ interface PivotSettingsPanelProps {
     minimumTouchGap: number;
     detectSupport: boolean;
     detectResistance: boolean;
+    showLabels: boolean;
   };
   onChange: (patternType: PatternType, settings: any) => void;
 }
@@ -122,17 +123,25 @@ const PivotSettingsPanel: React.FC<PivotSettingsPanelProps> = ({ settings, onCha
           <StyledCheckbox
             type="checkbox"
             checked={settings.detectSupport}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('detectSupport', e.target.checked)}
+            onChange={(e) => handleChange('detectSupport', e.target.checked)}
           />
-          Detect Support Pivots
+          Detect Support Levels
         </StyledCheckboxLabel>
         <StyledCheckboxLabel>
           <StyledCheckbox
             type="checkbox"
             checked={settings.detectResistance}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('detectResistance', e.target.checked)}
+            onChange={(e) => handleChange('detectResistance', e.target.checked)}
           />
-          Detect Resistance Pivots
+          Detect Resistance Levels
+        </StyledCheckboxLabel>
+        <StyledCheckboxLabel>
+          <StyledCheckbox
+            type="checkbox"
+            checked={settings.showLabels}
+            onChange={(e) => handleChange('showLabels', e.target.checked)}
+          />
+          Show Labels
         </StyledCheckboxLabel>
       </CheckboxGroup>
       
@@ -146,7 +155,7 @@ const PivotSettingsPanel: React.FC<PivotSettingsPanelProps> = ({ settings, onCha
             <StyledSlider
               type="range"
               value={settings.touchPointThreshold}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('touchPointThreshold', parseInt(e.target.value))}
+              onChange={(e) => handleChange('touchPointThreshold', parseInt(e.target.value))}
               step={1}
               min={2}
               max={5}
@@ -163,7 +172,7 @@ const PivotSettingsPanel: React.FC<PivotSettingsPanelProps> = ({ settings, onCha
             <StyledSlider
               type="range"
               value={settings.priceTolerance}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('priceTolerance', parseFloat(e.target.value))}
+              onChange={(e) => handleChange('priceTolerance', parseFloat(e.target.value))}
               step={0.05}
               min={0.1}
               max={0.5}
@@ -180,7 +189,7 @@ const PivotSettingsPanel: React.FC<PivotSettingsPanelProps> = ({ settings, onCha
             <StyledSlider
               type="range"
               value={settings.confidenceThreshold}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('confidenceThreshold', parseFloat(e.target.value))}
+              onChange={(e) => handleChange('confidenceThreshold', parseFloat(e.target.value))}
               step={0.05}
               min={0.4}
               max={0.9}
@@ -197,7 +206,7 @@ const PivotSettingsPanel: React.FC<PivotSettingsPanelProps> = ({ settings, onCha
             <StyledSlider
               type="range"
               value={settings.volumeReactionThreshold}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('volumeReactionThreshold', parseFloat(e.target.value))}
+              onChange={(e) => handleChange('volumeReactionThreshold', parseFloat(e.target.value))}
               step={0.1}
               min={1.0}
               max={2.0}
@@ -214,7 +223,7 @@ const PivotSettingsPanel: React.FC<PivotSettingsPanelProps> = ({ settings, onCha
             <StyledSlider
               type="range"
               value={settings.minimumTouchGap}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => handleChange('minimumTouchGap', parseInt(e.target.value))}
+              onChange={(e) => handleChange('minimumTouchGap', parseInt(e.target.value))}
               step={1}
               min={2}
               max={10}

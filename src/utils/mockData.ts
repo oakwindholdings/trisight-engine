@@ -1,8 +1,9 @@
 // src/utils/mockData.ts
-// Mock market data for testing chart rendering
-// Provides sample candlestick data when API is unavailable
+// Mock market data generator for testing and fallback scenarios
+// NOTE: Debug channel support - DEBUG_DATA_FETCH
 
 import { CandlestickData } from '../models/ChartTypes';
+import { logDebug } from './debug';
 
 export const generateMockCandlestickData = (count: number = 100): CandlestickData[] => {
   const now = new Date();
@@ -41,6 +42,6 @@ export const generateMockCandlestickData = (count: number = 100): CandlestickDat
 };
 
 export const getMockMarketData = (): CandlestickData[] => {
-  console.log('[MockData] Generating 200 mock candles for testing');
+  logDebug('DEBUG_DATA_FETCH', '[MockData] Generating 200 mock candles for testing');
   return generateMockCandlestickData(200);
 };

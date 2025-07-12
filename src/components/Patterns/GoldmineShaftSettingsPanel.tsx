@@ -113,6 +113,7 @@ const RadioInput = styled.input`
 
 interface GoldmineShaftSettings {
   enabled: boolean;
+  showLabels: boolean;
   minThrustMagnitude: number;
   minRetracementPercentage: number;
   maxRetracementPercentage: number;
@@ -131,10 +132,14 @@ const GoldmineShaftSettingsPanel: React.FC<GoldmineShaftSettingsPanelProps> = ({
   onSettingsChange
 }) => {
   const handleChange = (key: keyof GoldmineShaftSettings, value: any) => {
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       [key]: value
-    });
+    };
+    onSettingsChange(newSettings);
+    
+    // Persist to localStorage
+    localStorage.setItem('goldmineShaftSettings', JSON.stringify(newSettings));
   };
 
   return (
@@ -149,6 +154,14 @@ const GoldmineShaftSettingsPanel: React.FC<GoldmineShaftSettingsPanelProps> = ({
             onChange={(e) => handleChange('enabled', e.target.checked)}
           />
           Enable Goldmine Shaft Detection
+        </StyledCheckboxLabel>
+        <StyledCheckboxLabel>
+          <StyledCheckbox
+            type="checkbox"
+            checked={settings.showLabels}
+            onChange={(e) => handleChange('showLabels', e.target.checked)}
+          />
+          Show Labels
         </StyledCheckboxLabel>
       </CheckboxGroup>
       

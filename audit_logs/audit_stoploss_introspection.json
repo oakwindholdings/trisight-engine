@@ -1,0 +1,81 @@
+{
+  "audit": {
+    "id": "audit.stoploss.introspection",
+    "name": "Exhaustive Stop-Loss Pipeline Verification",
+    "timestamp": "2025-07-03T13:38:17.000Z",
+    "scope": "ALL",
+    "timeframes": ["1m", "5m", "15m"],
+    "status": "INITIALIZED",
+    "stages": {
+      "PATTERN_INSTRUMENTATION": {
+        "description": "Wrap all emitTradeSignal() and registerStopLoss() calls with console logging",
+        "status": "PENDING",
+        "targets": ["escalator.ts", "pivot.ts", "rocketman.ts", "goldmine.ts", "breakoutBox.ts", "goldenCandle.ts"],
+        "metrics": {
+          "patternsInstrumented": 0,
+          "emitCallsLogged": 0,
+          "registerCallsLogged": 0
+        }
+      },
+      "TRAILING_EVALUATION": {
+        "description": "Validate evaluateStopLoss() is called per candle with debug logs",
+        "status": "PENDING",
+        "target": "usePatternBus.ts",
+        "metrics": {
+          "evaluationCallsLogged": 0,
+          "activePositionsTracked": 0
+        }
+      },
+      "EMISSION_FLOW": {
+        "description": "Trace STOP_EXIT emissions with full metadata",
+        "status": "PENDING",
+        "target": "StopLossManager.ts",
+        "metrics": {
+          "stopExitEmissions": 0,
+          "trailingStopsTriggered": 0
+        }
+      },
+      "RENDER_PIPELINE": {
+        "description": "Trace STOP_EXIT rendering in canvas draw calls",
+        "status": "PENDING",
+        "target": "SignalRenderer.tsx",
+        "metrics": {
+          "stopExitRendered": 0,
+          "renderCallsLogged": 0
+        }
+      },
+      "UI_PANEL_UPGRADE": {
+        "description": "Inject STOP_EXIT metrics into Live Pattern Health Panel",
+        "status": "PENDING",
+        "target": "PatternHealthPanel.tsx",
+        "metrics": {
+          "metricsDisplayed": false,
+          "panelUpdated": false
+        }
+      },
+      "DIFF_ANALYSIS": {
+        "description": "Map ENTRY signals to STOP_EXIT responses",
+        "status": "PENDING",
+        "metrics": {
+          "entrySignals": 0,
+          "registeredStops": 0,
+          "triggeredStops": 0,
+          "renderedStops": 0,
+          "missingChains": []
+        }
+      }
+    }
+  },
+  "output": {
+    "path": "./audit_logs/audit_stoploss_introspection.json",
+    "includeSummary": true,
+    "diagnostics": true,
+    "injectConsoleLogs": true,
+    "updateUIPanel": true,
+    "forceVerboseLogging": true
+  },
+  "diagnostics": {
+    "initializationTime": "2025-07-03T13:38:17.000Z",
+    "implementationStatus": "STARTING"
+  }
+}

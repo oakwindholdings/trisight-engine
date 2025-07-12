@@ -1,15 +1,34 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows a 5-stage lifecycle: detect → emit → context → render → score.
 // src/hooks/usePatternBus.ts
-// Pattern detection event bus that runs detectors and emits events
-// Debounced to run only on new candle append
+// Central pattern detection and event coordination
+// Processes candle data and emits pattern events to the UI
+
+// NOTE: All pattern detection logic is coordinated here: ESCALATOR, BREAKOUT_BOX, etc.
 
 import { useEffect, useRef, useState } from 'react';
 import { Candle, EscalatorRun } from '../types';
-import { detectEscalators } from '../patternEngine/escalator';
-import { detectEscalatorSteps } from '../patternEngine/escalatorStep';
-import { detectGoldmine, GoldmineSignal } from '../patternEngine/goldmine';
+import { 
+  detectEscalators, 
+  detectBreakoutBoxes,
+  detectGoldmine, 
+  detectRocketman,
+  getIntrinsicScore,
+  computeRollingBlackjackScores,
+  computeTargetBlackjackScore,
+  detectStepContinuation, // Phase 4: Continuation Linking
+  detectPivots, // Added import for detectPivots
+  detectGoldmineChannel, // Added import for detectGoldmineChannel
+  detectGoldenCandle, // Added import for detectGoldenCandle
+  detectGoldenCandleCandidates, // Added import for detectGoldenCandleCandidates forensics
+  detectGoldenNearMisses // Added import for detectGoldenNearMisses
+} from '../patternEngine';
+import type { GoldmineSignal } from '../patternEngine';
 import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop';
-import { getIntrinsicScore } from '../patternEngine/blackjack';
 import { usePatternContext } from '../contexts/PatternContext';
+import { logDebug, logDebugHAAlignmentMismatch } from '../utils/debug';
+import { convertToHeikinAshi } from '../utils/candleTransform'; // HA transformation for pattern detection
+import { evaluateStopLoss, getActiveStopLosses } from '../engine/StopLossManager';
+import { patternEngineTracker, dataAnalysisLock, LifecycleInstrumentation, FIDELITY_MODE_SETTINGS } from '../utils/signalFidelityPatch';
 
 export interface Position {
   side: 'LONG' | 'SHORT';
@@ -17,10 +36,12 @@ export interface Position {
   step: any; // StepBox type
 }
 
+// NOTE: Valid PatternEvent types: ESCALATOR, ESCALATOR_STEP, BREAKOUT_BOX, GOLDMINE, etc.
 export interface PatternEvent {
-  type: 'ESCALATOR' | 'ESCALATOR_STEP' | 'GOLDMINE' | 'STOP_EVENT';
+  type: 'ESCALATOR' | 'ESCALATOR_STEP' | 'GOLDMINE' | 'STOP_EVENT' | 'BREAKOUT_BOX' | 'BLACKJACK_ROLLING' | 'BLACKJACK_TARGET' | 'ROCKETMAN' | 'PIVOT' | 'GOLDMINE_CHANNEL' | 'GOLDEN_CANDLE' | 'GOLDMINE_FORENSICS' | 'GOLDEN_NEAR_MISS'; // Added 'GOLDEN_NEAR_MISS' type
   data: EscalatorRun | GoldmineSignal | StopLossEvent | any; // 'any' for StepBox data
   timestamp: number;
+  index?: number;
 }
 
 export interface PatternBusState {
@@ -31,50 +52,63 @@ export interface PatternBusState {
 }
 
 export function usePatternBus(candles: Candle[]): PatternBusState {
-  // Debug: Log what we receive
-  console.log('[usePatternBus] Hook called with:', {
-    candlesLength: candles?.length || 0,
-    candlesType: typeof candles,
-    isArray: Array.isArray(candles),
-    firstCandle: candles?.[0]?.datetime,
-    caller: new Error().stack?.split('\n')[2]?.trim() // Track which component called us
-  });
-
+  const prevCandleCountRef = useRef(0);
+  const prevFirstCandleRef = useRef<Candle | null>(null);
   const [events, setEvents] = useState<PatternEvent[]>([]);
   const [activePosition, setActivePosition] = useState<Position | undefined>();
   const [isPatternDetectionComplete, setIsPatternDetectionComplete] = useState(false);
   const [processedDataHash, setProcessedDataHash] = useState<string>('');
-  const prevCandleCountRef = useRef(0);
-  const prevFirstCandleRef = useRef<Candle | null>(null);
   const existingGoldmineRef = useRef<GoldmineSignal | undefined>(undefined);
 
-  // Get context setters for pattern metrics
   const { 
     setBjIntrinsic, 
-    setBjCumulative, 
+    setBjCumulative,
+    setBjRollingScores, 
+    setBjTargetScores, 
     setStepIndex,
     setEscalatorDir,
     setEscalatorLength,
     setGoldmineQual,
     setTrailStop,
     setDistToStopPct,
-    setEscalatorSteps
+    setEscalatorSteps,
+    setBreakoutBoxes,
+    setRocketmanConfidence,
+    setRocketmanAcceleration,
+    setRocketmanDirection,
+    setPivotDirection, // Added setPivotDirection
+    setPivotStrength, // Added setPivotStrength
+    setPivotTouchCount, // Added setPivotTouchCount
+    setGmcDepthPercent, // Added setGmcDepthPercent
+    setGmcBreakoutStrength, // Added setGmcBreakoutStrength
+    setGmcBaseDuration, // Added setGmcBaseDuration
+    setGoldenCandleQual, // Added setGoldenCandleQual
+    setGoldenScore, // Added setGoldenScore
+    setGoldenDirection, // Added setGoldenDirection
+    setGoldmineForensics, // Added setGoldmineForensics
+    setGoldmineForensicsNotes, // Added setGoldmineForensicsNotes
+    setGoldenNearMisses, // Added setGoldenNearMisses
+    escalatorSettings,
+    setStepIntrinsicCount,
+    setStepBreakoutCount,
+    setStepContinuanceCount
   } = usePatternContext();
   
-  console.log('[usePatternBus] Got context setters:', {
-    hasSetEscalatorDir: !!setEscalatorDir,
-    typeOfSetEscalatorDir: typeof setEscalatorDir
-  });
-
-  // Clear pattern arrays on data change
   useEffect(() => {
     if (!candles || candles.length === 0) return;
+
+    // Signal Fidelity Mode: Start data analysis
+    dataAnalysisLock.startAnalysis();
+    LifecycleInstrumentation.logMilestone("Pattern detection started", {
+      candleCount: candles.length,
+      timestamp: new Date().toISOString()
+    });
     
-    // Clear all pattern arrays when data changes
-    console.log('[PatternBus] Clearing pattern arrays for new data');
     setIsPatternDetectionComplete(false);
     setBjIntrinsic([]);
     setBjCumulative([]);
+    setBjRollingScores([]);
+    setBjTargetScores([]);
     setStepIndex([]);
     setEscalatorDir([]);
     setEscalatorLength([]);
@@ -82,35 +116,28 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     setTrailStop([]);
     setDistToStopPct([]);
     setEscalatorSteps([]);
+    setBreakoutBoxes([]);
+    setStepIntrinsicCount([]);
+    setStepBreakoutCount([]);
+    setStepContinuanceCount([]);
   }, [candles.length, candles[0]?.datetime, candles[candles.length - 1]?.datetime,
       setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, 
-      setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps]);
+      setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct, setEscalatorSteps, setBreakoutBoxes, setBjTargetScores,
+      setStepIntrinsicCount, setStepBreakoutCount, setStepContinuanceCount]);
 
-  // Run pattern detection
   useEffect(() => {
     if (!candles || candles.length === 0) {
-      console.log('[PatternBus] No candles provided, skipping pattern detection');
       setIsPatternDetectionComplete(false);
       return;
     }
     
-    console.log('[PatternBus] Running pattern detection on', candles.length, 'candles');
-    console.log('[PatternBus] Data range:', {
-      first: candles[0] ? { time: candles[0].datetime, close: candles[0].close } : null,
-      last: candles[candles.length - 1] ? { time: candles[candles.length - 1].datetime, close: candles[candles.length - 1].close } : null,
-      candleHash: candles[0]?.datetime + '_' + candles[candles.length - 1]?.datetime + '_' + candles.length
-    });
-    
-    // Track if this is the same data as last time
     const currentFirstTime = candles[0]?.datetime;
     const currentLastTime = candles[candles.length - 1]?.datetime;
     
-    // Update candle count tracking
     const dataChanged = !prevFirstCandleRef.current || 
                        prevFirstCandleRef.current.datetime !== currentFirstTime ||
                        prevCandleCountRef.current === 0; // First load
 
-    // Debounce - only run when new candles are appended or data changed
     if (candles.length <= prevCandleCountRef.current && !dataChanged) {
       setIsPatternDetectionComplete(true);
       return;
@@ -119,93 +146,239 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
     prevCandleCountRef.current = candles.length;
     prevFirstCandleRef.current = candles[0];
 
-    console.log('[PatternBus] Data changed, running pattern detection');
-    
-    // Log the time range
-    if (candles.length > 0) {
-      const firstTime = new Date(candles[0].datetime);
-      const lastTime = new Date(candles[candles.length - 1].datetime);
-      console.log('[PatternBus] Time range:', {
-        first: firstTime.toLocaleString(),
-        last: lastTime.toLocaleString(),
-        firstIdx: 0,
-        lastIdx: candles.length - 1
-      });
-    }
-
     const newEvents: PatternEvent[] = [];
 
-    // 1. Detect Escalator patterns
-    const escalators = detectEscalators(candles);
-    console.log('[PatternBus] Detected escalators:', escalators.length);
-    console.log('[PatternBus] Escalator details:', escalators.map(e => ({
-      startIndex: e.startIndex,
-      endIndex: e.endIndex,
-      direction: e.direction,
-      stepsCount: e.steps.length
-    })));
+    // ──── HEIKIN-ASHI TRANSFORMATION ────────────────────────────────────────
+    // Convert OHLC candles to Heikin-Ashi for all pattern detection
+    // UI rendering continues to use original OHLC candles for user display
+    const haCandles = convertToHeikinAshi(candles);
     
-    // 1b. Detect Escalator Steps
-    const escalatorSteps = detectEscalatorSteps(candles);
-    console.log('[PatternBus] Detected escalator steps:', escalatorSteps.length);
+    logDebug('DEBUG_PATTERN_DETECT', '[HA_TRANSFORM] Pattern detection using Heikin-Ashi candles:', {
+      originalCandles: candles.length,
+      heikinAshiCandles: haCandles.length,
+      firstHA: haCandles[0] ? {
+        open: haCandles[0].open.toFixed(2),
+        close: haCandles[0].close.toFixed(2)
+      } : null
+    });
+
+    // Detect BreakoutBoxes independently using HA candles
+    let breakoutBoxes: any[] = [];
+    const targetEvents: PatternEvent[] = [];
+    const bjTargets: { stepRef: string; score: number; qualifiesForGoldmine?: boolean }[] = [];
+    const breakoutBoxEvents: PatternEvent[] = [];
     
-    // Emit events for each detected step
-    const escalatorStepEvents: PatternEvent[] = [];
-    escalatorSteps.forEach(step => {
-      const direction = escalators.find(esc => 
-        esc.steps.some(s => s.startIndex <= step.startIndex && s.endIndex >= step.startIndex)
-      )?.direction === 'BULLISH' ? 'RISING' : 'FALLING';
+    try {
+      breakoutBoxes = detectBreakoutBoxes(haCandles);
+    } catch (error) {
+      console.error('[usePatternBus] Error in detectBreakoutBoxes:', error);
+      console.error('[usePatternBus] Stack trace:', (error as Error).stack);
+    }
+    
+    // Process breakout boxes
+    breakoutBoxes.forEach(box => {
+      const boxCandles = haCandles.slice(box.startIndex, box.endIndex + 1);
+      // Compute Target Blackjack Score for this breakout box
+      const tbsScore = computeTargetBlackjackScore(haCandles, box.startIndex, box.endIndex);
+      bjTargets.push({ stepRef: box.stepRef, score: tbsScore, qualifiesForGoldmine: box.qualifiesForGoldmine });
+      targetEvents.push({
+        type: 'BLACKJACK_TARGET',
+        data: { stepRef: box.stepRef, score: tbsScore, qualifiesForGoldmine: box.qualifiesForGoldmine },
+        timestamp: Date.now()
+      });
       
-      const stepEvent: PatternEvent = {
-        type: 'ESCALATOR_STEP',
+      // DIAGNOSTIC: Log qualification status before event creation
+      logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] [usePatternBus] Creating event for box:', {
+        stepRef: box.stepRef,
+        qualifiesForGoldmine: box.qualifiesForGoldmine,
+        blackjackScore: box.blackjackScore,
+        hasQualificationField: 'qualifiesForGoldmine' in box
+      });
+      
+      const event: PatternEvent = {
+        type: 'BREAKOUT_BOX',
         data: {
-          stepRef: `${step.startIndex}-${step.endIndex}`,
-          direction,
-          floor: step.floor,
-          ceiling: step.ceiling,
-          height: step.height
+          ...box,
+          candles: boxCandles, // Add candles array for renderer
+          // Add additional fields expected by renderer
+          high: box.ceiling,
+          low: box.floor,
+          boxType: box.direction === 'RISING' ? 'consolidation' : 'compression', // Renamed from 'type' to avoid collision
+          // Include Blackjack scoring metadata
+          blackjackScore: box.blackjackScore,
+          blackjackComponents: box.blackjackComponents,
+          qualifiesForGoldmine: box.qualifiesForGoldmine
         },
-        timestamp: candles[step.endIndex].timestamp
+        timestamp: Date.now()
       };
       
-      newEvents.push(stepEvent);
-      escalatorStepEvents.push(stepEvent);
+      // DIAGNOSTIC: Verify event data after creation
+      logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] [usePatternBus] Event created with data:', {
+        stepRef: event.data.stepRef,
+        qualifiesForGoldmine: event.data.qualifiesForGoldmine,
+        dataKeys: Object.keys(event.data)
+      });
+      
+      breakoutBoxEvents.push(event);
     });
     
-    // Debug: Log sample of candles to verify data
-    console.log('[PatternBus] Sample candles for pattern detection:', {
-      totalCandles: candles.length,
-      firstCandle: { 
-        datetime: candles[0]?.datetime, 
-        open: candles[0]?.open, 
-        close: candles[0]?.close,
-        isBullish: candles[0]?.close > candles[0]?.open
-      },
-      lastCandle: { 
-        datetime: candles[candles.length-1]?.datetime, 
-        open: candles[candles.length-1]?.open, 
-        close: candles[candles.length-1]?.close,
-        isBullish: candles[candles.length-1]?.close > candles[candles.length-1]?.open
-      },
-      sampleMidCandles: candles.slice(Math.floor(candles.length/2) - 2, Math.floor(candles.length/2) + 3).map((c, i) => ({
-        index: Math.floor(candles.length/2) - 2 + i,
-        datetime: c.datetime,
-        open: c.open,
-        close: c.close,
-        isBullish: c.close > c.open
-      }))
+    // DIAGNOSTIC: Summary of qualified events
+    const qualifiedEvents = breakoutBoxEvents.filter(e => e.data.qualifiesForGoldmine === true);
+    logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] [usePatternBus] Event emission summary:', {
+      totalEvents: breakoutBoxEvents.length,
+      qualifiedEvents: qualifiedEvents.length,
+      qualifiedStepRefs: qualifiedEvents.map(e => e.data.stepRef)
     });
     
-    // Compute real Blackjack intrinsic scores
-    const bjIntrinsic = candles.map((candle, i) => {
-      if (i === 0) return 0;
-      const prevCandle = candles[i - 1];
-      const prevBodyHigh = Math.max(prevCandle.open, prevCandle.close);
-      const prevBodyLow = Math.min(prevCandle.open, prevCandle.close);
-      return getIntrinsicScore(candle, prevBodyHigh, prevBodyLow);
+    // Add breakout box events to the main events array
+    newEvents.push(...breakoutBoxEvents);
+    newEvents.push(...targetEvents);
+
+    // Update context with Target Blackjack Scores for rendering
+    setBjTargetScores(bjTargets);
+
+    // Detect escalators using pattern engine - only if enabled
+    const shouldDetect = escalatorSettings?.enabled === true;
+    // Signal Fidelity Mode: Mark ESCALATOR engine as processing
+    patternEngineTracker.markEngineProcessing('ESCALATOR');
+    
+    // Detect escalators using Heikin-Ashi candles
+    const escalators = detectEscalators(haCandles);
+    logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Escalator detection complete:', {
+      escalatorCount: escalators?.length || 0,
+      escalators: escalators || []
+    });
+
+    // Signal Fidelity Mode: Mark ESCALATOR engine as ready
+    patternEngineTracker.markEngineReady('ESCALATOR');
+    
+    // Process escalators and emit events
+    const escalatorEvents: PatternEvent[] = [];
+    
+    // Emit ESCALATOR events for each escalator run
+    escalators.forEach(escalator => {
+      escalatorEvents.push({
+        type: 'ESCALATOR',
+        data: escalator,
+        timestamp: haCandles[escalator.startIndex]?.timestamp || Date.now()
+      });
+      
+      // Emit ESCALATOR_STEP events for each step within the escalator
+      escalator.steps.forEach((step, stepIndex) => {
+        const startTimestamp = haCandles[step.startIndex]?.timestamp || 0;
+        const endTimestamp = haCandles[step.endIndex]?.timestamp || 0;
+        const stepRef = `${startTimestamp}-${endTimestamp}`;
+        
+        const existingEvent = escalatorEvents.find(event => event.type === 'ESCALATOR_STEP' && event.data.stepRef === stepRef);
+        if (!existingEvent) {
+          escalatorEvents.push({
+            type: 'ESCALATOR_STEP',
+            data: {
+              stepRef,
+              direction: escalator.direction === 'BULLISH' ? 'UP' : 'DOWN',
+              floor: step.floor,
+              ceiling: step.ceiling,
+              height: step.ceiling - step.floor,
+              startIndex: step.startIndex,
+              endIndex: step.endIndex,
+              startTime: step.startTime,
+              endTime: step.endTime
+            },
+            timestamp: haCandles[step.startIndex]?.timestamp || Date.now()
+          });
+        }
+      });
     });
     
-    // Compute cumulative Blackjack scores
+    // Add all escalator events to the main events array
+    newEvents.push(...escalatorEvents);
+    
+    // Detect Rocketman patterns
+    const rocketmanPatterns = detectRocketman(haCandles);
+    rocketmanPatterns.forEach((pattern) => {
+      newEvents.push({
+        type: 'ROCKETMAN',
+        data: pattern,
+        timestamp: pattern.peakTime.getTime(),
+        index: pattern.peakIndex
+      });
+    });
+
+    const newRocketmanConfidence = new Array<number>(haCandles.length).fill(0);
+    const newRocketmanAcceleration = new Array<number>(haCandles.length).fill(0);
+    const newRocketmanDirection = new Array(haCandles.length).fill('LONG');
+
+    rocketmanPatterns.forEach((p) => {
+      newRocketmanConfidence[p.peakIndex] = p.confidence;
+      newRocketmanAcceleration[p.peakIndex] = p.accelerationRate;
+      newRocketmanDirection[p.peakIndex] = p.direction === 'BULLISH' ? 'LONG' : 'SHORT';
+    });
+
+    setRocketmanConfidence(newRocketmanConfidence);
+    setRocketmanAcceleration(newRocketmanAcceleration);
+    setRocketmanDirection(newRocketmanDirection);
+
+    // Detect Pivot patterns
+    const pivotPatterns = detectPivots(haCandles);
+    pivotPatterns.forEach((pattern) => {
+      newEvents.push({
+        type: 'PIVOT',
+        data: pattern,
+        timestamp: pattern.timestamp.getTime(),
+        index: pattern.pivotIndex
+      });
+    });
+
+    const newPivotDirection = new Array<'SUPPORT' | 'RESISTANCE' | null>(haCandles.length).fill(null);
+    const newPivotStrength = new Array<number>(haCandles.length).fill(0);
+    const newPivotTouchCount = new Array<number>(haCandles.length).fill(0);
+
+    pivotPatterns.forEach((p) => {
+      newPivotDirection[p.pivotIndex] = p.pivotType;
+      newPivotStrength[p.pivotIndex] = p.strengthScore;
+      newPivotTouchCount[p.pivotIndex] = p.touchCount;
+    });
+
+    setPivotDirection(newPivotDirection);
+    setPivotStrength(newPivotStrength);
+    setPivotTouchCount(newPivotTouchCount);
+
+    // Detect Goldmine Channel patterns
+    const goldmineChannelPatterns = detectGoldmineChannel(haCandles);
+    goldmineChannelPatterns.forEach((pattern) => {
+      newEvents.push({
+        type: 'GOLDMINE_CHANNEL',
+        data: pattern,
+        timestamp: pattern.touchPoints[0]?.time.getTime() || new Date().getTime(),
+        index: pattern.startIndex
+      });
+    });
+
+    const newGmcDepthPercent = new Array<number>(haCandles.length).fill(0);
+    const newGmcBreakoutStrength = new Array<number>(haCandles.length).fill(0);
+    const newGmcBaseDuration = new Array<number>(haCandles.length).fill(0);
+
+    goldmineChannelPatterns.forEach((p) => {
+      const depthPercent = (p.channelWidth * 100);
+      const baseDuration = p.endIndex - p.startIndex;
+      const breakoutStrength = p.confidence;
+      
+      newGmcDepthPercent[p.startIndex] = depthPercent;
+      newGmcBreakoutStrength[p.startIndex] = breakoutStrength;
+      newGmcBaseDuration[p.startIndex] = baseDuration;
+    });
+
+    setGmcDepthPercent(newGmcDepthPercent);
+    setGmcBreakoutStrength(newGmcBreakoutStrength);
+    setGmcBaseDuration(newGmcBaseDuration);
+
+    // Calculate blackjack scores first (needed for Golden Candle detection)
+    const bjIntrinsic = haCandles.map((candle, idx) => {
+      if (idx === 0) return 0; // First candle has no previous reference
+      const prevCandle = haCandles[idx - 1];
+      return getIntrinsicScore(candle, prevCandle);
+    });
+    
     const bjCumulative = bjIntrinsic.reduce<number[]>(
       (arr, val) => {
         arr.push((arr[arr.length - 1] ?? 0) + val);
@@ -213,242 +386,232 @@ export function usePatternBus(candles: Candle[]): PatternBusState {
       }, 
       []
     );
+
+    // Signal Fidelity Mode: Mark BLACKJACK engine as processing
+    patternEngineTracker.markEngineProcessing('BLACKJACK');
     
-    // Compute step indices from detected escalator steps
-    const stepIndex = new Array(candles.length).fill(null);
-    escalators.forEach(escalator => {
-      escalator.steps.forEach(step => {
-        for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < candles.length) {
-            stepIndex[i] = i - step.startIndex + 1;
-          }
-        }
+    // Detect Blackjack scores
+    const blackjackRollingScores = computeRollingBlackjackScores(haCandles);
+    // Note: blackjackTargetScores will be computed per escalator step in Phase 1
+    const blackjackTargetScores: number[] = [];
+
+    // Signal Fidelity Mode: Mark BLACKJACK engine as ready
+    patternEngineTracker.markEngineReady('BLACKJACK');
+
+    // Emit latest rolling score event for UI consumers
+    if (blackjackRollingScores.length > 0) {
+      const latestRolling = blackjackRollingScores[blackjackRollingScores.length - 1];
+      newEvents.push({
+        type: 'BLACKJACK_ROLLING',
+        data: latestRolling,
+        timestamp: latestRolling.timestamp
       });
-    });
-    
-    // Create per-candle escalator direction array
-    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(candles.length).fill(null);
-    
-    console.log('[PatternBus] Before populating escalatorDir:', {
-      escalatorsCount: escalators.length,
-      arrayLength: escalatorDirArray.length,
-      candlesLength: candles.length
-    });
-    
-    escalators.forEach(escalator => {
-      console.log('[PatternBus] Processing escalator:', {
-        startIndex: escalator.startIndex,
-        endIndex: escalator.endIndex,
-        direction: escalator.direction,
-        startCandle: candles[escalator.startIndex]?.close,
-        endCandle: candles[escalator.endIndex]?.close,
-        startDate: candles[escalator.startIndex]?.datetime,
-        endDate: candles[escalator.endIndex]?.datetime,
-        stepsCount: escalator.steps.length
-      });
-      
-      // Fill in the direction for all candles in this escalator run
-      escalator.steps.forEach((step, stepIndex) => {
-        console.log(`[PatternBus] Processing step ${stepIndex}:`, {
-          startIndex: step.startIndex,
-          endIndex: step.endIndex,
-          willFill: `indices ${step.startIndex} to ${step.endIndex}`
-        });
-        
-        for (let i = step.startIndex; i <= step.endIndex; i++) {
-          if (i < candles.length) {
-            const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
-            escalatorDirArray[i] = dir;
-            console.log(`[PatternBus] Set escalatorDir[${i}] = ${dir}`);
-          }
-        }
-      });
-    });
-    
-    console.log('[PatternBus] After escalator detection, nulls remaining:', escalatorDirArray.filter(d => d === null).length);
-    
-    // DO NOT fill nulls - respect Dick Oleary's strict escalator rules
-    // If there's no escalator pattern detected, it should remain null
-    // This preserves the integrity of the pattern detection
-    
-    console.log('[PatternBus] Final escalator direction array sample:', {
-      first5: escalatorDirArray.slice(0, 5),
-      last5: escalatorDirArray.slice(-5),
-      totalNulls: escalatorDirArray.filter(d => d === null).length,
-      totalRising: escalatorDirArray.filter(d => d === 'RISING').length,
-      totalFalling: escalatorDirArray.filter(d => d === 'FALLING').length
-    });
-    
-    // NOW set the escalator direction array after it's been populated
-    setEscalatorDir(escalatorDirArray);
-    
-    // Build escalator length array
-    const escalatorLength = new Array<number>(candles.length).fill(0);
-    
-    escalators.forEach(escalator => {
-      // Debug log to track escalator detection
-      console.log(`Escalator detected: startIndex=${escalator.startIndex}, endIndex=${escalator.endIndex}, direction=${escalator.direction}`);
-      
-      // Log candle prices at the escalator to verify direction
-      if (escalator.startIndex < candles.length && escalator.endIndex < candles.length) {
-        const startCandle = candles[escalator.startIndex];
-        const endCandle = candles[escalator.endIndex];
-        console.log(`[PatternBus] Escalator candles:`, {
-          startPrice: startCandle.close,
-          endPrice: endCandle.close,
-          priceChange: endCandle.close - startCandle.close,
-          expectedDirection: endCandle.close > startCandle.close ? 'RISING' : 'FALLING',
-          detectedDirection: escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING'
-        });
-      }
-      
-      for (let i = escalator.startIndex; i <= escalator.endIndex; i++) {
-        if (i < candles.length) {
-          escalatorLength[i] = i - escalator.startIndex + 1;
-        }
-      }
-    });
-    
-    // Debug log the populated escalatorDir array
-    console.log('[PatternBus] EscalatorDir array populated:', {
-      totalLength: escalatorDirArray.length,
-      nonNullCount: escalatorDirArray.filter(d => d !== null).length,
-      sample: escalatorDirArray.slice(45, 55).map((dir, i) => `[${i + 45}]: ${dir}`),
-      atIndex92: `[92]: ${escalatorDirArray[92]}`,
-      nearIndex92: escalatorDirArray.slice(88, 96).map((dir, i) => `[${i + 88}]: ${dir}`)
-    });
-    
-    // Build goldmine qualifier array
-    const goldmineQual = new Array<boolean>(candles.length).fill(false);
-    
-    // Build trailing stop arrays (use 0 as default for no stop)
-    const trailStop = new Array<number>(candles.length).fill(0);
-    const distToStopPct = new Array<number>(candles.length).fill(0);
-    
-    // Populate goldmine qualifier array based on goldmine events
-    events.forEach(event => {
-      if (event.type === 'GOLDMINE' && event.data) {
-        const goldmine = event.data as any;
-        if (goldmine.entryIndex < candles.length) {
-          goldmineQual[goldmine.entryIndex] = true;
-        }
-      }
-    });
-    
-    // Calculate trailing stops for all candles where escalators exist
-    escalators.forEach(escalator => {
-      // For each escalator, calculate trailing stops using the i-2 method
-      escalator.steps.forEach(step => {
-        // Start calculating stops from the step end + 1
-        for (let i = step.endIndex + 1; i < candles.length; i++) {
-          if (i >= 2) {
-            // Use the low of candle i-2 as the trailing stop
-            const stopPrice = candles[i - 2].low;
-            trailStop[i] = stopPrice;
-            
-            // Calculate distance to stop as percentage
-            const closePrice = candles[i].close;
-            distToStopPct[i] = ((closePrice - stopPrice) / closePrice) * 100;
-          }
-        }
-      });
-    });
-    
-    // Push arrays into context
+    }
     setBjIntrinsic(bjIntrinsic);
     setBjCumulative(bjCumulative);
+    setBjRollingScores(blackjackRollingScores);
+    
+    // Initialize missing variables for validation array
+    const newGoldenCandleQual = new Array<boolean>(haCandles.length).fill(false);
+    const newGoldenScore = new Array<number>(haCandles.length).fill(0);
+    const newGoldenDirection = new Array<'LONG' | 'SHORT' | null>(haCandles.length).fill(null);
+    
+    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(haCandles.length).fill(null);
+    const escalatorLength = new Array<number>(haCandles.length).fill(0);
+    const goldmineQual = new Array<boolean>(haCandles.length).fill(false);
+    const trailStop = new Array<number>(haCandles.length).fill(0);
+    const distToStopPct = new Array<number>(haCandles.length).fill(0);
+    const stepIndex = new Array(haCandles.length).fill(null);
+    
+    // Set context with initialized arrays
     setStepIndex(stepIndex);
     setEscalatorLength(escalatorLength);
     setGoldmineQual(goldmineQual);
     setTrailStop(trailStop);
     setDistToStopPct(distToStopPct);
-    setEscalatorSteps(escalatorStepEvents);
+    setGoldenCandleQual(newGoldenCandleQual);
+    setGoldenScore(newGoldenScore);
+    setGoldenDirection(newGoldenDirection);
+    
+    // Phase 1: Core Metrics - Populate step metrics arrays
+    // Populate step metrics from escalator steps
+    // Update context with step metrics
+    
+    const attributedSteps = escalatorEvents.map(s => ({
+      ...s,
+      data: {
+        ...s.data,
+        symbol: (s.data as any).symbol || (s.data as any).ticker?.toUpperCase() || 'UNKNOWN',
+        ticker: (s.data as any).ticker || 'UNKNOWN',
+      }
+    }));
+    setEscalatorSteps(attributedSteps);
+    setBreakoutBoxes(breakoutBoxEvents);
 
-    // Emit new escalator events (only for the latest patterns to avoid duplicates)
-    const latestEscalators = escalators.slice(-5); // Keep last 5 escalators active
-    latestEscalators.forEach(escalator => {
-      // Check if this escalator is already in events
-      const exists = events.some(e => 
-        e.type === 'ESCALATOR' && 
-        (e.data as EscalatorRun).startIndex === escalator.startIndex
-      );
-      
-      if (!exists) {
-        newEvents.push({
-          type: 'ESCALATOR',
-          data: escalator,
-          timestamp: Date.now()
-        });
+    // Signal Fidelity Mode: Mark BREAKOUT_BOX engine as processing (already done above)
+    // Breakout boxes were already detected earlier - reuse the existing variable
+    logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] BreakoutBox detection already complete:', {
+      breakoutBoxCount: breakoutBoxes?.length || 0,
+      boxes: breakoutBoxes || []
+    });
+
+    // Signal Fidelity Mode: Mark BREAKOUT_BOX engine as ready
+    patternEngineTracker.markEngineReady('BREAKOUT_BOX');
+
+    // Update breakout boxes in context
+    if (breakoutBoxEvents.length > 0) {
+      logDebug('DEBUG_PATTERN_DETECT', '[DIAGNOSTIC] usePatternBus setting breakoutBoxes in context:', {
+        count: breakoutBoxEvents.length,
+        firstFive: breakoutBoxEvents.slice(0, 5).map(e => ({
+          stepRef: e.data.stepRef,
+          indices: `${e.data.startIndex}-${e.data.endIndex}`
+        }))
+      });
+    }
+
+    logDebug('DEBUG_PATTERN_DETECT', '[usePatternBus] Context update:', {
+      breakoutBoxEventsLength: breakoutBoxEvents.length,
+      sampleStepRefs: breakoutBoxEvents.slice(0, 3).map(e => e.data.stepRef)
+    });
+
+    // Comprehensive HA alignment validation
+    const arraysToValidate = [
+      newRocketmanConfidence,
+      newRocketmanAcceleration,
+      newRocketmanDirection,
+      newPivotDirection,
+      newPivotStrength,
+      newPivotTouchCount,
+      newGmcDepthPercent,
+      newGmcBreakoutStrength,
+      newGmcBaseDuration,
+      newGoldenCandleQual,
+      newGoldenScore,
+      newGoldenDirection,
+      escalatorDirArray,
+      escalatorLength,
+      goldmineQual,
+      trailStop,
+      distToStopPct,
+      stepIndex
+    ];
+
+    arraysToValidate.forEach((array, index) => {
+      if (array.length !== haCandles.length) {
+        logDebugHAAlignmentMismatch(index, `usePatternBus.contextArray[${index}]`, `haCandles.length=${haCandles.length}`, `array.length=${array.length}`);
       }
     });
 
-    // 2. Detect Goldmine signals on latest escalator
-    if (escalators.length > 0 && !existingGoldmineRef.current) {
-      const latestEscalator = escalators[escalators.length - 1];
-      const latestStep = latestEscalator.steps[latestEscalator.steps.length - 1];
-      
-      // Check for Goldmine on the latest candles after the step
-      const candlesAfterStep = candles.slice(latestStep.endIndex + 1);
-      
-      if (candlesAfterStep.length > 0) {
-        const goldmine = detectGoldmine(
-          latestStep,
-          candlesAfterStep,
-          existingGoldmineRef.current
-        );
-        
-        if (goldmine) {
-          existingGoldmineRef.current = goldmine;
-          newEvents.push({
-            type: 'GOLDMINE',
-            data: goldmine,
-            timestamp: Date.now()
-          });
+    // Phase 4: Continuation Linking - Detect post-breakout escalator continuations
+    const continuationEvents: PatternEvent[] = [];
+    
+    breakoutBoxes.forEach(box => {
+      // Find the corresponding step from escalator steps
+      if (box.stepRef) {
+        // Extract step indices from stepRef (format: "timestamp1-timestamp2")
+        const stepRefParts = box.stepRef.split('-');
+        if (stepRefParts.length === 2) {
+          const startTimestamp = parseInt(stepRefParts[0]);
+          const endTimestamp = parseInt(stepRefParts[1]);
+          
+          // Find the step that matches this timestamp range
+          let matchingStep: any = null;
+          for (const escalator of (escalators || [])) {
+            for (const step of escalator.steps) {
+              const stepStartTs = haCandles[step.startIndex]?.timestamp || 0;
+              const stepEndTs = haCandles[step.endIndex]?.timestamp || 0;
+              
+              if (stepStartTs === startTimestamp && stepEndTs === endTimestamp) {
+                matchingStep = step;
+                break;
+              }
+            }
+            if (matchingStep) break;
+          }
+          
+          // If we found the matching step, check for continuation
+          if (matchingStep && box.breakoutIndex !== undefined) {
+            logDebug('DEBUG_PATTERN_DETECT', '[Phase 4] Checking continuation for step:', {
+              stepRef: box.stepRef,
+              breakoutIndex: box.breakoutIndex,
+              stepDirection: matchingStep.direction
+            });
+            
+            const continuation = detectStepContinuation(
+              matchingStep,
+              haCandles,
+              box.breakoutIndex,
+              2 // Minimum continuation length
+            );
+            
+            if (continuation) {
+              logDebug('DEBUG_PATTERN_DETECT', '[Phase 4] Continuation detected:', {
+                stepRef: box.stepRef,
+                continuationRange: `${continuation.startIndex}-${continuation.endIndex}`,
+                direction: continuation.direction,
+                originatingStep: continuation.originatingStep
+              });
+              
+              // Emit continuation escalator event
+              const continuationEvent: PatternEvent = {
+                type: 'ESCALATOR',
+                data: {
+                  ...continuation,
+                  // Mark as continuation
+                  isContinuation: true,
+                  continuationType: 'POST_STEP_BREAKOUT'
+                },
+                timestamp: haCandles[continuation.startIndex]?.timestamp || Date.now()
+              };
+              
+              continuationEvents.push(continuationEvent);
+              
+              // Also emit step events for the continuation steps
+              continuation.steps.forEach((contStep: any, stepIndex: number) => {
+                const contStepEvent: PatternEvent = {
+                  type: 'ESCALATOR_STEP',
+                  data: {
+                    ...contStep,
+                    // Link back to originating step
+                    originatingStepRef: box.stepRef,
+                    isContinuation: true
+                  },
+                  timestamp: haCandles[contStep.startIndex]?.timestamp || Date.now()
+                };
+                
+                continuationEvents.push(contStepEvent);
+              });
+            }
+          }
         }
       }
+    });
+    
+    // Add continuation events to main events array
+    if (continuationEvents.length > 0) {
+      logDebug('DEBUG_PATTERN_DETECT', '[Phase 4] Continuation events generated:', {
+        count: continuationEvents.length,
+        eventTypes: continuationEvents.map(e => e.type)
+      });
+      
+      newEvents.push(...continuationEvents);
     }
 
-    // 3. Compute trailing stop if position is active
-    if (activePosition) {
-      // Track trailing stop for all candles while position is active
-      for (let i = activePosition.openIndex; i < candles.length; i++) {
-        const partialCandles = candles.slice(0, i + 1);
-        const stopEvent = computeEscalatorStop(activePosition, partialCandles);
-        
-        if (stopEvent && stopEvent.price) {
-          trailStop[i] = stopEvent.price;
-          // Calculate distance to stop as percentage
-          const closePrice = candles[i].close;
-          distToStopPct[i] = ((closePrice - stopEvent.price) / closePrice) * 100;
-        }
-      }
-      
-      // Check if stop has been hit on the latest candle
-      const stopEvent = computeEscalatorStop(activePosition, candles);
-      
-      if (stopEvent) {
-        newEvents.push({
-          type: 'STOP_EVENT',
-          data: stopEvent,
-          timestamp: Date.now()
-        });
-        
-        // Clear position after stop
-        setActivePosition(undefined);
-        existingGoldmineRef.current = undefined;
-      }
-    }
+    // Integrate trailing stop loss evaluation
+    // 🔍 AUDIT: Trailing evaluation - EVAL STOP tracking
+    const activeStopLossCount = getActiveStopLosses().length;
+    const currentCandleIndex = candles.length - 1;
+    console.log("[EVAL STOP] Candle Index:", currentCandleIndex, "Open Positions:", activeStopLossCount, "Price:", candles[currentCandleIndex]?.close?.toFixed(4) || "N/A");
+    
+    evaluateStopLoss(candles, currentCandleIndex);
 
-    // Update events
-    if (newEvents.length > 0) {
-      setEvents(prev => [...prev, ...newEvents]);
-    }
+    setEvents(prev => [...prev, ...newEvents]);
     
     const dataHash = candles[0]?.datetime + '_' + candles[candles.length - 1]?.datetime + '_' + candles.length;
     setProcessedDataHash(dataHash);
     
     setIsPatternDetectionComplete(true);
-  }, [candles, events, activePosition, setBjIntrinsic, setBjCumulative, setStepIndex, setEscalatorDir, setEscalatorLength, setGoldmineQual, setTrailStop, setDistToStopPct]);
+  }, [candles]);
 
   return { events, activePosition, isPatternDetectionComplete, processedDataHash };
 }

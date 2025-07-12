@@ -49,6 +49,12 @@ class PatternDetector {
     // Run each adaptive detector with market context
     this.detectors.forEach(detector => {
       const detectedPatterns = detector.detect(data, context);
+      
+      // Debug logging for pattern detection
+      if (detectedPatterns.length > 0) {
+        console.log(`[PatternDetector] ${detector.getPatternType()} found ${detectedPatterns.length} patterns`);
+      }
+      
       patterns = [...patterns, ...detectedPatterns];
     });
     

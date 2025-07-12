@@ -1,13 +1,17 @@
 // src/components/Chart/ChartWorkspace.tsx
 // Container for chart and its controls
 // Manages chart workspace layout
+// NOTE: supports DEBUG_UI channel (TriSight canvas logging system)
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import InfiniteZoomChart, { InfiniteZoomChartRef } from './InfiniteZoomChart';
 import ChartControlBar from './ChartControlBar';
 import { ThemeTokens } from '../../styles/theme';
 import { TimeRangeOption } from './TimeRangeSelector';
+import { usePatternContext } from '../../contexts/PatternContext';
+import { useMarketDataContext } from '../../contexts/MarketDataContext';
+import { logDebug } from '../../utils/debug';
 
 const WorkspaceContainer = styled.div`
   display: flex;
@@ -62,7 +66,31 @@ const ChartWorkspace: React.FC<ChartWorkspaceProps> = ({
   selectedSymbol
 }) => {
   const chartRef = useRef<InfiniteZoomChartRef>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedDate] = useState(() => new Date());
+  const { data: marketData } = useMarketDataContext();
+
+  // Track actual container dimensions
+  const [containerDimensions, setContainerDimensions] = useState({ width, height });
+
+  // Use ResizeObserver to detect container size changes
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width: newWidth, height: newHeight } = entry.contentRect;
+        logDebug('DEBUG_UI', '[ChartWorkspace] Container resized:', { newWidth, newHeight });
+        setContainerDimensions({ width: newWidth, height: newHeight });
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   const handleZoomToFit = () => {
     if (chartRef.current?.zoomToFit) {
@@ -74,7 +102,7 @@ const ChartWorkspace: React.FC<ChartWorkspaceProps> = ({
   const [startDate, endDate] = useMemo(() => {
     const endDate = new Date();
     let startDate: Date;
-    
+
     switch (activeTimeRange) {
       case '1D':
         startDate = new Date(endDate);
@@ -104,35 +132,24 @@ const ChartWorkspace: React.FC<ChartWorkspaceProps> = ({
         startDate = new Date(endDate);
         startDate.setDate(startDate.getDate() - 1);
     }
-    
+
     return [startDate, endDate];
   }, [activeTimeRange]);
 
   return (
     <WorkspaceContainer>
-      {/* Chart Controls - top area */}
-      <ChartControlBar
-        timeframe={timeframe}
-        onTimeframeChange={onTimeframeChange}
-        showTradingHoursOnly={showTradingHoursOnly}
-        onTradingHoursToggle={onTradingHoursToggle}
-        onAutoScale={onAutoScale}
-        onResetView={onResetView}
-        onZoomToFit={handleZoomToFit}
-        activeTimeRange={activeTimeRange}
-        onTimeRangeSelect={onTimeRangeSelect}
-      />
       {/* Main Chart Area */}
-      <ChartContainer>
+      <ChartContainer ref={containerRef}>
         <InfiniteZoomChart
           ref={chartRef}
           symbol={selectedSymbol || 'AAPL'}
           startDate={startDate}
           endDate={endDate}
-          width={width}
-          height={height}
+          width={containerDimensions.width}
+          height={containerDimensions.height}
           patterns={patterns}
           onPatternSelect={onPatternSelect}
+          data={marketData}
         />
       </ChartContainer>
     </WorkspaceContainer>

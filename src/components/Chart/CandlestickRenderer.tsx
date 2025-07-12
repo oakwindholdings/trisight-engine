@@ -4,6 +4,8 @@
 import { CandlestickData } from '../../models/ChartTypes';
 import { createPriceScale } from '../../utils/scaling';
 import { createSequentialTimeScale } from '../../utils/sequentialScale';
+import { logDebug } from '../../utils/debug';
+import { isNearMissGoldenCandle } from '../../utils/patternQualifiers';
 
 interface ChartDimensions {
   width: number;
@@ -15,7 +17,44 @@ interface ChartDimensions {
     left: number;
   };
   showingTradingHoursOnly?: boolean;
+  // Chart display options
+  isHeikinAshi?: boolean;
+  showVolume?: boolean;
+  showGrid?: boolean;
 }
+
+// Heikin-Ashi specific color scheme for enhanced trend visibility
+const HA_COLORS = {
+  bullish: {
+    fill: 'rgba(34, 197, 94, 0.85)',     // Emerald-500 with opacity
+    stroke: '#059669',                    // Emerald-600
+    wick: '#059669'
+  },
+  bearish: {
+    fill: 'rgba(239, 68, 68, 0.85)',     // Red-500 with opacity  
+    stroke: '#DC2626',                    // Red-600
+    wick: '#DC2626'
+  },
+  doji: {
+    fill: 'rgba(107, 114, 128, 0.7)',    // Gray-500 with opacity
+    stroke: '#6B7280',                    // Gray-500
+    wick: '#6B7280'
+  }
+} as const;
+
+// Standard OHLC color scheme
+const OHLC_COLORS = {
+  bullish: {
+    fill: 'rgba(67, 160, 71, 0.8)',
+    stroke: '#2E7D32',
+    wick: '#43A047'
+  },
+  bearish: {
+    fill: 'rgba(229, 57, 53, 0.8)',
+    stroke: '#C62828',
+    wick: '#E53935'
+  }
+} as const;
 
 // Implementation with 'Impl' suffix to match declaration in ChartComponents.d.ts
 const CandlestickRendererImpl = {
@@ -24,16 +63,28 @@ const CandlestickRendererImpl = {
     data: CandlestickData[],
     timeScale: ReturnType<typeof createSequentialTimeScale>,
     priceScale: ReturnType<typeof createPriceScale>,
-    dimensions: ChartDimensions
+    dimensions: ChartDimensions,
+    options?: {
+      isHeikinAshi?: boolean;
+      showVolume?: boolean;
+      showGrid?: boolean;
+      goldmineQual?: boolean[]; // Golden Candle indicators
+      goldmineForensics?: boolean[]; // Golden Candle forensics overlay
+    }
   ) {
-    console.log('[CandlestickRenderer] Starting render with:', {
+    const { isHeikinAshi = false, showVolume = true, showGrid = true, goldmineQual = [], goldmineForensics = [] } = options || {};
+    
+    logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] Starting render:', {
       dataLength: data.length,
       contextAvailable: !!ctx,
-      dimensions
+      dimensions,
+      isHeikinAshi,
+      showVolume,
+      showGrid
     });
 
     if (!ctx || data.length === 0) {
-      console.warn('[CandlestickRenderer] No context or data, skipping render');
+      logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] No context or data, skipping render');
       return;
     }
 
@@ -54,21 +105,24 @@ const CandlestickRendererImpl = {
     const candleOffset = (totalWidth / candleCount) * gapRatio; // Gap between candles
     
     // Volume scaling - use bottom 20% of chart for volume
-    const volumeHeight = (height - margin.top - margin.bottom) * 0.2;
+    const volumeHeight = showVolume ? (height - margin.top - margin.bottom) * 0.2 : 0;
     const volumeTop = height - margin.bottom - volumeHeight;
     
     // Find max volume for scaling
     const maxVolume = Math.max(...data.map(d => d.volume));
     
-    console.log('[CandlestickRenderer] Drawing grid and candles:', {
+    logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] Drawing candles:', {
       candleWidth,
       totalWidth,
       candleCount,
-      maxVolume
+      maxVolume,
+      candleType: isHeikinAshi ? 'Heikin-Ashi' : 'OHLC'
     });
 
     // Draw grid (light background lines)
-    this.drawGrid(ctx, timeScale, priceScale, dimensions);
+    if (showGrid) {
+      this.drawGrid(ctx, timeScale, priceScale, dimensions);
+    }
     
     let candlesDrawn = 0;
     
@@ -85,63 +139,112 @@ const CandlestickRendererImpl = {
       const lowY = priceScale.scale(candle.low);
       
       if (index === 0) {
-        console.log('[CandlestickRenderer] First candle position:', {
+        logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] First candle position:', {
           candleX,
           openY,
           closeY,
           highY,
           lowY,
-          candle
+          candle,
+          isHeikinAshi
         });
       }
       
       const isUp = candle.close >= candle.open;
+      const isDoji = Math.abs(candle.close - candle.open) < (candle.high - candle.low) * 0.1;
+      
+      // Select color scheme based on candle type
+      let colors;
+      if (isHeikinAshi) {
+        if (isDoji) {
+          colors = HA_COLORS.doji;
+        } else {
+          colors = isUp ? HA_COLORS.bullish : HA_COLORS.bearish;
+        }
+      } else {
+        colors = isUp ? OHLC_COLORS.bullish : OHLC_COLORS.bearish;
+      }
       
       // Draw candle wick (high to low)
       ctx.beginPath();
       ctx.moveTo(centerX, highY);
       ctx.lineTo(centerX, lowY);
-      ctx.strokeStyle = isUp ? '#43A047' : '#E53935';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = colors.wick;
+      ctx.lineWidth = isHeikinAshi ? 1.5 : 1; // Slightly thicker wicks for HA
       ctx.stroke();
       
       // Draw candle body
+      const bodyHeight = Math.max(1, Math.abs(closeY - openY));
+      const bodyTop = isUp ? closeY : openY;
+      
       ctx.beginPath();
-      ctx.rect(
-        left,
-        isUp ? closeY : openY,
-        candleWidth,
-        Math.max(1, Math.abs(closeY - openY))
-      );
+      ctx.rect(left, bodyTop, candleWidth, bodyHeight);
       
       // Fill with proper color and opacity
-      ctx.fillStyle = isUp ? 'rgba(67, 160, 71, 0.8)' : 'rgba(229, 57, 53, 0.8)';
+      ctx.fillStyle = colors.fill;
       ctx.fill();
       
       // Stroke the outline
-      ctx.strokeStyle = isUp ? '#2E7D32' : '#C62828';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = colors.stroke;
+      ctx.lineWidth = isHeikinAshi ? 1.2 : 1; // Slightly thicker outlines for HA
       ctx.stroke();
       
-      // Draw volume bar
-      const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight;
+      // Draw Golden Candle stroke if applicable
+      if (goldmineQual[index]) {
+        ctx.strokeStyle = 'gold';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
       
-      ctx.beginPath();
-      ctx.rect(
-        left,
-        volumeTop + (volumeHeight - volumeBarHeight),
-        candleWidth,
-        volumeBarHeight
-      );
+      // Draw forensic overlay if applicable
+      if (goldmineForensics[index]) {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(left, bodyTop, candleWidth, bodyHeight);
+      }
       
-      // Fill with the same color as the candle but more transparent
-      ctx.fillStyle = isUp ? 'rgba(67, 160, 71, 0.5)' : 'rgba(229, 57, 53, 0.5)';
-      ctx.fill();
+      // Draw near-miss Golden Candle overlay if applicable
+      // DICK O'LEARY COMPLIANCE: Visualize near-miss Golden Candle candidates with black fill
+      if (index >= 3) { // Ensure we have enough previous candles for analysis
+        const previousCandles = data.slice(Math.max(0, index - 5), index);
+        if (isNearMissGoldenCandle(candle, previousCandles)) {
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 2;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Semi-transparent black fill
+          ctx.fillRect(left, bodyTop, candleWidth, bodyHeight);
+          ctx.strokeRect(left, bodyTop, candleWidth, bodyHeight);
+          
+          logDebug('DEBUG_GOLDEN_MISS', '[CandlestickRenderer] Near-miss Golden Candle overlay rendered:', {
+            candleIndex: index,
+            candleClose: candle.close.toFixed(4),
+            overlayStyle: 'black fill with 30% opacity',
+            dickOLearyCompliant: true
+          });
+        }
+      }
+      
+      // Draw volume bar (if enabled)
+      if (showVolume && volumeHeight > 0) {
+        const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight;
+        
+        ctx.beginPath();
+        ctx.rect(
+          left,
+          volumeTop + (volumeHeight - volumeBarHeight),
+          candleWidth,
+          volumeBarHeight
+        );
+        
+        // Fill with the same color as the candle but more transparent
+        ctx.fillStyle = isUp 
+          ? (isHeikinAshi ? 'rgba(34, 197, 94, 0.4)' : 'rgba(67, 160, 71, 0.5)')
+          : (isHeikinAshi ? 'rgba(239, 68, 68, 0.4)' : 'rgba(229, 57, 53, 0.5)');
+        ctx.fill();
+      }
       
       candlesDrawn++;
     });
     
-    console.log('[CandlestickRenderer] Finished rendering', candlesDrawn, 'candles');
+    logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] Finished rendering', candlesDrawn, 'candles');
   },
   
   drawGrid(

@@ -87,14 +87,21 @@ const apiRequest = async <T>(
   }
 
   try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error('API key not found. Please add it to localStorage with key "twelvedata_api_key"');
+    }
+
     const url = `${BASE_URL}${endpoint}`;
-    const currentApiKey = getApiKey();
-    console.log('[apiRequest] Using API key:', currentApiKey ? `${currentApiKey.substring(0, 8)}...` : 'NOT SET!');
+    const fullParams = { ...params, apikey: apiKey };
     
-    const fullParams = {
-      ...params,
-      apikey: currentApiKey,
-    };
+    // Add comprehensive logging
+    console.log('[TwelveData API] Making request:', {
+      endpoint,
+      url,
+      params: fullParams,
+      cacheKey
+    });
     
     // Build full URL with params for logging
     const fullUrl = `${url}?${new URLSearchParams({ ...params, apikey: 'YOUR_API_KEY_HIDDEN' }).toString()}`;
@@ -212,7 +219,7 @@ interface MarketStatusResponse {
 }
 
 // Convert TwelveData timeframe to API interval
-const timeframeToInterval = (timeframe: Timeframe): string => {
+export const timeframeToInterval = (timeframe: Timeframe): string => {
   switch (timeframe) {
     case '1min': return '1min';
     case '5min': return '5min';
@@ -280,11 +287,18 @@ export const fetchCandlestickData = async (
   start: Date,
   end: Date
 ): Promise<CandlestickData[]> => {
-  // Format dates to YYYY-MM-DD HH:mm:ss for the API
+  // Format dates based on interval type
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
+    
+    // For daily/weekly/monthly intervals, use date-only format
+    if (interval === '1day' || interval === '1week' || interval === '1month') {
+      return `${year}-${month}-${day}`;
+    }
+    
+    // For intraday intervals, include time
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
@@ -311,11 +325,16 @@ export const fetchCandlestickData = async (
     start_date: startStr,
     end_date: endStr,
     format: 'JSON',
-    // Removed outputsize - it might conflict with date range parameters
-    timezone: 'America/New_York' // Add timezone to ensure proper date handling
+    timezone: 'America/New_York'
   };
   
-  console.log(`fetchCandlestickData - Requesting ${symbol} ${interval} from ${startStr} to ${endStr}`);
+  console.log(`[fetchCandlestickData] Requesting:`, {
+    symbol,
+    interval,
+    start_date: startStr,
+    end_date: endStr,
+    timezone: 'America/New_York'
+  });
   
   const response = await apiRequest<TimeSeriesResponse>(
     '/time_series',
@@ -323,54 +342,29 @@ export const fetchCandlestickData = async (
     cacheKey
   );
   
-  console.log(`fetchCandlestickData - Response metadata:`, {
+  console.log(`[fetchCandlestickData] Response metadata:`, {
     symbol: response.meta?.symbol,
     interval: response.meta?.interval,
-    currency: response.meta?.currency,
-    exchange_timezone: response.meta?.exchange_timezone,
-    exchange: response.meta?.exchange,
-    mic_code: response.meta?.mic_code,
-    type: response.meta?.type,
+    requestedInterval: interval,
+    mismatch: response.meta?.interval !== interval,
     valuesCount: response.values?.length || 0
   });
   
-  // Check if there's a status or message field
-  if ((response as any).status) {
-    console.log(`API Status: ${(response as any).status}`);
-  }
-  if ((response as any).message) {
-    console.log(`API Message: ${(response as any).message}`);
-  }
-  
-  // Log the raw response to see all fields
-  console.log('Full API Response Structure:', Object.keys(response));
-  
-  // Check for any data_available or limitations info
-  if ((response as any).data_available) {
-    console.log(`Data Available: ${(response as any).data_available}`);
-  }
-  if ((response as any).available_from) {
-    console.log(`Available From: ${(response as any).available_from}`);
-  }
-  if ((response as any).available_to) {
-    console.log(`Available To: ${(response as any).available_to}`);
-  }
-  
-  if (response.values && response.values.length > 0) {
-    const firstCandle = response.values[0];
-    const lastCandle = response.values[response.values.length - 1];
-    console.log(`fetchCandlestickData - Date range of returned data: ${firstCandle.datetime} to ${lastCandle.datetime}`);
-    console.log(`fetchCandlestickData - Requested: ${startStr} to ${endStr}`);
-    console.log(`fetchCandlestickData - Got ${response.values.length} candles`);
-  }
-
   console.log(`fetchCandlestickData response: ${response.values?.length || 0} candles`);
   
   if (!response.values || response.values.length === 0) {
     return [];
   }
   
-  const result = response.values.map(item => ({
+  console.log(`[fetchCandlestickData] API Response for ${interval}:`, {
+    status: response.status,
+    metaInfo: response.meta,
+    valuesCount: response.values?.length || 0,
+    firstThreeValues: response.values?.slice(0, 3)
+  });
+  
+  // Parse the response
+  const candles = response.values.map(item => ({
     datetime: item.datetime,
     timestamp: new Date(item.datetime).getTime(),
     open: parseFloat(item.open),
@@ -380,11 +374,32 @@ export const fetchCandlestickData = async (
     volume: parseFloat(item.volume),
   })).reverse();
   
-  if (result.length > 0) {
-    console.log(`fetchCandlestickData date range in response: ${result[0].datetime} to ${result[result.length - 1].datetime}`);
+  // Log first few candles for daily interval
+  if (interval === '1day') {
+    console.log(`[fetchCandlestickData] DAILY INTERVAL DEBUG:`, {
+      requestedInterval: interval,
+      apiResponseInterval: response.meta?.interval,
+      firstFiveCandles: candles.slice(0, 5).map(c => ({
+        datetime: c.datetime,
+        timestamp: new Date(c.datetime).getTime(),
+        date: new Date(c.datetime).toLocaleDateString(),
+        time: new Date(c.datetime).toLocaleTimeString(),
+        close: c.close
+      }))
+    });
+    
+    // Check if we're getting hourly data instead of daily
+    if (candles.length > 1) {
+      const timeDiff = new Date(candles[1].datetime).getTime() - new Date(candles[0].datetime).getTime();
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      console.log(`[fetchCandlestickData] Time difference between first two candles: ${hoursDiff} hours`);
+      if (hoursDiff < 24) {
+        console.error(`[fetchCandlestickData] WARNING: Requested daily candles but got ${hoursDiff}-hour candles!`);
+      }
+    }
   }
   
-  return result;
+  return candles;
 };
 
 // Search for symbols

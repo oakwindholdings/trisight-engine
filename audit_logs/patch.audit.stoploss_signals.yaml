@@ -1,0 +1,153 @@
+audit:
+  id: audit.stoploss.exit
+  name: "STOP-LOSS EXIT Signal Audit"
+  description: "Comprehensive audit of STOP_EXIT signals emitted by StopLossManager"
+  scope: ["STOPLOSS_*"]
+  timeframes: ["1m", "5m", "15m", "1h"]
+  patterns: ["ESCALATOR", "GOLDMINE", "ROCKETMAN", "PIVOT", "BREAKOUT_BOX", "BLACKJACK", "GOLDEN_CANDLE"]
+  
+  actions:
+    - stage: DETECTION
+      description: "N/A – STOP_EXIT is reactive to price movements, not pattern detection"
+      emit:
+        - skipped: true
+          reason: "Stop loss signals are triggered by price action, not pattern detection"
+    
+    - stage: EMISSION
+      description: "Track all STOP_EXIT signals emitted by StopLossManager"
+      emit:
+        - signalType: "LONG_EXIT | SHORT_EXIT"
+        - patternId: "STOPLOSS_{positionId}"
+        - action: "SELL | COVER"
+        - price: "Exit price at stop trigger"
+        - confidence: "Always 1.0 for stop exits"
+        - timestamp: "Exact trigger timestamp"
+        - triggeredBy: "StopLossManager"
+        - reason: "Trailing stop trigger description"
+        - candleIndex: "Original entry candle index"
+        - riskLevel: "Always HIGH for stop exits"
+        - stopLoss: "Trailing reference price"
+        - meta:
+            - trailingRef:
+                - low: "Reference candle low"
+                - high: "Reference candle high" 
+                - datetime: "Reference candle timestamp"
+            - positionType: "LONG | SHORT"
+            - entryPrice: "Original position entry price"
+            - trailingIndex: "Number of candles used for trailing"
+            - pnl: "Profit/Loss percentage"
+    
+    - stage: RENDER
+      description: "Ensure STOP_EXIT signals are rendered properly on chart"
+      emit:
+        - signalId: "Unique signal identifier"
+        - action: "SELL | COVER"
+        - isRendered: "Boolean rendering status"
+        - position: "Chart coordinates {x, y}"
+        - labelVisible: "Boolean label visibility"
+        - labelText: "Exit label text"
+        - labelColor: "Red for stop exits"
+        - candleStyle: "Black candle with red border"
+        - leaderLine: "Directional line to exit point"
+    
+    - stage: DIFF_ANALYSIS
+      description: "Catch suppressed or unrendered STOP_EXITs"
+      emit:
+        - signalId: "Signal identifier"
+        - status: ["VALID", "SUPPRESSED_BY_VIEWPORT", "MISSING_FROM_RENDER", "DUPLICATE_SIGNAL"]
+        - rootCause: "Detailed failure reason"
+        - timestamp: "Signal timestamp"
+        - expectedRender: "Should signal be rendered"
+        - actualRender: "Is signal actually rendered"
+        - renderingIssues: "Specific rendering problems"
+        - validationFlags: "TradeSignalValidator results"
+
+  validation:
+    rules:
+      - name: "stop_exit_confidence"
+        description: "All STOP_EXIT signals must have confidence = 1.0"
+        condition: "confidence == 1.0"
+        severity: "ERROR"
+      
+      - name: "stop_exit_action_match"
+        description: "LONG positions must emit SELL, SHORT positions must emit COVER"
+        condition: "(positionType == 'LONG' && action == 'SELL') || (positionType == 'SHORT' && action == 'COVER')"
+        severity: "ERROR"
+      
+      - name: "trailing_reference_valid"
+        description: "Trailing reference price must be valid"
+        condition: "stopLoss > 0 && trailingRef.low > 0 && trailingRef.high > 0"
+        severity: "ERROR"
+      
+      - name: "pnl_calculation_valid"
+        description: "PnL calculation must be present and reasonable"
+        condition: "pnl != null && Math.abs(pnl) < 100"
+        severity: "WARNING"
+      
+      - name: "exit_price_vs_trailing"
+        description: "Exit price should align with trailing stop trigger"
+        condition: "(positionType == 'LONG' && price <= trailingRef.low) || (positionType == 'SHORT' && price >= trailingRef.high)"
+        severity: "ERROR"
+      
+      - name: "stop_exit_render_mandatory"
+        description: "All STOP_EXIT signals must render on chart"
+        condition: "isRendered == true"
+        severity: "ERROR"
+
+  metrics:
+    performance:
+      - name: "stop_exit_latency"
+        description: "Time from trigger to signal emission"
+        unit: "milliseconds"
+        target: "< 10ms"
+      
+      - name: "false_stop_rate"
+        description: "Percentage of stops that reverse immediately"
+        unit: "percentage"
+        target: "< 5%"
+      
+      - name: "trailing_efficiency"
+        description: "Average PnL improvement vs fixed stops"
+        unit: "percentage"
+        target: "> 15%"
+    
+    accuracy:
+      - name: "stop_trigger_precision"
+        description: "Accuracy of stop trigger detection"
+        unit: "percentage" 
+        target: "> 99%"
+      
+      - name: "render_completion_rate"
+        description: "Percentage of stops that render successfully"
+        unit: "percentage"
+        target: "100%"
+    
+    coverage:
+      - name: "pattern_stop_coverage"
+        description: "Percentage of patterns with stop loss protection"
+        unit: "percentage"
+        target: "> 95%"
+
+output:
+  path: "./audit_logs/stoploss_signal_audit.json"
+  format: "json"
+  diagnostics: true
+  includeSummary: true
+  includeMetrics: true
+  includeValidation: true
+  
+  summary:
+    - totalStopExits: "Count of all STOP_EXIT signals"
+    - longExits: "Count of LONG position exits"
+    - shortExits: "Count of SHORT position exits"
+    - avgPnL: "Average profit/loss percentage"
+    - renderSuccessRate: "Percentage of successful renders"
+    - validationErrors: "Count of validation rule failures"
+    - performanceMetrics: "All performance measurements"
+    
+  diagnostics:
+    - unrenderedSignals: "List of signals that failed to render"
+    - validationFailures: "Detailed validation failures"
+    - performanceIssues: "Latency and efficiency problems"
+    - patternCoverage: "Stop loss coverage by pattern type"
+    - trailingEffectiveness: "Analysis of trailing stop performance"

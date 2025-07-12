@@ -1,0 +1,9 @@
+{
+  "DEBUG_PATTERN_DETECT": true,
+  "DEBUG_RENDER_FLOW": false,
+  "DEBUG_CONTEXT_UPDATE": true,
+  "DEBUG_UI": false,
+  "DEBUG_DATA_FETCH": false,
+  "DEBUG_GOLDEN_MISS": false,
+  "DEBUG_TRADE_SIGNALS": true
+}

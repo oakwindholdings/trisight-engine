@@ -33,6 +33,13 @@ export interface StepBox {
   volumeProfile: number; // Average volume during this step
   floor: number; // Step range bottom (lowest low in step)
   ceiling: number; // Step range top (highest high in step)
+  direction?: 'UP' | 'DOWN'; // Direction of the preceding escalator
+  isCompleted?: boolean; // True if step has been broken/completed
+  
+  // Phase 1: Core Metrics (as per trisight.escalator_step.yml)
+  stepIntrinsicCount?: number; // Candles in directional escalator prior to stall
+  stepBreakoutCount?: number; // Candles after breakout, before reversal or stall
+  stepContinuanceCount?: number; // Sum of intrinsic and breakout candle counts
 }
 
 // Blackjack pattern structures

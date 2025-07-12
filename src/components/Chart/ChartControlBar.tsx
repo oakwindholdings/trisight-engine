@@ -164,6 +164,68 @@ const ChartControlBar: React.FC<ChartControlBarProps> = ({
   console.log('ChartControlBar received onTimeRangeSelect:', 
     typeof onTimeRangeSelect === 'function' ? 'Function ✓' : `Not a function: ${typeof onTimeRangeSelect}`);
   
+  const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newTimeframe = e.target.value;
+    console.log('[ChartControlBar] Timeframe changed to:', newTimeframe);
+    onTimeframeChange(newTimeframe);
+  };
+
+  const handleTradingHoursToggle = () => {
+    console.log('[ChartControlBar] Trading hours toggle clicked, current state:', showTradingHoursOnly);
+    onTradingHoursToggle();
+  };
+
+  const handleAutoScaleClick = () => {
+    console.log('[ChartControlBar] Auto-scale button clicked');
+    onAutoScale();
+  };
+
+  const handleResetViewClick = () => {
+    console.log('[ChartControlBar] Reset view button clicked');
+    onResetView();
+  };
+
+  const handleZoomToFitClick = () => {
+    console.log('[ChartControlBar] Zoom to fit button clicked');
+    if (onZoomToFit) {
+      onZoomToFit();
+    }
+  };
+
+  const handleTimeRangeClick = (range: TimeRangeOption) => {
+    console.log('[ChartControlBar] Time range selected:', range);
+    // Calculate start and end dates based on the selected range
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (range) {
+      case '1D':
+        startDate.setDate(endDate.getDate() - 1);
+        break;
+      case '1W':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '1M':
+        startDate.setMonth(endDate.getMonth() - 1);
+        break;
+      case '3M':
+        startDate.setMonth(endDate.getMonth() - 3);
+        break;
+      case 'YTD':
+        // Set to January 1st of current year
+        startDate.setMonth(0);
+        startDate.setDate(1);
+        break;
+      case 'Custom':
+        // For custom, we might want to show a date picker dialog
+        // For now, default to last 30 days
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+    }
+    
+    onTimeRangeSelect(range, startDate, endDate);
+  };
+
   return (
     <ControlBarContainer>
       {/* Timeframe Controls */}
@@ -173,7 +235,7 @@ const ChartControlBar: React.FC<ChartControlBarProps> = ({
           <StyledSelect
             id="timeframe-select"
             value={timeframe}
-            onChange={(e) => onTimeframeChange(e.target.value)}
+            onChange={handleTimeframeChange}
           >
             <option value="1min">1m</option>
             <option value="5min">5m</option>
@@ -195,7 +257,7 @@ const ChartControlBar: React.FC<ChartControlBarProps> = ({
               id="trading-hours-toggle"
               type="checkbox"
               checked={showTradingHoursOnly}
-              onChange={onTradingHoursToggle}
+              onChange={handleTradingHoursToggle}
             />
             <ToggleSlider />
           </ToggleSwitch>
@@ -209,7 +271,7 @@ const ChartControlBar: React.FC<ChartControlBarProps> = ({
       <ControlGroup>
         <TimeRangeSelector
           activeRange={activeTimeRange}
-          onRangeSelect={onTimeRangeSelect}
+          onRangeSelect={handleTimeRangeClick}
         />
       </ControlGroup>
       
@@ -218,14 +280,14 @@ const ChartControlBar: React.FC<ChartControlBarProps> = ({
       {/* Viewport Controls */}
       <ControlGroup>
         {onZoomToFit && (
-          <ViewportControlButton onClick={onZoomToFit}>
+          <ViewportControlButton onClick={handleZoomToFitClick}>
             Zoom to Fit
           </ViewportControlButton>
         )}
-        <ViewportControlButton onClick={onAutoScale}>
+        <ViewportControlButton onClick={handleAutoScaleClick}>
           Auto-Scale
         </ViewportControlButton>
-        <ViewportControlButton onClick={onResetView}>
+        <ViewportControlButton onClick={handleResetViewClick}>
           Reset View
         </ViewportControlButton>
       </ControlGroup>

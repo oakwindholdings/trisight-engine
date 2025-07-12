@@ -41,12 +41,19 @@ export const useFeedback = (onPatternUpdate?: (pattern: Pattern) => void) => {
       // Update the feedback history
       setFeedbackHistory(prev => [...prev, feedback]);
       
-      // If pattern update callback is provided, mark the pattern as having received feedback
+      // PATCH L9: Preserve symbol during pattern feedback update
       if (onPatternUpdate) {
-        onPatternUpdate({
-          ...feedback,
-          hasReceivedFeedback: true
-        } as unknown as Pattern);
+        // Use feedback data to create updated pattern, preserving symbol properties
+        const updatedPattern: Pattern = {
+          ...(feedback as any), // Cast to access all properties
+          hasReceivedFeedback: true,
+          // Preserve symbol properties if they exist in the feedback
+          symbol: (feedback as any).symbol || 'UNKNOWN',
+          ticker: (feedback as any).ticker || 'UNKNOWN',
+        } as Pattern;
+        
+        console.log('[Feedback] Updated pattern with preserved symbol:', updatedPattern);
+        onPatternUpdate(updatedPattern);
       }
       
       return true;

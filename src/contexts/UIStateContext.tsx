@@ -1,12 +1,13 @@
 // src/contexts/UIStateContext.tsx
-// Context for managing UI state like datepicker visibility
+// Context for managing UI state
 // Used to coordinate between different UI components
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 
+// Note: Removed isDatePickerOpen state since we switched to HTML5 date input
+// HTML5 date inputs don't require external state tracking
 interface UIStateContextType {
-  isDatePickerOpen: boolean;
-  setIsDatePickerOpen: (isOpen: boolean) => void;
+  // Future UI state can be added here
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -24,10 +25,8 @@ interface UIStateProviderProps {
 }
 
 export const UIStateProvider: React.FC<UIStateProviderProps> = ({ children }) => {
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-
   return (
-    <UIStateContext.Provider value={{ isDatePickerOpen, setIsDatePickerOpen }}>
+    <UIStateContext.Provider value={{}}>
       {children}
     </UIStateContext.Provider>
   );

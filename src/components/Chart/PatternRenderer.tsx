@@ -1,8 +1,77 @@
+// NOTE: TriSight uses Canvas, not SVG. Pattern rendering follows a 5-stage lifecycle: detect → emit → context → render → score.
 // src/components/Chart/PatternRenderer.tsx
 // Renders detected patterns on chart
 // Colors based on confidence
+// CRITICAL: We use CANVAS for all rendering, NEVER SVG or other technologies.
+// All pattern drawing uses Canvas 2D context methods (fillRect, strokeRect, etc.)
+// HA Infrastructure Alignment Patch v1.0.0: All overlay rendering now uses HA context arrays for consistency with detection logic
+
+import React from 'react';
 import { Pattern, PatternType, patternStyles } from '../../models/PatternTypes';
 import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
+import { logDebugHAAlignmentMismatch } from '../../utils/debug';
+import { renderTradeActionSignals, renderSignalCandleAction } from './SignalRenderer';
+import { TradeActionSignal } from '../../utils/trading/TradeActionSignal';
+import { renderConvictionCloud, ConvictionCloudItem, defaultConvictionCloudSettings } from './ConvictionCloudRenderer';
+import { registerPatternHitBox, clearPatternHitBoxes, getPatternHitBoxDimensions } from '../../utils/patternHitDetection';
+
+// Direction arrow symbols for unified labeling
+const DIRECTION_ARROWS = {
+  UP: '↑',
+  DOWN: '↓',
+  RISING: '↑',
+  FALLING: '↓',
+  BULLISH: '↑',
+  BEARISH: '↓',
+  LONG: '↑',
+  SHORT: '↓'
+};
+
+// Unified label font specification
+const LABEL_FONT = 'bold 11px sans-serif';
+
+// Helper function to generate standardized pattern labels
+function generatePatternLabel(pattern: Pattern): string {
+  const patternTypeMap: Record<PatternType, string> = {
+    [PatternType.ESCALATOR]: 'ESC',
+    [PatternType.BLACKJACK]: 'BJ',
+    [PatternType.BREAKOUTBOX]: 'BREAKOUT',
+    [PatternType.GOLDMINE_CHANNEL]: 'GMC',
+    [PatternType.GOLDMINE_SHAFT]: 'SHAFT',
+    [PatternType.PIVOT]: 'PIVOT',
+    [PatternType.ROCKETMAN]: 'ROCKET',
+    [PatternType.GOLDEN_CANDLE]: 'GOLD'
+  };
+
+  const baseLabel = patternTypeMap[pattern.type] || pattern.type;
+  
+  // Add direction arrow based on pattern type
+  let direction = '';
+  if (pattern.type === PatternType.ESCALATOR && 'direction' in pattern) {
+    direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
+  } else if (pattern.type === PatternType.GOLDMINE_SHAFT && 'direction' in pattern) {
+    direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
+  } else if (pattern.type === PatternType.GOLDMINE_CHANNEL && 'direction' in pattern) {
+    // GMC patterns: ↑ for ASCENDING (upward breakout), ↓ for DESCENDING (downward breakout)
+    direction = ` ${pattern.direction === 'ASCENDING' ? DIRECTION_ARROWS.UP : DIRECTION_ARROWS.DOWN}`;
+  } else if (pattern.type === PatternType.PIVOT && 'pivotType' in pattern) {
+    direction = ` ${pattern.pivotType === 'SUPPORT' ? DIRECTION_ARROWS.UP : DIRECTION_ARROWS.DOWN}`;
+  } else if (pattern.type === PatternType.ROCKETMAN && 'direction' in pattern) {
+    direction = ` ${DIRECTION_ARROWS[pattern.direction] || ''}`;
+  }
+
+  return baseLabel + direction;
+}
+
+// Helper function to determine if pattern qualifies for gold highlight
+function shouldApplyGoldHighlight(pattern: Pattern): boolean {
+  // Apply gold fill for qualified goldmine patterns
+  if (pattern.type === PatternType.GOLDMINE_SHAFT || pattern.type === PatternType.GOLDMINE_CHANNEL) {
+    return pattern.confidence > 0.7; // High confidence goldmine patterns get gold highlight
+  }
+  // Note: BreakoutBox goldmine qualification will be handled when BreakoutBoxPattern interface is added
+  return false;
+}
 
 interface ChartDimensions {
   width: number;
@@ -51,14 +120,52 @@ const PatternRendererImpl = {
     timeScale: any,
     priceScale: any,
     dimensions: ChartDimensions,
-    selectedPattern: Pattern | null
+    selectedPattern: Pattern | null,
+    escalatorSteps: any[] = [],
+    breakoutBoxes: any[] = [],
+    goldenNearMisses: boolean[] = [],
+    haCandles: any[] = [], // HA Infrastructure Alignment Patch v1.0.0: Now uses HA candles
+    blackjackSettings: { showLabels: boolean } = { showLabels: true },
+    pivotSettings: { showLabels: boolean } = { showLabels: false },
+    goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
+    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean; showEntryExitLabels?: boolean } = { 
+      showLabels: false, 
+      showNearMiss: false,
+      showEntryExitLabels: false // Golden Exit Event capability
+    },
+    candles: any[] = [], // Original (non-HA) candles for fresh timestamp lookup
+    signals: TradeActionSignal[] = [], // Trade action signals
+    signalSettings = { showAggressive: true, showLabels: true, showIcons: true }, // Signal visibility settings
+    convictionItems: ConvictionCloudItem[] = [], // Conviction cloud items
+    convictionCloudSettings = defaultConvictionCloudSettings, // Conviction Cloud settings
+    hoveredConvictionItem: ConvictionCloudItem | null = null // Currently hovered conviction item
   ) {
+    const perfStart = performance.now();
+    
+    // Clear hitboxes from previous render cycle
+    clearPatternHitBoxes();
     if (!ctx) return;
     
-    // Clear the canvas
-    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+    // Early exit if no content to render
+    const hasContent = patterns.length > 0 || escalatorSteps.length > 0 || 
+                      breakoutBoxes.length > 0 || signals.length > 0 || 
+                      convictionItems.length > 0;
+    if (!hasContent) {
+      return;
+    }
     
-    // Filter patterns that are in the visible range
+    // HA Infrastructure Alignment Patch v1.0.0: Validate HA array lengths
+    if (candles.length > 0 && haCandles.length !== candles.length) {
+      logDebugHAAlignmentMismatch(
+        0, 
+        'PatternRenderer.render', 
+        `haCandles.length=${candles.length}`, 
+        `actual=${haCandles.length}`
+      );
+    }
+    
+    // Performance optimization: Filter patterns once
+    const filterStart = performance.now();
     const visiblePatterns = patterns.filter(pattern => {
       const patternStartX = timeScale.scale(pattern.startTime);
       const patternEndX = timeScale.scale(pattern.endTime);
@@ -68,14 +175,115 @@ const PatternRendererImpl = {
         patternStartX <= dimensions.width - dimensions.margin.right
       );
     });
+    const filterTime = performance.now() - filterStart;
+    
+    // Log performance warning if too many patterns
+    if (visiblePatterns.length > 100) {
+      console.warn(`⚠️ PatternRenderer: Rendering ${visiblePatterns.length} visible patterns (${patterns.length} total)`);
+    }
     
     // Render each pattern
+    const renderPatternsStart = performance.now();
     visiblePatterns.forEach(pattern => {
-      this.renderPattern(ctx, pattern, timeScale, priceScale, dimensions, pattern.id === selectedPattern?.id);
+      this.renderPattern(ctx, pattern, timeScale, priceScale, dimensions, pattern.id === selectedPattern?.id, blackjackSettings);
     });
     
-    // Render pattern labels after all patterns
-    this.renderPatternLabels(ctx, visiblePatterns, timeScale, priceScale, dimensions);
+    // Render escalator steps only if enabled
+    if (escalatorSteps.length > 0) {
+      escalatorSteps.forEach((step, index) => {
+        if (step.startIndex !== undefined && step.endIndex !== undefined) {
+          this.renderEscalatorStep(ctx, step, timeScale, priceScale, dimensions, true, haCandles);
+        }
+      });
+    }
+    
+    // Render Golden Candle near-miss overlays if present (Dick O'Leary Compliance)
+    if (goldenCandleSettings.showNearMiss && goldenNearMisses && goldenNearMisses.length > 0 && haCandles && haCandles.length > 0) {
+      this.renderGoldenNearMisses(ctx, goldenNearMisses, haCandles, timeScale, priceScale, dimensions);
+    }
+    
+    // Render pattern labels after all patterns (including Pivot and Goldmine Channel labels if enabled)
+    this.renderPatternLabels(ctx, visiblePatterns, timeScale, priceScale, dimensions, pivotSettings, goldmineChannelSettings, goldenCandleSettings);
+    
+    // TriSight Detection Input Refactor Patch v1.3.3: Render ENTRY/EXIT labels for Golden Candle patterns
+    if (goldenCandleSettings.showEntryExitLabels) {
+      visiblePatterns.forEach(pattern => {
+        if (pattern.type === PatternType.GOLDEN_CANDLE) {
+          // Render ENTRY label for all Golden Candle patterns
+          this.renderGoldenEntryLabel(ctx, pattern, timeScale, priceScale, dimensions, goldenCandleSettings.showEntryExitLabels);
+          // Render EXIT label for all Golden Candle patterns (for testing)
+          this.renderGoldenExitLabel(ctx, pattern, timeScale, priceScale, dimensions, goldenCandleSettings.showEntryExitLabels);
+        }
+      });
+    }
+    
+    // 🔗 Injected: TradeActionSignal Rendering
+    // Debug logging for TradeActionSignals validation
+    console.log(`[PatternRenderer] render() called with:`, {
+      signalsReceived: signals ? signals.length : 0,
+      candlesReceived: candles ? candles.length : 0,
+      signalsArray: signals
+    });
+    
+    // Render TradeActionSignals after pattern labels
+    if (signals && signals.length > 0) {
+      console.log(`[PatternRenderer] Rendering ${signals.length} TradeActionSignals`);
+      
+      renderTradeActionSignals(
+        ctx,
+        signals,
+        timeScale,
+        priceScale,
+        dimensions,
+        signalSettings
+      );
+      
+      // Render TradeActionCandle rendering (black candles with leader lines)
+      renderSignalCandleAction(
+        ctx,
+        signals,
+        candles, // Pass candle data for OHLC values
+        timeScale,
+        priceScale,
+        dimensions,
+        0.6 // Confidence threshold
+      );
+    } else {
+      console.log(`[PatternRenderer] No TradeActionSignals to render (array is ${signals ? 'empty' : 'null/undefined'})`);
+    }
+
+    // 🌟 Conviction Cloud Rendering Layer (Top-most layer for anchored positioning)
+    // Render conviction cloud above all other chart elements for maximum visibility
+    if (convictionItems && convictionItems.length > 0) {
+      console.log(`[PatternRenderer] Rendering ${convictionItems.length} Conviction Cloud items`);
+      
+      renderConvictionCloud(
+        ctx,
+        convictionItems,
+        dimensions,
+        convictionCloudSettings,
+        hoveredConvictionItem
+      );
+    } else {
+      console.log('[PatternRenderer] No Conviction Cloud items to render');
+    }
+
+    // 🔗 CRITICAL FIX: Render TradeActionSignals (including STOP_EXIT labels)
+    // This was the missing piece - signals were being cleared but not redrawn!
+    if (signals && signals.length > 0 && signalSettings) {
+      console.log(`🚀 [PatternRenderer] Rendering ${signals.length} TradeActionSignals`);
+      
+      renderTradeActionSignals(
+        ctx,
+        signals,
+        timeScale,
+        priceScale,
+        dimensions,
+        signalSettings
+      );
+    } else {
+      console.log('⚠️ [PatternRenderer] No TradeActionSignals to render or settings disabled');
+    }
   },
   
   renderPattern(
@@ -84,8 +292,15 @@ const PatternRendererImpl = {
     timeScale: any,
     priceScale: any,
     dimensions: ChartDimensions,
-    isSelected: boolean
+    isSelected: boolean,
+    blackjackSettings: { showLabels: boolean } = { showLabels: true }
   ) {
+    // Register hitbox for click detection
+    const hitBox = getPatternHitBoxDimensions(pattern, timeScale.scale, priceScale.scale);
+    if (hitBox) {
+      registerPatternHitBox(pattern, hitBox.x, hitBox.y, hitBox.width, hitBox.height);
+    }
+    
     // Save current context state
     ctx.save();
     
@@ -119,7 +334,7 @@ const PatternRendererImpl = {
         this.renderEscalator(ctx, pattern, timeScale, priceScale);
         break;
       case PatternType.BLACKJACK:
-        this.renderBlackjack(ctx, pattern, timeScale, priceScale);
+        this.renderBlackjack(ctx, pattern, timeScale, priceScale, blackjackSettings.showLabels);
         break;
     }
     
@@ -252,19 +467,18 @@ const PatternRendererImpl = {
     if (pattern.touchPoints) {
       pattern.touchPoints.forEach((point: any) => {
         const pointX = timeScale.scale(point.time);
-        const triangleSize = 6;
+        const pointY = priceScale.scale(point.price);
         
         ctx.beginPath();
+        ctx.moveTo(pointX, pivotY);
         if (pattern.pivotType === 'SUPPORT') {
           // Triangle pointing up for support
-          ctx.moveTo(pointX, pivotY);
-          ctx.lineTo(pointX - triangleSize, pivotY + triangleSize);
-          ctx.lineTo(pointX + triangleSize, pivotY + triangleSize);
+          ctx.lineTo(pointX - 6, pivotY + 6);
+          ctx.lineTo(pointX + 6, pivotY + 6);
         } else {
           // Triangle pointing down for resistance
-          ctx.moveTo(pointX, pivotY);
-          ctx.lineTo(pointX - triangleSize, pivotY - triangleSize);
-          ctx.lineTo(pointX + triangleSize, pivotY - triangleSize);
+          ctx.lineTo(pointX - 6, pivotY - 6);
+          ctx.lineTo(pointX + 6, pivotY - 6);
         }
         ctx.closePath();
         ctx.fill();
@@ -409,7 +623,8 @@ const PatternRendererImpl = {
     ctx: CanvasRenderingContext2D,
     pattern: any,
     timeScale: any,
-    priceScale: any
+    priceScale: any,
+    showLabels: boolean = true
   ) {
     if (!pattern.priceVolumeCorrelations || pattern.priceVolumeCorrelations.length === 0) return;
     
@@ -419,30 +634,34 @@ const PatternRendererImpl = {
     );
     const centerY = priceScale.scale((pattern.highPrice + pattern.lowPrice) / 2);
     
-    // Draw card suit symbols at confirmation points
-    pattern.priceVolumeCorrelations.forEach((point: any) => {
-      const pointX = timeScale.scale(point.time);
-      const pointY = priceScale.scale(
-        point.priceMovement === 'up' ? pattern.highPrice : pattern.lowPrice
-      );
-      
-      // Skip points with zero value (no correlation)
-      if (point.value === 0) return;
-      
-      // Choose symbol based on value
-      let symbol = '';
-      if (point.value === 1) {
-        symbol = '♠'; // Spade for positive correlation
-      } else if (point.value === -1) {
-        symbol = '♦'; // Diamond for negative correlation
-      }
-      
-      // Draw the symbol
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(symbol, pointX, pointY);
-    });
+    // Only render labels if showLabels is enabled
+    if (showLabels) {
+      // Draw card suit symbols at confirmation points
+      pattern.priceVolumeCorrelations.forEach((point: any) => {
+        const pointX = timeScale.scale(point.time);
+        const pointY = priceScale.scale(
+          point.priceMovement === 'up' ? pattern.highPrice : pattern.lowPrice
+        );
+        
+        // Skip points with zero value (no correlation)
+        if (point.value === 0) return;
+        
+        // Choose symbol based on value
+        let symbol = '';
+        if (point.value === 1) {
+          symbol = '♠'; // Spade for positive correlation
+        } else if (point.value === -1) {
+          symbol = '♦'; // Diamond for negative correlation
+        }
+        
+        // Draw the symbol
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.fillText(symbol, pointX, pointY);
+      });
+    }
     
     // Draw connection lines to related patterns if any
     if (pattern.relatedPatternIds && pattern.relatedPatternIds.length > 0) {
@@ -459,26 +678,370 @@ const PatternRendererImpl = {
       ctx.stroke();
     }
     
-    // Draw numerical confidence display
-    const scoreDisplay = Math.round(pattern.score).toString();
+    // Only render numerical score if showLabels is enabled
+    if (showLabels) {
+      // Draw numerical confidence display
+      const scoreDisplay = Math.round(pattern.score).toString();
+      
+      // Background for score
+      const textWidth = ctx.measureText(scoreDisplay).width;
+      const padX = 5, padY = 3;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.beginPath();
+      ctx.rect(
+        centerX - textWidth / 2 - padX,
+        centerY - 6 - padY,
+        textWidth + padX * 2,
+        12 + padY * 2
+      );
+      ctx.fill();
+      
+      // Score text
+      ctx.fillStyle = pattern.score > 10 ? '#4CAF50' : '#FFC107';
+      ctx.fillText(scoreDisplay, centerX, centerY);
+    }
+  },
+  
+  renderEscalatorStep(
+    ctx: CanvasRenderingContext2D,
+    step: any,
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions,
+    showLabels: boolean = true,
+    candles: any[] = [] // Add candles parameter for fresh timestamp lookup
+  ) {
+    // Save context state & log
+    console.log('[DIAGNOSTIC] [renderEscalatorStep] step', step.stepRef, 'BJ', step.blackjackScore, 'GM', step.qualifiesForGoldmine);
+    // Save context state
+    ctx.save();
     
-    // Background for score
-    const textWidth = ctx.measureText(scoreDisplay).width;
-    const padX = 5, padY = 3;
+    // Get coordinates from step data
+    // CRITICAL FIX: Use fresh candle timestamps from indices to prevent zoom drift
+    let startX: number;
+    let endX: number;
     
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.beginPath();
-    ctx.rect(
-      centerX - textWidth/2 - padX,
-      centerY - 6 - padY,
-      textWidth + padX*2,
-      12 + padY*2
-    );
-    ctx.fill();
+    if (candles.length > 0 && step.startIndex !== undefined && step.endIndex !== undefined) {
+      // Use candle indices to get fresh timestamps
+      const startCandle = candles[step.startIndex];
+      const endCandle = candles[step.endIndex];
+      
+      if (startCandle && endCandle && startCandle.datetime && endCandle.datetime) {
+        startX = timeScale.scale(new Date(startCandle.datetime));
+        endX = timeScale.scale(new Date(endCandle.datetime));
+      } else {
+        // Fallback to pre-stored times if candle lookup fails
+        startX = timeScale.scale(step.startTime);
+        endX = timeScale.scale(step.endTime);
+      }
+    } else {
+      // Fallback to pre-stored times if no candles available
+      startX = timeScale.scale(step.startTime);
+      endX = timeScale.scale(step.endTime);
+    }
     
-    // Score text
-    ctx.fillStyle = pattern.score > 10 ? '#4CAF50' : '#FFC107';
-    ctx.fillText(scoreDisplay, centerX, centerY);
+    const topY = priceScale.scale(step.ceiling);
+    const bottomY = priceScale.scale(step.floor);
+    
+    // Calculate box dimensions
+    const boxWidth = endX - startX;
+    const boxHeight = bottomY - topY;
+    
+    // Style configuration
+    const isActive = !step.isCompleted;
+    const borderColor = step.direction === 'UP' ? '#10b981' : '#ef4444'; // Green for up, red for down
+    const fillColor = isActive ? `${borderColor}10` : `${borderColor}05`; // More transparent when completed
+    
+    // Draw filled rectangle
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(startX, topY, boxWidth, boxHeight);
+    
+    // Draw border (transparent)
+    ctx.strokeStyle = 'transparent';
+    ctx.lineWidth = 2;
+    if (!isActive) {
+      ctx.setLineDash([2, 2]); // Dashed when completed
+    }
+    ctx.strokeRect(startX, topY, boxWidth, boxHeight);
+    
+    // Draw STEP and BJ labels if enabled
+    if (showLabels) {
+      // ✅ FIXED: Use separate padX/padY variables like Blackjack
+      const padX = 5, padY = 3;
+      
+      // Set font and alignment properties (following Blackjack pattern)
+      ctx.font = 'bold 12px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      const labelX = startX + boxWidth / 2;
+      const labelY = topY + boxHeight / 2 - 10; // shift up to leave room for BJ label
+
+      // === STEP LABEL ===
+      const stepLabel = step.direction === 'UP' ? 'STEP UP' : 'STEP DOWN';
+      
+      // ✅ FIXED: Dynamic text measurement and background-first rendering like Blackjack
+      const stepTextWidth = ctx.measureText(stepLabel).width;
+      ctx.fillStyle = 'white';
+      ctx.fillRect(
+        labelX - stepTextWidth / 2 - padX,
+        labelY - 6 - padY,
+        stepTextWidth + padX * 2,
+        12 + padY * 2
+      );
+      
+      ctx.fillStyle = borderColor;
+      ctx.fillText(stepLabel, labelX, labelY);
+
+      // === BJ TARGET LABEL ===
+      if (typeof step.blackjackScore === 'number') {
+        const bjScore: number = step.blackjackScore;
+        const bjLabel = `BJ: ${bjScore >= 0 ? '+' : ''}${bjScore}`;
+        const bjColor = bjScore >= 21 ? '#10b981' : '#374151';
+        const bjY = labelY + 20;
+        
+        // ✅ FIXED: Dynamic text measurement and background-first rendering like Blackjack
+        const bjTextWidth = ctx.measureText(bjLabel).width;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(
+          labelX - bjTextWidth / 2 - padX,
+          bjY - 6 - padY,
+          bjTextWidth + padX * 2,
+          12 + padY * 2
+        );
+        
+        ctx.fillStyle = bjColor;
+        ctx.fillText(bjLabel, labelX, bjY);
+
+        // Goldmine star indicator
+        if (step.qualifiesForGoldmine === true) {
+          ctx.fillStyle = '#FFD700';
+          ctx.font = 'bold 14px Inter, sans-serif';
+          ctx.fillText('★', labelX + bjTextWidth / 2 + 10, bjY);
+        }
+      }
+    }
+    
+    // Restore context state
+    ctx.restore();
+  },
+  
+  renderBreakoutBox(
+    ctx: CanvasRenderingContext2D,
+    box: any,
+    dimensions: ChartDimensions,
+    timeScale: any,
+    priceScale: any
+  ): void {
+    // DIAGNOSTIC: Log incoming box data
+    console.log('[DIAGNOSTIC] [renderBreakoutBox] Rendering box:', {
+      stepRef: box.data.stepRef,
+      qualifiesForGoldmine: box.data.qualifiesForGoldmine,
+      hasQualificationField: 'qualifiesForGoldmine' in box.data,
+      dataKeys: Object.keys(box.data),
+      boxData: box.data
+    });
+    
+    if (!box.data.candles || box.data.candles.length === 0) {
+      console.warn('[PatternRenderer] Cannot render BreakoutBox without candles');
+      return;
+    }
+
+    const candles = box.data.candles;
+    const firstCandle = candles[0];
+    const lastCandle = candles[candles.length - 1];
+
+    const x1 = Math.round(timeScale.scale(new Date(firstCandle.datetime)));
+    const x2 = Math.round(timeScale.scale(new Date(lastCandle.datetime)));
+    const y1 = Math.round(priceScale.scale(box.data.high));
+    const y2 = Math.round(priceScale.scale(box.data.low));
+
+    const width = x2 - x1 + 10; // Add candle width
+    const height = Math.abs(y2 - y1);
+
+    // Skip if box is too small
+    if (width < 10 || height < 5) {
+      return;
+    }
+
+    // Determine styling based on Goldmine qualification
+    const qualified = box.data.qualifiesForGoldmine === true;
+    
+    // DIAGNOSTIC: Log qualification check result
+    console.log('[DIAGNOSTIC] [renderBreakoutBox] Qualification check:', {
+      stepRef: box.data.stepRef,
+      qualified,
+      qualifiesForGoldmine: box.data.qualifiesForGoldmine,
+      typeofQualifiesForGoldmine: typeof box.data.qualifiesForGoldmine
+    });
+    
+    let fillColor: string;
+    let strokeColor: string;
+    
+    if (qualified) {
+      // Goldmine-qualified: darker gold fill (50% opacity) with directional border
+      fillColor = 'rgba(255, 215, 0, 0.5)'; // Darker gold
+      // Direction-based border: green for RISING, red for FALLING
+      strokeColor = box.data.direction === 'RISING' ? '#10b981' : '#ef4444'; // Green : Red
+      console.log('[DIAGNOSTIC] [renderBreakoutBox] Setting GOLD style for qualified box:', { 
+        stepRef: box.data.stepRef, 
+        score: box.data.blackjackScore,
+        fillColor,
+        strokeColor,
+        direction: box.data.direction
+      });
+    } else {
+      // Regular styling based on direction
+      if (box.data.direction === 'RISING') {
+        fillColor = 'rgba(59, 130, 246, 0.1)'; // Blue translucent
+        strokeColor = '#3B82F6'; // Blue
+      } else {
+        fillColor = 'rgba(239, 68, 68, 0.1)'; // Red translucent
+        strokeColor = '#EF4444'; // Red
+      }
+      console.log('[DIAGNOSTIC] [renderBreakoutBox] Setting regular style for non-qualified box:', {
+        stepRef: box.data.stepRef,
+        direction: box.data.direction,
+        fillColor,
+        strokeColor
+      });
+    }
+    
+    // DIAGNOSTIC: Log before drawing
+    console.log('[DIAGNOSTIC] [renderBreakoutBox] Drawing box at:', {
+      stepRef: box.data.stepRef,
+      x1, y1, width, height,
+      fillColor,
+      strokeColor,
+      qualified
+    });
+    
+    // Draw box with determined colors
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(x1, y1, width, height);
+    
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x1, y1, width, height);
+    
+    // Draw label only for Goldmine-qualified boxes
+    if (qualified) {
+      // Calculate positions using Blackjack approach
+      const centerX = x1 + width / 2;
+      const centerY = y1 - 15; // Position above box
+      
+      // Context state management like Blackjack
+      ctx.save();
+      
+      // Set font and alignment properties like Blackjack
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle'; // Added missing textBaseline
+      
+      // Add directional arrow based on direction
+      const arrow = box.data.direction === 'RISING' ? '↑' : '↓';
+      const text = `BREAKOUT ${arrow}`;
+      
+      // Dynamic text measurement like Blackjack
+      const textWidth = ctx.measureText(text).width;
+      const padX = 5, padY = 3; // Separate X/Y padding like Blackjack
+      
+      // Background-first rendering like Blackjack
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // White background
+      ctx.fillRect(
+        centerX - textWidth / 2 - padX,
+        centerY - 6 - padY,
+        textWidth + padX * 2,
+        12 + padY * 2
+      );
+      
+      // Draw border
+      ctx.strokeStyle = box.data.direction === 'RISING' ? '#10b981' : '#ef4444';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(
+        centerX - textWidth / 2 - padX,
+        centerY - 6 - padY,
+        textWidth + padX * 2,
+        12 + padY * 2
+      );
+      
+      // Clean coordinate calculation like Blackjack
+      ctx.fillStyle = '#000000'; // Black text
+      ctx.fillText(text, centerX, centerY);
+      
+      console.log('[DIAGNOSTIC] [renderBreakoutBox] Drew BREAKOUT label at:', {
+        stepRef: box.data.stepRef,
+        x: centerX,
+        y: centerY,
+        direction: box.data.direction,
+        label: text
+      });
+      
+      // Restore context state like Blackjack
+      ctx.restore();
+    }
+  },
+  
+  renderGoldenNearMisses(
+    ctx: CanvasRenderingContext2D,
+    goldenNearMisses: boolean[],
+    haCandles: any[], // HA Infrastructure Alignment Patch v1.0.0: Now uses HA candles
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions
+  ) {
+    // DICK O'LEARY COMPLIANCE: Render near-miss Golden Candle candidates with black fill/outline
+    // This provides forensic visualization for breakout opportunities that nearly qualified
+    // HA Infrastructure Alignment Patch v1.0.0: Uses HA candles for consistency with detection logic
+    
+    ctx.save();
+    
+    // Set black overlay styling for near-miss candidates
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Semi-transparent black fill
+    
+    let renderedCount = 0;
+    
+    goldenNearMisses.forEach((isNearMiss, index) => {
+      if (isNearMiss && index < haCandles.length) {
+        const haCandle = haCandles[index]; // HA Infrastructure Alignment: Use HA candle
+        
+        // Validate HA candle data
+        if (!haCandle) {
+          logDebugHAAlignmentMismatch(index, 'PatternRenderer.renderGoldenNearMisses', 'HA candle data', 'undefined');
+          return;
+        }
+        
+        // Calculate candle position and dimensions using HA candle data
+        const x = timeScale.scale(new Date(haCandle.timestamp));
+        const candleWidth = Math.max(1, timeScale.bandwidth ? timeScale.bandwidth() : 4);
+        
+        // Calculate candle body dimensions using HA-aware logic
+        const bodyTop = priceScale.scale(Math.max(haCandle.open, haCandle.close));
+        const bodyBottom = priceScale.scale(Math.min(haCandle.open, haCandle.close));
+        const bodyHeight = Math.max(1, bodyBottom - bodyTop);
+        
+        // Only render if candle is within visible chart area
+        if (x >= dimensions.margin.left && x <= dimensions.width - dimensions.margin.right) {
+          // Draw black fill overlay
+          ctx.fillRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+          
+          // Draw black outline
+          ctx.strokeRect(x - candleWidth/2, bodyTop, candleWidth, bodyHeight);
+          
+          renderedCount++;
+        }
+      }
+    });
+    
+    ctx.restore();
+    
+    // Debug logging for rendered near-miss overlays
+    if (renderedCount > 0) {
+      console.log(`[DEBUG_GOLDEN_MISS] [PatternRenderer] Rendered ${renderedCount} Golden Candle near-miss overlays with Dick O'Leary compliance using HA candles`);
+    }
   },
   
   renderFeedbackIndicator(
@@ -511,7 +1074,10 @@ const PatternRendererImpl = {
     patterns: Pattern[],
     timeScale: any,
     priceScale: any,
-    dimensions: ChartDimensions
+    dimensions: ChartDimensions,
+    pivotSettings: { showLabels: boolean } = { showLabels: false },
+    goldmineChannelSettings: { showLabels: boolean } = { showLabels: false },
+    goldenCandleSettings: { showLabels: boolean; showNearMiss?: boolean } = { showLabels: false, showNearMiss: false }
   ) {
     const labelPositions = this.placePatternLabels(
       patterns,
@@ -536,7 +1102,8 @@ const PatternRendererImpl = {
       const style = patternStyles[pattern.type];
       
       // Draw label background
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      const isGoldHighlight = shouldApplyGoldHighlight(pattern);
+      ctx.fillStyle = isGoldHighlight ? 'rgba(255, 215, 0, 0.9)' : 'rgba(255, 255, 255, 0.8)';
       ctx.strokeStyle = style.color;
       ctx.lineWidth = 1;
       
@@ -545,15 +1112,15 @@ const PatternRendererImpl = {
       ctx.fill();
       ctx.stroke();
       
-      // Draw label text
-      ctx.font = '10px Arial';
-      ctx.fillStyle = '#212121';
+      // Draw label text with unified font and format
+      ctx.font = LABEL_FONT;
+      ctx.fillStyle = isGoldHighlight ? '#8B4513' : '#212121'; // Dark brown for gold backgrounds, dark gray otherwise
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      const patternTypeText = pattern.type.replace('_', ' ');
+      const labelText = generatePatternLabel(pattern);
       ctx.fillText(
-        patternTypeText,
+        labelText,
         label.x + label.width / 2,
         label.y + label.height / 2
       );
@@ -566,6 +1133,59 @@ const PatternRendererImpl = {
         ctx.stroke();
       }
     });
+    
+    // Render Pivot labels if enabled
+    if (pivotSettings.showLabels) {
+      patterns.forEach(pattern => {
+        if (pattern.type === PatternType.PIVOT) {
+          const startX = timeScale.scale(pattern.startTime);
+          const endX = timeScale.scale(pattern.endTime);
+          const pivotY = priceScale.scale(pattern.pivotLevel);
+          const labelX = (startX + endX) / 2;
+          const labelY = pivotY - 10;
+          ctx.font = LABEL_FONT;
+          ctx.fillStyle = '#212121'; // Dark gray
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+        }
+      });
+    }
+    
+    // Render Goldmine Channel labels if enabled
+    if (goldmineChannelSettings.showLabels) {
+      patterns.forEach(pattern => {
+        if (pattern.type === PatternType.GOLDMINE_CHANNEL) {
+          const startX = timeScale.scale(pattern.startTime);
+          const endX = timeScale.scale(pattern.endTime);
+          const upperY = priceScale.scale(pattern.upperBoundary);
+          const labelX = (startX + endX) / 2;
+          const labelY = upperY - 10;
+          ctx.font = LABEL_FONT;
+          ctx.fillStyle = '#212121'; // Dark gray
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+        }
+      });
+    }
+    
+    // Render Golden Candle labels if enabled
+    if (goldenCandleSettings.showLabels) {
+      patterns.forEach(pattern => {
+        if (pattern.type === PatternType.GOLDEN_CANDLE) {
+          const startX = timeScale.scale(pattern.startTime);
+          const endX = timeScale.scale(pattern.endTime);
+          const labelX = (startX + endX) / 2;
+          const labelY = priceScale.scale((pattern.highPrice + pattern.lowPrice) / 2) - 10;
+          ctx.font = LABEL_FONT;
+          ctx.fillStyle = '#212121'; // Dark gray
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+        }
+      });
+    }
   },
   
   placePatternLabels(
@@ -633,10 +1253,10 @@ const PatternRendererImpl = {
       positions: any[],
       collisions: [number, number][],
       options: {
-        maxIterations: number,
-        repulsionForce: number,
-        constrainToChart: boolean,
-        chartDimensions: { width: number, height: number }
+        maxIterations: number;
+        repulsionForce: number;
+        constrainToChart: boolean;
+        chartDimensions: { width: number; height: number };
       }
     ) => {
       const { maxIterations, repulsionForce, constrainToChart, chartDimensions } = options;
@@ -754,7 +1374,134 @@ const PatternRendererImpl = {
     };
     
     return attachLeaderLines(resolvedPositions, patterns, timeScale, priceScale);
+  },
+
+  // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT Visual Labeling with Conditional Rendering
+  renderGoldenEntryLabel(
+    ctx: CanvasRenderingContext2D,
+    pattern: Pattern,
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions,
+    showEntryExitLabels: boolean = true
+  ): void {
+    // Only render if showEntryExitLabels is enabled
+    if (!showEntryExitLabels || pattern.type !== PatternType.GOLDEN_CANDLE) {
+      return;
+    }
+
+    // For now, treat all Golden Candle patterns as potential ENTRY events
+    // TODO: Implement proper ENTRY/EXIT event type discrimination when metadata is available
+
+    // Calculate positions using Blackjack approach
+    const centerX = timeScale.scale(pattern.startTime);
+    const centerY = priceScale.scale(pattern.highPrice) - 25; // Place above candle
+    
+    // Save context state (following Blackjack pattern)
+    ctx.save();
+    
+    // Set font and alignment properties (following Blackjack pattern)
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle'; // ✅ FIXED: Added missing textBaseline like Blackjack
+    
+    // Draw label text
+    const text = 'ENTRY';
+    
+    // ✅ FIXED: Dynamic text measurement like Blackjack
+    const textWidth = ctx.measureText(text).width;
+    const padX = 5, padY = 3; // ✅ FIXED: Separate X/Y padding like Blackjack
+    
+    // ✅ FIXED: Background-first rendering like Blackjack
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.9)'; // Semi-transparent gold background
+    ctx.fillRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // Draw border (maintaining visual style)
+    ctx.strokeStyle = '#B8860B';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // ✅ FIXED: Clean coordinate calculation like Blackjack
+    ctx.fillStyle = '#333';
+    ctx.fillText(text, centerX, centerY);
+    
+    // Restore context state
+    ctx.restore();
+  },
+
+// ...
+  renderGoldenExitLabel(
+    ctx: CanvasRenderingContext2D,
+    pattern: Pattern,
+    timeScale: any,
+    priceScale: any,
+    dimensions: ChartDimensions,
+    showEntryExitLabels: boolean = true
+  ): void {
+    // Only render if showEntryExitLabels is enabled
+    if (!showEntryExitLabels || pattern.type !== PatternType.GOLDEN_CANDLE) {
+      return;
+    }
+
+    // For now, enable EXIT labeling for testing boundary positioning
+    // TODO: Implement proper ENTRY/EXIT event type discrimination when metadata is available
+
+    // Calculate positions using Blackjack approach
+    const centerX = timeScale.scale(pattern.startTime);
+    const centerY = priceScale.scale(pattern.lowPrice) + 25; // Place below candle
+    
+    // Save context state (following Blackjack pattern)
+    ctx.save();
+    
+    // Set font and alignment properties (following Blackjack pattern)
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle'; // ✅ FIXED: Added missing textBaseline like Blackjack
+    
+    // Draw label text
+    const text = 'EXIT';
+    
+    // ✅ FIXED: Dynamic text measurement like Blackjack
+    const textWidth = ctx.measureText(text).width;
+    const padX = 5, padY = 3; // ✅ FIXED: Separate X/Y padding like Blackjack
+    
+    // ✅ FIXED: Background-first rendering like Blackjack
+    ctx.fillStyle = 'rgba(255, 68, 68, 0.9)'; // Semi-transparent red background
+    ctx.fillRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // Draw border (maintaining visual style)
+    ctx.strokeStyle = '#CC0000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      centerX - textWidth / 2 - padX,
+      centerY - 6 - padY,
+      textWidth + padX * 2,
+      12 + padY * 2
+    );
+    
+    // ✅ FIXED: Clean coordinate calculation like Blackjack
+    ctx.fillStyle = '#FFF';
+    ctx.fillText(text, centerX, centerY);
+    
+    // Restore context state
+    ctx.restore();
   }
+
 };
 
 // Export directly with the name expected by importers

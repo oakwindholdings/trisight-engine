@@ -119,6 +119,7 @@ interface GoldmineChannelSettings {
   minChannelDuration: number;
   confidenceThreshold: number;
   preferredDirection: ChannelDirection | 'ALL';
+  showLabels: boolean;
 }
 
 interface GoldmineChannelSettingsPanelProps {
@@ -131,10 +132,14 @@ const GoldmineChannelSettingsPanel: React.FC<GoldmineChannelSettingsPanelProps> 
   onSettingsChange 
 }) => {
   const handleChange = (key: keyof GoldmineChannelSettings, value: any) => {
-    onSettingsChange({
+    const newSettings = {
       ...settings,
       [key]: value
-    });
+    };
+    onSettingsChange(newSettings);
+    
+    // Persist to localStorage
+    localStorage.setItem('goldmineChannelSettings', JSON.stringify(newSettings));
   };
 
   return (
@@ -149,6 +154,14 @@ const GoldmineChannelSettingsPanel: React.FC<GoldmineChannelSettingsPanelProps> 
             onChange={(e) => handleChange('enabled', e.target.checked)}
           />
           Enable Goldmine Channel Detection
+        </StyledCheckboxLabel>
+        <StyledCheckboxLabel>
+          <StyledCheckbox
+            type="checkbox"
+            checked={settings.showLabels}
+            onChange={(e) => handleChange('showLabels', e.target.checked)}
+          />
+          Show Labels
         </StyledCheckboxLabel>
       </CheckboxGroup>
       

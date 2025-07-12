@@ -8,6 +8,7 @@ import { PatternDetectionOrchestrator, PatternDetectionResult } from './core/Pat
 import { DetectionOptions } from './core/BasePatternDetector';
 import { MarketContext } from './core/MarketContext';
 import { filterTradingHoursData } from '../marketHours';
+import { logDebug } from '../debug';
 
 // Storage keys for pattern detection preferences
 const STORAGE_KEY_DETECTION_SETTINGS = 'trisight_detection_settings';
@@ -30,6 +31,7 @@ export interface BlackjackDetectionOptions {
  */
 export interface EscalatorDetectionOptions {
   enabled: boolean;
+  showLabels: boolean;
   minSteps: number;
   minStepSize: number;
   maxConsolidationVolatility: number;
@@ -139,6 +141,7 @@ const DEFAULT_PREFERENCES: PatternDetectionPreferences = {
     },
     escalator: {
       enabled: true,
+      showLabels: true,
       minSteps: 3,
       minStepSize: 0.5,
       maxConsolidationVolatility: 1.0,
@@ -181,8 +184,8 @@ export class AdaptivePatternDetectionService {
       detectorOptions: this.createDetectorOptions()
     });
     
-    console.log('Adaptive Pattern Detection Service initialized');
-    console.log('Enabled patterns:', this.preferences.enabledPatternTypes);
+    logDebug('DEBUG_PATTERN_DETECT', 'Adaptive Pattern Detection Service initialized');
+    logDebug('DEBUG_PATTERN_DETECT', 'Enabled patterns:', this.preferences.enabledPatternTypes);
   }
   
   /**
@@ -195,20 +198,20 @@ export class AdaptivePatternDetectionService {
       : data;
     
     if (filteredData.length === 0) {
-      console.warn('No data available for pattern detection after filtering');
+      logDebug('DEBUG_PATTERN_DETECT', 'No data available for pattern detection after filtering');
       return [];
     }
     
     // Run the full pattern detection
-    console.log(`Detecting patterns in ${filteredData.length} candles`);
+    logDebug('DEBUG_PATTERN_DETECT', `Detecting patterns in ${filteredData.length} candles`);
     
     // Time the detection process
     const startTime = performance.now();
     this.lastDetectionResult = this.orchestrator.detectPatterns(filteredData);
     const elapsedTime = performance.now() - startTime;
     
-    console.log(`Pattern detection completed in ${elapsedTime.toFixed(2)}ms`);
-    console.log(`Detected ${this.lastDetectionResult.patterns.length} total patterns`);
+    logDebug('DEBUG_PATTERN_DETECT', `Pattern detection completed in ${elapsedTime.toFixed(2)}ms`);
+    logDebug('DEBUG_PATTERN_DETECT', `Detected ${this.lastDetectionResult.patterns.length} total patterns`);
     
     // Return the detected patterns
     return this.lastDetectionResult.patterns;
@@ -263,7 +266,7 @@ export class AdaptivePatternDetectionService {
       detectorOptions: this.createDetectorOptions()
     });
     
-    console.log('Pattern detection preferences updated', this.preferences);
+    logDebug('DEBUG_PATTERN_DETECT', 'Pattern detection preferences updated', this.preferences);
   }
   
   /**
@@ -303,7 +306,7 @@ export class AdaptivePatternDetectionService {
     try {
       return new Date(this.preferences.lastSelectedDate);
     } catch (e) {
-      console.error('Error parsing saved date:', e);
+      logDebug('DEBUG_UI', 'Error parsing saved date:', e);
       return null;
     }
   }
@@ -363,7 +366,7 @@ export class AdaptivePatternDetectionService {
         return { ...DEFAULT_PREFERENCES, ...parsed };
       }
     } catch (e) {
-      console.error('Error loading pattern detection preferences:', e);
+      logDebug('DEBUG_UI', 'Error loading pattern detection preferences:', e);
     }
     
     return { ...DEFAULT_PREFERENCES };
@@ -379,7 +382,7 @@ export class AdaptivePatternDetectionService {
         JSON.stringify(this.preferences)
       );
     } catch (e) {
-      console.error('Error saving pattern detection preferences:', e);
+      logDebug('DEBUG_UI', 'Error saving pattern detection preferences:', e);
     }
   }
 }

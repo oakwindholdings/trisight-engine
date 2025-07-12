@@ -1,14 +1,17 @@
 // src/components/Chart/ChartPatternLayer.tsx
-// Chart-agnostic pattern layer that renders pattern markers
-// Uses pattern context to receive and visualize pattern events
+// Renders pattern overlays on top of the main chart canvas
+// Handles StepBox, BreakoutBox, and EscalatorBand components
 
-import React from 'react';
+// NOTE: TriSight renders to Canvas, not SVG. ChartPatternLayer is the root pattern rendering layer.
+
+import React, { useMemo } from 'react';
 import { Candle } from '../../types';
 import { usePatternContext } from '../../contexts/PatternContext';
 import { EscalatorBand } from '../Markers/EscalatorBand';
 import { GoldmineArrow } from '../Markers/GoldmineArrow';
 import { TrailLine } from '../Markers/TrailLine';
 import { StepBox } from '../Markers/StepBox';
+import { BreakoutBox } from '../Markers/BreakoutBox';
 import { EscalatorRun } from '../../types';
 import { GoldmineSignal } from '../../patternEngine/goldmine';
 import { StopLossEvent } from '../../riskEngine/trailingStop';
@@ -17,7 +20,7 @@ interface ChartPatternLayerProps {
   candles: Candle[];
   width?: number;
   height?: number;
-  xScale?: (index: number) => number;
+  xScale?: (timestamp: number) => number;
   yScale?: (price: number) => number;
 }
 
@@ -25,41 +28,86 @@ export const ChartPatternLayer: React.FC<ChartPatternLayerProps> = ({
   candles,
   width = 800,
   height = 400,
-  xScale = (index: number) => index * 10,
+  xScale = (timestamp: number) => timestamp * 10,
   yScale = (price: number) => height - price
 }) => {
-  // Debug logging
-  console.log('[ChartPatternLayer] Rendering with candles:', {
-    candleCount: candles?.length || 0,
-    firstCandle: candles?.[0]?.datetime,
-    lastCandle: candles?.[candles.length - 1]?.datetime
-  });
-
   // Get pattern events from context
-  const { events } = usePatternContext();
-
-  if (!candles.length || !events.length) {
+  const { events, escalatorSettings, breakoutBoxes } = usePatternContext();
+  
+  // Merge all event types into a single array for rendering
+  const allEvents = useMemo(() => {
+    return [...events, ...breakoutBoxes];
+  }, [events, breakoutBoxes]);
+  
+  // Performance: Logging disabled during render
+  
+  // Track unique StepBoxes to avoid duplicates
+  const stepBoxDeduplication = useMemo(() => {
+    const uniqueSteps = new Map<string, any>();
+    const duplicates: string[] = [];
+    
+    allEvents.forEach((event) => {
+      if (event.type === 'ESCALATOR_STEP' && event.data) {
+        const stepData = event.data as any;
+        const { startIndex, endIndex } = stepData;
+        const key = `${startIndex}-${endIndex}`;
+        
+        if (uniqueSteps.has(key)) {
+          duplicates.push(key);
+        } else {
+          uniqueSteps.set(key, { event, stepData });
+        }
+      }
+    });
+    
+    // Performance: Logging disabled during render
+    
+    return uniqueSteps;
+  }, [allEvents]);
+  
+  // Process breakout boxes to deduplicate by stepRef
+  const breakoutBoxDeduplication = useMemo(() => {
+    const uniqueBoxes = new Map<string, { event: any; boxData: any }>();
+    const duplicates: string[] = [];
+    
+    // Build map of unique boxes by key
+    allEvents.forEach((event) => {
+      if (event.type === 'BREAKOUT_BOX' && event.data) {
+        const boxData = event.data as any;
+        const { startIndex, endIndex } = boxData;
+        const key = `${startIndex}-${endIndex}`;
+        
+        if (uniqueBoxes.has(key)) {
+          duplicates.push(key);
+        } else {
+          uniqueBoxes.set(key, { event, boxData });
+        }
+      }
+    });
+    
+    // Performance: Logging disabled during render
+    
+    return uniqueBoxes;
+  }, [allEvents]);
+  
+  if (!candles.length || !allEvents.length) {
     return null;
   }
 
+  // NOTE: Component mappings:
+  // ESCALATOR → EscalatorBand
+  // ESCALATOR_STEP → StepBox
+  // BREAKOUT_BOX → BreakoutBox
+
   return (
-    <svg
-      width={width}
-      height={height}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        pointerEvents: 'none',
-        zIndex: 5
-      }}
-    >
-      {events.map((event, idx) => {
+    <>
+      {allEvents.map((event, index) => {
         if (event.type === 'ESCALATOR') {
           const escalator = event.data as EscalatorRun;
+          
           return (
             <EscalatorBand
-              key={`escalator-${idx}`}
+              key={`escalator-${index}`}
               escalator={escalator}
               candles={candles}
               xScale={xScale}
@@ -68,24 +116,74 @@ export const ChartPatternLayer: React.FC<ChartPatternLayerProps> = ({
               height={height}
             />
           );
-        } else if (event.type === 'ESCALATOR_STEP') {
-          const stepData = event.data as {
-            stepRef: string;
-            direction: 'RISING' | 'FALLING';
-            floor: number;
-            ceiling: number;
-            height: number;
-          };
+        } else if (event.type === 'ESCALATOR_STEP' && event.data) {
+          const stepData = event.data as any;
+          const { startIndex, endIndex } = stepData;
+          const stepKey = `${startIndex}-${endIndex}`;
           
-          // Parse stepRef to get start and end indices
-          const [startIndex, endIndex] = stepData.stepRef.split('-').map(Number);
+          // Skip if this is a duplicate
+          if (!stepBoxDeduplication.has(stepKey) || stepBoxDeduplication.get(stepKey).event !== event) {
+            return null;
+          }
           
+          // These indices should already be relative to visible data
+          const visibleStartIndex = startIndex;
+          const visibleEndIndex = endIndex;
+          
+          // Debug: Check if indices are valid
+          if (visibleStartIndex >= 0 && visibleStartIndex < candles.length && 
+              visibleEndIndex >= 0 && visibleEndIndex < candles.length) {
+            const startX = xScale(candles[visibleStartIndex].timestamp);
+            const endX = xScale(candles[visibleEndIndex].timestamp);
+            
+            // Performance: Logging disabled during render
+            
+            return (
+              <StepBox
+                key={`step-${stepKey}`}
+                step={stepData}
+                startIndex={visibleStartIndex}
+                endIndex={visibleEndIndex}
+                candles={candles}
+                xScale={xScale}
+                yScale={yScale}
+                width={width}
+                height={height}
+              />
+            );
+          }
+          
+          return null;
+        } else if (event.type === 'BREAKOUT_BOX' && event.data) {
+          const boxData = event.data as any;
+          const key = `${boxData.startIndex}-${boxData.endIndex}`;
+          
+          // Performance: Logging disabled during render
+          
+          // Skip if this is a duplicate
+          if (!breakoutBoxDeduplication.has(key)) {
+            // Performance: Logging disabled during render
+            return null;
+          }
+
+          // Validate data before rendering
+          if (!boxData.startIndex === undefined || !boxData.endIndex === undefined) {
+            // Performance: Logging disabled during render
+            return null;
+          }
+
+          // Performance: Logging disabled during render
+          const x1 = xScale(boxData.startIndex);
+          const x2 = xScale(boxData.endIndex);
+          const y1 = yScale(boxData.ceiling);
+          const y2 = yScale(boxData.floor);
+          const width = x2 - x1;
+          const height = y2 - y1;
+
           return (
-            <StepBox
-              key={`step-${stepData.stepRef}`}
-              step={stepData}
-              startIndex={startIndex}
-              endIndex={endIndex}
+            <BreakoutBox
+              key={`breakout-${boxData.stepRef || index}`}
+              box={boxData}
               candles={candles}
               xScale={xScale}
               yScale={yScale}
@@ -97,7 +195,7 @@ export const ChartPatternLayer: React.FC<ChartPatternLayerProps> = ({
           const signal = event.data as GoldmineSignal;
           return (
             <GoldmineArrow
-              key={`goldmine-${idx}`}
+              key={`goldmine-${index}`}
               signal={signal}
               xScale={xScale}
               yScale={yScale}
@@ -116,7 +214,7 @@ export const ChartPatternLayer: React.FC<ChartPatternLayerProps> = ({
           };
           return (
             <TrailLine
-              key={`stop-${idx}`}
+              key={`stop-${index}`}
               position={position}
               candles={candles}
               xScale={xScale}
@@ -126,8 +224,9 @@ export const ChartPatternLayer: React.FC<ChartPatternLayerProps> = ({
             />
           );
         }
+        // Performance: Logging disabled during render
         return null;
       })}
-    </svg>
+    </>
   );
 };

@@ -21,6 +21,13 @@
     "chart panel";
 }
 
+.chartGridNoPanel {
+  grid-template-columns: 1fr; /* Full width, no panel */
+  grid-template-areas:
+    "controls"
+    "chart";
+}
+
 .header {
   grid-area: header;
 }

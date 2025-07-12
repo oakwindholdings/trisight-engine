@@ -21,13 +21,19 @@ export interface InfiniteZoomState {
   targetCandles: number;
 }
 
-interface InfiniteZoomOptions {
+export interface InfiniteZoomOptions {
   interactionCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   width: number;
   height: number;
   margin: { left: number; right: number; top: number; bottom: number };
   symbol: string;
-  onDataUpdate: (data: CandlestickData[], resolution: ResolutionConfig) => void;
+  startDate?: Date;
+  endDate?: Date;
+  targetCandles?: number;
+  externalData?: CandlestickData[];
+  disableAutoFetch?: boolean;
+  
+  onDataUpdate: (data: CandlestickData[], resolution: ResolutionConfig, fullData?: CandlestickData[]) => void;
   onZoomChange: (state: InfiniteZoomState) => void;
   setPanState: React.Dispatch<React.SetStateAction<PanState>>;
   setVisibleRange: React.Dispatch<React.SetStateAction<VisibleRange>>;
@@ -141,7 +147,7 @@ export function useInfiniteZoomController(opts: InfiniteZoomOptions) {
         // Apply data smoothing for transitions
         let processedData = data;
         
-        // If we have too many candles, aggregate them
+        // If we have too many candles, aggregate them FOR UI RENDERING ONLY
         if (data.length > zoomState.targetCandles * 2) {
           processedData = aggregateCandles(data, zoomState.targetCandles);
         }
@@ -150,7 +156,9 @@ export function useInfiniteZoomController(opts: InfiniteZoomOptions) {
           processedData = interpolateCandles(data, Math.min(zoomState.targetCandles, data.length * 2));
         }
         
-        onDataUpdate(processedData, fetchedResolution);
+        // CRITICAL FIX: Pass both full data for pattern detection AND processed data for UI
+        // This ensures pattern detection always gets the complete, unaggregated dataset
+        onDataUpdate(processedData, fetchedResolution, data); // Pass original full data as third parameter
         
         // Update visible range
         if (processedData.length > 0) {

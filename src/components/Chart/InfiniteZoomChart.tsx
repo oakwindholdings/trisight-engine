@@ -1,6 +1,8 @@
 // src/components/Chart/InfiniteZoomChart.tsx
 // Enhanced chart with infinite zoom capabilities
 // Dynamically loads and displays data at appropriate resolutions
+// CRITICAL: We use CANVAS for all rendering, NEVER SVG or other technologies.
+// Pattern rendering happens via RenderOrchestrator -> PatternRenderer using Canvas 2D context.
 
 import React, { useState, useRef, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { CandlestickData } from '../../models/ChartTypes';
@@ -15,8 +17,27 @@ import { createPriceScale } from '../../utils/scaling';
 import { ChartPatternLayer } from './ChartPatternLayer';
 import { PatternProvider, usePatternContext } from '../../contexts/PatternContext';
 import { useHoverMetrics } from '../../hooks/useHoverMetrics';
-import { MetricPopover } from './MetricPopover';
+import { HoverTooltipZones } from './HoverTooltipZones';
+import { UnifiedHoverProvider } from '../../contexts/UnifiedHoverContext';
+import { usePatternBus } from '../../hooks/usePatternBus';
+import { Candle } from '../../types';
+import { logDebug } from '../../utils/debug';
+import { useHeikinAshiTransform } from '../../hooks/useHeikinAshiTransform';
+import { useChartSettings } from '../../contexts/ChartSettingsContext';
+import { getPatternAtPoint } from '../../utils/patternHitDetection';
 import './InfiniteZoomChart.css';
+
+// TradeActionSignal Integration
+import { TradeActionBus } from '../../utils/trading/TradeActionSignal';
+import { getTradeActionSignals } from '../../framework/tradeActionEmitter';
+
+// ConvictionCloud & TargetReportTable Integration
+import { ConvictionCloudItem, defaultConvictionCloudSettings } from './ConvictionCloudRenderer';
+import { evaluateAllPatterns } from '../../utils/patternHydration';
+import { useLivePolling } from '../../hooks/useLivePolling';
+
+import ExportControls from './ExportControls';
+import DevHUD from './DevHUD';
 
 interface InfiniteZoomChartProps {
   symbol: string;
@@ -28,10 +49,13 @@ interface InfiniteZoomChartProps {
   startDate?: Date;
   endDate?: Date;
   data?: CandlestickData[];  // Add data prop to receive candles from parent
+  timeframe?: string;  // Add timeframe prop to control candle display
 }
 
 export interface InfiniteZoomChartRef {
   zoomToFit: () => void;
+  autoScale: () => void;
+  resetView: () => void;
 }
 
 const CHART_MARGIN = { top: 20, right: 60, bottom: 40, left: 60 };
@@ -47,20 +71,59 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     selectedPattern: selectedPatternProp,
     startDate,
     endDate,
-    data: dataProp
+    data: dataProp,
+    timeframe
   },
   ref
 ) => {
   if (process.env.NODE_ENV === 'development') {
-    // console.log('InfiniteZoomChart Component Render:', {
-    //   symbol,
-    //   startDate: startDate?.toISOString(),
-    //   endDate: endDate?.toISOString(),
-    //   width,
-    //   height,
-    //   patternsCount: patterns.length
-    // });
+    logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] Component Render:', {
+      symbol,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      width,
+      height,
+      patternsCount: patterns.length,
+      hasDataProp: !!dataProp,
+      dataPropLength: dataProp?.length || 0,
+      timeframe
+    });
+    
+    // DIAGNOSTIC: Log detailed data structure
+    if (dataProp && dataProp.length > 0) {
+      logDebug('DEBUG_RENDER_FLOW', '[DIAGNOSTIC] InfiniteZoomChart received data:', {
+        totalCandles: dataProp.length,
+        firstCandle: {
+          ...dataProp[0],
+          timestampCheck: {
+            value: dataProp[0].timestamp,
+            type: typeof dataProp[0].timestamp,
+            asDate: new Date(dataProp[0].timestamp).toISOString(),
+            isValidDate: !isNaN(new Date(dataProp[0].timestamp).getTime())
+          }
+        },
+        lastCandle: {
+          ...dataProp[dataProp.length - 1],
+          timestampCheck: {
+            value: dataProp[dataProp.length - 1].timestamp,
+            type: typeof dataProp[dataProp.length - 1].timestamp,
+            asDate: new Date(dataProp[dataProp.length - 1].timestamp).toISOString(),
+            isValidDate: !isNaN(new Date(dataProp[dataProp.length - 1].timestamp).getTime())
+          }
+        }
+      });
+    } else {
+      logDebug('DEBUG_RENDER_FLOW', '[DIAGNOSTIC] InfiniteZoomChart NO DATA received:', {
+        hasDataProp: !!dataProp,
+        dataPropType: dataProp === null ? 'null' : dataProp === undefined ? 'undefined' : Array.isArray(dataProp) ? 'empty array' : typeof dataProp
+      });
+    }
   }
+  
+  // Get pattern context
+  const { 
+    selectedPattern: selectedPatternFromContext
+  } = usePatternContext();
   
   // Canvas refs
   const mainCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -76,6 +139,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     minPrice: 180,  // More reasonable default
     maxPrice: 220   // More reasonable default
   });
+  const [showResolutionIndicator, setShowResolutionIndicator] = useState(true);
   const [visibleDataIndices, setVisibleDataIndices] = useState({ start: 0, end: 0 });
   const [initialVisibleIndices, setInitialVisibleIndices] = useState({ start: 0, end: 0 });
 
@@ -103,44 +167,85 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
   const [error, setError] = useState<Error | null>(null);
   const dataGenerationRef = useRef(0);
   const [currentDataHash, setCurrentDataHash] = useState<string>('');
+  
+  // DevHUD visibility state
+  const [showDevHUD, setShowDevHUD] = useState(false);
 
   // Get pattern context to trigger detection
   const patternContext = usePatternContext();
 
-  // Handle data updates from zoom controller
-  const handleDataUpdate = useCallback((data: CandlestickData[], resolution: ResolutionConfig) => {
-    dataGenerationRef.current += 1;
-    const generation = dataGenerationRef.current;
-    
-    // Store data hash to detect changes
-    const newHash = `${data.length}_${data[0]?.timestamp}_${data[data.length - 1]?.timestamp}`;
-    if (newHash !== currentDataHash) {
-      setCurrentDataHash(newHash);
-      
-      // Trigger pattern detection on the new data
-      // This ensures pattern arrays are synchronized with the displayed data
-      if (patternContext && typeof patternContext.detectPatterns === 'function') {
-        patternContext.detectPatterns(data);
-      }
-    }
-    
-    // Don't update indices here - let them be updated by the effect
-  }, [currentDataHash, patternContext]);
-
-  // Initialize zoom controller
-  const zoomController = useInfiniteZoomController({
+  // Initialize zoom controller first
+  const controller = useInfiniteZoomController({
     interactionCanvasRef,
     width,
     height,
     margin: CHART_MARGIN,
     symbol,
-    onDataUpdate: handleDataUpdate,
+    timeframe, // Pass the user's selected timeframe
+    onDataUpdate: (data: CandlestickData[], resolution: ResolutionConfig, fullData?: CandlestickData[]) => {
+      dataGenerationRef.current += 1;
+      const generation = dataGenerationRef.current;
+      
+      // Store data hash to detect changes - use fullData for comprehensive detection
+      const dataForHashing = fullData || data;
+      const newHash = `${dataForHashing.length}_${dataForHashing[0]?.timestamp}_${dataForHashing[dataForHashing.length - 1]?.timestamp}`;
+      if (newHash !== currentDataHash) {
+        setCurrentDataHash(newHash);
+        
+        // CRITICAL FIX: Use fullData for pattern detection to ensure patterns across entire chart
+        // If fullData is available, use it for pattern detection; otherwise fall back to processed data
+        const dataForPatternDetection = fullData || data;
+        
+        if (patternContext && typeof patternContext.detectPatterns === 'function') {
+          // console.log('[InfiniteZoomChart] Calling detectPatterns with', dataForPatternDetection.length, 'candles (full data):', !!fullData);
+          patternContext.detectPatterns(dataForPatternDetection);
+        } else {
+          // console.log('[InfiniteZoomChart] Pattern context not available:', {
+          //   patternContext: !!patternContext,
+          //   hasDetectPatterns: patternContext && typeof patternContext.detectPatterns === 'function'
+          // });
+        }
+      }
+      
+      // Don't update indices here - let them be updated by the effect
+    },
     onZoomChange: (state) => {
-      // Zoom state changes are now handled by the controller
+      // Handle zoom centering on the hovered candle
+      if (state.centerCandleRatio !== undefined && transformedData.length > 0) {
+        // Calculate which candle the cursor is over
+        const currentVisibleCandles = visibleDataIndices.end - visibleDataIndices.start + 1;
+        const hoveredCandleOffset = Math.floor(state.centerCandleRatio * currentVisibleCandles);
+        const hoveredCandleIndex = visibleDataIndices.start + hoveredCandleOffset;
+        
+        // Clamp to valid range
+        const centerCandleIndex = Math.max(0, Math.min(transformedData.length - 1, hoveredCandleIndex));
+        
+        // Calculate new range with the hovered candle at the CENTER
+        const newVisibleCandles = state.targetCandles;
+        const halfCandles = Math.floor(newVisibleCandles / 2);
+        
+        // Center the view on the hovered candle
+        let newStartIndex = centerCandleIndex - halfCandles;
+        let newEndIndex = centerCandleIndex + (newVisibleCandles - halfCandles - 1);
+        
+        // Adjust for boundaries
+        if (newStartIndex < 0) {
+          newStartIndex = 0;
+          newEndIndex = Math.min(transformedData.length - 1, newVisibleCandles - 1);
+        } else if (newEndIndex >= transformedData.length) {
+          newEndIndex = transformedData.length - 1;
+          newStartIndex = Math.max(0, newEndIndex - newVisibleCandles + 1);
+        }
+        
+        // Update visible indices to center on the hovered candle
+        setVisibleDataIndices({ start: newStartIndex, end: newEndIndex });
+      }
     },
     setPanState,
     startDate,
-    endDate
+    endDate,
+    externalData: dataProp, // Pass external data to prevent duplicate fetches
+    disableAutoFetch: !!dataProp // Disable auto-fetch when we have external data
   });
 
   const { 
@@ -152,21 +257,174 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     isTransitioning,
     zoomToFit: zoomToFitController,
     resetZoom: resetZoomController
-  } = zoomController;
+  } = controller;
+
+  // Note: panController will be instantiated after transformedData is available
 
   // Combine the data source - prefer dataProp from parent over chartData
   const dataToUse = dataProp || chartData;
+  
+  // DIAGNOSTIC: Log data combination result
+  if (process.env.NODE_ENV === 'development') {
+    logDebug('DEBUG_RENDER_FLOW', '[DIAGNOSTIC] Data source selection:', {
+      hasDataProp: !!dataProp,
+      dataPropLength: dataProp?.length || 0,
+      hasChartData: !!chartData,
+      chartDataLength: chartData?.length || 0,
+      usingDataProp: !!dataProp,
+      dataToUseLength: dataToUse?.length || 0
+    });
+  }
 
-  // Log when pattern detection state changes
+  // Apply Heikin-Ashi transform to chart data
+  const { candleType, showVolume, showGrid } = useChartSettings();
+  const { transformedData } = useHeikinAshiTransform({
+    candleType,
+    data: dataToUse
+  });
+
+  // Convert current data to Candle format for pattern bus
+  const candles: Candle[] = useMemo(() => {
+    return transformedData.map((d: CandlestickData) => ({
+      datetime: new Date(d.timestamp).toISOString(),
+      open: d.open,
+      high: d.high,
+      low: d.low,
+      close: d.close,
+      volume: d.volume || 0,
+      timestamp: d.timestamp
+    }));
+  }, [transformedData]);
+
+  // Convert visible data to Candle format for pattern bus
+  const visibleCandles: Candle[] = useMemo(() => {
+    const visibleData = transformedData.slice(
+      visibleDataIndices.start, 
+      visibleDataIndices.end + 1
+    );
+    return visibleData.map((d: CandlestickData) => ({
+      datetime: new Date(d.timestamp).toISOString(),
+      open: d.open,
+      high: d.high,
+      low: d.low,
+      close: d.close,
+      volume: d.volume || 0,
+      timestamp: d.timestamp
+    }));
+  }, [transformedData, visibleDataIndices.start, visibleDataIndices.end]);
+
+  // Debug: Log visible data info when it changes
   useEffect(() => {
-    // console.log('[InfiniteZoomChart] Pattern synchronization:', {
-    //   isPatternDetectionComplete,
-    //   isPatternDataSynchronized,
-    //   currentDataHash,
-    //   processedDataHash,
-    //   matches: processedDataHash === currentDataHash
-    // });
-  }, [currentDataHash]);
+    if (visibleCandles.length > 0) {
+      // console.log('[InfiniteZoomChart] Visible data info:', {
+      //   visibleCount: visibleCandles.length,
+      //   visibleIndices: { start: visibleDataIndices.start, end: visibleDataIndices.end },
+      //   firstVisible: {
+      //     index: 0,
+      //     timestamp: new Date(visibleCandles[0].timestamp).toISOString()
+      //   },
+      //   lastVisible: {
+      //     index: visibleCandles.length - 1,
+      //     timestamp: new Date(visibleCandles[visibleCandles.length - 1].timestamp).toISOString()
+      //   },
+      //   totalDataLength: transformedData.length
+      // });
+    }
+  }, [visibleCandles.length, visibleDataIndices.start, visibleDataIndices.end]);
+
+  // Auto-hydrate patterns when candleData changes (per TriSight Live Data Polling patch)
+  useEffect(() => {
+    if (transformedData.length > 0) {
+      console.debug('[InfiniteZoomChart] Auto-hydrating patterns with', transformedData.length, 'candles');
+      evaluateAllPatterns(transformedData);
+    }
+  }, [transformedData]);
+
+  // Enable live polling for automatic pattern updates (per TriSight Live Data Polling patch)
+  useLivePolling(true);
+
+  // Use pattern bus to detect patterns on visible candles
+  // console.log('[InfiniteZoomChart] About to call usePatternBus with', candles.length, 'candles (full dataset)');
+  const patternBusState = usePatternBus(candles);
+
+  // Sync pattern bus events to pattern context
+  useEffect(() => {
+    if (patternBusState.events.length > 0) {
+      // Debug: Log first pattern event details
+      const firstStepEvent = patternBusState.events.find(e => e.type === 'ESCALATOR_STEP');
+      if (firstStepEvent && firstStepEvent.data) {
+        const stepData = firstStepEvent.data as any;
+        // console.log('[InfiniteZoomChart] First ESCALATOR_STEP event debug:', {
+        //   stepRef: stepData.stepRef,
+        //   indices: { start: stepData.startIndex, end: stepData.endIndex },
+        //   timestamps: { start: stepData.startTime, end: stepData.endTime },
+        //   visibleCandlesLength: visibleCandles.length,
+        //   visibleCandleTimestamps: {
+        //     first: visibleCandles[0]?.timestamp,
+        //     atStartIndex: visibleCandles[stepData.startIndex]?.timestamp,
+        //     atEndIndex: visibleCandles[stepData.endIndex]?.timestamp,
+        //     last: visibleCandles[visibleCandles.length - 1]?.timestamp
+        //   }
+        // });
+      }
+      
+      // Pattern detection runs on visible candles, indices are already slice-relative
+      const adjustedEvents = patternBusState.events.map(event => {
+        if (event.type === 'ESCALATOR_STEP' && event.data) {
+          const stepData = event.data as any;
+          
+          // Verify indices are within bounds
+          if (stepData.startIndex >= 0 && stepData.startIndex < visibleCandles.length &&
+              stepData.endIndex >= 0 && stepData.endIndex < visibleCandles.length) {
+            // Update timestamps to match visible candles
+            return {
+              ...event,
+              data: {
+                ...stepData,
+                // Ensure timestamps match the visible candles at these indices
+                startTime: new Date(visibleCandles[stepData.startIndex].timestamp),
+                endTime: new Date(visibleCandles[stepData.endIndex].timestamp)
+              }
+            };
+          }
+        }
+        return event;
+      });
+      
+      // Update pattern context with events - REPLACE, don't append
+      if (patternContext.setEvents) {
+        patternContext.setEvents(adjustedEvents);
+      }
+      
+      // Extract escalator step events for the context - REPLACE, don't append
+      const stepEvents = adjustedEvents.filter(e => e.type === 'ESCALATOR_STEP');
+      if (patternContext.setEscalatorSteps) {
+        patternContext.setEscalatorSteps(stepEvents);
+      }
+      
+      // Extract breakout box events for the context - REPLACE, don't append
+      const breakoutBoxEvents = adjustedEvents.filter(e => e.type === 'BREAKOUT_BOX');
+      if (patternContext.setBreakoutBoxes) {
+        patternContext.setBreakoutBoxes(breakoutBoxEvents);
+        // console.log('[InfiniteZoomChart] Syncing BreakoutBox events to context:', {
+        //   totalEvents: adjustedEvents.length,
+        //   breakoutBoxEvents: breakoutBoxEvents.length,
+        //   sampleBoxes: breakoutBoxEvents.slice(0, 3).map(e => e.data)
+        // });
+      }
+    } else {
+      // Clear events when there are none
+      if (patternContext.setEvents) {
+        patternContext.setEvents([]);
+      }
+      if (patternContext.setEscalatorSteps) {
+        patternContext.setEscalatorSteps([]);
+      }
+      if (patternContext.setBreakoutBoxes) {
+        patternContext.setBreakoutBoxes([]);
+      }
+    }
+  }, [patternBusState.events, patternContext.setEvents, patternContext.setEscalatorSteps, patternContext.setBreakoutBoxes, visibleCandles]);
 
   // Dynamic pattern detection state
   const [localPatterns, setLocalPatterns] = useState<Pattern[]>([]);
@@ -181,8 +439,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Update refs when values change
   useEffect(() => {
-    chartDataRef.current = dataToUse;
-  }, [dataToUse]);
+    chartDataRef.current = transformedData;
+  }, [transformedData]);
 
   useEffect(() => {
     visibleDataIndicesRef.current = visibleDataIndices;
@@ -190,10 +448,10 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Detect patterns on visible data after zoom/pan completes
   const detectPatternsForVisibleData = useCallback(async () => {
-    if (!dataToUse.length || isDetectingPatterns) return;
+    if (!transformedData.length || isDetectingPatterns) return;
     
     // Get the visible data slice
-    const visibleData = dataToUse.slice(
+    const visibleData = transformedData.slice(
       visibleDataIndices.start,
       visibleDataIndices.end + 1
     );
@@ -222,13 +480,13 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       setLocalPatterns(detectedPatterns);
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        // console.error('InfiniteZoomChart - Pattern detection error:', error);
+        logDebug('DEBUG_RENDER_FLOW', 'InfiniteZoomChart - Pattern detection error:', error);
       }
       setLocalPatterns([]);
     } finally {
       setIsDetectingPatterns(false);
     }
-  }, [dataToUse, visibleDataIndices, isDetectingPatterns]);
+  }, [transformedData, visibleDataIndices, isDetectingPatterns]);
 
   // Debounce pattern detection to avoid too many calls during rapid zoom/pan
   const debouncedPatternDetection = useMemo(() => {
@@ -243,18 +501,18 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Trigger pattern detection when visible data changes
   useEffect(() => {
-    if (dataToUse.length > 0 && !isLoading) {
+    if (transformedData.length > 0 && !isLoading) {
       debouncedPatternDetection();
     }
-  }, [visibleDataIndices, dataToUse.length, isLoading, debouncedPatternDetection]);
+  }, [visibleDataIndices, transformedData.length, isLoading, debouncedPatternDetection]);
 
   // Update visible range when visible data indices change
   useEffect(() => {
-    const hasData = dataToUse.length > 0;
+    const hasData = transformedData.length > 0;
     if (!hasData) return;
 
     // For infinite zoom, we use the visible indices from the zoom controller
-    const visibleData = dataToUse.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     
     if (visibleData.length > 0) {
       // Get first and last candle times
@@ -293,39 +551,81 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         };
       });
     }
-  }, [dataToUse.length, visibleDataIndices.start, visibleDataIndices.end]);
+  }, [transformedData.length, visibleDataIndices.start, visibleDataIndices.end]);
 
-  // Update visible indices when zoom level changes (targetCandles changes)
+  // Update visible indices when data first loads or changes
   useEffect(() => {
-    if (dataToUse.length > 0 && targetCandles > 0) {
-      // Calculate new visible indices based on targetCandles
-      // Keep the center of the current view
+    if (transformedData.length > 0 && targetCandles > 0) {
+      // Only initialize indices if they haven't been set yet
+      // or if the data has completely changed (different length)
+      const needsInitialization = !indicesInitializedRef.current || 
+                                  visibleDataIndicesRef.current.end >= transformedData.length ||
+                                  visibleDataIndicesRef.current.end === 0;
+      
+      if (needsInitialization) {
+        // Initialize to show the most recent data
+        const endIndex = transformedData.length - 1;
+        const startIndex = Math.max(0, endIndex - targetCandles + 1);
+        
+        setVisibleDataIndices({ start: startIndex, end: endIndex });
+        visibleDataIndicesRef.current = { start: startIndex, end: endIndex };
+        indicesInitializedRef.current = true;
+        
+        // console.log('[InfiniteZoomChart] Initialized visible indices:', {
+        //   start: startIndex,
+        //   end: endIndex,
+        //   targetCandles,
+        //   dataLength: transformedData.length
+        // });
+      }
+    }
+  }, [transformedData.length]); // Remove targetCandles from dependencies to prevent re-centering on zoom
+
+  // Handle zoom changes - update visible indices while maintaining focus
+  useEffect(() => {
+    if (transformedData.length > 0 && targetCandles > 0 && indicesInitializedRef.current) {
       const currentStart = visibleDataIndicesRef.current.start;
       const currentEnd = visibleDataIndicesRef.current.end;
-      const currentCenter = Math.floor((currentStart + currentEnd) / 2);
+      const currentRange = currentEnd - currentStart + 1;
       
-      // Calculate new range centered on current center
-      const halfRange = Math.floor(targetCandles / 2);
-      let newStart = currentCenter - halfRange;
-      let newEnd = currentCenter + halfRange;
-      
-      // Adjust for data bounds
-      if (newEnd >= dataToUse.length) {
-        newEnd = dataToUse.length - 1;
-        newStart = Math.max(0, newEnd - targetCandles);
+      // Only update if the range has changed (zoom occurred)
+      if (currentRange !== targetCandles) {
+        // Calculate the center point of the current view
+        const currentCenter = (currentStart + currentEnd) / 2;
+        
+        // Calculate new indices centered on the current center
+        const halfRange = targetCandles / 2;
+        let newStart = Math.round(currentCenter - halfRange);
+        let newEnd = Math.round(currentCenter + halfRange - 1);
+        
+        // Clamp to data bounds
+        if (newEnd >= transformedData.length) {
+          newEnd = transformedData.length - 1;
+          newStart = Math.max(0, newEnd - targetCandles + 1);
+        }
+        if (newStart < 0) {
+          newStart = 0;
+          newEnd = Math.min(transformedData.length - 1, newStart + targetCandles - 1);
+        }
+        
+        // Update indices
+        setVisibleDataIndices({ start: newStart, end: newEnd });
+        visibleDataIndicesRef.current = { start: newStart, end: newEnd };
+        
+        // console.log('[InfiniteZoomChart] Zoom update - visible indices adjusted:', {
+        //   oldRange: currentRange,
+        //   newRange: targetCandles,
+        //   oldIndices: { start: currentStart, end: currentEnd },
+        //   newIndices: { start: newStart, end: newEnd },
+        //   center: currentCenter
+        // });
       }
-      if (newStart < 0) {
-        newStart = 0;
-        newEnd = Math.min(dataToUse.length - 1, newStart + targetCandles);
-      }
-      
-      setVisibleDataIndices({ start: newStart, end: newEnd });
     }
-  }, [targetCandles, dataToUse.length]);
+  }, [targetCandles, transformedData.length]);
 
   // Update visible range from pan
   const updateVisibleRangeFromPan = useCallback((translateX: number) => {
-    const data = chartDataRef.current;
+    const data = transformedData;
     if (data.length === 0) return;
     
     const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
@@ -381,7 +681,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         });
       }
     }
-  }, [width, targetCandles, visibleDataIndices.start, visibleDataIndices.end]);
+  }, [width, targetCandles, visibleDataIndices.start, visibleDataIndices.end, transformedData, panState.isPanning]);
 
   // Initialize pan controller
   const panController = usePanController(
@@ -402,7 +702,22 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       // console.log('InfiniteZoomChart - Canvas clicked at:', { x, y });
     }
     
-    if (dataToUse.length === 0) {
+    // Check if a pattern was clicked using hit detection
+    const hitPattern = getPatternAtPoint(x, y, CHART_MARGIN);
+    
+    if (hitPattern && patternContext) {
+      logDebug('chart.interaction', 'Pattern clicked via hit detection:', {
+        pattern: hitPattern,
+        type: hitPattern.type,
+        confidence: hitPattern.confidence
+      });
+      
+      // Set selected pattern to open modal
+      patternContext.setSelectedPattern(hitPattern);
+      return; // Exit early if pattern was clicked
+    }
+    
+    if (transformedData.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         // console.log('InfiniteZoomChart - No chart data available');
       }
@@ -410,7 +725,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     }
     
     // Create scales for pattern detection
-    const visibleData = dataToUse.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
     const timeScale = createSequentialTimeScale(
       width - CHART_MARGIN.left - CHART_MARGIN.right,
       visibleData,
@@ -423,7 +738,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     
     // Find pattern label at click position
     let clickedPattern: Pattern | null = null;
-    const allPatterns = [...patterns, ...localPatterns];
+    const allPatterns = [...patterns];
     
     if (process.env.NODE_ENV === 'development') {
       // console.log('InfiniteZoomChart - Checking patterns:', allPatterns.length, 'patterns');
@@ -432,8 +747,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     // Check each pattern directly
     for (const pattern of allPatterns) {
       // Simple bounds check for pattern area (can be enhanced later)
-      const startIndex = dataToUse.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
-      const endIndex = dataToUse.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
+      const startIndex = transformedData.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
+      const endIndex = transformedData.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
       
       if (startIndex >= 0 && endIndex >= 0) {
         const xStart = timeScale.scale(pattern.startTime);
@@ -457,20 +772,20 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       }
       onPatternSelect(clickedPattern);
     }
-  }, [patterns, localPatterns, dataToUse, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
+  }, [patterns, transformedData, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
 
   // Render chart when data or view changes
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      // console.log('InfiniteZoomChart render effect:', {
-      //   dataLength: dataToUse.length,
-      //   visibleDataIndices,
-      //   isLoading,
-      //   currentResolution
-      // });
+      logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] Triggering renderChart:', { 
+        width, 
+        height, 
+        dataLength: transformedData.length,
+        visibleIndices: visibleDataIndices 
+      });
     }
     
-    if (dataToUse.length === 0) {
+    if (transformedData.length === 0) {
       if (process.env.NODE_ENV === 'development') {
         // console.log('InfiniteZoomChart - No data to render');
       }
@@ -487,44 +802,269 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       return;
     }
     
-    const visiblePatterns = [...patterns, ...localPatterns].filter(pattern => {
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    
+    if (process.env.NODE_ENV === 'development') {
+      logDebug('DEBUG_RENDER_FLOW', '[DIAGNOSTIC] Rendering with visible data:', {
+        totalData: dataToUse?.length || 0,
+        visibleDataLength: visibleData.length,
+        visibleIndices: visibleDataIndices,
+        firstVisibleCandle: visibleData[0] ? {
+          timestamp: visibleData[0].timestamp,
+          date: new Date(visibleData[0].timestamp).toISOString(),
+          close: visibleData[0].close
+        } : null,
+        lastVisibleCandle: visibleData[visibleData.length - 1] ? {
+          timestamp: visibleData[visibleData.length - 1].timestamp,
+          date: new Date(visibleData[visibleData.length - 1].timestamp).toISOString(),
+          close: visibleData[visibleData.length - 1].close
+        } : null
+      });
+    }
+    
+    // Include all patterns within the full data range, not just visible viewport
+    // This ensures patterns appear across the entire chart, not just the left portion
+    const fullDataStart = transformedData[0]?.timestamp || 0;
+    const fullDataEnd = transformedData[transformedData.length - 1]?.timestamp || 0;
+    
+    const visiblePatterns = patterns.filter(pattern => {
       const patternStart = pattern.startTime.getTime();
       const patternEnd = pattern.endTime.getTime();
-      const visibleStart = dataToUse[visibleDataIndices.start]?.timestamp || 0;
-      const visibleEnd = dataToUse[visibleDataIndices.end]?.timestamp || 0;
       
-      return patternStart <= visibleEnd && patternEnd >= visibleStart;
+      // Use full data range instead of visible range to show patterns across entire chart
+      return patternStart <= fullDataEnd && patternEnd >= fullDataStart;
     });
     
     if (process.env.NODE_ENV === 'development') {
       // console.log('InfiniteZoomChart - Rendering with data:', {
-      //   dataLength: dataToUse.length,
+      //   dataLength: transformedData.length,
       //   visibleIndices: visibleDataIndices,
       //   visiblePatternsCount: visiblePatterns.length
       // });
     }
     
+    // Get escalator steps from pattern context
+    const escalatorSteps = patternContext.escalatorSteps || [];
+    
+    // Get full data range for pattern detection (don't restrict to visible range)
+    const fullTimeStart = transformedData[0]?.timestamp || 0;
+    const fullTimeEnd = transformedData[transformedData.length - 1]?.timestamp || 0;
+    
+    // Current visible range for debugging
+    const visibleTimeStart = transformedData[visibleDataIndices.start]?.timestamp || 0;
+    const visibleTimeEnd = transformedData[visibleDataIndices.end]?.timestamp || 0;
+    
+    const stepMap = new Map();
+    escalatorSteps.forEach(event => {
+      if (event.data && event.data.stepRef) {
+        const stepData = event.data as any;
+        
+        // Use the timestamps directly from the pattern event
+        const stepStartTime = stepData.startTime ? new Date(stepData.startTime).getTime() : 0;
+        const stepEndTime = stepData.endTime ? new Date(stepData.endTime).getTime() : 0;
+        
+        // Include all patterns within the full data range, not just visible range
+        // This ensures patterns appear across the entire chart, not just the left portion
+        if (stepStartTime <= fullTimeEnd && stepEndTime >= fullTimeStart) {
+          stepMap.set(stepData.stepRef, stepData);
+        }
+      }
+    });
+    
+    // Merge Target Blackjack Scores (TBS) and Goldmine flags into step objects
+    const bjTargetLookup = new Map(
+      (patternContext.bjTargetScores || []).map(entry => [entry.stepRef, entry])
+    );
+
+    const visibleEscalatorSteps = Array.from(stepMap.values())
+      .filter(step => step && step.startTime && step.endTime)
+      .map(step => {
+        const target = bjTargetLookup.get(step.stepRef);
+        if (target) {
+          (step as any).blackjackScore = target.score;
+          (step as any).qualifiesForGoldmine = target.qualifiesForGoldmine;
+        }
+        return step;
+      });
+    
+    // Debug escalator steps
+    if (visibleEscalatorSteps.length > 0) {
+      // console.log('[InfiniteZoomChart] Passing escalator steps to renderChart:', {
+      //   originalCount: escalatorSteps.length,
+      //   visibleCount: visibleEscalatorSteps.length,
+      //   timeRange: {
+      //     visible: { start: new Date(visibleTimeStart), end: new Date(visibleTimeEnd) },
+      //     firstStep: {
+      //       start: new Date(visibleEscalatorSteps[0].startTime),
+      //       end: new Date(visibleEscalatorSteps[0].endTime)
+      //     }
+      //   }
+      // });
+    }
+    
+    const breakoutBoxes = patternContext.breakoutBoxes || []; // Get breakoutBoxes from context
+    
+    // Debug breakoutBoxes
+    if (breakoutBoxes.length > 0) {
+      logDebug('DEBUG_RENDER_FLOW', '[DIAGNOSTIC] [InfiniteZoomChart] Passing breakoutBoxes to renderChart:', {
+        boxCount: breakoutBoxes.length,
+        boxes: breakoutBoxes.slice(0, 3).map(box => ({
+          startIndex: box.data.startIndex,
+          endIndex: box.data.endIndex,
+          high: box.data.high,
+          low: box.data.low,
+          type: box.data.type
+        }))
+      });
+    }
+    
+    // DIAGNOSTIC: verify BJ scores merged into steps
+    if (process.env.NODE_ENV === 'development' && visibleEscalatorSteps.length) {
+      logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] visibleEscalatorSteps sample (with BJ):', visibleEscalatorSteps.slice(0,3).map(s => ({ stepRef: s.stepRef, bj: s.blackjackScore, gm: s.qualifiesForGoldmine })));
+    }
+
+    // Get TradeActionSignals from both bus implementations for debugging
+    const classBasedSignals = TradeActionBus.getSignals();
+    const arrayBasedSignals = getTradeActionSignals();
+    
+    // Debug logging to identify which bus has signals
+    console.log(`[InfiniteZoomChart] TradeActionSignal sources:`, {
+      classBasedCount: classBasedSignals.length,
+      arrayBasedCount: arrayBasedSignals.length,
+      classSignals: classBasedSignals.slice(0, 2), // First 2 for debugging
+      arraySignals: arrayBasedSignals.slice(0, 2)   // First 2 for debugging
+    });
+    
+    // Use whichever bus has signals (prefer class-based for consistency)
+    // Convert readonly array to mutable array to match expected type
+    const allSignals = classBasedSignals.length > 0 ? classBasedSignals : [...arrayBasedSignals];
+    
+    // Signal Fidelity Mode: Include SELL/COVER signals when fidelity mode is enabled
+    const isFidelityMode = (window as any).signalFidelityPatch?.isFidelityModeOn?.() || false;
+    const tradeActionSignals = isFidelityMode ? 
+      allSignals : // Show ALL signals in fidelity mode
+      allSignals.filter(signal => 
+        signal.signalType === 'LONG_ENTRY' || 
+        signal.signalType === 'SHORT_ENTRY' ||
+        signal.action === 'SELL' || 
+        signal.action === 'COVER' // ALWAYS show STOP_EXIT signals
+      );
+    
+    // URGENT DEBUG: Comprehensive signal tracing for SELL/COVER signals
+    const sellSignals = allSignals.filter(s => s.action === 'SELL');
+    const coverSignals = allSignals.filter(s => s.action === 'COVER');
+    const visibleSellSignals = tradeActionSignals.filter(s => s.action === 'SELL');
+    const visibleCoverSignals = tradeActionSignals.filter(s => s.action === 'COVER');
+    
+    console.log(`🚨 [STOP_EXIT_DEBUG] Signal pipeline analysis:`, {
+      totalSignals: allSignals.length,
+      totalSellSignals: sellSignals.length,
+      totalCoverSignals: coverSignals.length,
+      fidelityModeEnabled: isFidelityMode,
+      visibleSignals: tradeActionSignals.length,
+      visibleSellSignals: visibleSellSignals.length,
+      visibleCoverSignals: visibleCoverSignals.length,
+      exitSignalsFiltered: isFidelityMode ? 0 : (allSignals.length - tradeActionSignals.length),
+      allSignalActions: allSignals.map(s => s.action),
+      visibleSignalActions: tradeActionSignals.map(s => s.action),
+      sellSignalDetails: sellSignals.map(s => ({ 
+        pattern: s.pattern, 
+        action: s.action, 
+        signalType: s.signalType, 
+        timestamp: s.timestamp,
+        price: s.price 
+      })),
+      coverSignalDetails: coverSignals.map(s => ({ 
+        pattern: s.pattern, 
+        action: s.action, 
+        signalType: s.signalType, 
+        timestamp: s.timestamp,
+        price: s.price 
+      }))
+    });
+    
+    // 🔄 Transform tradeActionSignals for ConvictionCloud with REAL calculated values (NO MOCK DATA)
+    const transformedConvictionCloudItems: ConvictionCloudItem[] = tradeActionSignals.map((signal, index): ConvictionCloudItem => {
+      // Find associated patterns for this signal to get real data
+      const associatedPatterns = patterns?.filter(pattern => 
+        pattern.type === signal.pattern || 
+        Math.abs(pattern.startTime.getTime() - signal.timestamp.getTime()) < 60000
+      ) || [];
+      
+      // **REAL CALCULATED VALUES - NO DUMMY DATA**
+      // Use same formulas as TargetReportTable for consistency
+      const confidence = signal.confidence || 0;
+      const convictionRating = Math.round(confidence * 100); // 0-100 scale
+      
+      // Real traction calculation based on pattern confidence and count
+      const traction = associatedPatterns.length > 0 
+        ? Math.round(associatedPatterns.reduce((sum, p) => sum + (p.confidence || 0), 0) / associatedPatterns.length * 100)
+        : Math.round(confidence * 100);
+      
+      // Real timing calculation based on pattern recency
+      const timing = signal.timestamp 
+        ? Math.max(0, Math.min(100, 100 - (Date.now() - signal.timestamp.getTime()) / (1000 * 60 * 60 * 24))) // Fresher = higher score
+        : 50;
+      
+      // Real risk calculation based on confidence (higher confidence = lower risk)
+      const riskRating = Math.round((1 - confidence) * 100); // Inverted: low confidence = high risk
+      
+      return {
+        symbol: signal.pattern || `SIGNAL_${index + 1}`,
+        convictionRating,
+        traction: Math.round(traction),
+        timing: Math.round(timing),
+        riskRating,
+        confidenceLevel: confidence,
+        signalCount: associatedPatterns.length || 1,
+        patternTypes: [signal.pattern || 'UNKNOWN'],
+        lastUpdated: signal.timestamp || new Date()
+      };
+    });
+
+    // Update state with transformed data
+    setConvictionCloudItems(transformedConvictionCloudItems);
+    
     renderChart({
       mainCanvasRef,
       bufferCanvasRef,
       patternsCanvasRef,
-      filteredData: dataToUse,
+      filteredData: transformedData,
       visibleDataIndices,
       visibleRange,
       width,
       height,
       margin: CHART_MARGIN,
       visiblePatterns,
-      selectedPattern: selectedPatternProp || null,
-      timeframe: currentResolution?.timeframe || '1min',
-      showOnlyTradingHours: false
+      selectedPattern: selectedPatternFromContext || null,
+      timeframe: timeframe || '1min', // Always use the timeframe prop with a fallback
+      showOnlyTradingHours: false,
+      escalatorSteps: visibleEscalatorSteps,
+      escalatorSettings: patternContext.escalatorSettings,
+      breakoutBoxes, // Pass breakoutBoxes to renderChart
+      breakoutBoxSettings: patternContext.breakoutBoxSettings, // Add breakoutBoxSettings
+      blackjackSettings: patternContext.blackjackSettings, // Add BlackJack settings for label toggle
+      goldenCandleSettings: patternContext.goldenCandleSettings, // Golden Candle settings with near-miss toggle
+      goldenNearMisses: patternContext.goldenNearMisses || [], // Golden Candle near-miss overlays
+      // 🔗 TradeActionSignal Integration - CRITICAL FIX
+      tradeActionSignals: tradeActionSignals,
+      tradeActionSettings: { showAggressive: true, showLabels: true, showIcons: true },
+      // 🌟 ConvictionCloud Integration - Transform tradeActionSignals to ConvictionCloud
+      convictionCloudItems: transformedConvictionCloudItems,
+      convictionCloudSettings: defaultConvictionCloudSettings,
+      hoveredConvictionItem: null,
+      chartSettings: {
+        isHeikinAshi: candleType === 'heikin_ashi',
+        showVolume: showVolume,
+        showGrid: showGrid
+      }
     });
-  }, [dataToUse, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, localPatterns, isLoading]);
+  }, [transformedData, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, isLoading, patternContext.escalatorSteps, patternContext.escalatorSettings, patternContext.breakoutBoxes, timeframe, candleType, showVolume, showGrid]);
 
   // Setup canvas dimensions
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      // console.log('InfiniteZoomChart - Setting up canvas dimensions:', { width, height });
+      logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] Canvas dimension update triggered:', { width, height });
     }
     const canvases = [mainCanvasRef, bufferCanvasRef, patternsCanvasRef, interactionCanvasRef];
     canvases.forEach(ref => {
@@ -544,18 +1084,42 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     });
   }, [width, height]);
 
-  // Expose zoomToFit to parent components
+  // Expose chart control methods to parent components
   useImperativeHandle(ref, () => ({
     zoomToFit: () => {
-      if (zoomToFitController) {
-        zoomToFitController();
+      if (controller?.zoomToFit) {
+        controller.zoomToFit();
+      }
+    },
+    autoScale: () => {
+      // Auto-scale is essentially the same as zoom to fit for now
+      if (controller?.zoomToFit) {
+        controller.zoomToFit();
+      }
+    },
+    resetView: () => {
+      if (controller?.resetZoom) {
+        controller.resetZoom();
       }
     }
-  }), [zoomToFitController]);
+  }), [controller]);
+
+  // Keyboard handler for F12 to toggle DevHUD
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F12') {
+        e.preventDefault();
+        setShowDevHUD(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Auto-scale when data is first loaded or changes significantly
   useEffect(() => {
-    if (dataToUse.length > 0 && zoomToFitController && !indicesInitializedRef.current) {
+    if (transformedData.length > 0 && zoomToFitController && !indicesInitializedRef.current) {
       // Small delay to ensure chart is rendered
       const timer = setTimeout(() => {
         zoomToFitController();
@@ -563,7 +1127,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       
       return () => clearTimeout(timer);
     }
-  }, [dataToUse.length, zoomToFitController]);
+  }, [transformedData.length, zoomToFitController]);
 
   // Update visible range when date props change
   useEffect(() => {
@@ -600,126 +1164,201 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     }
   }, [startDate, endDate, resetZoomController, setPanState]);
 
+  // Use hover metrics with the same data we're rendering
+  const timeScale = useMemo(() => {
+    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
+    
+    if (!visibleData.length) {
+      return createSequentialTimeScale(
+        width - CHART_MARGIN.left - CHART_MARGIN.right,
+        transformedData,
+        [0, transformedData.length - 1]
+      );
+    }
+    
+    // console.log('[InfiniteZoomChart] Creating timeScale for visible data:', {
+    //   visibleDataLength: visibleData.length,
+    //   visibleStart: visibleDataIndices.start,
+    //   visibleEnd: visibleDataIndices.end,
+    //   firstVisible: visibleData[0]?.datetime,
+    //   lastVisible: visibleData[visibleData.length - 1]?.datetime
+    // });
+    
+    return createSequentialTimeScale(
+      width - CHART_MARGIN.left - CHART_MARGIN.right,
+      visibleData,
+      [0, width - CHART_MARGIN.left - CHART_MARGIN.right] // We're in transformed space, so range starts at 0
+    );
+  }, [width, visibleDataIndices.start, visibleDataIndices.end, transformedData]);
+  
+  const { hoverData, HoverMetricsProvider } = useHoverMetrics(
+    containerRef, 
+    timeScale,  // Use the same timeScale we calculated above
+    transformedData,  // Pass the same data we're rendering
+    CHART_MARGIN,
+    visibleDataIndices
+  );
+
+  // Debug hover data
+  useEffect(() => {
+    if (hoverData) {
+      // console.log('[InfiniteZoomChart] Hover data:', {
+      //   hoverIndex: hoverData.idx,
+      //   hoverCandle: hoverData.candle,
+      //   expectedCandle: transformedData[hoverData.idx],
+      //   match: hoverData.candle === transformedData[hoverData.idx]
+      // });
+    }
+  }, [hoverData, transformedData]);
+
+  // 📤 CSV Export State
+  const [showExportControls, setShowExportControls] = useState(false);
+  
+  // 🔄 State for transformed data (will be updated in useEffect)
+  const [convictionCloudItems, setConvictionCloudItems] = useState<ConvictionCloudItem[]>([]);
+
   return (
-    <div className="infinite-zoom-chart-container" ref={containerRef}>
-      <div className="canvas-stack" style={{ width, height }}>
-        <canvas ref={mainCanvasRef} className="main-canvas" />
-        <canvas ref={bufferCanvasRef} className="buffer-canvas" style={{ display: 'none' }} />
-        <canvas ref={patternsCanvasRef} className="patterns-canvas" />
-        <canvas 
-          ref={interactionCanvasRef} 
-          className="interaction-canvas"
-          onClick={handleCanvasClick}
-          onMouseDown={panController.handleMouseDown}
-          onMouseMove={panController.handleMouseMove}
-          onMouseUp={panController.handleMouseUp}
-          onMouseLeave={panController.handleMouseLeave}
-          onWheel={zoomController.handleWheel}
-          onTouchStart={panController.handleTouchStart}
-          onTouchMove={(e) => {
-            panController.handleTouchMove(e);
-            zoomController.handlePinch(e);
-          }}
-          onTouchEnd={panController.handleTouchEnd}
-          style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
-        />
-        
-        {/* Pattern overlay */}
-        <svg className="pattern-overlay">
-          <g transform={`translate(${CHART_MARGIN.left}, ${CHART_MARGIN.top})`}>
-            <ChartPatternLayer
-              candles={dataToUse}
-              xScale={(index: number) => {
-                const visibleData = dataToUse.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
-                const timeScale = createSequentialTimeScale(
-                  width - CHART_MARGIN.left - CHART_MARGIN.right,
-                  visibleData,
-                  [0, visibleData.length - 1]
-                );
-                const candle = dataToUse[index];
-                if (!candle) return 0;
-                return timeScale.scale(new Date(candle.timestamp));
-              }}
-              yScale={(price: number) => {
-                const priceScale = createPriceScale(
-                  height - CHART_MARGIN.top - CHART_MARGIN.bottom,
-                  [visibleRange.minPrice, visibleRange.maxPrice]
-                );
-                return priceScale.scale(price);
-              }}
-              width={width - CHART_MARGIN.left - CHART_MARGIN.right}
-              height={height - CHART_MARGIN.top - CHART_MARGIN.bottom}
-            />
-          </g>
-        </svg>
-        
-        {currentResolution && (
-          <ResolutionIndicator
-            resolution={currentResolution}
-            zoomLevel={zoomLevel}
-            candleCount={targetCandles}
-            isTransitioning={isTransitioning}
+    <HoverMetricsProvider value={hoverData}>
+      <UnifiedHoverProvider>
+        <div className="infinite-zoom-chart-container" ref={containerRef}>
+          <DevHUD visible={showDevHUD} />
+          <HoverTooltipZones />
+        <div className="canvas-stack" style={{ width, height }}>
+          <canvas ref={mainCanvasRef} className="main-canvas" />
+          <canvas ref={bufferCanvasRef} className="buffer-canvas" style={{ display: 'none' }} />
+          <canvas ref={patternsCanvasRef} className="patterns-canvas" />
+          <canvas 
+            ref={interactionCanvasRef} 
+            className="interaction-canvas"
+            onClick={handleCanvasClick}
+            onMouseDown={panController.handleMouseDown}
+            onMouseMove={panController.handleMouseMove}
+            onMouseUp={panController.handleMouseUp}
+            onMouseLeave={panController.handleMouseLeave}
+            onWheel={controller.handleWheel}
+            onTouchStart={panController.handleTouchStart}
+            onTouchMove={(e) => {
+              panController.handleTouchMove(e);
+              controller.handlePinch(e);
+            }}
+            onTouchEnd={panController.handleTouchEnd}
+            style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
           />
-        )}
+          
+          {/* 📤 CSV Export Controls */}
+          {showExportControls && (
+            <ExportControls
+              convictionCloudItems={convictionCloudItems}
+              targetReportRows={[]} // Empty since we're using DOM table now
+              position="floating"
+              className="z-50"
+            />
+          )}
+          
+          {/* 📤 Export Toggle Button */}
+          <button
+            onClick={() => setShowExportControls(!showExportControls)}
+            className={`
+              fixed top-4 right-4 z-40 px-3 py-2 text-sm font-medium rounded-lg shadow-lg
+              transition-all duration-200 border-2
+              ${
+                showExportControls
+                  ? 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }
+            `}
+            title="Toggle CSV Export Controls"
+          >
+            📊 {showExportControls ? 'Hide' : 'Export'}
+          </button>
+          
+          {currentResolution && showResolutionIndicator && (
+            <ResolutionIndicator
+              resolution={currentResolution}
+              zoomLevel={zoomLevel}
+              candleCount={targetCandles}
+              isTransitioning={isTransitioning}
+              onClose={() => setShowResolutionIndicator(false)}
+            />
+          )}
+          
+          {isLoading && (
+            <div className="loading-overlay">
+              <div className="loading-spinner" />
+              <div className="loading-text">Loading {currentResolution?.label} data...</div>
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-overlay">
+              <div className="error-message">{error.message}</div>
+            </div>
+          )}
+          
+          {!isLoading && !error && transformedData.length === 0 && (
+            <div className="error-overlay">
+              <div className="error-message">No data available. Please check symbol and date range.</div>
+            </div>
+          )}
+        </div>
         
-        {isLoading && (
-          <div className="loading-overlay">
-            <div className="loading-spinner" />
-            <div className="loading-text">Loading {currentResolution?.label} data...</div>
-          </div>
-        )}
+        <div className="zoom-controls">
+          <button 
+            className="zoom-button" 
+            onClick={() => controller.zoomOut()}
+            disabled={zoomLevel >= 5 || isTransitioning}
+            title="Zoom Out"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5 9a1 1 0 100 2h10a1 1 0 100-2H5z" />
+            </svg>
+          </button>
+          <button 
+            className="zoom-button" 
+            onClick={() => controller.zoomIn()}
+            disabled={zoomLevel <= 0.1 || isTransitioning}
+            title="Zoom In"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
+            </svg>
+          </button>
+          <button 
+            className="zoom-button" 
+            onClick={resetZoomController}
+            disabled={isTransitioning}
+            title="Reset Zoom"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9 3a6 6 0 11-4.84 9.5 1 1 0 011.68-1.09A4 4 0 109 5a1 1 0 100-2zm-2 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
+            </svg>
+          </button>
+          <button 
+            className="zoom-button" 
+            onClick={zoomToFitController}
+            disabled={isTransitioning}
+            title="Fit to Screen"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5 9a1 1 0 100 2h10a1 1 0 100-2H5z" />
+            </svg>
+          </button>
+        </div>
         
-        {error && (
-          <div className="error-overlay">
-            <div className="error-message">{error.message}</div>
-          </div>
-        )}
+        <div className="resolution-info">
+          {currentResolution && (
+            <span>{currentResolution.timeframe}</span>
+          )}
+        </div>
         
-        {!isLoading && !error && dataToUse.length === 0 && (
-          <div className="error-overlay">
-            <div className="error-message">No data available. Please check symbol and date range.</div>
-          </div>
-        )}
+        <div className="data-info">
+          {transformedData.length > 0 && (
+            <span>{transformedData.length} candles</span>
+          )}
+        </div>
       </div>
-      
-      <div className="zoom-controls">
-        <button 
-          className="zoom-button"
-          onClick={() => {
-            zoomController.zoomTo(zoomLevel * 1.5);
-          }}
-          title="Zoom Out"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M5 9a1 1 0 100 2h10a1 1 0 100-2H5z" />
-          </svg>
-        </button>
-        
-        <button 
-          className="zoom-button"
-          onClick={() => {
-            resetZoomController();
-          }}
-          title="Reset Zoom"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9 3a6 6 0 11-4.84 9.5 1 1 0 011.68-1.09A4 4 0 109 5a1 1 0 100-2zm-2 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" />
-          </svg>
-        </button>
-        
-        <button 
-          className="zoom-button"
-          onClick={() => {
-            zoomController.zoomTo(zoomLevel * 0.67);
-          }}
-          title="Zoom In"
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
-          </svg>
-        </button>
-      </div>
-    </div>
+      </UnifiedHoverProvider>
+    </HoverMetricsProvider>
   );
 };
 

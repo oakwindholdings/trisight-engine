@@ -1,17 +1,21 @@
 // src/hooks/usePatterns.ts
-// Detects patterns in candle data
-// Uses adaptive detection service
+// Pattern detection integration with adaptive services
+// Manages both pattern entities and candle-aligned metric arrays
+
 import { useState, useEffect, useCallback } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
-import { Pattern, PatternType } from '../models/PatternTypes';
+import { Pattern, PatternType, ThrustDirection } from '../models/PatternTypes';
 import { PatternEvent } from './usePatternBus';
-// Import the new adaptive pattern detection service instead of the old PatternDetector
 import { AdaptivePatternDetectionService, PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
+import { BreakoutBoxSettings } from '../components/Patterns/BreakoutBoxSettingsPanel';
+import { getIntrinsicScore } from '../patternEngine/blackjack';
+import { detectEscalators } from '../patternEngine/escalator';
+import { Candle } from '../types';
 
 /**
- * Hook for detecting and managing patterns in market data
+ * Hook for detecting and managing chart patterns
  */
-export const usePatterns = (data: CandlestickData[]) => {
+export function usePatterns(data: CandlestickData[]) {
   // All detected patterns
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   // Patterns after type filtering - what's shown to the user in the UI
@@ -25,6 +29,10 @@ export const usePatterns = (data: CandlestickData[]) => {
   
   // Pattern bus metrics states
   const [bjCounts, setBjCounts] = useState<number[]>([]);
+  // Rolling blackjack scores per candle { timestamp, score }
+  const [bjRollingScores, setBjRollingScores] = useState<{ timestamp: number; score: number }[]>([]);
+  // Target Blackjack scores per breakout box { stepRef, score }
+  const [bjTargetScores, setBjTargetScores] = useState<{ stepRef: string; score: number; qualifiesForGoldmine?: boolean }[]>([]);
   const [stepIndex, setStepIndex] = useState<number[]>([]);
   const [bjIntrinsic, setBjIntrinsic] = useState<number[]>([]);
   const [bjCumulative, setBjCumulative] = useState<number[]>([]);
@@ -35,6 +43,212 @@ export const usePatterns = (data: CandlestickData[]) => {
   const [distToStopPct, setDistToStopPct] = useState<number[]>([]);
   const [escalatorSteps, setEscalatorSteps] = useState<PatternEvent[]>([]);
   const [events, setEvents] = useState<PatternEvent[]>([]);  // All pattern events
+  const [breakoutBoxes, setBreakoutBoxes] = useState<PatternEvent[]>([]);
+  
+  // Phase 1: Core Metrics - Step candle count arrays (indexed by candle position)
+  const [stepIntrinsicCount, setStepIntrinsicCount] = useState<number[]>([]);
+  const [stepBreakoutCount, setStepBreakoutCount] = useState<number[]>([]);
+  const [stepContinuanceCount, setStepContinuanceCount] = useState<number[]>([]);
+  
+  // Rocketman pattern metrics
+  const [rocketmanConfidence, setRocketmanConfidence] = useState<number[]>([]);
+  const [rocketmanAcceleration, setRocketmanAcceleration] = useState<number[]>([]);
+  const [rocketmanDirection, setRocketmanDirection] = useState<('LONG' | 'SHORT')[]>([]);
+  
+  // Pivot pattern metrics
+  const [pivotDirection, setPivotDirection] = useState<('SUPPORT' | 'RESISTANCE' | null)[]>([]);
+  const [pivotStrength, setPivotStrength] = useState<number[]>([]);
+  const [pivotTouchCount, setPivotTouchCount] = useState<number[]>([]);
+  
+  // Goldmine Channel pattern metrics
+  const [gmcDepthPercent, setGmcDepthPercent] = useState<number[]>([]);
+  const [gmcBreakoutStrength, setGmcBreakoutStrength] = useState<number[]>([]);
+  const [gmcBaseDuration, setGmcBaseDuration] = useState<number[]>([]);
+  
+  // Golden Candle pattern metrics
+  const [goldenCandleQual, setGoldenCandleQual] = useState<boolean[]>([]);
+  const [goldenScore, setGoldenScore] = useState<number[]>([]);
+  const [goldenDirection, setGoldenDirection] = useState<('LONG' | 'SHORT' | null)[]>([]);
+  const [goldmineForensics, setGoldmineForensics] = useState<boolean[]>([]);
+  const [goldmineForensicsNotes, setGoldmineForensicsNotes] = useState<string[]>([]);
+  const [goldenNearMisses, setGoldenNearMisses] = useState<boolean[]>([]);
+  
+  // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT lifecycle arrays
+  const [goldenCandleEntries, setGoldenCandleEntries] = useState<PatternEvent[]>([]);
+  const [goldenCandleExits, setGoldenCandleExits] = useState<PatternEvent[]>([]);
+  
+  // Display settings for patterns
+  const [escalatorSettings, setEscalatorSettings] = useState<{ 
+    enabled: boolean; 
+    showLabels: boolean;
+    showBreakoutBoxes: boolean;
+    minSteps: number;
+    minStepSize: number;
+    maxConsolidationVolatility: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+    useContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    minScore: number;
+    preferredDirection: ThrustDirection | 'BOTH';
+  }>(() => {
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem('escalatorSettings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('[usePatterns] Loaded escalator settings from localStorage:', parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading escalator settings:', error);
+    }
+    
+    // Default values
+    return {
+      enabled: true,
+      showLabels: false,
+      showBreakoutBoxes: true,
+      minSteps: 3,
+      minStepSize: 0.5,
+      maxConsolidationVolatility: 1.0,
+      basePriceChangeThreshold: 0.01,
+      baseVolumeChangeThreshold: 0.05,
+      useContextTimeframe: true,
+      contextTimeframeMultiplier: 3,
+      minScore: 2.0,
+      preferredDirection: 'BOTH'
+    };
+  });
+  
+  // BreakoutBox independent settings
+  const [breakoutBoxSettings, setBreakoutBoxSettings] = useState<BreakoutBoxSettings>(() => {
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem('patternSettings.breakoutbox');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('[usePatterns] Loaded breakoutBox settings from localStorage:', parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading breakoutBox settings:', error);
+    }
+    
+    // Default values
+    return {
+      enabled: true,
+      showBreakoutBoxes: true,
+      showLabels: false,
+      minStallLength: 3,
+      breakoutMultiplier: 0.5,
+      stallThreshold: 0.1
+    };
+  });
+  
+  // Golden Candle settings with near-miss toggle
+  const [goldenCandleSettings, setGoldenCandleSettings] = useState(() => {
+    // Default values for v1.3.3 compatibility
+    const defaults = {
+      enabled: true,
+      showLabels: true,
+      showForensics: false, // Default to false for forensic overlays
+      showNearMiss: false, // Default to false for near-miss highlighting
+      showEntryExitLabels: true, // TriSight Detection Input Refactor Patch v1.3.3: Default to showing ENTRY/EXIT labels
+      minContinuanceCount: 3,
+      minCumulativeScore: 5,
+      confidenceThreshold: 0.7,
+      intrinsicScoreRequired: 2,
+      preferredDirection: 'BOTH' as 'LONG' | 'SHORT' | 'BOTH',
+      trailingStopPercent: 2.0, // TriSight Detection Input Refactor Patch v1.3.1: Default 2.0%
+      stopLossPercent: 2.0 // TriSight Detection Input Refactor Patch v1.3.2: Default 2.0%
+    };
+    
+    // Try to load from localStorage with migration
+    try {
+      const saved = localStorage.getItem('patternSettings.goldenCandle');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Migrate existing settings to include new trailingStopPercent, stopLossPercent, and showEntryExitLabels fields
+        const migrated = {
+          ...defaults,
+          ...parsed,
+          // Ensure trailingStopPercent is always present (v1.3.1)
+          trailingStopPercent: parsed.trailingStopPercent ?? defaults.trailingStopPercent,
+          // Ensure stopLossPercent is always present (v1.3.2)
+          stopLossPercent: parsed.stopLossPercent ?? defaults.stopLossPercent,
+          // Ensure showEntryExitLabels is always present (v1.3.3)
+          showEntryExitLabels: parsed.showEntryExitLabels ?? defaults.showEntryExitLabels
+        };
+        console.log('[usePatterns] Loaded and migrated Golden Candle settings from localStorage:', migrated);
+        return migrated;
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading Golden Candle settings:', error);
+    }
+    
+    // Return defaults if no localStorage or error
+    return defaults;
+  });
+
+  // Persist Golden Candle settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('patternSettings.goldenCandle', JSON.stringify(goldenCandleSettings));
+      console.log('[usePatterns] Saved Golden Candle settings to localStorage:', goldenCandleSettings);
+    } catch (error) {
+      console.error('[usePatterns] Error saving Golden Candle settings:', error);
+    }
+  }, [goldenCandleSettings]);
+  
+  // BlackJack settings with localStorage persistence
+  const [blackjackSettings, setBlackjackSettings] = useState<{
+    enabled: boolean;
+    showLabels: boolean;
+    lookbackPeriods: number;
+    minScore: number;
+    showContextTimeframe: boolean;
+    contextTimeframeMultiplier: number;
+    basePriceChangeThreshold: number;
+    baseVolumeChangeThreshold: number;
+  }>(() => {
+    // Default values
+    const defaults = {
+      enabled: true,
+      showLabels: true,
+      lookbackPeriods: 7,
+      minScore: 3,
+      showContextTimeframe: false,
+      contextTimeframeMultiplier: 4,
+      basePriceChangeThreshold: 0.1,
+      baseVolumeChangeThreshold: 0.5
+    };
+    
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem('blackjackSettings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('[usePatterns] Loaded BlackJack settings from localStorage:', parsed);
+        return { ...defaults, ...parsed };
+      }
+    } catch (error) {
+      console.error('[usePatterns] Error loading BlackJack settings:', error);
+    }
+    
+    // Return defaults if no localStorage or error
+    return defaults;
+  });
+
+  // Persist BlackJack settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('blackjackSettings', JSON.stringify(blackjackSettings));
+      console.log('[usePatterns] Saved BlackJack settings to localStorage:', blackjackSettings);
+    } catch (error) {
+      console.error('[usePatterns] Error saving BlackJack settings:', error);
+    }
+  }, [blackjackSettings]);
   
   // Initialize preferences from service (which loads from localStorage)
   const [preferences, setPreferences] = useState<Partial<PatternDetectionPreferences>>(() => {
@@ -43,18 +257,101 @@ export const usePatterns = (data: CandlestickData[]) => {
     return servicePrefs;
   });
   
+  // Convert CandlestickData to Candle format for usePatternBus
+  const candles: Candle[] = data.map(d => ({
+    datetime: new Date(d.timestamp).toISOString(),  // Convert timestamp to ISO string
+    open: d.open,
+    high: d.high,
+    low: d.low,
+    close: d.close,
+    volume: d.volume || 0,
+    timestamp: d.timestamp
+  }));
+  
+  // Method to populate pattern arrays based on detected patterns
+  const populatePatternArrays = useCallback((candles: CandlestickData[], detectedPatterns: Pattern[]) => {
+    // Use detectEscalators from patternEngine to get proper escalator data
+    const escalatorRuns = detectEscalators(candles);
+    
+    // Compute Blackjack intrinsic scores
+    const bjIntrinsic = candles.map((candle, i) => {
+      if (i === 0) return 0;
+      const prevCandle = candles[i - 1];
+      return getIntrinsicScore(candle, prevCandle);
+    });
+    
+    // Compute cumulative Blackjack scores
+    const bjCumulative = bjIntrinsic.reduce<number[]>(
+      (arr, val) => {
+        arr.push((arr[arr.length - 1] ?? 0) + val);
+        return arr;
+      }, 
+      []
+    );
+    
+    // Compute step indices from detected escalator steps
+    const stepIndex = new Array(candles.length).fill(null);
+    escalatorRuns.forEach(escalator => {
+      escalator.steps.forEach(step => {
+        for (let i = step.startIndex; i <= step.endIndex; i++) {
+          if (i < candles.length) {
+            stepIndex[i] = i - step.startIndex + 1;
+          }
+        }
+      });
+    });
+    
+    // Create per-candle escalator direction array
+    const escalatorDirArray: ('RISING' | 'FALLING' | null)[] = new Array(candles.length).fill(null);
+    
+    escalatorRuns.forEach(escalator => {
+      // Fill in the direction for all candles in this escalator run
+      escalator.steps.forEach((step) => {
+        for (let i = step.startIndex; i <= step.endIndex; i++) {
+          if (i < candles.length) {
+            const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
+            escalatorDirArray[i] = dir;
+          }
+        }
+      });
+    });
+    
+    // Build escalator length array
+    const escalatorLength = new Array<number>(candles.length).fill(0);
+    
+    escalatorRuns.forEach(escalator => {
+      for (let i = escalator.startIndex; i <= escalator.endIndex; i++) {
+        if (i < candles.length) {
+          escalatorLength[i] = i - escalator.startIndex + 1;
+        }
+      }
+    });
+    
+    // Build goldmine qualifier array
+    const goldmineQual = new Array<boolean>(candles.length).fill(false);
+    
+    // Build trailing stop arrays (use 0 as default for no stop)
+    const trailStop = new Array<number>(candles.length).fill(0);
+    const distToStopPct = new Array<number>(candles.length).fill(0);
+    
+    // TODO: Populate goldmine and trailing stop arrays based on actual positions
+    
+    // Set all the arrays into context
+    setBjIntrinsic(bjIntrinsic);
+    setBjCumulative(bjCumulative);
+    setStepIndex(stepIndex);
+    setEscalatorDir(escalatorDirArray);
+    setEscalatorLength(escalatorLength);
+    setGoldmineQual(goldmineQual);
+    setTrailStop(trailStop);
+    setDistToStopPct(distToStopPct);
+  }, []);
+  
   // Detect patterns in the provided data
   const detectPatterns = useCallback(async (candleData: CandlestickData[]) => {
-    console.log('[usePatterns] detectPatterns called with', candleData.length, 'candles');
     if (candleData.length > 0) {
       const firstTime = new Date(candleData[0].datetime);
       const lastTime = new Date(candleData[candleData.length - 1].datetime);
-      console.log('[usePatterns] Data time range:', {
-        first: firstTime.toLocaleString(),
-        last: lastTime.toLocaleString(),
-        firstTimestamp: candleData[0].timestamp,
-        lastTimestamp: candleData[candleData.length - 1].timestamp
-      });
     }
     
     if (candleData.length === 0) {
@@ -66,12 +363,10 @@ export const usePatterns = (data: CandlestickData[]) => {
     
     // Prevent multiple concurrent detections
     if (isDetecting) {
-      console.log('Pattern detection already in progress, skipping request');
       return;
     }
     
     setIsDetecting(true);
-    console.log('Detecting patterns with adaptive service...');
     
     // Safely handle timer - check if there's already a timer running
     try {
@@ -92,8 +387,6 @@ export const usePatterns = (data: CandlestickData[]) => {
           return acc;
         }, {} as Record<PatternType, number>);
         
-        console.log(`Detected ${detectedPatterns.length} patterns with adaptive service`);
-        
         // Safely end timer - check if timer exists
         try {
           console.timeEnd('pattern-detection');
@@ -105,28 +398,29 @@ export const usePatterns = (data: CandlestickData[]) => {
         const enabledTypes = preferences.enabledPatternTypes || [];
         const filteredPatterns = detectedPatterns.filter(p => enabledTypes.includes(p.type));
         
-        setPatterns(filteredPatterns);
+        const attributedPatterns = filteredPatterns.map(p => ({
+          ...p,
+          symbol: (p as any).symbol || (p as any).ticker?.toUpperCase() || 'UNKNOWN',
+          ticker: (p as any).ticker || 'UNKNOWN',
+        }));
+        setPatterns(attributedPatterns);
         // Update visible patterns based on active filter
         if (activeFilter) {
-          setVisiblePatterns(filteredPatterns.filter(p => p.type === activeFilter));
+          setVisiblePatterns(attributedPatterns.filter(p => p.type === activeFilter));
         } else {
-          setVisiblePatterns(filteredPatterns);
+          setVisiblePatterns(attributedPatterns);
         }
         setPatternCounts(counts);
+        
+        // After detecting patterns, populate the pattern arrays
+        populatePatternArrays(candleData, detectedPatterns);
+        
         setIsDetecting(false);
       }, 0);
     } catch (error) {
-      console.error('Error detecting patterns:', error);
       setIsDetecting(false);
     }
-  }, [activeFilter, adaptiveService, isDetecting, preferences.enabledPatternTypes]);
-  
-  // Detect patterns when data changes
-  useEffect(() => {
-    if (data.length > 0) {
-      detectPatterns(data);
-    }
-  }, [data, detectPatterns]);
+  }, [activeFilter, adaptiveService, isDetecting, preferences.enabledPatternTypes, populatePatternArrays]);
   
   // Update a pattern (e.g., after receiving feedback)
   const updatePattern = useCallback((updatedPattern: Pattern) => {
@@ -175,7 +469,45 @@ export const usePatterns = (data: CandlestickData[]) => {
   useEffect(() => {
     adaptiveService.updatePreferences(preferences);
   }, [adaptiveService, preferences]);
-
+  
+  // Clear patterns when data changes significantly (e.g., symbol change)
+  useEffect(() => {
+    console.log('[usePatterns] Data changed, length:', data.length);
+    
+    // If we have no data, clear all patterns
+    if (data.length === 0) {
+      console.log('[usePatterns] Clearing patterns due to empty data');
+      setPatterns([]);
+      setVisiblePatterns([]);
+      setSelectedPattern(null);
+      setPatternCounts({} as Record<PatternType, number>);
+      
+      // Clear all pattern arrays
+      setBjCounts([]);
+      setBjRollingScores([]);
+      setBjTargetScores([]);
+      setStepIndex([]);
+      setBjIntrinsic([]);
+      setBjCumulative([]);
+      setEscalatorDir([]);
+      setEscalatorLength([]);
+      setGoldmineQual([]);
+      setTrailStop([]);
+      setDistToStopPct([]);
+      setBjTargetScores([]);
+      setEscalatorSteps([]);
+      setIsDetecting(false);
+    }
+  }, [data]); // Only re-run when data changes
+  
+  // Detect patterns when data changes and is available
+  useEffect(() => {
+    if (data.length > 0 && !isDetecting) {
+      console.log('[usePatterns] Auto-detecting patterns for new data');
+      detectPatterns(data);
+    }
+  }, [data, detectPatterns, isDetecting]);
+  
   return {
     // Return the main patterns array for chart rendering to ensure chart functionality works correctly
     patterns,
@@ -197,6 +529,10 @@ export const usePatterns = (data: CandlestickData[]) => {
     // Pattern bus metrics
     bjCounts,
     setBjCounts,
+    bjRollingScores,
+    setBjRollingScores,
+    bjTargetScores,
+    setBjTargetScores,
     stepIndex,
     setStepIndex,
     bjIntrinsic,
@@ -216,7 +552,59 @@ export const usePatterns = (data: CandlestickData[]) => {
     escalatorSteps,
     setEscalatorSteps,
     events,
-    setEvents
+    setEvents,
+    breakoutBoxes,
+    setBreakoutBoxes,
+    escalatorSettings,
+    setEscalatorSettings,
+    breakoutBoxSettings,
+    setBreakoutBoxSettings,
+    stepIntrinsicCount,
+    setStepIntrinsicCount,
+    stepBreakoutCount,
+    setStepBreakoutCount,
+    stepContinuanceCount,
+    setStepContinuanceCount,
+    rocketmanConfidence,
+    setRocketmanConfidence,
+    rocketmanAcceleration,
+    setRocketmanAcceleration,
+    rocketmanDirection,
+    setRocketmanDirection,
+    pivotDirection,
+    setPivotDirection,
+    pivotStrength,
+    setPivotStrength,
+    pivotTouchCount,
+    setPivotTouchCount,
+    gmcDepthPercent,
+    setGmcDepthPercent,
+    gmcBreakoutStrength,
+    setGmcBreakoutStrength,
+    gmcBaseDuration,
+    setGmcBaseDuration,
+    goldenCandleQual,
+    setGoldenCandleQual,
+    goldenScore,
+    setGoldenScore,
+    goldenDirection,
+    setGoldenDirection,
+    goldmineForensics,
+    setGoldmineForensics,
+    goldmineForensicsNotes,
+    setGoldmineForensicsNotes,
+    goldenNearMisses,
+    setGoldenNearMisses,
+    goldenCandleSettings,
+    setGoldenCandleSettings,
+    blackjackSettings,
+    setBlackjackSettings,
+    
+    // TriSight Detection Input Refactor Patch v1.3.3: Golden Candle ENTRY/EXIT arrays
+    goldenCandleEntries,
+    goldenCandleExits,
+    setGoldenCandleEntries,
+    setGoldenCandleExits
   };
 };
 

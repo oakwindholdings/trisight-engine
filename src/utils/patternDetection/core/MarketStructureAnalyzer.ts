@@ -1,6 +1,7 @@
 // src/utils/patternDetection/core/MarketStructureAnalyzer.ts
-// Analyzes market structure
-// Used by complex detectors
+// Analyzes market structure and provides context for pattern detection
+// NOTE: TriSight uses Canvas, not SVG. Supports DEBUG_PATTERN_DETECT channel via logDebug.
+
 import { CandlestickData, Timeframe } from '../../../models/ChartTypes';
 import { 
   MarketContext, 
@@ -11,6 +12,7 @@ import {
   PriceLevel,
   VolumeProfile
 } from './MarketContext';
+import { logDebug } from '../../debug';
 
 /**
  * Configuration options for market structure analysis
@@ -61,7 +63,7 @@ export class MarketStructureAnalyzer {
       throw new Error('Cannot analyze empty data array');
     }
     
-    console.log(`Analyzing market structure on ${data.length} candles`);
+    logDebug('DEBUG_PATTERN_DETECT', `Analyzing market structure on ${data.length} candles`);
     
     // Update market structure
     this.previousStructure = this.currentStructure;
@@ -162,7 +164,7 @@ export class MarketStructureAnalyzer {
    * Detects channels using linear regression on local highs and lows
    */
   private detectRegressionChannels(data: CandlestickData[]): Channel[] {
-    console.log('Detecting regression-based channels');
+    logDebug('DEBUG_PATTERN_DETECT', 'Detecting regression-based channels');
     
     const channels: Channel[] = [];
     // Implementation of regression-based channel detection
@@ -181,7 +183,7 @@ export class MarketStructureAnalyzer {
    * Detects channels based on swing highs and lows
    */
   private detectSwingChannels(data: CandlestickData[]): Channel[] {
-    console.log('Detecting swing-based channels');
+    logDebug('DEBUG_PATTERN_DETECT', 'Detecting swing-based channels');
     
     const channels: Channel[] = [];
     // Implementation of swing-based channel detection
@@ -200,7 +202,7 @@ export class MarketStructureAnalyzer {
    * Detects channels based on volatility bands (similar to Bollinger Bands)
    */
   private detectVolatilityChannels(data: CandlestickData[]): Channel[] {
-    console.log('Detecting volatility-based channels');
+    logDebug('DEBUG_PATTERN_DETECT', 'Detecting volatility-based channels');
     
     const channels: Channel[] = [];
     // Implementation of volatility-based channel detection
