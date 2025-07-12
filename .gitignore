@@ -27,5 +27,6 @@ yarn-error.log*
 *.exe
 *.asar
 
-# Local Netlify folder
-.netlify
+# deployment
+.netlify/
+.vercel/
