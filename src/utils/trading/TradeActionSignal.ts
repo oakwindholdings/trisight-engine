@@ -72,20 +72,20 @@ class TradeActionBusClass {
     this.signals.push(signal);
     
     // Debug logging for signal emission validation
-    console.log(`[TradeActionBus-Class] Signal pushed:`, {
+    logDebug('DEBUG_TRADE_SIGNALS', `[TradeActionBus-Class] Signal pushed:`, {
       action: signal.action,
       pattern: signal.pattern,
       price: signal.price,
       timestamp: signal.timestamp,
       confidence: signal.confidence,
-      totalSignals: this.signals.length
+      busLength: this.signals.length
     });
     
     this.notifyListeners(signal);
   }
 
   getSignals(): TradeActionSignal[] {
-    console.log(`[TradeActionBus-Class] getSignals() called, returning ${this.signals.length} signals`);
+    logDebug('DEBUG_TRADE_SIGNALS', `[TradeActionBus-Class] getSignals() called, returning ${this.signals.length} signals`);
     return [...this.signals];
   }
 

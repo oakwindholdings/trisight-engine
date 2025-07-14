@@ -12,7 +12,7 @@ import { logDebug } from './debug';
  * Executes and analyzes all stages of the stop-loss system
  */
 export function runStopLossAuditPipeline(): StopLossAuditReport {
-  console.log("🔍 [AUDIT PIPELINE] Starting comprehensive STOP_EXIT verification...");
+  logDebug('DEBUG_AUDIT', '[AUDIT PIPELINE] Starting comprehensive STOP_EXIT verification...');
   
   const startTime = Date.now();
   const report: StopLossAuditReport = {
@@ -41,7 +41,7 @@ export function runStopLossAuditPipeline(): StopLossAuditReport {
 
   try {
     // Stage 1: Test pattern instrumentation via simulation
-    console.log("🔍 [AUDIT] Stage 1: Pattern Instrumentation Verification...");
+    logDebug('DEBUG_AUDIT', '[AUDIT] Stage 1: Pattern Instrumentation Verification...');
     const validationResult = simulateTradingScenario();
     
     report.stages.PATTERN_INSTRUMENTATION.metrics = {
@@ -51,7 +51,7 @@ export function runStopLossAuditPipeline(): StopLossAuditReport {
     };
 
     // Stage 2: Check trailing evaluation integration
-    console.log("🔍 [AUDIT] Stage 2: Trailing Evaluation Check...");
+    logDebug('DEBUG_AUDIT', '[AUDIT] Stage 2: Trailing Evaluation Check...');
     const activeStops = getActiveStopLosses();
     
     report.stages.TRAILING_EVALUATION.metrics = {
@@ -60,7 +60,7 @@ export function runStopLossAuditPipeline(): StopLossAuditReport {
     };
 
     // Stage 3: Verify emission flow
-    console.log("🔍 [AUDIT] Stage 3: Emission Flow Verification...");
+    logDebug('DEBUG_AUDIT', '[AUDIT] Stage 3: Emission Flow Verification...');
     const allSignals = getTradeActionSignals();
     const stopExitSignals = allSignals.filter(s => 
       s.signalType === 'LONG_EXIT' || s.signalType === 'SHORT_EXIT'
@@ -73,14 +73,14 @@ export function runStopLossAuditPipeline(): StopLossAuditReport {
     };
 
     // Stage 4: Render pipeline check
-    console.log("🔍 [AUDIT] Stage 4: Render Pipeline Status...");
+    logDebug('DEBUG_AUDIT', '[AUDIT] Stage 4: Render Pipeline Status...');
     report.stages.RENDER_PIPELINE.metrics = {
       renderedStops: stopExitSignals.length, // Assuming all emitted signals get rendered
       renderInstrumentation: "ACTIVE"
     };
 
     // Stage 5: Diff analysis
-    console.log("🔍 [AUDIT] Stage 5: Diff Analysis...");
+    logDebug('DEBUG_AUDIT', '[AUDIT] Stage 5: Diff Analysis...');
     const entrySignals = allSignals.filter(s => 
       s.signalType === 'LONG_ENTRY' || s.signalType === 'SHORT_ENTRY'
     );
@@ -118,7 +118,7 @@ export function runStopLossAuditPipeline(): StopLossAuditReport {
       auditCompliance: hasRegistrations && hasValidation
     };
 
-    console.log("✅ [AUDIT PIPELINE] Complete! Results:", {
+    logDebug('DEBUG_AUDIT', '[AUDIT PIPELINE] Complete! Results:', {
       entrySignals: entrySignals.length,
       registeredStops: validationResult.totalPositions,
       triggeredStops: validationResult.triggeredStops,

@@ -38,6 +38,7 @@ import { useLivePolling } from '../../hooks/useLivePolling';
 
 import ExportControls from './ExportControls';
 import DevHUD from './DevHUD';
+import { PatternType } from '../../models/PatternTypes';
 
 interface InfiniteZoomChartProps {
   symbol: string;
@@ -163,6 +164,11 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     momentum: 0
   });
 
+  // Add state:
+  const [isInteracting, setIsInteracting] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
+  const [pixelOffset, setPixelOffset] = useState(0);
+
   // Chart data state
   const [error, setError] = useState<Error | null>(null);
   const dataGenerationRef = useRef(0);
@@ -240,6 +246,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         // Update visible indices to center on the hovered candle
         setVisibleDataIndices({ start: newStartIndex, end: newEndIndex });
       }
+      setIsZooming(true);
+      setTimeout(() => setIsZooming(false), 300);
     },
     setPanState,
     startDate,
@@ -334,11 +342,11 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Auto-hydrate patterns when candleData changes (per TriSight Live Data Polling patch)
   useEffect(() => {
-    if (transformedData.length > 0) {
+    if (transformedData.length > 0 && !isInteracting) {
       console.debug('[InfiniteZoomChart] Auto-hydrating patterns with', transformedData.length, 'candles');
       evaluateAllPatterns(transformedData);
     }
-  }, [transformedData]);
+  }, [transformedData, isInteracting]);
 
   // Enable live polling for automatic pattern updates (per TriSight Live Data Polling patch)
   useLivePolling(true);
@@ -625,35 +633,28 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Update visible range from pan
   const updateVisibleRangeFromPan = useCallback((translateX: number) => {
+    console.log('[PanDebug] updateVisibleRangeFromPan called with translateX:', translateX);
     const data = transformedData;
     if (data.length === 0) return;
     
     const chartWidth = width - CHART_MARGIN.left - CHART_MARGIN.right;
     const candleWidth = chartWidth / targetCandles;
     
-    // Apply damping based on zoom level
-    const baseDamping = 0.3;
+    const baseDamping = 0.1;
     const zoomDamping = Math.min(100 / targetCandles, 2);
     const dampingFactor = baseDamping / zoomDamping;
-    const dampedTranslateX = translateX * dampingFactor;
+    const dampedTranslateX = translateX * dampingFactor * 50; // Increased from 10
     const candleShift = Math.round(-dampedTranslateX / candleWidth);
     
-    // When panning starts, store the initial indices
-    if (panState.isPanning && !visibleDataIndices.start && !visibleDataIndices.end) {
-      setVisibleDataIndices({ 
-        start: visibleDataIndicesRef.current.start, 
-        end: visibleDataIndicesRef.current.end 
-      });
-    }
+    console.log('[PanDebug] Pan calculations:', { chartWidth, candleWidth, dampingFactor, dampedTranslateX, candleShift });
     
-    // Use initial indices as base for calculation
-    const baseStart = panState.isPanning ? visibleDataIndices.start : visibleDataIndicesRef.current.start;
-    const baseEnd = panState.isPanning ? visibleDataIndices.end : visibleDataIndicesRef.current.end;
+    // Always use ref for current indices to avoid stale state
+    const baseStart = visibleDataIndicesRef.current.start;
+    const baseEnd = visibleDataIndicesRef.current.end;
     
     let startIndex = baseStart + candleShift;
     let endIndex = baseEnd + candleShift;
     
-    // Clamp to data bounds
     if (endIndex >= data.length) {
       endIndex = data.length - 1;
       startIndex = Math.max(0, endIndex - targetCandles);
@@ -663,10 +664,12 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       endIndex = Math.min(data.length - 1, startIndex + targetCandles);
     }
     
+    console.log('[PanDebug] Calculated indices:', { baseStart, baseEnd, candleShift, newStart: startIndex, newEnd: endIndex, currentStart: visibleDataIndicesRef.current.start, currentEnd: visibleDataIndicesRef.current.end });
+    
     if (startIndex !== visibleDataIndicesRef.current.start || endIndex !== visibleDataIndicesRef.current.end) {
+      console.log('[PanDebug] Updating visible indices to:', { start: startIndex, end: endIndex });
       setVisibleDataIndices({ start: startIndex, end: endIndex });
       
-      // Update visible range for price scaling
       const visibleData = data.slice(startIndex, endIndex + 1);
       if (visibleData.length > 0) {
         const prices = visibleData.flatMap(d => [d.high, d.low]);
@@ -680,8 +683,10 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
           maxPrice
         });
       }
+    } else {
+      console.log('[PanDebug] No index change, skipping update');
     }
-  }, [width, targetCandles, visibleDataIndices.start, visibleDataIndices.end, transformedData, panState.isPanning]);
+  }, [width, targetCandles, transformedData]);
 
   // Initialize pan controller
   const panController = usePanController(
@@ -774,8 +779,22 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     }
   }, [patterns, transformedData, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
 
+  const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = event.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const hitPattern = getPatternAtPoint(x, y, CHART_MARGIN);
+    if (hitPattern && patternContext && hitPattern.type === PatternType.BLACKJACK) {
+      patternContext.setSelectedPattern(hitPattern);
+      // Optionally trigger modal open if not automatic
+    }
+  }, [patternContext]);
+
   // Render chart when data or view changes
   useEffect(() => {
+    if (isZooming) return; // Skip heavy renders
+
     if (process.env.NODE_ENV === 'development') {
       logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] Triggering renderChart:', { 
         width, 
@@ -1057,9 +1076,10 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         isHeikinAshi: candleType === 'heikin_ashi',
         showVolume: showVolume,
         showGrid: showGrid
-      }
+      },
+      pixelOffset,
     });
-  }, [transformedData, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, isLoading, patternContext.escalatorSteps, patternContext.escalatorSettings, patternContext.breakoutBoxes, timeframe, candleType, showVolume, showGrid]);
+  }, [transformedData, visibleDataIndices, visibleRange, width, height, patterns, selectedPatternProp, currentResolution, isLoading, patternContext.escalatorSteps, patternContext.escalatorSettings, patternContext.breakoutBoxes, timeframe, candleType, showVolume, showGrid, isZooming, pixelOffset]);
 
   // Setup canvas dimensions
   useEffect(() => {
@@ -1230,11 +1250,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
           <canvas 
             ref={interactionCanvasRef} 
             className="interaction-canvas"
-            onClick={handleCanvasClick}
+            onDoubleClick={handleCanvasDoubleClick}
             onMouseDown={panController.handleMouseDown}
-            onMouseMove={panController.handleMouseMove}
-            onMouseUp={panController.handleMouseUp}
-            onMouseLeave={panController.handleMouseLeave}
             onWheel={controller.handleWheel}
             onTouchStart={panController.handleTouchStart}
             onTouchMove={(e) => {

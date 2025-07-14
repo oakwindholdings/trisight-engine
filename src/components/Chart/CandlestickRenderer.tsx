@@ -244,7 +244,7 @@ const CandlestickRendererImpl = {
       candlesDrawn++;
     });
     
-    logDebug('DEBUG_RENDER_FLOW', '[CandlestickRenderer] Finished rendering', candlesDrawn, 'candles');
+    logDebug('DEBUG_RENDER_FLOW', `[CandlestickRenderer] Finished rendering ${candlesDrawn} candles`);
   },
   
   drawGrid(

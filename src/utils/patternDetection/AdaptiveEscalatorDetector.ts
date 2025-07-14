@@ -12,6 +12,7 @@ import { BasePatternDetector, DetectionOptions } from './core/BasePatternDetecto
 import { MarketContext, ThresholdConfig } from './core/MarketContext';
 import { EscalatorDetectionUtils } from './helper/EscalatorDetectionUtils';
 import { v4 as uuidv4 } from 'uuid';
+import { logDebug } from '../../utils/debug';
 
 /**
  * Options for the AdaptiveEscalatorDetector
@@ -91,14 +92,14 @@ export class AdaptiveEscalatorDetector extends BasePatternDetector<EscalatorPatt
         
         // Log warning only if logging is enabled
         if (this.options.enableLogging) {
-          console.log('Warning: getVolatilityFactor not found on context, using fallback calculation.');
+          logDebug('DEBUG_PATTERN_DETECT', 'Warning: getVolatilityFactor not found on context, using fallback calculation.');
         }
       }
     } catch (error) {
       // If anything goes wrong, use a default volatility factor
       volatilityFactor = 1.0;
       if (this.options.enableLogging) {
-        console.log('Error calculating volatilityFactor:', error);
+        logDebug('DEBUG_PATTERN_DETECT', 'Error calculating volatilityFactor:', error);
       }
     }
     
@@ -427,7 +428,7 @@ export class AdaptiveEscalatorDetector extends BasePatternDetector<EscalatorPatt
    */
   private logInfo(category: string, message: string): void {
     if (this.options.enableLogging) {
-      console.log(`[${category}] ${message}`);
+      logDebug('DEBUG_PATTERN_DETECT', `[${category}] ${message}`);
     }
   }
 }

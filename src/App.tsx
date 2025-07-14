@@ -84,7 +84,7 @@ const getSavedDate = (): Date => {
       }
     }
   } catch (e) {
-    console.error('Error loading saved date from localStorage:', e);
+    logDebug('DEBUG_SETTINGS', 'Error loading saved date from localStorage:', e);
   }
   
   // Default to the last trading day if no saved date or error
@@ -119,7 +119,7 @@ const getSavedChartHeight = (): number => {
       }
     }
   } catch (e) {
-    console.error('Error loading saved chart height from localStorage:', e);
+    logDebug('DEBUG_SETTINGS', 'Error loading saved chart height from localStorage:', e);
   }
   return 500; // Default height if no saved height or error
 };
@@ -130,7 +130,7 @@ const getSavedGoldenCandleFilter = (): boolean => {
     const saved = localStorage.getItem(STORAGE_KEY_GOLDEN_CANDLE_FILTER);
     return saved === 'true';
   } catch (e) {
-    console.error('Error loading saved Golden Candle filter from localStorage:', e);
+    logDebug('DEBUG_SETTINGS', 'Error loading saved Golden Candle filter from localStorage:', e);
   }
   return false; // Default to false if no saved state or error
 };
@@ -140,7 +140,7 @@ const saveChartHeight = (height: number): void => {
   try {
     localStorage.setItem(STORAGE_KEY_CHART_HEIGHT, height.toString());
   } catch (e) {
-    console.error('Error saving chart height to localStorage:', e);
+    logDebug('DEBUG_SETTINGS', 'Error saving chart height to localStorage:', e);
   }
 };
 
@@ -323,7 +323,7 @@ function AppContent() {
   
   // Debug: Log when customDateRange changes
   useEffect(() => {
-    console.log('[App] customDateRange changed:', customDateRange ? {
+    logDebug('DEBUG_UI', '[App] customDateRange changed:', customDateRange ? {
       startDate: customDateRange.startDate.toISOString(),
       endDate: customDateRange.endDate.toISOString()
     } : 'null');
@@ -357,12 +357,12 @@ function AppContent() {
     setShowRightPanel((prev: boolean) => {
       const newValue = !prev;
       localStorage.setItem(STORAGE_KEY_SHOW_RIGHT_PANEL, JSON.stringify(newValue));
-      console.log('[UI] Toggled Right Panel:', newValue);
+      logDebug('DEBUG_UI', '[UI] Toggled Right Panel: ' + newValue);
       
       // Force chart redraw by triggering resize event
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
-        console.log('[UI] Dispatched resize event for chart redraw');
+        logDebug('DEBUG_UI', '[UI] Dispatched resize event for chart redraw');
       }, 0);
       
       return newValue;
@@ -374,12 +374,12 @@ function AppContent() {
     setShowBottomTable((prev: boolean) => {
       const newValue = !prev;
       localStorage.setItem(STORAGE_KEY_SHOW_BOTTOM_TABLE, JSON.stringify(newValue));
-      console.log('[UI] Toggled Bottom Table:', newValue);
+      logDebug('DEBUG_UI', '[UI] Toggled Bottom Table: ' + newValue);
       
       // Force chart redraw by triggering resize event
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
-        console.log('[UI] Dispatched resize event for chart redraw');
+        logDebug('DEBUG_UI', '[UI] Dispatched resize event for chart redraw');
       }, 0);
       
       return newValue;
@@ -388,7 +388,7 @@ function AppContent() {
   
   // Handle symbol select
   const handleSymbolSelect = useCallback((symbol: string) => {
-    console.log('[App] handleSymbolSelect called with:', symbol);
+    logDebug('DEBUG_UI', '[App] handleSymbolSelect called with: ' + symbol);
     setSelectedSymbol(symbol);
     localStorage.setItem(STORAGE_KEY_SYMBOL, symbol);
     
@@ -396,7 +396,7 @@ function AppContent() {
     const symbolExists = symbolRankings.some(ranking => ranking.symbol === symbol);
     
     if (!symbolExists) {
-      logDebug('DEBUG_UI', '[App] Adding new symbol to rankings:', symbol);
+      logDebug('DEBUG_UI', '[App] Adding new symbol to rankings: ' + symbol);
       // Create a new ranking entry for the symbol with default values
       const newRanking: SymbolRanking = {
         symbol: symbol,
@@ -428,7 +428,7 @@ function AppContent() {
     const today = new Date();
     
     // Clear any lingering selected pattern on mount
-    console.log('[App] Clearing selectedPattern on mount');
+    logDebug('DEBUG_UI', '[App] Clearing selectedPattern on mount');
     setSelectedPattern(null);
     setShowFeedbackModal(false);
     
@@ -510,7 +510,7 @@ function AppContent() {
       const savedSetting = localStorage.getItem(STORAGE_KEY_TRADING_HOURS);
       return savedSetting === null ? true : savedSetting === 'true';
     } catch (e) {
-      console.error('Failed to load trading hours setting from localStorage:', e);
+      logDebug('DEBUG_SETTINGS', 'Failed to load trading hours setting from localStorage:', e);
       return true; // Default to true if there's an error
     }
   });
@@ -521,18 +521,18 @@ function AppContent() {
       const savedTimeRange = localStorage.getItem(STORAGE_KEY_TIME_RANGE) as TimeRangeOption;
       return savedTimeRange || '1D';
     } catch (e) {
-      console.error('Failed to load time range from localStorage:', e);
+      logDebug('DEBUG_SETTINGS', 'Failed to load time range from localStorage:', e);
       return '1D';
     }
   });
   
-  console.log(`AppContent render - activeTimeRange: ${activeTimeRange}, activeTab: ${activeTab}`);
-  console.log(`About to check activeTab === 'chart': ${activeTab === 'chart'}`);
-  console.log(`Chart should render: ${activeTab === 'chart'}`);
+  logDebug('DEBUG_UI', `AppContent render - activeTimeRange: ${activeTimeRange}, activeTab: ${activeTab}`);
+  logDebug('DEBUG_UI', `About to check activeTab === 'chart': ${activeTab === 'chart'}`);
+  logDebug('DEBUG_UI', `Chart should render: ${activeTab === 'chart'}`);
   
   // Debug which chart component will render
   if (activeTab === 'chart') {
-    console.log(`Chart tab is active. Will render ChartWithContext`);
+    logDebug('DEBUG_UI', `Chart tab is active. Will render ChartWithContext`);
   }
   
   // Viewport state for chart controls
@@ -599,7 +599,7 @@ function AppContent() {
       try {
         localStorage.setItem(STORAGE_KEY_GOLDEN_CANDLE_FILTER, filters.showOnlyGoldenCandles.toString());
       } catch (e) {
-        console.error('Error saving Golden Candle filter to localStorage:', e);
+        logDebug('DEBUG_SETTINGS', 'Error saving Golden Candle filter to localStorage:', e);
       }
     }
     
@@ -615,7 +615,7 @@ function AppContent() {
     try {
       localStorage.setItem(STORAGE_KEY_TRADING_HOURS, newValue.toString());
     } catch (e) {
-      console.error('Failed to save trading hours setting to localStorage:', e);
+      logDebug('DEBUG_SETTINGS', 'Failed to save trading hours setting to localStorage:', e);
     }
   };
   
@@ -650,13 +650,13 @@ function AppContent() {
       adjustedEndDate.setDate(adjustedEndDate.getDate() - 1); // Go back to Friday
     }
     
-    console.log('Adjusted dates for fetch:', { startDate, endDate: adjustedEndDate });
+    logDebug('DEBUG_UI', 'Adjusted dates for fetch:', { startDate, endDate: adjustedEndDate });
     
     // Save to localStorage for persistence across sessions
     try {
       localStorage.setItem(STORAGE_KEY_TIME_RANGE, range);
     } catch (e) {
-      console.error('Failed to save time range to localStorage:', e);
+      logDebug('DEBUG_SETTINGS', 'Failed to save time range to localStorage:', e);
     }
     
     // Update state
@@ -689,7 +689,7 @@ function AppContent() {
       try {
         localStorage.setItem(STORAGE_KEY_TIMEFRAME, newTimeframe);
       } catch (e) {
-        console.error('Failed to save timeframe to localStorage:', e);
+        logDebug('DEBUG_SETTINGS', 'Failed to save timeframe to localStorage:', e);
       }
     }
     
@@ -711,7 +711,7 @@ function AppContent() {
   // Handle settings toggle
   const handleSettingsToggle = () => {
     setShowSettingsPanel(!showSettingsPanel);
-    logDebug('DEBUG_UI', 'Settings toggled:', !showSettingsPanel);
+    logDebug('DEBUG_UI', 'Settings toggled: ' + !showSettingsPanel);
   };
 
   // Handle save pattern
@@ -719,7 +719,7 @@ function AppContent() {
     if (selectedPattern) {
       logDebug('DEBUG_UI', 'Saving pattern:', selectedPattern);
       // TODO: Implement pattern saving logic
-      console.log('Pattern saved:', selectedPattern);
+      logDebug('DEBUG_UI', 'Pattern saved: ' + selectedPattern.id);
     }
   };
 
@@ -739,24 +739,15 @@ function AppContent() {
 
   // Debug: Check what's causing the click blocking
   useEffect(() => {
-    console.log('=== DEBUG UI BLOCKING ===');
-    console.log('selectedPattern:', selectedPattern);
-    console.log('showFeedbackModal:', showFeedbackModal);
-    console.log('isFeatureEnabled(NEW_LAYOUT):', isFeatureEnabled('NEW_LAYOUT'));
-    console.log('Modal should render:', !isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal);
+    logDebug('DEBUG_UI', '=== DEBUG UI BLOCKING ===');
+    logDebug('DEBUG_UI', 'selectedPattern:', selectedPattern);
+    logDebug('DEBUG_UI', 'showFeedbackModal:', showFeedbackModal);
+    logDebug('DEBUG_UI', 'isFeatureEnabled(NEW_LAYOUT):', isFeatureEnabled('NEW_LAYOUT'));
+    logDebug('DEBUG_UI', 'Modal should render:', !isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal);
     
     // Check localStorage for feature flag
     const features = localStorage.getItem('features');
-    console.log('Features in localStorage:', features);
-    
-    // Auto-clear stale pattern selection
-    if (selectedPattern && !showFeedbackModal) {
-      const patternElement = document.querySelector('.pattern-details-modal');
-      if (!patternElement) {
-        console.warn('Pattern is selected but modal is not visible - clearing selection');
-        setSelectedPattern(null);
-      }
-    }
+    logDebug('DEBUG_SETTINGS', 'Features in localStorage:', features);
     
     // Add a global click listener to debug
     const debugClickHandler = (e: MouseEvent) => {
@@ -792,7 +783,7 @@ function AppContent() {
     // Clear any stale pattern selection on mount
     setSelectedPattern(null);
     setShowFeedbackModal(false);
-    console.log('App mounted - cleared any stale selections');
+    logDebug('DEBUG_UI', 'App mounted - cleared any stale selections');
   }, []);
 
   // Handle pattern selection from URL on component mount
@@ -813,10 +804,10 @@ function AppContent() {
   // Auto-hydrate TradeActionBus when candle data changes
   useEffect(() => {
     if (data.length > 0) {
-      console.debug('[App] Auto-hydrating TradeActionBus with', data.length, 'candles');
+      logDebug('DEBUG_UI', `[App] Auto-hydrating TradeActionBus with ${data.length} candles`);
       evaluateAllPatterns(data);
       const signalCount = TradeActionBus.getSignals().length;
-      console.debug('[App] TradeActionBus now contains', signalCount, 'signals');
+      logDebug('DEBUG_UI', `[App] TradeActionBus now contains ${signalCount} signals`);
     }
   }, [data]);
 
@@ -853,7 +844,7 @@ function AppContent() {
               showRightPanel={showRightPanel}
               showBottomTable={showBottomTable}
               onCustomDateRange={(start, end) => {
-                console.log('[App] onCustomDateRange called with:', { start, end });
+                logDebug('DEBUG_UI', '[App] onCustomDateRange called with:', { start, end });
                 setCustomDateRange({ startDate: start, endDate: end });
               }}
             />
@@ -1084,7 +1075,7 @@ function AppContent() {
                 pointerEvents: 'auto',
               }}
               onClick={() => {
-                console.log('Debug button clicked successfully!');
+                logDebug('DEBUG_UI', 'Debug button clicked successfully!');
                 // Removed unused import: debugClickBlocking
                 // Force clear any blocking state
                 setSelectedPattern(null);
@@ -1093,7 +1084,7 @@ function AppContent() {
                 const appDiv = document.querySelector('.App');
                 if (appDiv) {
                   const computedStyle = window.getComputedStyle(appDiv);
-                  console.log('App div pointer-events:', computedStyle.pointerEvents);
+                  logDebug('DEBUG_UI', 'App div pointer-events:', computedStyle.pointerEvents);
                 }
               }}
             >

@@ -4,6 +4,7 @@
 
 import { ConvictionCloudItem } from '../../components/Chart/ConvictionCloudRenderer';
 import { TargetReportRow } from '../../components/Chart/TargetReportTableRenderer';
+import { logDebug } from '../debug';
 
 export interface ExportOptions {
   includeTimestamp: boolean;
@@ -97,7 +98,7 @@ export const exportTargetReportToCSV = (
     ...dataRows
   ].join('\n');
 
-  console.log(`[CSVExporter] Exported ${rows.length} target report rows to CSV`);
+  logDebug('DEBUG_UI', `[CSVExporter] Exported ${rows.length} target report rows to CSV`);
   return csvContent;
 };
 
@@ -168,7 +169,7 @@ export const exportConvictionCloudToCSV = (
     ...dataRows
   ].join('\n');
 
-  console.log(`[CSVExporter] Exported ${items.length} conviction cloud items to CSV`);
+  logDebug('DEBUG_UI', `[CSVExporter] Exported ${items.length} conviction cloud items to CSV`);
   return csvContent;
 };
 
@@ -230,7 +231,7 @@ export const downloadCSV = (
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
 
-  console.log(`[CSVExporter] Downloaded: ${link.download}`);
+  logDebug('DEBUG_UI', `[CSVExporter] Downloaded: ${link.download}`);
 };
 
 /**

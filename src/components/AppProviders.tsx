@@ -10,6 +10,7 @@ import { UIStateProvider } from '../contexts/UIStateContext';
 import { ChartSettingsProvider } from '../contexts/ChartSettingsContext';
 import { SymbolSetProvider } from '../contexts/SymbolSetContext';
 import { Timeframe } from '../models/ChartTypes';
+import { logDebug } from '../utils/debug';
 
 // localStorage keys (same as in ContextBar)
 const STORAGE_KEYS = {
@@ -30,8 +31,9 @@ function AppProviders({ children }: AppProvidersProps) {
         const parsed = JSON.parse(saved);
         return parsed.symbol || 'AAPL';
       }
-    } catch (e) {
-      console.error('Failed to parse saved symbol info:', e);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      logDebug('DEBUG_CONTEXT_UPDATE', 'Failed to parse saved symbol info: ' + errorMessage);
     }
     return 'AAPL';
   };
@@ -42,8 +44,9 @@ function AppProviders({ children }: AppProvidersProps) {
       if (saved && ['1min', '5min', '15min', '30min', '60min', '1hour', 'daily', 'weekly', 'monthly'].includes(saved)) {
         return saved as Timeframe;
       }
-    } catch (e) {
-      console.error('Failed to parse saved timeframe:', e);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      logDebug('DEBUG_CONTEXT_UPDATE', 'Failed to parse saved timeframe: ' + errorMessage);
     }
     return '5min';
   };
@@ -51,10 +54,7 @@ function AppProviders({ children }: AppProvidersProps) {
   const initialSymbol = getInitialSymbol();
   const initialTimeframe = getInitialTimeframe();
 
-  console.log('[AppProviders] Initializing with persisted values:', {
-    symbol: initialSymbol,
-    timeframe: initialTimeframe
-  });
+  logDebug('DEBUG_CONTEXT_UPDATE', '[AppProviders] Initializing with persisted values: symbol=' + initialSymbol + ', timeframe=' + initialTimeframe);
 
   return (
     <UIStateProvider>

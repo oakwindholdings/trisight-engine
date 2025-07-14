@@ -203,11 +203,7 @@ export class SignalFidelityValidator {
     const analysisReady = dataAnalysisLock.isAnalysisReady();
     
     if (!allReady || !analysisReady) {
-      console.log("[Fidelity] Waiting for pattern analysis to complete...", {
-        patternEnginesReady: allReady,
-        dataAnalysisReady: analysisReady,
-        engineStatus: patternEngineTracker.getStatus()
-      });
+      logDebug('DEBUG_TRADE_SIGNALS', 'Waiting for pattern analysis to complete...', { pendingEngines: patternEngineTracker.getStatus() });
       return true;
     }
 
@@ -243,7 +239,7 @@ export class LifecycleInstrumentation {
   }
 
   static logMilestone(milestone: string, data?: any): void {
-    console.log(`[Fidelity] ${milestone}`, data || {});
+    logDebug('DEBUG_TRADE_SIGNALS', `${milestone}`, data || {});
     logDebug('DEBUG_FIDELITY', `[Fidelity] Milestone: ${milestone}`, {
       data,
       timestamp: new Date().toISOString()
@@ -260,7 +256,7 @@ class SignalFidelityModeManager {
   enableFidelityMode(): void {
     this.fidelityModeEnabled = true;
     localStorage.setItem('signalFidelityMode', 'true');
-    console.log('🎯 [FIDELITY] Signal Fidelity Mode ENABLED');
+    logDebug('DEBUG_TRADE_SIGNALS', '[FIDELITY] Signal Fidelity Mode ENABLED');
     logDebug('DEBUG_FIDELITY', '[Fidelity] Mode enabled', {
       enabled: true,
       timestamp: new Date().toISOString()
@@ -270,7 +266,7 @@ class SignalFidelityModeManager {
   disableFidelityMode(): void {
     this.fidelityModeEnabled = false;
     localStorage.setItem('signalFidelityMode', 'false');
-    console.log('🎯 [FIDELITY] Signal Fidelity Mode DISABLED');
+    logDebug('DEBUG_TRADE_SIGNALS', '[FIDELITY] Signal Fidelity Mode DISABLED');
     logDebug('DEBUG_FIDELITY', '[Fidelity] Mode disabled', {
       enabled: false,
       timestamp: new Date().toISOString()
@@ -317,10 +313,7 @@ export const fidelityModeManager = new SignalFidelityModeManager();
  * Apply Fidelity Mode Patches
  */
 export function applyFidelityModePatches(): void {
-  console.log('[Fidelity] Signal Fidelity Mode patches applied', {
-    settings: FIDELITY_MODE_SETTINGS,
-    timestamp: new Date().toISOString()
-  });
+  logDebug('DEBUG_TRADE_SIGNALS', 'Signal Fidelity Mode patches applied', { settings: FIDELITY_MODE_SETTINGS, timestamp: new Date().toISOString() });
 
   // Reset all trackers
   patternEngineTracker.reset();
@@ -347,10 +340,7 @@ export function applyFidelityModePatches(): void {
       dataAnalysisLock
     };
 
-    console.log('🎯 [FIDELITY] Window object initialized', {
-      isFidelityModeOn: fidelityModeManager.isFidelityModeOn(),
-      windowObjectExists: !!(window as any).signalFidelityPatch
-    });
+    logDebug('DEBUG_TRADE_SIGNALS', '[FIDELITY] Window object initialized', { isFidelityModeOn: (window as any).signalFidelityPatch?.isFidelityModeOn, windowObjectExists: !!(window as any).signalFidelityPatch });
   }
 
   logDebug('DEBUG_FIDELITY', '[Fidelity] Fidelity Mode activated', {

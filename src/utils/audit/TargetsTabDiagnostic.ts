@@ -6,6 +6,7 @@ import { TradeActionSignal, TradeAction, SignalType } from '../trading/TradeActi
 import { fetchCandlestickData } from '../../api/twelveDataApi';
 import { CandlestickData } from '../../models/ChartTypes';
 import PatternDetector from '../patternDetection/PatternDetector';
+import { logDebug } from '../../utils/debug';
 
 interface SymbolValidationResult {
   original: string;
@@ -65,7 +66,7 @@ export class TargetsTabDiagnostic {
    * Run comprehensive Targets tab diagnostic
    */
   static async runFullDiagnostic(): Promise<TargetsTabAuditResult> {
-    console.log('[TargetsTabDiagnostic] Starting full pipeline audit...');
+    logDebug('DEBUG_AUDIT', '[TargetsTabDiagnostic] Starting full pipeline audit...');
     
     const result: TargetsTabAuditResult = {
       timestamp: new Date().toISOString(),
@@ -113,7 +114,7 @@ export class TargetsTabDiagnostic {
    * Step 1: Validate symbol input and cleaning
    */
   private static async validateSymbolInput(symbols: string[]): Promise<SymbolValidationResult[]> {
-    console.log('[TargetsTabDiagnostic] Step 1: Validating symbol input...');
+    logDebug('DEBUG_AUDIT', '[TargetsTabDiagnostic] Step 1: Validating symbol input...');
     
     return symbols.map(symbol => {
       const issues: string[] = [];
@@ -154,7 +155,7 @@ export class TargetsTabDiagnostic {
    * Step 2: Test signal scanner execution
    */
   private static async testSignalScanner(): Promise<ScanResult[]> {
-    console.log('[TargetsTabDiagnostic] Step 2: Testing signal scanner...');
+    logDebug('DEBUG_AUDIT', '[TargetsTabDiagnostic] Step 2: Testing signal scanner...');
     
     const cleanSymbols = ['AAPL', 'NVDA', 'TSLA']; // Valid symbols only for API test
     const results: ScanResult[] = [];
@@ -176,7 +177,7 @@ export class TargetsTabDiagnostic {
         const startDate = new Date();
         startDate.setDate(endDate.getDate() - 30);
         
-        console.log(`[TargetsTabDiagnostic] Fetching data for ${symbol}...`);
+        logDebug('DEBUG_AUDIT', `[TargetsTabDiagnostic] Fetching data for ${symbol}...`);
         const ohlcv = await fetchCandlestickData(symbol, '1day', startDate, endDate);
         
         scanResult.apiResponse = { status: 'success', dataPoints: ohlcv.length };
@@ -219,7 +220,7 @@ export class TargetsTabDiagnostic {
    * Step 3: Test signal rendering in TargetReportTable
    */
   private static async testSignalRendering(scanResults: ScanResult[]): Promise<RenderResult[]> {
-    console.log('[TargetsTabDiagnostic] Step 3: Testing signal rendering...');
+    logDebug('DEBUG_AUDIT', '[TargetsTabDiagnostic] Step 3: Testing signal rendering...');
     
     return scanResults.map(scan => {
       const renderResult: RenderResult = {
@@ -295,7 +296,7 @@ export class TargetsTabDiagnostic {
    * Step 4: Test table UI functionality (simulated)
    */
   private static async testTableUI(renderResults: RenderResult[]): Promise<any> {
-    console.log('[TargetsTabDiagnostic] Step 4: Testing table UI...');
+    logDebug('DEBUG_AUDIT', '[TargetsTabDiagnostic] Step 4: Testing table UI...');
     
     const validRows = renderResults.filter(r => r.targetReportRow !== null);
     
@@ -311,7 +312,7 @@ export class TargetsTabDiagnostic {
    * Step 5: Test route sync (simulated)
    */
   private static async testRouteSync(): Promise<any> {
-    console.log('[TargetsTabDiagnostic] Step 5: Testing route sync...');
+    logDebug('DEBUG_AUDIT', '[TargetsTabDiagnostic] Step 5: Testing route sync...');
     
     // This would need actual React context testing
     return {
@@ -400,6 +401,6 @@ export class TargetsTabDiagnostic {
 export async function runTargetsTabDiagnostic(): Promise<TargetsTabAuditResult> {
   const results = await TargetsTabDiagnostic.runFullDiagnostic();
   TargetsTabDiagnostic.downloadAuditResults(results);
-  console.log('[TargetsTabDiagnostic] Audit completed. Results downloaded.');
+  logDebug('DEBUG_AUDIT', '[TargetsTabDiagnostic] Audit completed. Results downloaded.');
   return results;
 }

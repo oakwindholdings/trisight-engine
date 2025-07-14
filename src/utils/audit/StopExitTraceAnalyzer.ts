@@ -3,6 +3,7 @@
 // Tracks emission → rendering lifecycle and identifies gaps
 
 import { TradeActionSignal, TradeAction } from '../trading/TradeActionSignal';
+import { logDebug } from '../../utils/debug';
 
 interface EmissionTrace {
   patternId: string;
@@ -82,14 +83,7 @@ class StopExitTraceAnalyzer {
     this.emissionTraces.push(trace);
     
     // 🔍 AUDIT: EMISSION stage logging
-    console.log('[STOP_EXIT_TRACE] EMISSION:', {
-      patternId,
-      action,
-      price: price.toFixed(4),
-      timestamp: timestamp.toISOString(),
-      triggeredBy,
-      emissionId
-    });
+    logDebug('DEBUG_AUDIT', '[STOP_EXIT_TRACE] EMISSION:', trace);
 
     this.updateAuditData();
   }
@@ -109,13 +103,7 @@ class StopExitTraceAnalyzer {
     this.renderTraces.push(trace);
     
     // 🔍 AUDIT: RENDER stage logging
-    console.log('[STOP_EXIT_TRACE] RENDER:', {
-      signalId,
-      labelVisible,
-      isRendered,
-      position: `(${position.x.toFixed(1)}, ${position.y.toFixed(1)})`,
-      renderTimestamp: trace.renderTimestamp.toISOString()
-    });
+    logDebug('DEBUG_AUDIT', '[STOP_EXIT_TRACE] RENDER:', trace);
 
     this.updateAuditData();
   }
@@ -173,11 +161,7 @@ class StopExitTraceAnalyzer {
     
     // 🔍 AUDIT: DIFF_ANALYSIS stage logging
     analyses.forEach(analysis => {
-      console.log('[STOP_EXIT_TRACE] DIFF_ANALYSIS:', {
-        status: analysis.status,
-        rootCause: analysis.rootCause,
-        timestamp: analysis.timestamp.toISOString()
-      });
+      logDebug('DEBUG_AUDIT', '[STOP_EXIT_TRACE] DIFF_ANALYSIS:', analysis);
     });
 
     this.updateAuditData();
@@ -197,7 +181,7 @@ class StopExitTraceAnalyzer {
       lastUpdate: new Date().toISOString()
     };
 
-    console.log('[STOP_EXIT_TRACE] AUDIT_SUMMARY:', summary);
+    logDebug('DEBUG_AUDIT', '[STOP_EXIT_TRACE] AUDIT_SUMMARY:', summary);
     return summary;
   }
 

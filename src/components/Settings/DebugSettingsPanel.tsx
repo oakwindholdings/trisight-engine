@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { getDebugSettings, setChannelEnabled, logDebug } from '../../utils/debug';
+import { getDebugSettings, setChannelEnabled, logDebug, exportLogs } from '../../utils/debug';
 import { ThemeTokens } from '../../styles/theme';
 
 const PanelContainer = styled.div`
@@ -80,7 +80,7 @@ const DebugSettingsPanel: React.FC = () => {
     const enabled = e.target.checked;
     setSettings(prev => ({ ...prev, [channel]: enabled }));
     setChannelEnabled(channel, enabled);
-    logDebug('DEBUG_UI', '[DebugSettingsPanel] Toggled channel:', channel, enabled);
+    logDebug('DEBUG_UI', '[DebugSettingsPanel] Toggled channel:', {channel, enabled});
   };
 
   const handleHAToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,6 +116,7 @@ const DebugSettingsPanel: React.FC = () => {
             <span>{channel}</span>
           </ChannelRow>
         ))}
+        <button onClick={exportLogs} style={{ marginTop: '10px' }}>Export Logs</button>
         <ChannelRow htmlFor="dbg-ha-comparisons">
           <input
             id="dbg-ha-comparisons"

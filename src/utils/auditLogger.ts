@@ -2,6 +2,8 @@
 // JSON audit report download utility for TriSight pattern analysis
 // Supports full trace audit of symbol → signal → row calculations
 
+import { logDebug } from './debug';
+
 /**
  * Downloads audit data as JSON file with timestamp
  * @param data - Object to serialize as JSON
@@ -23,7 +25,7 @@ export const downloadAuditJSON = (data: any, filename?: string): void => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    console.log(`[AuditLogger] Downloaded audit report: ${link.download}`);
+    logDebug('DEBUG_AUDIT', `[AuditLogger] Downloaded audit report: ${link.download}`);
   } catch (error) {
     console.error('[AuditLogger] Failed to download audit JSON:', error);
   }
@@ -35,7 +37,5 @@ export const downloadAuditJSON = (data: any, filename?: string): void => {
  * @param label - Optional label for the log
  */
 export const logAuditData = (data: any, label: string = 'Audit Data'): void => {
-  console.group(`[AuditLogger] ${label}`);
-  console.log(JSON.stringify(data, null, 2));
-  console.groupEnd();
+  logDebug('DEBUG_AUDIT', `[AuditLogger] ${label}`, data);
 };

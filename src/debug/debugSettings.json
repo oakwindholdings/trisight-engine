@@ -1,9 +1,11 @@
 {
-  "DEBUG_PATTERN_DETECT": true,
+  "DEBUG_PATTERN_DETECT": false,
   "DEBUG_RENDER_FLOW": false,
-  "DEBUG_CONTEXT_UPDATE": true,
+  "DEBUG_CONTEXT_UPDATE": false,
   "DEBUG_UI": false,
   "DEBUG_DATA_FETCH": false,
   "DEBUG_GOLDEN_MISS": false,
-  "DEBUG_TRADE_SIGNALS": true
+  "DEBUG_TRADE_SIGNALS": false,
+  "ENABLE_CONSOLE_LOGGING": true,
+  "DEBUG_AUDIT": false
 }

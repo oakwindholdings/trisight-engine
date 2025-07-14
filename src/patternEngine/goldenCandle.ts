@@ -63,7 +63,7 @@ export function detectGoldenCandle(
   bjIntrinsic: number[] = [],
   bjCumulative: number[] = []
 ): GoldenCandlePattern[] {
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldenCandle] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] Starting detection on ${candles.length} candles`);
   
   if (!candles || candles.length === 0) {
     if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldenCandle] No candles provided for detection');
@@ -170,7 +170,7 @@ export function detectGoldenCandle(
     goldenCandles.push(goldenCandle);
   }
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldenCandle] Detection complete. Found', goldenCandles.length, 'golden candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] Detection complete. Found ${goldenCandles.length} golden candles`);
   
   // 🔗 Pattern Detector Signal Evaluation Hook - Ensure emitTradeSignal() is triggered
   goldenCandles.forEach(evaluateGoldenCandleForEntry);
@@ -198,7 +198,7 @@ export function detectGoldenCandleCandidates(
   bjIntrinsic: number[] = [],
   bjCumulative: number[] = []
 ): GoldenCandleCandidate[] {
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_FORENSICS] Starting forensic candidate detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GOLDMINE_FORENSICS] Starting forensic candidate detection on ${candles.length} candles`);
   
   if (!candles || candles.length === 0) {
     if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_FORENSICS] No candles provided for forensic detection');
@@ -293,7 +293,7 @@ export function detectGoldenCandleCandidates(
     }
   }
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_FORENSICS] Forensic detection complete. Found', candidates.length, 'Golden Candle candidates');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GOLDMINE_FORENSICS] Forensic detection complete. Found ${candidates.length} Golden Candle candidates`);
   
   return candidates;
 }
@@ -338,7 +338,7 @@ export function detectGoldenNearMisses(
   candles: Candle[],
   latestStep?: any
 ): boolean[] {
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_NEAR_MISS] Starting near miss detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GOLDMINE_NEAR_MISS] Starting near miss detection on ${candles.length} candles`);
   
   if (!candles || candles.length === 0) {
     if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_NEAR_MISS] No candles provided for near miss detection');
@@ -374,7 +374,7 @@ export function detectGoldenNearMisses(
   }
 
   const totalNearMisses = nearMisses.filter(nm => nm).length;
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GOLDMINE_NEAR_MISS] Near miss detection complete. Found', totalNearMisses, 'Golden Near Misses');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GOLDMINE_NEAR_MISS] Near miss detection complete. Found ${totalNearMisses} Golden Near Misses`);
   
   return nearMisses;
 }

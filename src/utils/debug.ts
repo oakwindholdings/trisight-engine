@@ -89,21 +89,33 @@ export const isChannelEnabled = (channel: string): boolean => !!runtimeSettings[
  * Core channel-aware logger. Only logs when the specified channel is enabled.
  * Each message is prefixed with the channel name for easy filtering.
  */
-export const logDebug = (channel: string, ...args: any[]): void => {
-  if (isChannelEnabled(channel)) {
-    // eslint-disable-next-line no-console
-    console.log(`[${channel}]`, ...args);
+export const logDebug = (channel: string, message: string, data?: any) => {
+  if (!isChannelEnabled(channel)) return;
+
+  const timestamp = new Date().toISOString();
+  const logEntry = { timestamp, channel, message, data };
+
+  if (runtimeSettings['ENABLE_CONSOLE_LOGGING']) {
+    console.log(`[${channel}] ${message}`, data || '');
   }
+
+  storeLogEntry(logEntry);
 };
 
 /**
  * Channel-aware warning logger that mirrors console.warn behaviour.
  */
-export const logWarn = (channel: string, ...args: any[]): void => {
-  if (isChannelEnabled(channel)) {
-    // eslint-disable-next-line no-console
-    console.warn(`[${channel}]`, ...args);
+export const logWarn = (channel: string, message: string, data?: any) => {
+  if (!isChannelEnabled(channel)) return;
+
+  const timestamp = new Date().toISOString();
+  const logEntry = { timestamp, channel, message, data };
+
+  if (runtimeSettings['ENABLE_CONSOLE_LOGGING']) {
+    console.warn(`[${channel}] ${message}`, data || '');
   }
+
+  storeLogEntry(logEntry); // Or separate warn storage if needed
 };
 
 /**
@@ -250,4 +262,28 @@ export function logDebugHover(
   if (isChannelEnabled('DEBUG_HOVER_EVENTS')) {
     logDebug('DEBUG_HOVER_EVENTS', `[HOVER] ${component} - ${event}:`, data);
   }
+}
+
+const LOG_STORAGE_KEY = 'trisight_debug_logs';
+const MAX_LOGS = 1000;
+
+function storeLogEntry(entry: {timestamp: string, channel: string, message: string, data?: any}) {
+  let logs = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]') as any[];
+  logs.push(entry);
+  if (logs.length > MAX_LOGS) {
+    logs = logs.slice(-MAX_LOGS);
+  }
+  localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
+}
+
+export function exportLogs() {
+  const logs = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
+  const json = JSON.stringify(logs, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'trisight_logs.json';
+  a.click();
+  URL.revokeObjectURL(url);
 }

@@ -108,7 +108,7 @@ export const useMarketData = (initialSymbol = 'AAPL', initialTimeframe: Timefram
       
       // Debug log for 15min specifically
       if (timeframe === '15min' || interval === '15min') {
-        logDebug('DEBUG_DATA_FETCH', '[useMarketData] DEBUG 15min: timeframe =', timeframe, ', interval =', interval);
+        logDebug('DEBUG_DATA_FETCH', '[useMarketData] DEBUG 15min: timeframe =', {timeframe, interval});
       }
       
       const candlestickData = await fetchCandlestickData(symbol, interval, startDate, endDate);

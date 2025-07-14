@@ -9,6 +9,7 @@ import { BasePatternDetector } from './core/BasePatternDetector';
 import { MarketContext } from './core/MarketContext';
 import { MarketStructureAnalyzer } from './core/MarketStructureAnalyzer';
 import RocketmanDetectorFactory from './RocketmanDetectorFactory';
+import { logDebug } from '../../utils/debug';
 
 /**
  * Main pattern detection orchestrator that runs all detectors and 
@@ -52,7 +53,7 @@ class PatternDetector {
       
       // Debug logging for pattern detection
       if (detectedPatterns.length > 0) {
-        console.log(`[PatternDetector] ${detector.getPatternType()} found ${detectedPatterns.length} patterns`);
+        logDebug('DEBUG_PATTERN_DETECT', `[PatternDetector] ${detector.getPatternType()} found ${detectedPatterns.length} patterns`);
       }
       
       patterns = [...patterns, ...detectedPatterns];

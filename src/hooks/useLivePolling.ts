@@ -10,7 +10,10 @@ export function useLivePolling(enabled: boolean = true): void {
     const interval = getPollingInterval();
     const timer = setInterval(async () => {
       const candles = await fetchLatestCandleData(); // must return Candle[]
+      const start = performance.now();
       evaluateAllPatterns(candles);
+      const duration = performance.now() - start;
+      console.log(`[PerformanceDebug] Pattern evaluation took ${duration}ms`);
       console.debug('[LivePolling] Rehydrated @', new Date().toISOString());
     }, interval * 1000);
 

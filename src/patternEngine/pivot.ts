@@ -57,10 +57,10 @@ export function detectPivots(
   pivotLookback: number = 5,
   zoneTolerance: number = 0.002
 ): PivotDetection[] {
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA Pivot] Starting detection on ${candles.length} candles`);
   
   if (!candles || candles.length < pivotLookback * 2 + 1) {
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Not enough candles for detection:', candles?.length, 'min required:', pivotLookback * 2 + 1);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA Pivot] Not enough candles for detection: ${candles?.length} min required: ${pivotLookback * 2 + 1}`);
     return [];
   }
 
@@ -100,7 +100,7 @@ export function detectPivots(
     }
   }
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Found', pivotPoints.length, 'potential pivot points');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA Pivot] Found ${pivotPoints.length} potential pivot points`);
 
   // Group nearby pivot points into zones
   const pivotZones = new Map<string, Array<{index: number, price: number, type: PivotType}>>();
@@ -178,11 +178,12 @@ export function detectPivots(
       
       pivots.push(pivotDetection);
       
-      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Detected', pivotType, 'at', avgPrice.toFixed(4), 'with', touchCount, 'touches, confidence:', pivotDetection.confidence.toFixed(3));
+      // Adjust calls accordingly, for line 181 use data object
+      logDebug('DEBUG_PATTERN_DETECT', `[HA Pivot] Detected ${pivotType} at ${avgPrice.toFixed(4)} with ${touchCount} touches, confidence: ${pivotDetection.confidence.toFixed(3)}`);
     }
   });
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Pivot] Detection complete. Found', pivots.length, 'valid pivots');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA Pivot] Detection complete. Found ${pivots.length} valid pivots`);
   
   // 🔗 Pattern Detector Signal Evaluation Hook - Ensure emitTradeSignal() is triggered
   pivots.forEach(evaluatePivotForEntry);

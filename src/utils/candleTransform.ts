@@ -21,7 +21,7 @@ export function convertToHeikinAshi(candles: CandlestickData[]): CandlestickData
     return [];
   }
 
-  logDebug('DEBUG_PATTERN_DETECT', '[HA_TRANSFORM] Converting', candles.length, 'OHLC candles to Heikin-Ashi');
+  logDebug('DEBUG_PATTERN_DETECT', `[HA_TRANSFORM] Converting ${candles.length} OHLC candles to Heikin-Ashi`);
 
   const haCandles: CandlestickData[] = [];
   
@@ -80,7 +80,7 @@ export function convertToHeikinAshi(candles: CandlestickData[]): CandlestickData
     }
   }
 
-  logDebug('DEBUG_PATTERN_DETECT', '[HA_TRANSFORM] Heikin-Ashi conversion complete. Generated', haCandles.length, 'HA candles');
+  logDebug('DEBUG_PATTERN_DETECT', `[HA_TRANSFORM] Heikin-Ashi conversion complete. Generated ${haCandles.length} HA candles`);
   
   return haCandles;
 }

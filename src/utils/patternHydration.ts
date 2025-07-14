@@ -5,6 +5,7 @@
 import { CandlestickData } from '../models/ChartTypes';
 import { TradeActionBus } from './trading/TradeActionSignal';
 import { logDebug } from './debug';
+import { throttle } from './gestureThrottle';
 
 // Pattern detector imports - these are the functions that detect patterns and internally emit signals
 import { detectGoldenCandle } from '../patternEngine/goldenCandle';
@@ -19,7 +20,7 @@ import { detectPivots } from '../patternEngine/pivot';
  * Canonical pattern evaluation function that calls all pattern detection functions
  * Each detection function internally calls evaluateXForEntry which emits signals to TradeActionBus
  */
-export function evaluateAllPatterns(candles: CandlestickData[]): void {
+export const evaluateAllPatterns = throttle((candles: CandlestickData[]): void => {
   // 🔒 CRITICAL FIX: Preserve STOP_EXIT signals during chart updates
   // This prevents STOP/LOSS/COVER labels from disappearing after initial render
   const existingSignals = TradeActionBus.getSignals();
@@ -28,7 +29,7 @@ export function evaluateAllPatterns(candles: CandlestickData[]): void {
   );
   
   // 🔍 DEBUG: Analyze signal timestamps to identify root cause
-  console.log("🔍 [SIGNAL_TIMESTAMP_ANALYSIS] Analyzing STOP_EXIT signal timestamps", {
+  logDebug('DEBUG_PATTERN_DETECT', '[SIGNAL_TIMESTAMP_ANALYSIS] Analyzing STOP_EXIT signal timestamps', {
     totalSignals: stopExitSignals.length,
     signalTimestamps: stopExitSignals.map(s => ({
       pattern: s.pattern,
@@ -42,34 +43,14 @@ export function evaluateAllPatterns(candles: CandlestickData[]): void {
   // Clear existing signals (but we'll restore STOP_EXIT signals)
   TradeActionBus.clear();
   
-  console.log("🔄 [PATTERN_HYDRATION] Preserving STOP_EXIT signals during pattern evaluation", {
-    totalExistingSignals: existingSignals.length,
-    stopExitSignalsToPreserve: stopExitSignals.length,
-    preservedSignals: stopExitSignals.map(s => ({ 
-      action: s.action, 
-      pattern: s.pattern, 
-      price: s.price.toFixed(4),
-      timestamp: s.timestamp.toISOString(),
-      candleIndex: s.candleIndex
-    }))
-  });
+  logDebug('DEBUG_PATTERN_DETECT', '[PATTERN_HYDRATION] Preserving STOP_EXIT signals during pattern evaluation', { preservedCount: stopExitSignals.length });
   
   // 🔍 ENHANCED DEBUG: Check for identical timestamps in preserved signals
   const uniqueTimestamps = new Set(stopExitSignals.map(s => s.timestamp.getTime()));
   const uniquePrices = new Set(stopExitSignals.map(s => s.price));
   const uniquePatterns = new Set(stopExitSignals.map(s => s.pattern));
   
-  console.log("🔍 [SIGNAL_ANALYSIS] Analyzing preserved signal diversity", {
-    totalSignals: stopExitSignals.length,
-    uniqueTimestamps: uniqueTimestamps.size,
-    uniquePrices: uniquePrices.size,
-    uniquePatterns: uniquePatterns.size,
-    allTimestamps: Array.from(uniqueTimestamps).map(t => new Date(t).toISOString()),
-    allPrices: Array.from(uniquePrices).map(p => p.toFixed(4)),
-    hasIdenticalTimestamps: uniqueTimestamps.size === 1,
-    hasIdenticalPrices: uniquePrices.size === 1,
-    rootCauseIdentified: uniqueTimestamps.size === 1 && uniquePrices.size === 1
-  });
+  logDebug('DEBUG_PATTERN_DETECT', '[SIGNAL_ANALYSIS] Analyzing preserved signal diversity', { totalPreserved: stopExitSignals.length, uniquePatterns: new Set(stopExitSignals.map(s => s.pattern)).size });
   
   try {
     // Golden Candle Detection & Signal Emission
@@ -111,14 +92,9 @@ export function evaluateAllPatterns(candles: CandlestickData[]): void {
     });
     
     const finalSignals = TradeActionBus.getSignals();
-    console.log("✅ [PATTERN_HYDRATION] STOP_EXIT signals restored after pattern evaluation", {
-      newSignalsFromPatterns: emittedSignals.length,
-      restoredStopExitSignals: stopExitSignals.length,
-      totalFinalSignals: finalSignals.length,
-      restoredSignals: stopExitSignals.map(s => ({ action: s.action, pattern: s.pattern, price: s.price.toFixed(4) }))
-    });
+    logDebug('DEBUG_PATTERN_DETECT', '[PATTERN_HYDRATION] STOP_EXIT signals restored after pattern evaluation', { restoredCount: stopExitSignals.length });
     
   } catch (error) {
     console.error('[AutoHydration] Error during pattern evaluation:', error);
   }
-}
+}, 5000); // 5 second throttle

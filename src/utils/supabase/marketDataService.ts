@@ -5,6 +5,7 @@
 import { supabase, supabaseQuery, batchInsertOHLCV, isSupabaseConfigured } from './client';
 import { OHLCVData, ApiCacheStatus, INTERVAL_MAP, IntervalKey } from './types';
 import { CandlestickData } from '../../models/ChartTypes';
+import { logDebug } from '../debug';
 
 // TwelveData API configuration
 const TWELVE_DATA_API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
@@ -41,7 +42,7 @@ async function checkCacheStatus(
 
   // Check cache status
   const { data: cacheStatus, error } = await supabaseQuery<ApiCacheStatus>(() =>
-    supabase
+    supabase!
       .from('api_cache_status')
       .select('*')
       .eq('symbol', symbol.toUpperCase())
@@ -88,9 +89,9 @@ export async function fetchFromCache(
   startDate: Date,
   endDate: Date
 ): Promise<CandlestickData[]> {
-  console.log('[DEBUG_SUPABASE] fetchFromCache called:', { symbol, interval, startDate, endDate });
+  logDebug('DEBUG_DATA_FETCH', 'fetchFromCache called:', { symbol, interval, startDate, endDate });
   const { data, error } = await supabaseQuery<OHLCVData[]>(() =>
-    supabase
+    supabase!
       .from('ohlcv_data')
       .select('*')
       .eq('symbol', symbol.toUpperCase())
@@ -150,7 +151,7 @@ async function fetchFromTwelveData(
   }
 
   const url = `${TWELVE_DATA_BASE_URL}/time_series?${params}`;
-  console.log('Fetching from TwelveData:', url);
+  logDebug('DEBUG_DATA_FETCH', `Fetching from TwelveData: ${url}`);
 
   const response = await fetch(url);
   const data = await response.json();
@@ -184,7 +185,7 @@ async function storeInCache(
   interval: string,
   data: CandlestickData[]
 ): Promise<void> {
-  console.log('[DEBUG_SUPABASE] storeInCache called:', { symbol, interval, dataLength: data.length });
+  logDebug('DEBUG_DATA_FETCH', 'storeInCache called:', { symbol, interval, dataLength: data.length });
   
   if (!isSupabaseConfigured()) {
     console.error('[DEBUG_SUPABASE] Supabase not configured, skipping cache storage');
@@ -192,7 +193,7 @@ async function storeInCache(
   }
   
   if (data.length === 0) {
-    console.log('[DEBUG_SUPABASE] No data to store');
+    logDebug('DEBUG_DATA_FETCH', 'No data to store');
     return;
   }
 
@@ -208,8 +209,8 @@ async function storeInCache(
     volume: candle.volume,
   }));
 
-  console.log('[DEBUG_SUPABASE] Prepared', ohlcvData.length, 'records for insertion');
-  console.log('[DEBUG_SUPABASE] Sample record:', ohlcvData[0]);
+  logDebug('DEBUG_DATA_FETCH', `Prepared ${ohlcvData.length} records for insertion`);
+  logDebug('DEBUG_DATA_FETCH', 'Sample record:', ohlcvData[0]);
   
   // Batch insert with upsert to handle duplicates
   const results = await batchInsertOHLCV(ohlcvData);
@@ -218,7 +219,7 @@ async function storeInCache(
   if (failedBatches.length > 0) {
     console.error('[DEBUG_SUPABASE] Failed to insert some batches:', failedBatches);
   } else {
-    console.log('[DEBUG_SUPABASE] All batches inserted successfully');
+    logDebug('DEBUG_DATA_FETCH', 'All batches inserted successfully');
   }
 
   // Update cache status
@@ -226,7 +227,7 @@ async function storeInCache(
   const firstTimestamp = new Date(Math.min(...timestamps));
   const lastTimestamp = new Date(Math.max(...timestamps));
 
-  await supabase
+  await supabase!
     .from('api_cache_status')
     .upsert({
       symbol: symbol.toUpperCase(),
@@ -255,7 +256,7 @@ export async function fetchMarketData(options: FetchOptions): Promise<Candlestic
 
   // If we have complete data and don't need update, return from cache
   if (cacheStatus.hasData && !cacheStatus.needsUpdate && !forceRefresh) {
-    console.log('Returning data from cache');
+    logDebug('DEBUG_DATA_FETCH', 'Returning data from cache');
     return fetchFromCache(symbol, interval, startDate, endDate);
   }
 
@@ -304,14 +305,14 @@ export async function fetchMarketData(options: FetchOptions): Promise<Candlestic
       return acc;
     }, [] as CandlestickData[]);
 
-    console.log('[DEBUG_SUPABASE] Returning', uniqueData.length, 'unique data points');
+    logDebug('DEBUG_DATA_FETCH', `Returning ${uniqueData.length} unique data points`);
     return uniqueData;
   } catch (error) {
     console.error('Error fetching from TwelveData:', error);
     
     // Fall back to cache if available
     if (cacheStatus.hasData) {
-      console.log('Falling back to cached data');
+      logDebug('DEBUG_DATA_FETCH', 'Falling back to cached data');
       return fetchFromCache(symbol, interval, startDate, endDate);
     }
     
@@ -328,7 +329,7 @@ export async function getCachedSymbols(): Promise<string[]> {
   }
 
   const { data } = await supabaseQuery<{ symbol: string }[]>(() =>
-    supabase
+    supabase!
       .from('api_cache_status')
       .select('symbol')
       .order('symbol')
@@ -346,19 +347,19 @@ export async function clearSymbolCache(symbol: string): Promise<void> {
   }
 
   // Delete OHLCV data
-  await supabase
+  await supabase!
     .from('ohlcv_data')
     .delete()
     .eq('symbol', symbol.toUpperCase());
 
   // Delete cache status
-  await supabase
+  await supabase!
     .from('api_cache_status')
     .delete()
     .eq('symbol', symbol.toUpperCase());
 
   // Delete patterns
-  await supabase
+  await supabase!
     .from('pattern_cache')
     .delete()
     .eq('symbol', symbol.toUpperCase());
