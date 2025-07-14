@@ -3,6 +3,7 @@
 // Hydrates and persists key for API calls
 import { useState, useEffect } from 'react';
 import { setApiKey as setClientApiKey } from '../api/twelveDataApi';
+import { logDebug } from '../utils/debug';
 
 const STORAGE_KEY = 'twelveDataApiKey';
 
@@ -12,17 +13,18 @@ export const useTwelveDataApiKey = () => {
   // Load key from localStorage on mount
   useEffect(() => {
     try {
-      console.log('[useTwelveDataApiKey] Loading API key from localStorage...');
+      logDebug('DEBUG_DATA_FETCH', '[useTwelveDataApiKey] Loading API key from localStorage...');
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        console.log('[useTwelveDataApiKey] Found API key in localStorage:', stored.substring(0, 8) + '...');
+        logDebug('DEBUG_DATA_FETCH', '[useTwelveDataApiKey] Found API key in localStorage: ' + stored.substring(0, 8) + '...');
         setApiKeyState(stored);
         setClientApiKey(stored);
       } else {
-        console.log('[useTwelveDataApiKey] No API key found in localStorage');
+        logDebug('DEBUG_DATA_FETCH', '[useTwelveDataApiKey] No API key found in localStorage');
       }
-    } catch (e) {
-      console.error('Failed to load TwelveData API key:', e);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      logDebug('DEBUG_DATA_FETCH', 'Failed to load TwelveData API key: ' + errorMessage);
     }
   }, []);
 
@@ -31,8 +33,9 @@ export const useTwelveDataApiKey = () => {
     setApiKeyState(key);
     try {
       localStorage.setItem(STORAGE_KEY, key);
-    } catch (e) {
-      console.error('Failed to save TwelveData API key:', e);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      logDebug('DEBUG_DATA_FETCH', 'Failed to save TwelveData API key: ' + errorMessage);
     }
     setClientApiKey(key);
   };

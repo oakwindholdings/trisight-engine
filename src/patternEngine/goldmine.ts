@@ -108,7 +108,7 @@ export function detectGoldmine(
     if (isFirstReversal && isSecondReversal) {
       reversalCandles.push(haCandle, nextHACandle);
       firstReversalIndex = i;
-      logDebug('DEBUG_PATTERN_DETECT', '[Goldmine:HA] Confirmed HA reversal at index', i, {
+      logDebug('DEBUG_PATTERN_DETECT', `[Goldmine:HA] Confirmed HA reversal at index ${i}`, {
         direction: targetSide,
         keyLevel,
         haCandleClose: haCandle.close.toFixed(4),

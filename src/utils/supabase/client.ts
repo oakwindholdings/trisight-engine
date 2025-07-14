@@ -4,39 +4,43 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './types';
+import { logDebug } from '../debug';
 
 // Get environment variables
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables not found. Please check your .env file.');
+let supabase: ReturnType<typeof createClient<Database>> | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient<Database>(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false, // We're not using auth redirects
+      },
+      db: {
+        schema: 'public',
+      },
+      global: {
+        headers: {
+          'x-application-name': 'trisight',
+        },
+      },
+    }
+  );
+} else {
+  console.warn('Supabase environment variables not found. Please check your .env file. Client not created.');
 }
 
-// Create Supabase client with proper typing
-export const supabase = createClient<Database>(
-  supabaseUrl || '',
-  supabaseAnonKey || '',
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: false, // We're not using auth redirects
-    },
-    db: {
-      schema: 'public',
-    },
-    global: {
-      headers: {
-        'x-application-name': 'trisight',
-      },
-    },
-  }
-);
+export { supabase };
 
 // Helper function to check if Supabase is configured
 export const isSupabaseConfigured = (): boolean => {
-  return !!(supabaseUrl && supabaseAnonKey);
+  return !!supabase;
 };
 
 /**
@@ -64,7 +68,7 @@ export async function batchInsertOHLCV(
   data: Database['public']['Tables']['ohlcv_data']['Insert'][],
   batchSize = 500
 ): Promise<Array<{ success: boolean; error?: any; data?: any; batch?: any[] }>> {
-  console.log('[DEBUG_SUPABASE] batchInsertOHLCV called with', data.length, 'records');
+  logDebug('DEBUG_DATA_FETCH', `batchInsertOHLCV called with ${data.length} records`);
   
   if (!supabase) {
     console.error('[DEBUG_SUPABASE] Supabase client not initialized!');
@@ -75,7 +79,7 @@ export async function batchInsertOHLCV(
   
   for (let i = 0; i < data.length; i += batchSize) {
     const batch = data.slice(i, i + batchSize);
-    console.log('[DEBUG_SUPABASE] Inserting batch', i/batchSize + 1, 'with', batch.length, 'records');
+    logDebug('DEBUG_DATA_FETCH', `Inserting batch ${i/batchSize + 1} with ${batch.length} records`);
     
     try {
       const { data: insertedData, error } = await supabase
@@ -91,7 +95,7 @@ export async function batchInsertOHLCV(
         console.error('[DEBUG_SUPABASE] Failed batch sample:', batch[0]);
         results.push({ success: false, error, batch });
       } else {
-        console.log(`[DEBUG_SUPABASE] Successfully upserted ${insertedData?.length || 0} records`);
+        logDebug('DEBUG_DATA_FETCH', `Successfully upserted ${insertedData?.length || 0} records`);
         results.push({ success: true, data: insertedData });
       }
     } catch (err) {
@@ -100,8 +104,8 @@ export async function batchInsertOHLCV(
     }
   }
   
-  console.log('[DEBUG_SUPABASE] batchInsertOHLCV complete. Success rate:', 
-    results.filter(r => r.success).length, '/', results.length);
+  const successRate = (results.filter(r => r.success).length / results.length) * 100;
+  logDebug('DEBUG_DATA_FETCH', `batchInsertOHLCV complete. Success rate: ${successRate.toFixed(2)}%`);
   
   return results;
 }

@@ -319,14 +319,14 @@ export function detectBlackjackTradeSignals(candles: Candle[]) {
       lastBiasSignalIndex = i; // Update deduplication tracker
       
       if (process.env.DEBUG_BLACKJACK_SIGNALS) {
-        logDebug(`🎯 Blackjack BIAS Signal: Score=${cumulativeScore}, Confidence=${confidence.toFixed(2)}, Price=${candle.close}, Index=${i}, Bias=${cumulativeScore > 0 ? 'LONG' : 'SHORT'}`);
+        logDebug('DEBUG_PATTERN_DETECT', `🎯 Blackjack BIAS Signal: Score=${cumulativeScore}, Confidence=${confidence.toFixed(2)}, Price=${candle.close}, Index=${i}, Bias=${cumulativeScore > 0 ? 'LONG' : 'SHORT'}`);
       }
     }
   }
   
   // Enhanced debug logging for bias signal validation
   if (process.env.DEBUG_BLACKJACK_SIGNALS && signals.length > 0) {
-    logDebug(`🔍 Blackjack BIAS Summary: ${signals.length} bias signals emitted, Non-executional mode, Deduplication active (${minSignalGap} candle gap)`);
+    logDebug('DEBUG_PATTERN_DETECT', `🔍 Blackjack BIAS Summary: ${signals.length} bias signals emitted, Non-executional mode, Deduplication active (${minSignalGap} candle gap)`);
   }
   
   return signals;

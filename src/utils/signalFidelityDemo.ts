@@ -10,6 +10,7 @@ import {
   LifecycleInstrumentation,
   SignalFidelityValidator 
 } from './signalFidelityPatch';
+import { logDebug } from './debug';
 
 /**
  * Demonstrates Signal Fidelity Mode functionality
@@ -22,13 +23,13 @@ export class SignalFidelityDemo {
    */
   async runDemo(): Promise<void> {
     if (this.isRunning) {
-      console.warn('[SignalFidelityDemo] Demo already running');
+      logDebug('DEBUG_TRADE_SIGNALS', '[SignalFidelityDemo] Demo already running');
       return;
     }
 
     this.isRunning = true;
-    console.log('\n🎯 SIGNAL FIDELITY MODE DEMONSTRATION STARTED');
-    console.log('=' .repeat(60));
+    logDebug('DEBUG_TRADE_SIGNALS', '\n🎯 SIGNAL FIDELITY MODE DEMONSTRATION STARTED');
+    logDebug('DEBUG_TRADE_SIGNALS', '=' .repeat(60));
 
     try {
       // Step 1: Initialize Fidelity Mode
@@ -47,35 +48,35 @@ export class SignalFidelityDemo {
       this.showFinalStatus();
       
     } catch (error) {
-      console.error('[SignalFidelityDemo] Demo failed:', error);
+      logDebug('DEBUG_TRADE_SIGNALS', '[SignalFidelityDemo] Demo failed:', error);
     } finally {
       this.isRunning = false;
-      console.log('\n✅ SIGNAL FIDELITY MODE DEMONSTRATION COMPLETED');
-      console.log('=' .repeat(60));
+      logDebug('DEBUG_TRADE_SIGNALS', '\n✅ SIGNAL FIDELITY MODE DEMONSTRATION COMPLETED');
+      logDebug('DEBUG_TRADE_SIGNALS', '=' .repeat(60));
     }
   }
 
   private async initializeFidelityMode(): Promise<void> {
-    console.log('\n📋 Step 1: Initializing Fidelity Mode');
-    console.log('-' .repeat(40));
+    logDebug('DEBUG_TRADE_SIGNALS', '\n📋 Step 1: Initializing Fidelity Mode');
+    logDebug('DEBUG_TRADE_SIGNALS', '-' .repeat(40));
     
     // Apply patches
     applyFidelityModePatches();
     
     // Log settings
-    console.log('[Fidelity] Current settings:', FIDELITY_MODE_SETTINGS);
+    logDebug('DEBUG_TRADE_SIGNALS', '[Fidelity] Current settings:', FIDELITY_MODE_SETTINGS);
     
     // Reset all trackers
     patternEngineTracker.reset();
     dataAnalysisLock.reset();
     
-    console.log('[Fidelity] ✅ Initialization complete');
+    logDebug('DEBUG_TRADE_SIGNALS', '[Fidelity] ✅ Initialization complete');
     await this.delay(1000);
   }
 
   private async demonstratePatternEngineTracking(): Promise<void> {
-    console.log('\n🔧 Step 2: Pattern Engine Readiness Tracking');
-    console.log('-' .repeat(40));
+    logDebug('DEBUG_TRADE_SIGNALS', '\n🔧 Step 2: Pattern Engine Readiness Tracking');
+    logDebug('DEBUG_TRADE_SIGNALS', '-' .repeat(40));
     
     const engines = [
       'ESCALATOR',
@@ -90,23 +91,23 @@ export class SignalFidelityDemo {
 
     // Simulate pattern detection sequence
     for (const engine of engines) {
-      console.log(`[Fidelity] Processing ${engine}...`);
+      logDebug('DEBUG_TRADE_SIGNALS', `[Fidelity] Processing ${engine}...`);
       patternEngineTracker.markEngineProcessing(engine);
       
       await this.delay(200); // Simulate processing time
       
       patternEngineTracker.markEngineReady(engine);
-      console.log(`[Fidelity] ✅ ${engine} ready (${patternEngineTracker.getReadyCount()}/${engines.length})`);
+      logDebug('DEBUG_TRADE_SIGNALS', `[Fidelity] ✅ ${engine} ready (${patternEngineTracker.getReadyCount()}/${engines.length})`);
     }
 
     const allReady = patternEngineTracker.areAllEnginesReady();
-    console.log(`[Fidelity] All engines ready: ${allReady ? '✅ YES' : '❌ NO'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `[Fidelity] All engines ready: ${allReady ? '✅ YES' : '❌ NO'}`);
     await this.delay(500);
   }
 
   private async demonstrateSignalValidation(): Promise<void> {
-    console.log('\n🎯 Step 3: Signal Validation Testing');
-    console.log('-' .repeat(40));
+    logDebug('DEBUG_TRADE_SIGNALS', '\n🎯 Step 3: Signal Validation Testing');
+    logDebug('DEBUG_TRADE_SIGNALS', '-' .repeat(40));
     
     // Test signal rendering validation
     const testSignals = [
@@ -117,22 +118,22 @@ export class SignalFidelityDemo {
 
     testSignals.forEach((signal, index) => {
       const shouldRender = SignalFidelityValidator.shouldRenderSignal(signal, FIDELITY_MODE_SETTINGS);
-      console.log(`[Fidelity] Signal ${index + 1} (${signal.signalType}): ${shouldRender ? '✅ RENDER' : '❌ SKIP'}`);
+      logDebug('DEBUG_TRADE_SIGNALS', `[Fidelity] Signal ${index + 1} (${signal.signalType}): ${shouldRender ? '✅ RENDER' : '❌ SKIP'}`);
     });
 
     // Test debounce bypass
     const patterns = ['ESCALATOR', 'ROCKETMAN', 'PIVOT'];
     patterns.forEach(pattern => {
       const canEmit = SignalFidelityValidator.canEmitSignal(pattern, FIDELITY_MODE_SETTINGS);
-      console.log(`[Fidelity] ${pattern} emission: ${canEmit ? '✅ ALLOWED' : '❌ BLOCKED'}`);
+      logDebug('DEBUG_TRADE_SIGNALS', `[Fidelity] ${pattern} emission: ${canEmit ? '✅ ALLOWED' : '❌ BLOCKED'}`);
     });
 
     await this.delay(1000);
   }
 
   private async demonstrateLifecycleInstrumentation(): Promise<void> {
-    console.log('\n⏱️ Step 4: Lifecycle Instrumentation');
-    console.log('-' .repeat(40));
+    logDebug('DEBUG_TRADE_SIGNALS', '\n⏱️ Step 4: Lifecycle Instrumentation');
+    logDebug('DEBUG_TRADE_SIGNALS', '-' .repeat(40));
     
     // Start data analysis
     dataAnalysisLock.startAnalysis();
@@ -157,26 +158,26 @@ export class SignalFidelityDemo {
   }
 
   private showFinalStatus(): void {
-    console.log('\n📊 Final Status Report');
-    console.log('-' .repeat(40));
+    logDebug('DEBUG_TRADE_SIGNALS', '\n📊 Final Status Report');
+    logDebug('DEBUG_TRADE_SIGNALS', '-' .repeat(40));
     
     const engineStatus = patternEngineTracker.getStatus();
     const allReady = patternEngineTracker.areAllEnginesReady();
     const analysisReady = dataAnalysisLock.isAnalysisReady();
     
-    console.log('[Fidelity] Pattern Engines:', engineStatus);
-    console.log('[Fidelity] All Engines Ready:', allReady ? '✅' : '❌');
-    console.log('[Fidelity] Data Analysis Ready:', analysisReady ? '✅' : '❌');
-    console.log('[Fidelity] Chart Render Allowed:', !SignalFidelityValidator.shouldWaitForEngines(FIDELITY_MODE_SETTINGS) ? '✅' : '❌');
+    logDebug('DEBUG_TRADE_SIGNALS', '[Fidelity] Pattern Engines:', engineStatus);
+    logDebug('DEBUG_TRADE_SIGNALS', '[Fidelity] All Engines Ready:', allReady ? '✅' : '❌');
+    logDebug('DEBUG_TRADE_SIGNALS', '[Fidelity] Data Analysis Ready:', analysisReady ? '✅' : '❌');
+    logDebug('DEBUG_TRADE_SIGNALS', '[Fidelity] Chart Render Allowed:', !SignalFidelityValidator.shouldWaitForEngines(FIDELITY_MODE_SETTINGS) ? '✅' : '❌');
     
     // Verification checklist
-    console.log('\n✅ Verification Checklist:');
-    console.log(`   • Debounce disabled: ${!FIDELITY_MODE_SETTINGS.debounceSignals ? '✅' : '❌'}`);
-    console.log(`   • Overlap suppression off: ${!FIDELITY_MODE_SETTINGS.suppressOverlaps ? '✅' : '❌'}`);
-    console.log(`   • All patterns rendered: ${FIDELITY_MODE_SETTINGS.renderAllPatterns ? '✅' : '❌'}`);
-    console.log(`   • STOP_EXIT always visible: ${FIDELITY_MODE_SETTINGS.alwaysRenderStopExit ? '✅' : '❌'}`);
-    console.log(`   • Pattern engine tracking: ${allReady ? '✅' : '❌'}`);
-    console.log(`   • Lifecycle instrumentation: ${analysisReady ? '✅' : '❌'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', '\n✅ Verification Checklist:');
+    logDebug('DEBUG_TRADE_SIGNALS', `   • Debounce disabled: ${!FIDELITY_MODE_SETTINGS.debounceSignals ? '✅' : '❌'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `   • Overlap suppression off: ${!FIDELITY_MODE_SETTINGS.suppressOverlaps ? '✅' : '❌'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `   • All patterns rendered: ${FIDELITY_MODE_SETTINGS.renderAllPatterns ? '✅' : '❌'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `   • STOP_EXIT always visible: ${FIDELITY_MODE_SETTINGS.alwaysRenderStopExit ? '✅' : '❌'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `   • Pattern engine tracking: ${allReady ? '✅' : '❌'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `   • Lifecycle instrumentation: ${analysisReady ? '✅' : '❌'}`);
   }
 
   private delay(ms: number): Promise<void> {
@@ -187,8 +188,8 @@ export class SignalFidelityDemo {
    * Quick verification that fidelity mode is working
    */
   static quickVerify(): boolean {
-    console.log('\n🔍 QUICK FIDELITY MODE VERIFICATION');
-    console.log('-' .repeat(40));
+    logDebug('DEBUG_TRADE_SIGNALS', '\n🔍 QUICK FIDELITY MODE VERIFICATION');
+    logDebug('DEBUG_TRADE_SIGNALS', '-' .repeat(40));
     
     const checks = [
       {
@@ -212,11 +213,11 @@ export class SignalFidelityDemo {
     let allPassed = true;
     checks.forEach(check => {
       const status = check.result ? '✅ PASS' : '❌ FAIL';
-      console.log(`   ${check.name}: ${status}`);
+      logDebug('DEBUG_TRADE_SIGNALS', `   ${check.name}: ${status}`);
       if (!check.result) allPassed = false;
     });
 
-    console.log(`\nOverall Status: ${allPassed ? '✅ ALL CHECKS PASSED' : '❌ SOME CHECKS FAILED'}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `\nOverall Status: ${allPassed ? '✅ ALL CHECKS PASSED' : '❌ SOME CHECKS FAILED'}`);
     return allPassed;
   }
 }

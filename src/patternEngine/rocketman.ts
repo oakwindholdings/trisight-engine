@@ -45,7 +45,7 @@ export interface RocketmanDetection {
  * @returns Array of detected rocketman patterns
  */
 export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Starting detection on', candles.length, 'candles');
+  logDebug('DEBUG_PATTERN_DETECT', `[HA Rocketman] Starting detection on ${candles.length} candles`);
   
   if (!candles || candles.length === 0) {
     if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] No candles provided');
@@ -70,7 +70,7 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
   const detector = new AdaptiveRocketmanDetector();
   const rocketmanPatterns = detector.detect(haCandlestickData);
   
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Detection complete. Found', rocketmanPatterns.length, 'patterns with HA compliance');
+  logDebug('DEBUG_PATTERN_DETECT', `[HA Rocketman] Detection complete. Found ${rocketmanPatterns.length} patterns with HA compliance`);
   
   // Convert RocketmanPattern[] to RocketmanDetection[] for pattern bus compatibility
   const detections: RocketmanDetection[] = rocketmanPatterns.map((pattern: RocketmanPattern, index: number) => {
@@ -88,7 +88,7 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
     );
 
     // DEBUG_PATTERN_DETECT: Log each detected pattern with HA compliance
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Detected HA pattern at', peakIndex, 'with confidence', pattern.confidence, {
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA Rocketman] Detected HA pattern at ${peakIndex} with confidence ${pattern.confidence}`, {
       direction: pattern.direction,
       accelerationRate: pattern.accelerationRate,
       intensity: pattern.intensity,
@@ -115,7 +115,7 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
     };
   });
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA Rocketman] Converted', detections.length, 'patterns to detections');
+  logDebug('DEBUG_PATTERN_DETECT', `[HA Rocketman] Converted ${detections.length} patterns to detections`);
   
   // 🔗 Pattern Detector Signal Evaluation Hook - Ensure emitTradeSignal() is triggered
   detections.forEach(evaluateRocketmanForEntry);

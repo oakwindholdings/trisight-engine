@@ -11,6 +11,7 @@ import { timeframeToInterval } from '../api/twelveDataApi';
 import { PatternType } from '../models/PatternTypes';
 import { TradeActionBus } from '../utils/trading/TradeActionSignal';
 import { transformToHeikinAshi, heikinAshiToCandlestickData } from '../utils/heikinAshiUtils';
+import { logDebug } from '../utils/debug';
 
 const mapPatternToTradeAction = (pattern: string): TradeAction => {
   switch (pattern.toUpperCase()) {
@@ -86,50 +87,33 @@ export function useSignalScanner(symbols: string[], timeframe: string, shouldSca
   const [isScanning, setIsScanning] = useState(false);
 
   // Debug scanner trigger conditions
-  console.log('[useSignalScanner] Hook called with:', {
-    symbols,
-    symbolsLength: symbols.length,
-    timeframe,
-    shouldScan,
-    currentSignals: signals.length,
-    currentIsScanning: isScanning
-  });
+  logDebug('DEBUG_TRADE_SIGNALS', '[useSignalScanner] Hook called with: symbols=' + symbols.join(',') + ', symbolsLength=' + symbols.length + ', timeframe=' + timeframe + ', shouldScan=' + shouldScan + ', currentSignals=' + signals.length + ', currentIsScanning=' + isScanning);
 
   useEffect(() => {
-    console.log('[useSignalScanner] useEffect triggered with:', {
-      symbols,
-      symbolsLength: symbols.length,
-      timeframe,
-      shouldScan
-    });
+    logDebug('DEBUG_TRADE_SIGNALS', '[useSignalScanner] useEffect triggered with: symbols=' + symbols.join(',') + ', symbolsLength=' + symbols.length + ', timeframe=' + timeframe + ', shouldScan=' + shouldScan);
     
     // CRITICAL DEBUG: Log exact state before early returns
-    console.log('[useSignalScanner] CRITICAL DEBUG - Early return checks:', {
-      'symbols.length === 0': symbols.length === 0,
-      'symbols.length': symbols.length,
-      '!shouldScan': !shouldScan,
-      'shouldScan': shouldScan
-    });
+    logDebug('DEBUG_TRADE_SIGNALS', '[useSignalScanner] CRITICAL DEBUG - Early return checks: symbols.length === 0: ' + (symbols.length === 0) + ', symbols.length: ' + symbols.length + ', !shouldScan: ' + !shouldScan + ', shouldScan: ' + shouldScan);
     
     // Early return if no symbols or not supposed to scan
     if (symbols.length === 0) {
-      console.log('[useSignalScanner] EARLY RETURN: No symbols provided, skipping scan');
+      logDebug('DEBUG_TRADE_SIGNALS', '[useSignalScanner] EARLY RETURN: No symbols provided, skipping scan');
       return;
     }
     
     if (!shouldScan) {
-      console.log('[useSignalScanner] EARLY RETURN: shouldScan is false, skipping scan');
+      logDebug('DEBUG_TRADE_SIGNALS', '[useSignalScanner] EARLY RETURN: shouldScan is false, skipping scan');
       return;
     }
     
-    console.log('[useSignalScanner] PROCEEDING TO SCAN: All conditions met, starting fetchAndProcess');
+    logDebug('DEBUG_TRADE_SIGNALS', '[useSignalScanner] PROCEEDING TO SCAN: All conditions met, starting fetchAndProcess');
     
     const fetchAndProcess = async () => {
       setIsScanning(true);
       // PATCH L-16: Force 1-minute interval for high-resolution scanning
       const intervalParam = '1min';
       const outputsize = 420;
-      console.log(`[L-16] Overriding interval to ${intervalParam} with outputsize=${outputsize} for full session scan`);
+      logDebug('DEBUG_TRADE_SIGNALS', `[L-16] Overriding interval to ${intervalParam} with outputsize=${outputsize} for full session scan`);
       const allSignals: TradeActionSignal[] = [];
       const allPatterns: any[] = [];
       const allSteps: any[] = [];
@@ -147,167 +131,133 @@ export function useSignalScanner(symbols: string[], timeframe: string, shouldSca
         try {
           const symbolParam = batch.join(',');
           const apiUrl = `https://api.twelvedata.com/time_series?symbol=${symbolParam}&interval=${intervalParam}&outputsize=${outputsize}&apikey=${process.env.REACT_APP_TWELVE_DATA_API_KEY}`;
-          console.log(`[BatchScanner] API Request:`, {
-            url: apiUrl.replace(/apikey=[^&]*/, 'apikey=***'),
-            symbols: batch,
-            interval: intervalParam,
-            outputsize: outputsize
-          });
+          logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] API Request: url=${apiUrl.replace(/apikey=[^&]*/, 'apikey=***')}, symbols=${batch.join(',')}, interval=${intervalParam}, outputsize=${outputsize}`);
           
           const res = await fetch(apiUrl);
-          console.log(`[BatchScanner] API Response Status:`, {
-            status: res.status,
-            statusText: res.statusText,
-            headers: Object.fromEntries(res.headers.entries())
-          });
+          logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] API Response Status: status=${res.status}, statusText=${res.statusText}, headers=${JSON.stringify(Object.fromEntries(res.headers.entries()))}`);
           
           const data = await res.json();
-          console.log(`[BatchScanner] API Response Data:`, {
-            dataKeys: Object.keys(data),
-            fullResponse: data
-          });
+          logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] API Response Data: dataKeys=${Object.keys(data).join(',')}, fullResponse=${JSON.stringify(data)}`);
           
           // Detailed structure analysis for each symbol
           for (const ticker of batch) {
-            console.log(`[BatchScanner] Raw API data for ${ticker}:`, {
-              exists: !!data[ticker],
-              structure: data[ticker] ? Object.keys(data[ticker]) : 'N/A',
-              values: data[ticker]?.values ? 'HAS_VALUES' : 'NO_VALUES',
-              valuesLength: data[ticker]?.values?.length || 0,
-              firstValue: data[ticker]?.values?.[0],
-              status: data[ticker]?.status,
-              message: data[ticker]?.message
-            });
+            logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] Raw API data for ${ticker}: exists=${!!data[ticker]}, structure=${data[ticker] ? Object.keys(data[ticker]).join(',') : 'N/A'}, values=${data[ticker]?.values ? 'HAS_VALUES' : 'NO_VALUES'}, valuesLength=${data[ticker]?.values?.length || 0}, firstValue=${JSON.stringify(data[ticker]?.values?.[0])}, status=${data[ticker]?.status}, message=${data[ticker]?.message}`);
           }
 
           for (const ticker of batch) {
             try {
               TradeActionBus.clear();
-            console.log(`[L-15] TradeActionBus cleared for ${ticker}`);
-            const tickerData = data[ticker]?.values;
-            console.log(`[L-18] Retrieved ${tickerData?.length || 0} candles for ${ticker}`);
-            if (!tickerData || tickerData.length < 420) {
-              console.warn(`[L-18] INSUFFICIENT CANDLE DATA for ${ticker}: received ${tickerData?.length || 0} candles`);
-            }
-            console.log(`[BatchScanner] Processing ${ticker}:`, {
-              hasData: !!tickerData,
-              dataLength: tickerData?.length || 0,
-              status: data[ticker]?.status,
-              message: data[ticker]?.message
-            });
-            
-            if (!tickerData || tickerData.length < 10) {
-              console.warn(`[BatchScanner] Skipping ${ticker}: insufficient data (${tickerData?.length || 0} candles)`);
-              auditLog.push({ ticker, error: 'Insufficient data', candleCount: tickerData?.length || 0 });
-              continue;
-            }
-            const ohlcv = tickerData.map((d: any) => ({
-              open: +d.open,
-              high: +d.high,
-              low: +d.low,
-              close: +d.close,
-              volume: +d.volume,
-              timestamp: new Date(d.datetime)
-            })).reverse();
-
-            // CRITICAL FIX: Transform to Heikin-Ashi candles before pattern detection
-            const haCandles = transformToHeikinAshi(ohlcv);
-            const haCandlesAsOHLCV = haCandles.map(heikinAshiToCandlestickData);
-            console.log(`[SignalScanner] Transformed ${ohlcv.length} OHLCV candles to ${haCandles.length} HA candles for ${ticker}`);
-            
-            // Initialize pattern detector
-            const detector = new PatternDetector();
-            
-            // Run pattern detection on the HA candles
-            const detectionResults = detector.detectPatterns(haCandlesAsOHLCV);
-            
-            // Add ticker and symbol attribution to patterns
-            const enrichedPatterns = detectionResults.map(pattern => ({
-              ...pattern,
-              ticker,
-              symbol: ticker.toUpperCase(),
-            }));
-            
-            // Collect all patterns for this symbol
-            allPatterns.push(...enrichedPatterns);
-            
-            // Collect escalator steps (patterns with type ESCALATOR)
-            const escalatorSteps = enrichedPatterns.filter(p => p.type === 'ESCALATOR');
-            allSteps.push(...escalatorSteps);
-            
-            // Convert patterns to signals
-            const patternResults = await detectPatternsForSymbol(ticker, haCandlesAsOHLCV);
-            console.log(`[BatchScanner] ${ticker} pattern detection:`, {
-              patternsFound: patternResults.length,
-              patterns: patternResults.map(p => p.pattern)
-            });
-            auditLog.push({ ticker, patternsDetected: patternResults.map(p => p.pattern) });
-
-            const validSignals = patternResults
-              .filter(sig => sig.pattern && !sig.pattern.toUpperCase().includes('MOCK'))
-              .map(sig => {
-                const confidence = sig.confidence ?? 0.7; // fallback
-                const action = mapPatternToTradeAction(sig.pattern);
-                const signalType = mapPatternToSignalType(sig.pattern);
-                const enrichedSignal: TradeActionSignal = {
-                  ...sig,
-                  ticker,
-                  confidence,
-                  action,
-                  signalType,
-                  price: sig.price || ohlcv.at(-1)?.close || 0,
-                  timestamp: sig.timestamp || new Date()
-                };
-                auditLog.push({ ticker, signal: enrichedSignal });
-                return enrichedSignal;
-              });
-
-            console.log(`[BatchScanner] ${ticker} final signals:`, {
-              totalPatterns: patternResults.length,
-              validSignals: validSignals.length,
-              signalTypes: validSignals.map(s => s.pattern)
-            });
-
-            allSignals.push(...validSignals);
-            
-            // PATCH L-22: Direct injection of hydrated contexts
-            if (setPatterns) {
-              setPatterns(patternResults);
-              if (rowHydration) {
-                rowHydration.patternMap[ticker] = patternResults;
+              logDebug('DEBUG_TRADE_SIGNALS', `[L-15] TradeActionBus cleared for ${ticker}`);
+              const tickerData = data[ticker]?.values;
+              logDebug('DEBUG_TRADE_SIGNALS', `[L-18] Retrieved ${tickerData?.length || 0} candles for ${ticker}`);
+              if (!tickerData || tickerData.length < 420) {
+                logDebug('DEBUG_TRADE_SIGNALS', `[L-18] INSUFFICIENT CANDLE DATA for ${ticker}: received ${tickerData?.length || 0} candles`);
               }
-            }
-            if (setEscalatorSteps && patternResults.some(p => p.pattern === 'ESCALATOR')) {
-              const escalatorSteps = patternResults.filter(p => p.pattern === 'ESCALATOR');
-              setEscalatorSteps(escalatorSteps);
-              if (rowHydration) {
-                rowHydration.stepMap[ticker] = escalatorSteps;
+              logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] Processing ${ticker}: hasData=${!!tickerData}, dataLength=${tickerData?.length || 0}, status=${data[ticker]?.status}, message=${data[ticker]?.message}`);
+              
+              if (!tickerData || tickerData.length < 10) {
+                logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] Skipping ${ticker}: insufficient data (${tickerData?.length || 0} candles)`);
+                auditLog.push({ ticker, error: 'Insufficient data', candleCount: tickerData?.length || 0 });
+                continue;
               }
+              const ohlcv = tickerData.map((d: any) => ({
+                open: +d.open,
+                high: +d.high,
+                low: +d.low,
+                close: +d.close,
+                volume: +d.volume,
+                timestamp: new Date(d.datetime)
+              })).reverse();
+
+              // CRITICAL FIX: Transform to Heikin-Ashi candles before pattern detection
+              const haCandles = transformToHeikinAshi(ohlcv);
+              const haCandlesAsOHLCV = haCandles.map(heikinAshiToCandlestickData);
+              logDebug('DEBUG_TRADE_SIGNALS', `[SignalScanner] Transformed ${ohlcv.length} OHLCV candles to ${haCandles.length} HA candles for ${ticker}`);
+              
+              // Initialize pattern detector
+              const detector = new PatternDetector();
+              
+              // Run pattern detection on the HA candles
+              const detectionResults = detector.detectPatterns(haCandlesAsOHLCV);
+              
+              // Add ticker and symbol attribution to patterns
+              const enrichedPatterns = detectionResults.map(pattern => ({
+                ...pattern,
+                ticker,
+                symbol: ticker.toUpperCase(),
+              }));
+              
+              // Collect all patterns for this symbol
+              allPatterns.push(...enrichedPatterns);
+              
+              // Collect escalator steps (patterns with type ESCALATOR)
+              const escalatorSteps = enrichedPatterns.filter(p => p.type === 'ESCALATOR');
+              allSteps.push(...escalatorSteps);
+              
+              // Convert patterns to signals
+              const patternResults = await detectPatternsForSymbol(ticker, haCandlesAsOHLCV);
+              logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] ${ticker} pattern detection: patternsFound=${patternResults.length}, patterns=${JSON.stringify(patternResults.map(p => p.pattern))}`);
+              auditLog.push({ ticker, patternsDetected: patternResults.map(p => p.pattern) });
+
+              const validSignals = patternResults
+                .filter(sig => sig.pattern && !sig.pattern.toUpperCase().includes('MOCK'))
+                .map(sig => {
+                  const confidence = sig.confidence ?? 0.7; // fallback
+                  const action = mapPatternToTradeAction(sig.pattern);
+                  const signalType = mapPatternToSignalType(sig.pattern);
+                  const enrichedSignal: TradeActionSignal = {
+                    ...sig,
+                    ticker,
+                    confidence,
+                    action,
+                    signalType,
+                    price: sig.price || ohlcv.at(-1)?.close || 0,
+                    timestamp: sig.timestamp || new Date()
+                  };
+                  auditLog.push({ ticker, signal: enrichedSignal });
+                  return enrichedSignal;
+                });
+
+              logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] ${ticker} final signals: totalPatterns=${patternResults.length}, validSignals=${validSignals.length}, signalTypes=${validSignals.map(s => s.pattern).join(',')}`);
+
+              allSignals.push(...validSignals);
+              
+              // PATCH L-22: Direct injection of hydrated contexts
+              if (setPatterns) {
+                setPatterns(patternResults);
+                if (rowHydration) {
+                  rowHydration.patternMap[ticker] = patternResults;
+                }
+              }
+              if (setEscalatorSteps && patternResults.some(p => p.pattern === 'ESCALATOR')) {
+                const escalatorSteps = patternResults.filter(p => p.pattern === 'ESCALATOR');
+                setEscalatorSteps(escalatorSteps);
+                if (rowHydration) {
+                  rowHydration.stepMap[ticker] = escalatorSteps;
+                }
+              }
+              logDebug('DEBUG_TRADE_SIGNALS', `[L-19/L-22] Context + rowHydration injected for ${ticker}`);
+            } catch (err: unknown) {
+              const errorMessage = err instanceof Error ? err.message : String(err);
+              logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] Error processing ${ticker}: ` + errorMessage);
             }
-            console.log(`[L-19/L-22] Context + rowHydration injected for ${ticker}`);
-          } catch (err) {
-            console.warn(`[BatchScanner] Error processing ${ticker}:`, err);
           }
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          logDebug('DEBUG_TRADE_SIGNALS', '[BatchScanner] Error processing batch: ' + batch.join(',') + ' - ' + errorMessage);
         }
-      } catch (err) {
-        console.warn('[BatchScanner] Error processing batch:', batch, err);
+        await new Promise(r => setTimeout(r, 3000)); // 3s delay between batches
       }
-      await new Promise(r => setTimeout(r, 3000)); // 3s delay between batches
-    }
 
       const auditDump = { timestamp: new Date(), symbols: symbols.length, signals: allSignals, trace: auditLog };
       downloadAuditJSON(auditDump, `signal_audit_${Date.now()}.json`);
       
       // PATCH L7: Log final signals with symbol attribution
-      console.log('[SignalScanner] Final signals with symbol attribution:', {
-        totalSignals: allSignals.length,
-        symbolDistribution: allSignals.reduce((acc, sig) => {
-          const key = sig.ticker || 'UNKNOWN';
-          acc[key] = (acc[key] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>),
-        sampleSignals: allSignals.slice(0, 3).map(s => ({ ticker: s.ticker, pattern: s.pattern, confidence: s.confidence }))
-      });
+      logDebug('DEBUG_TRADE_SIGNALS', '[SignalScanner] Final signals with symbol attribution: totalSignals=' + allSignals.length + ', symbolDistribution=' + JSON.stringify(allSignals.reduce((acc, sig) => {
+        const key = sig.ticker || 'UNKNOWN';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)) + ', sampleSignals=' + JSON.stringify(allSignals.slice(0, 3).map(s => ({ ticker: s.ticker, pattern: s.pattern, confidence: s.confidence }))));
       
       setSignals(
         allSignals.sort((a, b) => symbols.indexOf(a.ticker || '') - symbols.indexOf(b.ticker || ''))
@@ -332,7 +282,7 @@ async function fetchOHLCVForSymbol(ticker: string, timeframe: string): Promise<C
   const endDate = new Date();
   const startDate = new Date();
   
-  console.log(`[FETCH-OHLCV] Fetching ${outputsize} candles for ${ticker} @ ${interval}`);
+  logDebug('DEBUG_TRADE_SIGNALS', `[FETCH-OHLCV] Fetching ${outputsize} candles for ${ticker} @ ${interval}`);
   
   // PATCH L-14: Ensure at least 1 full trading day (7 hours * 60min = 420 candles)
   // Calculate appropriate date range based on timeframe to ensure sufficient depth
@@ -371,7 +321,7 @@ async function detectPatternsForSymbol(ticker: string, ohlcv: CandlestickData[])
     detectionResults.forEach(p => {
       patternTypeCounts[p.type] = (patternTypeCounts[p.type] || 0) + 1;
     });
-    console.log(`[SignalScanner] Pattern detection for ${ticker}:`, patternTypeCounts);
+    logDebug('DEBUG_TRADE_SIGNALS', `[SignalScanner] Pattern detection for ${ticker}: ${JSON.stringify(patternTypeCounts)}`);
     
     // Add ticker and symbol attribution to patterns for row gating
     const enrichedPatterns = detectionResults.map(pattern => ({
@@ -442,10 +392,11 @@ async function detectPatternsForSymbol(ticker: string, ohlcv: CandlestickData[])
       signals.push(signal);
     });
     
-    console.log(`[SignalScanner] Converted ${detectionResults.length} patterns to ${signals.length} signals for ${ticker}`);
+    logDebug('DEBUG_TRADE_SIGNALS', `[SignalScanner] Converted ${detectionResults.length} patterns to ${signals.length} signals for ${ticker}`);
     
-  } catch (error) {
-    console.error(`[SignalScanner] Pattern detection failed for ${ticker}:`, error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logDebug('DEBUG_TRADE_SIGNALS', `[SignalScanner] Pattern detection failed for ${ticker}: ` + errorMessage);
   }
   
   return signals;

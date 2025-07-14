@@ -2,8 +2,10 @@
 // Utility to debug click blocking issues
 // Identifies elements that might be blocking user interactions
 
+import { logDebug } from '../utils/debug';
+
 export function debugClickBlocking() {
-  console.log('=== DEBUGGING CLICK BLOCKING ISSUES ===');
+  logDebug('DEBUG_UI', '=== DEBUGGING CLICK BLOCKING ISSUES ===');
   
   // Find all elements with high z-index
   const allElements = document.querySelectorAll('*');
@@ -21,15 +23,7 @@ export function debugClickBlocking() {
   // Sort by z-index descending
   highZIndexElements.sort((a, b) => b.zIndex - a.zIndex);
   
-  console.log('High z-index elements:', highZIndexElements.map(item => ({
-    tagName: item.element.tagName,
-    className: item.element.className,
-    id: item.element.id,
-    zIndex: item.zIndex,
-    display: window.getComputedStyle(item.element).display,
-    visibility: window.getComputedStyle(item.element).visibility,
-    pointerEvents: window.getComputedStyle(item.element).pointerEvents,
-  })));
+  logDebug('DEBUG_UI', 'High z-index elements:', highZIndexElements.map(item => ({ tag: item.element.tagName, class: item.element.className, zIndex: item.zIndex })));
   
   // Find all fixed/absolute positioned elements that might be overlays
   const overlayElements: Element[] = [];
@@ -49,7 +43,7 @@ export function debugClickBlocking() {
     }
   });
   
-  console.log('Potential overlay elements:', overlayElements.map(element => ({
+  logDebug('DEBUG_UI', 'Potential overlay elements:', overlayElements.map(element => ({
     tagName: element.tagName,
     className: element.className,
     id: element.id,
@@ -65,7 +59,7 @@ export function debugClickBlocking() {
   const centerY = window.innerHeight / 2;
   const elementAtCenter = document.elementFromPoint(centerX, centerY);
   
-  console.log('Element at center of screen:', {
+  logDebug('DEBUG_UI', 'Element at center of screen:', {
     element: elementAtCenter,
     tagName: elementAtCenter?.tagName,
     className: elementAtCenter?.className,
@@ -82,7 +76,7 @@ export function debugClickBlocking() {
     }
   });
   
-  console.log('Elements with pointer-events: none:', pointerEventsNoneElements.length);
+  logDebug('DEBUG_UI', 'Elements with pointer-events: none:', pointerEventsNoneElements.length);
   
   return {
     highZIndexElements,

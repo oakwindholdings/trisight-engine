@@ -17,6 +17,7 @@ import {
   ThresholdConfig 
 } from './core/MarketContext';
 import { BlackjackDetectionUtils } from './helper/BlackjackDetectionUtils';
+import { logDebug } from '../../utils/debug';
 
 /**
  * Convert datetime string to Date object
@@ -165,10 +166,10 @@ export class AdaptiveBlackjackDetector extends BasePatternDetector<BlackjackPatt
     data: CandlestickData[],
     context: MarketContext
   ): BlackjackPattern[] {
-    console.log(`[BlackjackDetector] Invoked with ${data.length} candles`);
+    logDebug('DEBUG_PATTERN_DETECT', `[BlackjackDetector] Invoked with ${data.length} candles`);
     
     if (data.length < (this.options.minPatternLength || 20)) {
-      console.log(`[BlackjackDetector] Not enough data: ${data.length} < ${this.options.minPatternLength || 20}`);
+      logDebug('DEBUG_PATTERN_DETECT', `[BlackjackDetector] Not enough data: ${data.length} < ${this.options.minPatternLength || 20}`);
       return [];
     }
     
@@ -274,17 +275,17 @@ export class AdaptiveBlackjackDetector extends BasePatternDetector<BlackjackPatt
       }
     }
     
-    console.log(`[BlackjackDetector] Found ${patterns.length} raw patterns before filtering`);
+    logDebug('DEBUG_PATTERN_DETECT', `[BlackjackDetector] Found ${patterns.length} raw patterns before filtering`);
     
     // Filter out overlapping patterns, keeping the strongest ones
     const filteredPatterns = this.filterOverlappingPatterns(patterns);
     
-    console.log(`[BlackjackDetector] ${filteredPatterns.length} patterns after overlap filtering`);
+    logDebug('DEBUG_PATTERN_DETECT', `[BlackjackDetector] ${filteredPatterns.length} patterns after overlap filtering`);
     
     // Apply post-processing
     const finalPatterns = this.postProcessPatterns(filteredPatterns, context);
     
-    console.log(`[BlackjackDetector] Returning ${finalPatterns.length} final patterns`);
+    logDebug('DEBUG_PATTERN_DETECT', `[BlackjackDetector] Returning ${finalPatterns.length} final patterns`);
     
     return finalPatterns;
   }

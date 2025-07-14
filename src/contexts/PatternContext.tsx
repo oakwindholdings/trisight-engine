@@ -10,6 +10,7 @@ import { useMarketDataContext } from './MarketDataContext';
 import { usePatternBus, PatternEvent } from '../hooks/usePatternBus';
 import { PatternDetectionPreferences } from '../utils/patternDetection/AdaptivePatternDetectionService';
 import { BreakoutBoxSettings } from '../components/Patterns/BreakoutBoxSettingsPanel';
+import { logDebug } from '../utils/debug';
 
 // Define the context type
 interface PatternContextType {
@@ -456,7 +457,7 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
   ]);
   
   // Log when provider renders
-  console.log('[PatternProvider] Rendering with:', {
+  logDebug('DEBUG_CONTEXT_UPDATE', '[PatternProvider] Rendering with:', {
     dataLength: data.length,
     bjCountsLength: patternHook.bjCounts?.length,
     escalatorDirLength: patternHook.escalatorDir?.length,

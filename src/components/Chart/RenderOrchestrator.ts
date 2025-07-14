@@ -63,6 +63,7 @@ interface RenderArgs {
     showVolume: boolean;
     showGrid: boolean;
   };
+  pixelOffset?: number;
 }
 
 // Original renderChart implementation wrapped for performance monitoring
@@ -96,7 +97,8 @@ function _renderChartImpl({
   targetReportRows = [], // 📊 Target Report Table Data
   targetReportSettings = defaultTargetReportTableSettings, // 📊 Target Report Table Settings
   hoveredTableCell = null, // 📊 Hovered Table Cell
-  chartSettings = { isHeikinAshi: false, showVolume: true, showGrid: true }
+  chartSettings = { isHeikinAshi: false, showVolume: true, showGrid: true },
+  pixelOffset = 0
 }: RenderArgs): void {
   // Signal Fidelity Mode: Check pattern engine readiness (but don't block basic chart rendering)
   const fidelityEnginesReady = patternEngineTracker.areAllEnginesReady();
@@ -156,6 +158,8 @@ function _renderChartImpl({
   const timeScale = createSequentialTimeScale(width - margin.left - margin.right, visibleData, [margin.left, width - margin.right]);
   const priceScale = createPriceScale(height - margin.top - margin.bottom, [visibleRange.minPrice, visibleRange.maxPrice], [height - margin.bottom, margin.top]);
 
+  bufferCtx.save();
+  bufferCtx.translate(pixelOffset, 0);
   CandlestickRenderer.render(bufferCtx, visibleData, timeScale, priceScale, { 
     width, 
     height, 
@@ -167,8 +171,11 @@ function _renderChartImpl({
     showGrid: chartSettings.showGrid,
     goldmineQual
   });
+  bufferCtx.restore();
   mainCtx.drawImage(bufferCanvas, 0, 0);
   
+  patternsCtx.save();
+  patternsCtx.translate(pixelOffset, 0);
   PatternRenderer.render(
     patternsCtx, 
     visiblePatterns, 
@@ -191,8 +198,10 @@ function _renderChartImpl({
     convictionCloudSettings, // param 19 - convictionCloudSettings
     hoveredConvictionItem // param 20 - hoveredConvictionItem
   );
+  patternsCtx.restore();
   TimeAxis.render(mainCtx, timeScale, { width, height, margin }, timeframe, showOnlyTradingHours);
   PriceAxis.render(mainCtx, priceScale, { width, height, margin });
+  mainCtx.restore();
 
   // Signal Fidelity Mode: Log chart rendering completion
   // Performance: Logging disabled during render

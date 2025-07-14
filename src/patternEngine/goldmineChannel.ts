@@ -52,10 +52,10 @@ export function detectGoldmineChannel(
   maxChannelWidth: number = 0.05,
   minChannelLength: number = 10
 ): GoldmineChannelDetection[] {
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] Starting detection on', candles.length, 'candles');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldmineChannel] Starting detection on ${candles.length} candles`);
   
   if (!candles || candles.length < minChannelLength) {
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] Not enough candles for detection:', candles?.length, 'min required:', minChannelLength);
+    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldmineChannel] Not enough candles for detection: ${candles?.length} min required: ${minChannelLength}`);
     return [];
   }
 
@@ -230,7 +230,7 @@ export function detectGoldmineChannel(
     }
   }
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[HA GoldmineChannel] Detection complete. Found', channels.length, 'channels');
+  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldmineChannel] Detection complete. Found ${channels.length} channels`);
   
   return channels;
 }

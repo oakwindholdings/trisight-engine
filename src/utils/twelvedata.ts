@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { logDebug } from './debug';
+import { CandlestickData } from '../models/ChartTypes';
 
 const API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY;
 const BASE_URL = 'https://api.twelvedata.com/time_series';
@@ -32,7 +34,7 @@ export async function fetchPriceNDayChange(symbol: string, daysAgo: number): Pro
     const prices = data.values.map((row: any) => parseFloat(row.close)).reverse();
     const pctChange = ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100;
     
-    console.log(`[TwelveData] ${symbol} ${daysAgo}d change: ${pctChange.toFixed(2)}%`);
+    logDebug('DEBUG_DATA_FETCH', `${symbol} ${daysAgo}d change: ${pctChange.toFixed(2)}%`);
     return Math.round(pctChange * 100) / 100; // round to 2 decimal places
   } catch (error) {
     console.error(`[TwelveData] Error fetching ${daysAgo}d change for ${symbol}:`, error);
@@ -69,4 +71,28 @@ export async function fetchMultipleSymbolChanges(symbols: string[], daysAgo: num
   }
   
   return results;
+}
+
+export async function fetchOHLCV(symbol: string, interval: string, count: number): Promise<CandlestickData[]> {
+  try {
+    const params = {
+      symbol,
+      interval,
+      outputsize: count,
+      apikey: API_KEY
+    };
+    const { data } = await axios.get(BASE_URL, { params });
+    if (!data.values) return [];
+    return data.values.reverse().map((row: any) => ({
+      timestamp: new Date(row.datetime).getTime(),
+      open: parseFloat(row.open),
+      high: parseFloat(row.high),
+      low: parseFloat(row.low),
+      close: parseFloat(row.close),
+      volume: parseInt(row.volume) || 0
+    }));
+  } catch (error) {
+    console.error('[TwelveData] Error fetching OHLCV:', error);
+    return [];
+  }
 }

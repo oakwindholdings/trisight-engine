@@ -11,6 +11,7 @@ import { BreakoutBoxSettings } from '../components/Patterns/BreakoutBoxSettingsP
 import { getIntrinsicScore } from '../patternEngine/blackjack';
 import { detectEscalators } from '../patternEngine/escalator';
 import { Candle } from '../types';
+import { logDebug } from '../utils/debug';
 
 /**
  * Hook for detecting and managing chart patterns
@@ -97,11 +98,12 @@ export function usePatterns(data: CandlestickData[]) {
       const saved = localStorage.getItem('escalatorSettings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        console.log('[usePatterns] Loaded escalator settings from localStorage:', parsed);
+        logDebug('DEBUG_CONTEXT_UPDATE', '[usePatterns] Loaded escalator settings from localStorage: ' + JSON.stringify(parsed));
         return parsed;
       }
-    } catch (error) {
-      console.error('[usePatterns] Error loading escalator settings:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Error loading escalator settings: ' + errorMessage);
     }
     
     // Default values
@@ -128,11 +130,12 @@ export function usePatterns(data: CandlestickData[]) {
       const saved = localStorage.getItem('patternSettings.breakoutbox');
       if (saved) {
         const parsed = JSON.parse(saved);
-        console.log('[usePatterns] Loaded breakoutBox settings from localStorage:', parsed);
+        logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Loaded breakoutBox settings from localStorage: ' + JSON.stringify(parsed));
         return parsed;
       }
-    } catch (error) {
-      console.error('[usePatterns] Error loading breakoutBox settings:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Error loading breakoutBox settings: ' + errorMessage);
     }
     
     // Default values
@@ -180,11 +183,12 @@ export function usePatterns(data: CandlestickData[]) {
           // Ensure showEntryExitLabels is always present (v1.3.3)
           showEntryExitLabels: parsed.showEntryExitLabels ?? defaults.showEntryExitLabels
         };
-        console.log('[usePatterns] Loaded and migrated Golden Candle settings from localStorage:', migrated);
+        logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Loaded and migrated Golden Candle settings from localStorage: ' + JSON.stringify(migrated));
         return migrated;
       }
-    } catch (error) {
-      console.error('[usePatterns] Error loading Golden Candle settings:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Error loading Golden Candle settings: ' + errorMessage);
     }
     
     // Return defaults if no localStorage or error
@@ -195,9 +199,10 @@ export function usePatterns(data: CandlestickData[]) {
   useEffect(() => {
     try {
       localStorage.setItem('patternSettings.goldenCandle', JSON.stringify(goldenCandleSettings));
-      console.log('[usePatterns] Saved Golden Candle settings to localStorage:', goldenCandleSettings);
-    } catch (error) {
-      console.error('[usePatterns] Error saving Golden Candle settings:', error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Saved Golden Candle settings to localStorage: ' + JSON.stringify(goldenCandleSettings));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Error saving Golden Candle settings: ' + errorMessage);
     }
   }, [goldenCandleSettings]);
   
@@ -229,11 +234,12 @@ export function usePatterns(data: CandlestickData[]) {
       const saved = localStorage.getItem('blackjackSettings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        console.log('[usePatterns] Loaded BlackJack settings from localStorage:', parsed);
+        logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Loaded BlackJack settings from localStorage: ' + JSON.stringify(parsed));
         return { ...defaults, ...parsed };
       }
-    } catch (error) {
-      console.error('[usePatterns] Error loading BlackJack settings:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Error loading BlackJack settings: ' + errorMessage);
     }
     
     // Return defaults if no localStorage or error
@@ -244,9 +250,10 @@ export function usePatterns(data: CandlestickData[]) {
   useEffect(() => {
     try {
       localStorage.setItem('blackjackSettings', JSON.stringify(blackjackSettings));
-      console.log('[usePatterns] Saved BlackJack settings to localStorage:', blackjackSettings);
-    } catch (error) {
-      console.error('[usePatterns] Error saving BlackJack settings:', error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Saved BlackJack settings to localStorage: ' + JSON.stringify(blackjackSettings));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Error saving BlackJack settings: ' + errorMessage);
     }
   }, [blackjackSettings]);
   
@@ -472,11 +479,11 @@ export function usePatterns(data: CandlestickData[]) {
   
   // Clear patterns when data changes significantly (e.g., symbol change)
   useEffect(() => {
-    console.log('[usePatterns] Data changed, length:', data.length);
+    logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Data changed, length: ' + data.length);
     
     // If we have no data, clear all patterns
     if (data.length === 0) {
-      console.log('[usePatterns] Clearing patterns due to empty data');
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Clearing patterns due to empty data');
       setPatterns([]);
       setVisiblePatterns([]);
       setSelectedPattern(null);
@@ -503,7 +510,7 @@ export function usePatterns(data: CandlestickData[]) {
   // Detect patterns when data changes and is available
   useEffect(() => {
     if (data.length > 0 && !isDetecting) {
-      console.log('[usePatterns] Auto-detecting patterns for new data');
+      logDebug('DEBUG_PATTERN_DETECT', '[usePatterns] Auto-detecting patterns for new data');
       detectPatterns(data);
     }
   }, [data, detectPatterns, isDetecting]);

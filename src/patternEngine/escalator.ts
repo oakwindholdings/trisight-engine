@@ -41,15 +41,15 @@ export function detectEscalators(
   maxStepBars = MAX_STEP_DURATION
 ): EscalatorRun[] {
   if (!candles || candles.length < minLength) {
-    if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Not enough candles:', candles?.length, 'min required:', minLength);
+    logDebug('DEBUG_PATTERN_DETECT', `[EscalatorDetector] Not enough candles: ${candles?.length} min required: ${minLength}`);
     return [];
   }
 
   // DICK O'LEARY COMPLIANCE: Convert to HA candles for all detection analysis
   const haCandles = convertToHeikinAshi(candles);
 
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Starting HA detection on', candles.length, 'candles');
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] First HA candle:', {
+  logDebug('DEBUG_PATTERN_DETECT', `[EscalatorDetector] Starting HA detection on ${candles.length} candles`);
+  logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] First HA candle:', {
     datetime: candles[0].datetime,
     haOpen: haCandles[0].open,
     haClose: haCandles[0].close,
@@ -57,7 +57,7 @@ export function detectEscalators(
     haBodyLow: Math.min(haCandles[0].open, haCandles[0].close),
     dickOLearyCompliant: true
   });
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Last HA candle:', {
+  logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Last HA candle:', {
     datetime: candles[candles.length-1].datetime,
     haOpen: haCandles[haCandles.length-1].open,
     haClose: haCandles[haCandles.length-1].close,
@@ -78,7 +78,7 @@ export function detectEscalators(
     
     if (run) {
       runs.push(run);
-      if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Found run at index', i, 'direction:', run.direction, 'length:', run.endIndex - run.startIndex + 1);
+      logDebug('DEBUG_PATTERN_DETECT', `[EscalatorDetector] Found run at index ${i} direction: ${run.direction} length: ${run.endIndex - run.startIndex + 1}`);
       // Move past this run
       i = run.endIndex + 1;
     } else {
@@ -96,7 +96,7 @@ export function detectEscalators(
     }
   }
   
-  if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Detection complete:', {
+  logDebug('DEBUG_PATTERN_DETECT', '[EscalatorDetector] Detection complete:', {
     runsFound: runs.length,
     attemptsMade: attemptCount,
     failureReasons
@@ -199,7 +199,7 @@ export function evaluateEscalatorForEntry(escalatorRun: EscalatorRun): void {
  * @returns Array of TradeActionSignal objects with actionable BUY/SHORT/SELL/COVER commands
  */
 export function detectEscalatorTradeSignals(candles: Candle[]): TradeActionSignal[] {
-  if (DEBUG_MODE) logDebug('DEBUG_ESCALATOR_TRADE_SIGNALS', '[HA Escalator TRADE SIGNALS] Starting trend signal detection on', candles.length, 'candles');
+  logDebug('DEBUG_ESCALATOR_TRADE_SIGNALS', `[HA Escalator TRADE SIGNALS] Starting trend signal detection on ${candles.length} candles`);
   
   const signals: TradeActionSignal[] = [];
   
@@ -222,7 +222,7 @@ export function detectEscalatorTradeSignals(candles: Candle[]): TradeActionSigna
     
     // Confidence gate — Dick doesn't want low-consistency trend signals
     if (consistency < 0.65 || averageStepHeight < 0.25) {
-      if (DEBUG_MODE) logDebug('DEBUG_ESCALATOR_TRADE_SIGNALS', '[ESCALATOR FILTERED] Low consistency/step height filtered out', {
+      logDebug('DEBUG_ESCALATOR_TRADE_SIGNALS', '[ESCALATOR FILTERED] Low consistency/step height filtered out', {
         startIndex,
         consistency: (consistency * 100).toFixed(1) + '%',
         averageStepHeight: averageStepHeight.toFixed(3),
@@ -318,7 +318,7 @@ export function monitorEscalatorExitSignals(
   candles: Candle[], 
   activeRuns: EscalatorRun[]
 ): TradeActionSignal[] {
-  if (DEBUG_MODE) logDebug('DEBUG_ESCALATOR_EXIT_SIGNALS', '[ESCALATOR EXIT MONITOR] Monitoring', activeRuns.length, 'active runs for floor/ceiling breach');
+  logDebug('DEBUG_ESCALATOR_EXIT_SIGNALS', `[ESCALATOR EXIT MONITOR] Monitoring ${activeRuns.length} active runs for floor/ceiling breach`);
   
   const exitSignals: TradeActionSignal[] = [];
   

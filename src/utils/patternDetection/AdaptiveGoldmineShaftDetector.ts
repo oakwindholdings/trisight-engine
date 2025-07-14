@@ -13,6 +13,7 @@ import {
   ThresholdConfig,
   Channel
 } from './core/MarketContext';
+import { logDebug } from '../../utils/debug';
 
 /**
  * Goldmine Shaft-specific threshold configuration
@@ -172,7 +173,7 @@ export class AdaptiveGoldmineShaftDetector extends BasePatternDetector<GoldmineS
     thresholds: ShaftThresholdConfig
   ): GoldmineShaftPattern[] {
     if (data.length < thresholds.minThrustLength + thresholds.minRetracementLength) {
-      console.log('Insufficient data for shaft detection');
+      logDebug('DEBUG_PATTERN_DETECT', 'Insufficient data for shaft detection');
       return [];
     }
     
@@ -180,7 +181,7 @@ export class AdaptiveGoldmineShaftDetector extends BasePatternDetector<GoldmineS
     
     // If channel context is required but missing, return empty
     if (this.options.requireChannelContext && context.activeChannels.length === 0) {
-      console.log('No channel context available, skipping shaft detection');
+      logDebug('DEBUG_PATTERN_DETECT', 'No channel context available, skipping shaft detection');
       return [];
     }
     
