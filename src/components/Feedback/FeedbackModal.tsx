@@ -5,8 +5,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Pattern, PatternType, GoldmineChannelPattern } from '../../models/PatternTypes';
 import { PatternFeedback, FalsePositiveReason } from '../../models/FeedbackTypes';
-import { BoundaryAdjusterImpl } from './';
-import GoldmineChannelAdjuster from './GoldmineChannelAdjuster';
+import { BoundaryAdjuster } from './BoundaryAdjuster';
+import { GoldmineChannelAdjuster } from './GoldmineChannelAdjuster';
 
 // Define component props types inline to avoid import issues
 interface PatternTypeSelectorProps {
@@ -34,7 +34,7 @@ const PatternTypeSelector = require('./PatternTypeSelector').default as React.FC
 const ConfidenceRating = require('./ConfidenceRating').default as React.FC<ConfidenceRatingProps>;
 // @ts-ignore - Ignore TypeScript module resolution errors
 // Use the renamed component to avoid identifier conflicts
-const BoundaryAdjuster = BoundaryAdjusterImpl as React.FC<BoundaryAdjusterProps>;
+const LocalBoundaryAdjuster = BoundaryAdjuster as React.FC<BoundaryAdjusterProps>;
 
 interface FeedbackModalProps {
   pattern: Pattern | null;
@@ -166,7 +166,7 @@ const Button = styled.button<{ $primary?: boolean }>`
   }
 `;
 
-const FeedbackModal: React.FC<FeedbackModalProps> = ({
+export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   pattern,
   onClose,
   onSubmit,
@@ -181,18 +181,16 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
     correctedStart: null,
     correctedEnd: null
   });
-  const [channelAdjustment, setChannelAdjustment] = useState<{
-    upperBoundary: number | null;
-    lowerBoundary: number | null;
-  }>({
-    upperBoundary: null,
-    lowerBoundary: null
-  });
+  const [channelAdjustment, setChannelAdjustment] = useState({ upper: null as number | null, lower: null as number | null });
   const [falsePositive, setFalsePositive] = useState<boolean>(false);
   const [falsePositiveReason, setFalsePositiveReason] = useState<FalsePositiveReason>('NOT_A_PATTERN');
   const [notes, setNotes] = useState<string>('');
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // Add local undo stack:
+  const [feedbackHistory, setFeedbackHistory] = useState([]);
+  // On change, push to history.
+  // Add undo button that pops from history.
 
   // Reset form when pattern changes
   useEffect(() => {
@@ -203,10 +201,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
         correctedStart: null,
         correctedEnd: null
       });
-      setChannelAdjustment({
-        upperBoundary: null,
-        lowerBoundary: null
-      });
+      setChannelAdjustment({ upper: null, lower: null });
       setFalsePositive(false);
       setFalsePositiveReason('NOT_A_PATTERN');
       setNotes('');
@@ -234,10 +229,10 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
     }
   };
   
-  const handleChannelAdjustment = (upperBoundary: number, lowerBoundary: number) => {
+  const handleChannelAdjustment = (upper: number, lower: number) => {
     setChannelAdjustment({
-      upperBoundary,
-      lowerBoundary
+      upper,
+      lower
     });
   };
   
@@ -266,8 +261,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
         channelAdjustment: {
           originalUpperBoundary: (pattern as GoldmineChannelPattern).upperBoundary,
           originalLowerBoundary: (pattern as GoldmineChannelPattern).lowerBoundary,
-          correctedUpperBoundary: channelAdjustment.upperBoundary,
-          correctedLowerBoundary: channelAdjustment.lowerBoundary
+          correctedUpperBoundary: channelAdjustment.upper,
+          correctedLowerBoundary: channelAdjustment.lower
         }
       }),
       falsePositive,
@@ -294,9 +289,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
     correctedPatternType === PatternType.GOLDMINE_CHANNEL;
   
   // Validation
-  const isValid = falsePositive 
-    ? !!falsePositiveReason 
-    : true;
+  const isValid = (falsePositive ? !!falsePositiveReason : true) || confidenceRating > 0; // Per spec: confidence OR false positive
   
   if (isPreviewMode) {
     return (
@@ -330,8 +323,8 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 channelAdjustment: {
                   originalUpperBoundary: (pattern as GoldmineChannelPattern).upperBoundary,
                   originalLowerBoundary: (pattern as GoldmineChannelPattern).lowerBoundary,
-                  correctedUpperBoundary: channelAdjustment.upperBoundary,
-                  correctedLowerBoundary: channelAdjustment.lowerBoundary
+                  correctedUpperBoundary: channelAdjustment.upper,
+                  correctedLowerBoundary: channelAdjustment.lower
                 }
               }),
               falsePositive,
@@ -388,19 +381,20 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
         
         <FormSection>
           <SectionTitle>Time Boundaries</SectionTitle>
-          <BoundaryAdjuster 
+          <LocalBoundaryAdjuster 
             originalStart={pattern.startTime}
             originalEnd={pattern.endTime}
             onChange={handleBoundaryChange}
           />
         </FormSection>
         
-        {isGoldmineChannel && (
+        {pattern.type === 'GOLDMINE_CHANNEL' && (
           <FormSection>
-            <SectionTitle>Price Channel Boundaries</SectionTitle>
+            <SectionTitle>Channel Adjustment</SectionTitle>
             <GoldmineChannelAdjuster 
-              pattern={pattern as GoldmineChannelPattern}
-              onChange={handleChannelAdjustment}
+              originalUpper={pattern.upperBoundary || 0}
+              originalLower={pattern.lowerBoundary || 0}
+              onChange={(upper, lower) => setChannelAdjustment({ upper, lower })}
             />
           </FormSection>
         )}
@@ -459,5 +453,3 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
     </ModalOverlay>
   );
 };
-
-export default FeedbackModal;

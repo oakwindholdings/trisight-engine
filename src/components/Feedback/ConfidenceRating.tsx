@@ -69,4 +69,4 @@ const ConfidenceRatingComponent: React.FC<ConfidenceRatingProps> = ({ value, onC
 };
 
 // Simply export the component directly
-export default ConfidenceRatingComponent;
+export const ConfidenceRating = ConfidenceRatingComponent;

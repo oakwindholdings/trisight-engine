@@ -1,7 +1,7 @@
 // src/contexts/LearningContext.tsx
 // Context exposing learning metrics
 // Wraps useLearning hook
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { PatternType } from '../models/PatternTypes';
 import { PatternFeedback } from '../models/FeedbackTypes';
 import { 
@@ -61,6 +61,12 @@ export const LearningProvider: React.FC<LearningProviderProps> = ({ children }) 
   // Initialize learning hook with feedback history
   const learningHook = useLearning(feedbackHistory);
   
+  // Add useEffect for broadcasting:
+  useEffect(() => {
+    // Broadcast update event
+    // Assume event bus: dispatch('parametersUpdated');
+  }, [/* params dependency */]);
+
   // Create enhanced context with additional functions
   const contextValue: LearningContextType = {
     metrics: learningHook.metrics,

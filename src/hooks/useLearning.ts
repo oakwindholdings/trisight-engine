@@ -148,6 +148,9 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
         return null;
       }
 
+      // Snapshot current params
+      const snapshot = JSON.parse(JSON.stringify(learningProcessor.getDetectionParameters(feedback.originalPatternType)));
+
       // Save feedback to storage
       FeedbackStorage.saveFeedback(feedback);
 

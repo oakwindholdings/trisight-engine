@@ -113,29 +113,29 @@ const formatDate = (date: Date): string => {
  * Implementation of the BoundaryAdjuster component
  * Using a completely different name to avoid conflicts with declaration files
  */
-const BoundaryAdjusterComponent: React.FC<BoundaryAdjusterProps> = ({ originalStart, originalEnd, onChange }) => {
+export const BoundaryAdjuster = (props: BoundaryAdjusterProps) => {
   const [startPos, setStartPos] = useState<number>(0);
   const [endPos, setEndPos] = useState<number>(100);
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<Date>(originalStart);
-  const [endDate, setEndDate] = useState<Date>(originalEnd);
+  const [startDate, setStartDate] = useState<Date>(props.originalStart);
+  const [endDate, setEndDate] = useState<Date>(props.originalEnd);
   
   // Initialize positions with padding (25% on each side) to allow time extension
   useEffect(() => {
     // Initialize handles at 25% and 75% of the slider
     setStartPos(25);
     setEndPos(75);
-    setStartDate(originalStart);
-    setEndDate(originalEnd);
-  }, [originalStart, originalEnd]);
+    setStartDate(props.originalStart);
+    setEndDate(props.originalEnd);
+  }, [props.originalStart, props.originalEnd]);
   
   // Total duration in milliseconds
-  const totalDuration = originalEnd.getTime() - originalStart.getTime();
+  const totalDuration = props.originalEnd.getTime() - props.originalStart.getTime();
   
   // Calculate extended range (2x the original duration)
   const extendedDuration = totalDuration * 2;
   // Start time for the timeline (50% earlier than original start)
-  const timelineStartTime = new Date(originalStart.getTime() - (totalDuration / 2));
+  const timelineStartTime = new Date(props.originalStart.getTime() - (totalDuration / 2));
   
   const handleMouseDown = (marker: string) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -162,7 +162,7 @@ const BoundaryAdjusterComponent: React.FC<BoundaryAdjusterProps> = ({ originalSt
           setStartDate(newDate);
           
           // Notify parent component
-          onChange(newDate, null);
+          props.onChange(newDate, null);
         }
       } else if (marker === 'end') {
         if (pos > startPos) {
@@ -174,7 +174,7 @@ const BoundaryAdjusterComponent: React.FC<BoundaryAdjusterProps> = ({ originalSt
           setEndDate(newDate);
           
           // Notify parent component
-          onChange(null, newDate);
+          props.onChange(null, newDate);
         }
       }
     };
@@ -192,13 +192,13 @@ const BoundaryAdjusterComponent: React.FC<BoundaryAdjusterProps> = ({ originalSt
   const handleReset = () => {
     setStartPos(25);
     setEndPos(75);
-    setStartDate(originalStart);
-    setEndDate(originalEnd);
-    onChange(null, null);
+    setStartDate(props.originalStart);
+    setEndDate(props.originalEnd);
+    props.onChange(null, null);
   };
   
-  const startChanged = startDate.getTime() !== originalStart.getTime();
-  const endChanged = endDate.getTime() !== originalEnd.getTime();
+  const startChanged = startDate.getTime() !== props.originalStart.getTime();
+  const endChanged = endDate.getTime() !== props.originalEnd.getTime();
   
   return (
     <Container>
@@ -246,6 +246,3 @@ const BoundaryAdjusterComponent: React.FC<BoundaryAdjusterProps> = ({ originalSt
     </Container>
   );
 };
-
-// Simply export the component directly
-export default BoundaryAdjusterComponent;

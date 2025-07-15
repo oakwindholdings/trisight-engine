@@ -162,4 +162,4 @@ const PatternTypeSelectorComponent: React.FC<PatternTypeSelectorProps> = ({
 };
 
 // Simply export the component directly
-export default PatternTypeSelectorComponent;
+export const PatternTypeSelector = PatternTypeSelectorComponent;

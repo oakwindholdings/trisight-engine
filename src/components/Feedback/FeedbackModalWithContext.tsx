@@ -2,7 +2,7 @@
 // Feedback modal bound to context
 // Submits feedback then closes modal
 import React from 'react';
-import FeedbackModal from './FeedbackModal';
+import { FeedbackModal } from './FeedbackModal';
 import { useFeedbackContext } from '../../contexts/FeedbackContext';
 import { Pattern } from '../../models/PatternTypes';
 import { PatternFeedback } from '../../models/FeedbackTypes';

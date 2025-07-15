@@ -26,6 +26,7 @@ import { useHeikinAshiTransform } from '../../hooks/useHeikinAshiTransform';
 import { useChartSettings } from '../../contexts/ChartSettingsContext';
 import { getPatternAtPoint } from '../../utils/patternHitDetection';
 import './InfiniteZoomChart.css';
+import * as d3 from 'd3';
 
 // TradeActionSignal Integration
 import { TradeActionBus } from '../../utils/trading/TradeActionSignal';

@@ -20,10 +20,17 @@ const STORAGE_KEYS = {
  * Service to handle persistent storage of feedback and learning data
  */
 export class FeedbackStorage {
+  private static lastSubmissions: number[] = [];
+
   /**
    * Save a new feedback entry
    */
   public static saveFeedback(feedback: PatternFeedback): void {
+    const now = Date.now();
+    this.lastSubmissions = this.lastSubmissions.filter(t => now - t < 60000); // 1 min
+    if (this.lastSubmissions.length >= 10) throw new Error('Rate limit exceeded');
+    this.lastSubmissions.push(now);
+    
     const existingFeedback = this.getAllFeedback();
     existingFeedback.push(feedback);
     

@@ -47,7 +47,7 @@ export class LearningProcessor {
     if (feedback.falsePositive) {
       // If false positive, increase sensitivity threshold to reduce false positives
       updatedParams.minConfidence = Math.min(0.9, updatedParams.minConfidence + 0.05);
-      impactScore += 0.2;
+      impactScore = 0.7;
     } else {
       // Process boundary adjustments
       if (feedback.boundaryAdjustment.correctedStart || feedback.boundaryAdjustment.correctedEnd) {
@@ -138,12 +138,12 @@ export class LearningProcessor {
     const normalizedRating = (feedback.confidenceRating - 1) / 4;
     
     // If user confidence is higher than current threshold, slightly decrease threshold
-    if (normalizedRating > params.minConfidence) {
-      params.minConfidence = Math.max(0.3, params.minConfidence - 0.02);
+    if (normalizedRating < 0.4) {
+      params.minConfidence = Math.min(0.9, params.minConfidence + 0.02);
     } 
     // If user confidence is lower than current threshold, slightly increase threshold
-    else if (normalizedRating < params.minConfidence) {
-      params.minConfidence = Math.min(0.9, params.minConfidence + 0.02);
+    else if (normalizedRating > 0.8) {
+      params.minConfidence = Math.max(0.3, params.minConfidence - 0.02);
     }
     
     // Adjust sensitivity based on confidence rating
@@ -269,7 +269,7 @@ export class LearningProcessor {
         startAdjustmentCount++;
         
         // Bucket start delta
-        const startBucket = this.getBoundaryDeltaBucket(startDelta);
+        const startBucket = this.getBoundaryDeltaBucket(startDelta, fb.boundaryAdjustment.originalEnd.getTime() - fb.boundaryAdjustment.originalStart.getTime());
         distribution[startBucket] = (distribution[startBucket] || 0) + 1;
       }
       
@@ -280,7 +280,7 @@ export class LearningProcessor {
         endAdjustmentCount++;
         
         // Bucket end delta
-        const endBucket = this.getBoundaryDeltaBucket(endDelta);
+        const endBucket = this.getBoundaryDeltaBucket(endDelta, fb.boundaryAdjustment.originalEnd.getTime() - fb.boundaryAdjustment.originalStart.getTime());
         distribution[endBucket] = (distribution[endBucket] || 0) + 1;
       }
     }
@@ -295,20 +295,20 @@ export class LearningProcessor {
   /**
    * Get bucket name for boundary delta
    */
-  private getBoundaryDeltaBucket(delta: number): string {
+  private getBoundaryDeltaBucket(delta: number, totalDuration: number): string {
     // Convert delta to minutes for more human-readable buckets
-    const deltaMinutes = Math.round(delta / (1000 * 60));
+    const deltaPercentage = Math.abs(delta / totalDuration) * 100;
     
-    if (deltaMinutes === 0) {
-      return 'no_change';
-    } else if (deltaMinutes > 0) {
-      if (deltaMinutes <= 5) return 'expand_small';
-      if (deltaMinutes <= 15) return 'expand_medium';
-      return 'expand_large';
+    if (deltaPercentage === 0) {
+      return 'No change';
+    } else if (delta > 0) {
+      if (deltaPercentage > 20) return 'Large expansion (> 20%)';
+      if (deltaPercentage > 5) return 'Small expansion (5-20%)';
+      return 'No change';
     } else {
-      if (deltaMinutes >= -5) return 'contract_small';
-      if (deltaMinutes >= -15) return 'contract_medium';
-      return 'contract_large';
+      if (deltaPercentage > 20) return 'Large reduction (> 20%)';
+      if (deltaPercentage > 5) return 'Small reduction (5-20%)';
+      return 'No change';
     }
   }
   
