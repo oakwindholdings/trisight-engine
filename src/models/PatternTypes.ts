@@ -161,6 +161,13 @@ export interface GoldenCandlePattern extends PatternBase {
   stepBoxFloor?: number;
 }
 
+export interface BreakoutBoxPattern extends PatternBase {
+  type: PatternType.BREAKOUTBOX;
+  direction: 'RISING' | 'FALLING';
+  floor: number;
+  ceiling: number;
+}
+
 export type Pattern =
   | GoldmineChannelPattern
   | GoldmineShaftPattern
@@ -168,7 +175,8 @@ export type Pattern =
   | RocketmanPattern
   | EscalatorPattern
   | BlackjackPattern
-  | GoldenCandlePattern;
+  | GoldenCandlePattern
+  | BreakoutBoxPattern;
 
 export interface PatternStyle {
   color: string;

@@ -1,4 +1,6 @@
 // src/patternEngine/index.ts
+// Central ScoreEngine
+import { calcStepBlackjack } from './blackjack';
 // TriSight Detection Input Refactor Patch v1.3.0: Export near-miss detection and trailing stop functions
 // TriSight Detection Input Refactor Patch v1.3.3: Export ENTRY/EXIT lifecycle detection
 // Provides centralized access to all pattern detection functions
@@ -8,7 +10,6 @@ export { detectEscalatorSteps, detectStepContinuation } from './escalatorStep';
 export { detectBreakoutBoxes, type BreakoutBox } from './breakoutBox';
 export {
   getIntrinsicScore,
-  calcStepBlackjack,
   computeRollingBlackjackScores,
   computeTargetBlackjackScore,
   detectBlackjackTradeSignals,
@@ -37,3 +38,8 @@ export {
 export { detectPivots, evaluatePivotForEntry, monitorPivotForExit, type PivotDetection } from './pivot';
 export { detectRocketman, evaluateRocketmanForEntry, monitorRocketmanForExit, type RocketmanDetection } from './rocketman';
 export { detectGoldenCandle, detectGoldenCandleCandidates, detectGoldenNearMisses, isTrailingStopTriggered, evaluateGoldenCandleForEntry, monitorGoldenCandleForExit, type GoldenCandlePattern, type GoldenCandleCandidate } from './goldenCandle';
+
+export const ScoreEngine = {
+  blackjack: calcStepBlackjack,
+  // Add more scorers
+};
