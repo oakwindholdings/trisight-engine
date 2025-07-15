@@ -1,0 +1,5 @@
+{
+  "testsGenerated": 2,
+  "coveragePercentage": 45,
+  "missingTestFiles": ["contexts/*", "api/*", "utils/learning/*", "hooks/useMarketData.ts"]
+} 

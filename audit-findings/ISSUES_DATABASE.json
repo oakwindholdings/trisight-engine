@@ -7,13 +7,21 @@
     {"id": "012", "phase": "2.1", "type": "Partial", "severity": "Medium", "component": "Detectors", "description": "Decentralized scoring."},
     {"id": "013", "phase": "2.2", "type": "Gap", "severity": "High", "component": "Validation", "description": "No central engine."},
     {"id": "014", "phase": "2.3", "type": "Partial", "severity": "Medium", "component": "Learning", "description": "Incomplete loop."},
-    {"id": "015", "phase": "3.2", "type": "Error", "severity": "High", "component": "Tests", "description": "Parsing failures in suites."}
+    {"id": "015", "phase": "3.2", "type": "Error", "severity": "High", "component": "Tests", "description": "Parsing failures in suites."},
+    {"id": "016", "phase": "5.1", "type": "Security Issue", "severity": "High", "component": "npm dependencies", "description": "19 vulnerabilities in packages."},
+    {"id": "017", "phase": "5.1", "type": "Security Issue", "severity": "Critical", "component": "REACT_APP variables", "description": "API keys exposed in client."},
+    {"id": "018", "phase": "5.1", "type": "Security Issue", "severity": "Medium", "component": "useTwelveDataApiKey.ts", "description": "API key logging."},
+    {"id": "019", "phase": "5.1", "type": "Security Issue", "severity": "Low", "component": "localStorage", "description": "Unencrypted storage."},
+    {"id": "020", "phase": "5.2", "type": "Privacy Issue", "severity": "High", "component": "Supabase RLS", "description": "Permissive access policies."},
+    {"id": "021", "phase": "5.2", "type": "Privacy Issue", "severity": "Medium", "component": "Learning system", "description": "No consent for data storage."},
+    {"id": "022", "phase": "5.2", "type": "Security Issue", "severity": "Medium", "component": "API logging", "description": "Excessive debug logging."},
+    {"id": "023", "phase": "5.2", "type": "Privacy Issue", "severity": "Low", "component": "Browser storage", "description": "No privacy notice."}
   ],
   "patterns": [],
   "statistics": {
-    "byType": {"Error":1, "Gap":3, "Omission":1, "Technical Debt":1, "Partial":2},
-    "bySeverity": {"High":2, "Medium":4, "Low":2},
-    "byComponent": {"src/models/PatternTypes.ts":2, "All models":1, "src/models/ChartTypes.ts":1, "Detectors":1, "Validation":1, "Learning":1},
-    "byPhase": {"1.1":4, "2.1":1, "2.2":1, "2.3":1, "3.2":1}
+    "byType": {"Error":2, "Gap":2, "Omission":1, "Technical Debt":1, "Partial":2, "Security Issue":5, "Privacy Issue":3},
+    "bySeverity": {"High":5, "Medium":6, "Low":4, "Critical":1},
+    "byComponent": {"src/models/PatternTypes.ts":2, "All models":1, "src/models/ChartTypes.ts":1, "Detectors":1, "Validation":1, "Learning":1, "Tests":1, "npm dependencies":1, "REACT_APP variables":1, "useTwelveDataApiKey.ts":1, "localStorage":1, "Supabase RLS":1, "Learning system":1, "API logging":1, "Browser storage":1},
+    "byPhase": {"1.1":4, "2.1":1, "2.2":1, "2.3":1, "3.2":1, "5.1":4, "5.2":4}
   }
 } 

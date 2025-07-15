@@ -29,6 +29,7 @@ import { logDebug, logDebugHAAlignmentMismatch } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // HA transformation for pattern detection
 import { evaluateStopLoss, getActiveStopLosses } from '../engine/StopLossManager';
 import { patternEngineTracker, dataAnalysisLock, LifecycleInstrumentation, FIDELITY_MODE_SETTINGS } from '../utils/signalFidelityPatch';
+import { debounce } from 'lodash';
 
 export interface Position {
   side: 'LONG' | 'SHORT';
