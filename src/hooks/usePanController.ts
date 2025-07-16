@@ -36,7 +36,7 @@ export const usePanController = (
   const lastClickTimeRef = useRef<number>(0);
   const globalMouseMoveRef = useRef<((e: MouseEvent) => void) | null>(null);
   const globalMouseUpRef = useRef<((e: MouseEvent) => void) | null>(null);
-  
+
   // Add ref to track current pan state to avoid stale closures
   const panStateRef = useRef(panState);
   useEffect(() => {
@@ -86,17 +86,17 @@ export const usePanController = (
   const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
     const currentPanState = panStateRef.current;
     if (!currentPanState.isPanning) return;
-    
+      
     const deltaX = e.clientX - currentPanState.startX;
     const newTranslateX = currentPanState.previousTranslateX + deltaX;
-    
+      
     // Update visible range outside of setState to prevent infinite loop
-    updateVisibleRangeFromPan(newTranslateX);
-    
+      updateVisibleRangeFromPan(newTranslateX);
+      
     setPanState(prev => ({
-      ...prev,
-      translateX: newTranslateX,
-      momentum: deltaX * 0.1
+        ...prev,
+        translateX: newTranslateX,
+        momentum: deltaX * 0.1
     }));
   }, [setPanState, updateVisibleRangeFromPan]);
 

@@ -104,7 +104,7 @@ export class LearningProcessor {
         params.boundaryPadding = Math.max(0.05, params.boundaryPadding * 0.9);
       }
     }
-
+    
     if (feedback.boundaryAdjustment?.correctedEnd) {
       const correctedEnd = feedback.boundaryAdjustment.correctedEnd.getTime();
       const endDiff = correctedEnd - originalEnd;
@@ -288,25 +288,25 @@ export class LearningProcessor {
     let startAdjustmentCount = 0;
     let endAdjustmentCount = 0;
     const distribution: Record<string, number> = {};
-
+    
     for (const fb of feedbackWithAdjustments) {
       if (fb.boundaryAdjustment?.correctedStart) {
-        const startDelta = fb.boundaryAdjustment.correctedStart.getTime() -
+        const startDelta = fb.boundaryAdjustment.correctedStart.getTime() - 
                           fb.boundaryAdjustment.originalStart.getTime();
         totalStartDelta += startDelta;
         startAdjustmentCount++;
-
+        
         // Bucket start delta
         const startBucket = this.getBoundaryDeltaBucket(startDelta, fb.boundaryAdjustment.originalEnd.getTime() - fb.boundaryAdjustment.originalStart.getTime());
         distribution[startBucket] = (distribution[startBucket] || 0) + 1;
       }
-
+      
       if (fb.boundaryAdjustment?.correctedEnd) {
-        const endDelta = fb.boundaryAdjustment.correctedEnd.getTime() -
+        const endDelta = fb.boundaryAdjustment.correctedEnd.getTime() - 
                         fb.boundaryAdjustment.originalEnd.getTime();
         totalEndDelta += endDelta;
         endAdjustmentCount++;
-
+        
         // Bucket end delta
         const endBucket = this.getBoundaryDeltaBucket(endDelta, fb.boundaryAdjustment.originalEnd.getTime() - fb.boundaryAdjustment.originalStart.getTime());
         distribution[endBucket] = (distribution[endBucket] || 0) + 1;
@@ -368,7 +368,7 @@ export class LearningProcessor {
         distribution[rating] = (distribution[rating] || 0) + 1;
       }
     }
-
+    
     return distribution;
   }
   

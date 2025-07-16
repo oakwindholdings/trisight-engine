@@ -150,7 +150,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Track previous date range to detect actual changes
   const previousDateRangeRef = useRef<{ start?: Date; end?: Date }>({});
-  
+
   // Track previous targetCandles to prevent unnecessary updates
   const previousTargetCandlesRef = useRef<number>(0);
 
@@ -805,7 +805,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
           if (patternContext.setSelectedPatternForFeedback) {
             patternContext.setSelectedPatternForFeedback(hitPattern);
             console.log('[InfiniteZoomChart] Called setSelectedPatternForFeedback successfully');
-          } else {
+        } else {
             console.error('[InfiniteZoomChart] setSelectedPatternForFeedback is not available!');
           }
         }

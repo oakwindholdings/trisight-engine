@@ -371,17 +371,17 @@ export function usePatterns(data: CandlestickData[]) {
       const stop = trailStopArray[idx];
       return stop > 0 ? ((candle.close - stop) / candle.close) * 100 : 0;
     });
-
+    
     // CRITICAL FIX: Batch all state updates to prevent cascading re-renders
     // Use React's unstable_batchedUpdates or setTimeout to batch updates
     // This prevents 15+ individual re-renders and the infinite loop
     setTimeout(() => {
-      setBjIntrinsic(bjIntrinsic);
-      setBjCumulative(bjCumulative);
-      setStepIndex(stepIndex);
-      setEscalatorDir(escalatorDirArray);
-      setEscalatorLength(escalatorLength);
-      setGoldmineQual(goldmineQual);
+    setBjIntrinsic(bjIntrinsic);
+    setBjCumulative(bjCumulative);
+    setStepIndex(stepIndex);
+    setEscalatorDir(escalatorDirArray);
+    setEscalatorLength(escalatorLength);
+    setGoldmineQual(goldmineQual);
       setTrailStop(trailStopArray);
       setDistToStopPct(distToStopPctArray);
     }, 0);
