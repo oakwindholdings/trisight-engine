@@ -295,19 +295,33 @@ const PatternRendererImpl = {
     isSelected: boolean,
     blackjackSettings: { showLabels: boolean } = { showLabels: true }
   ) {
+    // Check if pattern is clickable (for feedback system)
+    const isClickable = 'feedbackEnabled' in pattern && (pattern as any).feedbackEnabled;
+    
     // Register hitbox for click detection
     const hitBox = getPatternHitBoxDimensions(pattern, timeScale.scale, priceScale.scale);
     if (hitBox) {
-      registerPatternHitBox(pattern, hitBox.x, hitBox.y, hitBox.width, hitBox.height);
+      // Enhanced hitbox registration with feedback metadata
+      const enhancedPattern = isClickable ? { 
+        ...pattern, 
+        clickable: true,
+        feedbackEnabled: true,
+        feedbackId: (pattern as any).feedbackId || `feedback_${pattern.id}`
+      } : pattern;
+      registerPatternHitBox(enhancedPattern, hitBox.x, hitBox.y, hitBox.width, hitBox.height);
     }
     
     // Save current context state
     ctx.save();
     
-    // Apply highlighting for selected pattern
+    // Apply highlighting for selected pattern or clickable patterns
     if (isSelected) {
       ctx.shadowColor = 'rgba(33, 150, 243, 0.8)';
       ctx.shadowBlur = 8;
+    } else if (isClickable) {
+      // Subtle hover effect for clickable patterns
+      ctx.shadowColor = 'rgba(76, 175, 80, 0.4)';
+      ctx.shadowBlur = 4;
     }
     
     // Get base style for pattern type
@@ -793,6 +807,24 @@ const PatternRendererImpl = {
       
       ctx.fillStyle = borderColor;
       ctx.fillText(stepLabel, labelX, labelY);
+      
+      // Register hitbox for the STEP label
+      const stepLabelWidth = stepTextWidth + padX * 2;
+      const stepLabelHeight = 12 + padY * 2;
+      registerPatternHitBox(
+        { 
+          id: `escalator_step_${step.stepRef}`,
+          type: PatternType.ESCALATOR,
+          startTime: step.startTime,
+          endTime: step.endTime,
+          confidence: 0.8,
+          feedbackEnabled: true
+        } as any,
+        labelX - stepTextWidth / 2 - padX,
+        labelY - 6 - padY,
+        stepLabelWidth,
+        stepLabelHeight
+      );
 
       // === BJ TARGET LABEL ===
       if (typeof step.blackjackScore === 'number') {
@@ -1125,6 +1157,15 @@ const PatternRendererImpl = {
         label.y + label.height / 2
       );
       
+      // Register hitbox for the label - make all pattern labels clickable
+      registerPatternHitBox(
+        { ...pattern, feedbackEnabled: true } as Pattern & { feedbackEnabled: boolean },
+        label.x,
+        label.y,
+        label.width,
+        label.height
+      );
+      
       // Draw leader line if available
       if (label.leaderLine) {
         ctx.beginPath();
@@ -1147,7 +1188,20 @@ const PatternRendererImpl = {
           ctx.fillStyle = '#212121'; // Dark gray
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+          const labelText = generatePatternLabel(pattern);
+          ctx.fillText(labelText, labelX, labelY);
+          
+          // Register hitbox for the label
+          const metrics = ctx.measureText(labelText);
+          const labelWidth = metrics.width + 10; // Add padding
+          const labelHeight = 20; // Approximate height
+          registerPatternHitBox(
+            { ...pattern, feedbackEnabled: true },
+            labelX - labelWidth / 2,
+            labelY - labelHeight / 2,
+            labelWidth,
+            labelHeight
+          );
         }
       });
     }
@@ -1165,7 +1219,20 @@ const PatternRendererImpl = {
           ctx.fillStyle = '#212121'; // Dark gray
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+          const labelText = generatePatternLabel(pattern);
+          ctx.fillText(labelText, labelX, labelY);
+          
+          // Register hitbox for the label
+          const metrics = ctx.measureText(labelText);
+          const labelWidth = metrics.width + 10; // Add padding
+          const labelHeight = 20; // Approximate height
+          registerPatternHitBox(
+            { ...pattern, feedbackEnabled: true },
+            labelX - labelWidth / 2,
+            labelY - labelHeight / 2,
+            labelWidth,
+            labelHeight
+          );
         }
       });
     }
@@ -1182,7 +1249,20 @@ const PatternRendererImpl = {
           ctx.fillStyle = '#212121'; // Dark gray
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(generatePatternLabel(pattern), labelX, labelY);
+          const labelText = generatePatternLabel(pattern);
+          ctx.fillText(labelText, labelX, labelY);
+          
+          // Register hitbox for the label
+          const metrics = ctx.measureText(labelText);
+          const labelWidth = metrics.width + 10; // Add padding
+          const labelHeight = 20; // Approximate height
+          registerPatternHitBox(
+            { ...pattern, feedbackEnabled: true },
+            labelX - labelWidth / 2,
+            labelY - labelHeight / 2,
+            labelWidth,
+            labelHeight
+          );
         }
       });
     }

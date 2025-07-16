@@ -1,0 +1,13 @@
+# File: .cursor/rules/approach.mdc
+---
+description: General approach to development and code writing
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: false
+---
+
+# Approach
+- Write clean, concise TypeScript code that's easy for clients/teams to understand.
+- Implement fixes/features simply: Keep files <200 lines (ideally <150). Add // CONSIDER SPLIT if >500 lines.
+- Encourage testing after every change; prioritize core features (e.g., charting, pattern detection, audits) over premature optimization.
+- Use functional/declarative patterns; avoid classes unless required for TwelveData/Supabase integration.
+- Leverage grok-4 MAX for fast iterations: Use Cmd+K in Cursor for natural language prompts; cross-check outputs for accuracy.

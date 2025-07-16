@@ -40,7 +40,8 @@ export function detectEscalators(
   minLength = MIN_ESCALATOR_LENGTH,
   maxStepBars = MAX_STEP_DURATION
 ): EscalatorRun[] {
-  if (!candles || candles.length < minLength) {
+  if (!candles || candles.length === 0) return [];
+  if (candles.length < minLength) {
     logDebug('DEBUG_PATTERN_DETECT', `[EscalatorDetector] Not enough candles: ${candles?.length} min required: ${minLength}`);
     return [];
   }
@@ -418,6 +419,10 @@ function detectRunFromIndex(
   minLength: number,
   maxStepBars: number
 ): EscalatorRun | null {
+  const memo = new Map();
+  const key = `${startIndex}_${minLength}_${maxStepBars}`;
+  if (memo.has(key)) return memo.get(key);
+
   if (startIndex >= haCandles.length - 1) {
     return null;
   }
@@ -473,7 +478,7 @@ function detectRunFromIndex(
 
   const endIndex = startIndex + runLength - 1;
   
-  return {
+  const result = {
     startIndex,
     endIndex,
     direction,
@@ -481,6 +486,8 @@ function detectRunFromIndex(
     averageStepHeight: calculateAverageStepHeight(candles, startIndex, endIndex, direction),
     consistency: calculateConsistency(candles, startIndex, endIndex, direction)
   };
+  memo.set(key, result);
+  return result;
 }
 
 /**

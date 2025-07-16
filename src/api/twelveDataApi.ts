@@ -13,16 +13,84 @@ if (process.env.NODE_ENV === 'development') {
   console.log('[TwelveData API] Initial API key from env:', API_KEY ? `${API_KEY.substring(0, 8)}...` : 'empty');
 }
 
-export const setApiKey = (key: string) => {
+// Encryption helpers
+async function deriveKey(password: string): Promise<CryptoKey> {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits', 'deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: encoder.encode('saltysalt'),
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encrypt(data: string, key: CryptoKey): Promise<string> {
+  const encoder = new TextEncoder();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt(
+    {
+      name: 'AES-GCM',
+      iv
+    },
+    key,
+    encoder.encode(data)
+  );
+  const encryptedArray = new Uint8Array(encrypted);
+  const combined = new Uint8Array(iv.length + encryptedArray.length);
+  combined.set(iv);
+  combined.set(encryptedArray, iv.length);
+  return btoa(String.fromCharCode(...Array.from(combined)));
+}
+
+async function decrypt(encrypted: string, key: CryptoKey): Promise<string> {
+  const combined = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+  const iv = combined.slice(0, 12);
+  const data = combined.slice(12);
+  const decrypted = await crypto.subtle.decrypt(
+    {
+      name: 'AES-GCM',
+      iv
+    },
+    key,
+    data
+  );
+  const decoder = new TextDecoder();
+  return decoder.decode(decrypted);
+}
+
+const PASSWORD = 'trisight-secret'; // In production, derive from user session
+
+export const setApiKey = async (key: string) => {
+  const derivedKey = await deriveKey(PASSWORD);
+  const encryptedKey = await encrypt(key, derivedKey);
+  localStorage.setItem('twelvedata_api_key_enc', encryptedKey);
   if (process.env.NODE_ENV === 'development') {
-    console.log('[TwelveData API] Setting API key:', key ? `${key.substring(0, 8)}...` : 'empty');
+    console.log('[TwelveData API] Set encrypted key');
   }
-  API_KEY = key;
+  API_KEY = key; // Keep in memory
 };
 
-export const getApiKey = () => {
+export const getApiKey = async () => {
+  const stored = localStorage.getItem('twelvedata_api_key_enc');
+  if (stored) {
+    const derivedKey = await deriveKey(PASSWORD);
+    API_KEY = await decrypt(stored, derivedKey);
+  }
   if (process.env.NODE_ENV === 'development') {
-    console.log('[TwelveData API] Getting API key:', API_KEY ? `${API_KEY.substring(0, 8)}...` : 'empty');
+    console.log('[TwelveData API] Got key:', API_KEY ? 'set' : 'empty');
   }
   return API_KEY;
 };
@@ -87,7 +155,7 @@ const apiRequest = async <T>(
   }
 
   try {
-    const apiKey = getApiKey();
+    const apiKey = await getApiKey();
     if (!apiKey) {
       throw new Error('API key not found. Please add it to localStorage with key "twelvedata_api_key"');
     }
@@ -107,11 +175,9 @@ const apiRequest = async <T>(
     const fullUrl = `${url}?${new URLSearchParams({ ...params, apikey: 'YOUR_API_KEY_HIDDEN' }).toString()}`;
     console.log(`API Request URL: ${fullUrl}`);
     
-    console.log('TwelveData API Request:', {
-      url,
-      params: fullParams,
-      fullUrl: `${url}?${new URLSearchParams(fullParams).toString()}`
-    });
+    console.log('API call to endpoint:', endpoint, 'with params keys:', Object.keys(params));
+
+    // Avoid logging full params if sensitive
     
     console.log(`Actual API URL: ${url}?${new URLSearchParams(fullParams).toString()}`);
     
@@ -133,8 +199,8 @@ const apiRequest = async <T>(
     console.log('API Raw Response (first 500 chars):', JSON.stringify(data).substring(0, 500));
     
     // Handle API errors
-    if ((data as any).status === 'error') {
-      const errorMessage = (data as any).message || 'Unknown API error';
+    if ((data as Record<string, unknown>).status === 'error') {
+      const errorMessage = (data as Record<string, unknown>).message || 'Unknown API error';
       console.error(`API Error: ${errorMessage}`);
       throw new Error(`TwelveData API Error: ${errorMessage}`);
     }
@@ -142,11 +208,11 @@ const apiRequest = async <T>(
     // Check if response contains expected data structure
     // Symbol search endpoint returns {data: [...]} instead of {values: [...], meta: {...}}
     if (endpoint === '/symbol_search') {
-      if (!(data as any).data) {
+      if (!(data as Record<string, unknown>).data) {
         console.error('Unexpected symbol search response structure:', data);
         throw new Error('Invalid symbol search response structure');
       }
-    } else if (!(data as any).values && !(data as any).meta) {
+    } else if (!(data as Record<string, unknown>).values && !(data as Record<string, unknown>).meta) {
       console.error('Unexpected API response structure:', data);
       throw new Error('Invalid API response structure');
     }
@@ -157,7 +223,17 @@ const apiRequest = async <T>(
     }
 
     return data as T;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+      console.log(`Request to ${endpoint} aborted`);
+      return { data: [], status: 'aborted' } as T;
+    }
+    if (axios.isAxiosError(error) && error.response?.status === 429 && retryCount > 0) {
+      const backoff = 1000 * Math.pow(2, 3 - retryCount);
+      console.log(`Rate limited, backing off for ${backoff}ms`);
+      await wait(backoff);
+      return apiRequest(endpoint, params, cacheKey, retryCount - 1, signal);
+    }
     console.error(`API request failed: ${endpoint}`, error);
     
     if (retryCount > 0) {

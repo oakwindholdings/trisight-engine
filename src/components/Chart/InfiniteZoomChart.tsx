@@ -150,6 +150,14 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Track previous date range to detect actual changes
   const previousDateRangeRef = useRef<{ start?: Date; end?: Date }>({});
+  
+  // Track previous targetCandles to prevent unnecessary updates
+  const previousTargetCandlesRef = useRef<number>(0);
+
+  // Add separate debouncing for click and double-click to prevent conflicts
+  const lastClickTimeRef = useRef<number>(0);
+  const lastDoubleClickTimeRef = useRef<number>(0);
+  const clickDebounceMs = 100; // Reduced to allow double-clicks
 
   // Reset initialization flag when symbol changes
   useEffect(() => {
@@ -181,6 +189,19 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
   // Get pattern context to trigger detection
   const patternContext = usePatternContext();
 
+  // Create throttled pattern detection to prevent excessive calls
+  const throttledDetectPatterns = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    return (data: CandlestickData[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (patternContext && typeof patternContext.detectPatterns === 'function') {
+          patternContext.detectPatterns(data);
+        }
+      }, 250); // Throttle to max once per 250ms
+    };
+  }, [patternContext]);
+
   // Initialize zoom controller first
   const controller = useInfiniteZoomController({
     interactionCanvasRef,
@@ -203,15 +224,8 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         // If fullData is available, use it for pattern detection; otherwise fall back to processed data
         const dataForPatternDetection = fullData || data;
         
-        if (patternContext && typeof patternContext.detectPatterns === 'function') {
-          // console.log('[InfiniteZoomChart] Calling detectPatterns with', dataForPatternDetection.length, 'candles (full data):', !!fullData);
-          patternContext.detectPatterns(dataForPatternDetection);
-        } else {
-          // console.log('[InfiniteZoomChart] Pattern context not available:', {
-          //   patternContext: !!patternContext,
-          //   hasDetectPatterns: patternContext && typeof patternContext.detectPatterns === 'function'
-          // });
-        }
+        // Use throttled pattern detection to prevent excessive calls
+        throttledDetectPatterns(dataForPatternDetection);
       }
       
       // Don't update indices here - let them be updated by the effect
@@ -341,16 +355,12 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     }
   }, [visibleCandles.length, visibleDataIndices.start, visibleDataIndices.end]);
 
-  // Auto-hydrate patterns when candleData changes (per TriSight Live Data Polling patch)
-  useEffect(() => {
-    if (transformedData.length > 0 && !isInteracting) {
-      console.debug('[InfiniteZoomChart] Auto-hydrating patterns with', transformedData.length, 'candles');
-      evaluateAllPatterns(transformedData);
-    }
-  }, [transformedData, isInteracting]);
+  // REMOVED: Auto-hydrate patterns - This was causing excessive re-renders
+  // Pattern detection is already handled by the zoom controller's onDataUpdate callback
 
-  // Enable live polling for automatic pattern updates (per TriSight Live Data Polling patch)
-  useLivePolling(true);
+  // DISABLED: Enable live polling for automatic pattern updates
+  // Live polling is already handled at the App level to prevent duplicate pattern evaluations
+  // useLivePolling(true);
 
   // Use pattern bus to detect patterns on visible candles
   // console.log('[InfiniteZoomChart] About to call usePatternBus with', candles.length, 'candles (full dataset)');
@@ -433,7 +443,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         patternContext.setBreakoutBoxes([]);
       }
     }
-  }, [patternBusState.events, patternContext.setEvents, patternContext.setEscalatorSteps, patternContext.setBreakoutBoxes, visibleCandles]);
+  }, [patternBusState.events, patternContext.setEvents, patternContext.setEscalatorSteps, patternContext.setBreakoutBoxes]); // Removed visibleCandles dependency
 
   // Dynamic pattern detection state
   const [localPatterns, setLocalPatterns] = useState<Pattern[]>([]);
@@ -508,12 +518,15 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     };
   }, [detectPatternsForVisibleData]);
 
-  // Trigger pattern detection when visible data changes
-  useEffect(() => {
-    if (transformedData.length > 0 && !isLoading) {
-      debouncedPatternDetection();
-    }
-  }, [visibleDataIndices, transformedData.length, isLoading, debouncedPatternDetection]);
+  // DISABLED: Trigger pattern detection when visible data changes
+  // This is redundant as pattern detection is already handled by:
+  // 1. The zoom controller's onDataUpdate callback
+  // 2. The live polling mechanism
+  // useEffect(() => {
+  //   if (transformedData.length > 0 && !isLoading) {
+  //     debouncedPatternDetection();
+  //   }
+  // }, [visibleDataIndices, transformedData.length, isLoading, debouncedPatternDetection]);
 
   // Update visible range when visible data indices change
   useEffect(() => {
@@ -592,12 +605,19 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Handle zoom changes - update visible indices while maintaining focus
   useEffect(() => {
+    // Only proceed if targetCandles actually changed
+    if (previousTargetCandlesRef.current === targetCandles) {
+      return;
+    }
+    previousTargetCandlesRef.current = targetCandles;
+    
     if (transformedData.length > 0 && targetCandles > 0 && indicesInitializedRef.current) {
       const currentStart = visibleDataIndicesRef.current.start;
       const currentEnd = visibleDataIndicesRef.current.end;
       const currentRange = currentEnd - currentStart + 1;
       
-      // Only update if the range has changed (zoom occurred)
+      // Update if the range is different from targetCandles
+      // This ensures we respond to zoom changes
       if (currentRange !== targetCandles) {
         // Calculate the center point of the current view
         const currentCenter = (currentStart + currentEnd) / 2;
@@ -621,20 +641,17 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
         setVisibleDataIndices({ start: newStart, end: newEnd });
         visibleDataIndicesRef.current = { start: newStart, end: newEnd };
         
-        // console.log('[InfiniteZoomChart] Zoom update - visible indices adjusted:', {
-        //   oldRange: currentRange,
-        //   newRange: targetCandles,
-        //   oldIndices: { start: currentStart, end: currentEnd },
-        //   newIndices: { start: newStart, end: newEnd },
-        //   center: currentCenter
-        // });
+        console.log('[InfiniteZoomChart] Zoom applied:', {
+          oldRange: currentRange,
+          newRange: targetCandles,
+          newIndices: { start: newStart, end: newEnd }
+        });
       }
     }
   }, [targetCandles, transformedData.length]);
 
   // Update visible range from pan
   const updateVisibleRangeFromPan = useCallback((translateX: number) => {
-    console.log('[PanDebug] updateVisibleRangeFromPan called with translateX:', translateX);
     const data = transformedData;
     if (data.length === 0) return;
     
@@ -646,8 +663,6 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     const dampingFactor = baseDamping / zoomDamping;
     const dampedTranslateX = translateX * dampingFactor * 50; // Increased from 10
     const candleShift = Math.round(-dampedTranslateX / candleWidth);
-    
-    console.log('[PanDebug] Pan calculations:', { chartWidth, candleWidth, dampingFactor, dampedTranslateX, candleShift });
     
     // Always use ref for current indices to avoid stale state
     const baseStart = visibleDataIndicesRef.current.start;
@@ -665,10 +680,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       endIndex = Math.min(data.length - 1, startIndex + targetCandles);
     }
     
-    console.log('[PanDebug] Calculated indices:', { baseStart, baseEnd, candleShift, newStart: startIndex, newEnd: endIndex, currentStart: visibleDataIndicesRef.current.start, currentEnd: visibleDataIndicesRef.current.end });
-    
     if (startIndex !== visibleDataIndicesRef.current.start || endIndex !== visibleDataIndicesRef.current.end) {
-      console.log('[PanDebug] Updating visible indices to:', { start: startIndex, end: endIndex });
       setVisibleDataIndices({ start: startIndex, end: endIndex });
       
       const visibleData = data.slice(startIndex, endIndex + 1);
@@ -684,8 +696,6 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
           maxPrice
         });
       }
-    } else {
-      console.log('[PanDebug] No index change, skipping update');
     }
   }, [width, targetCandles, transformedData]);
 
@@ -699,102 +709,165 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
 
   // Handle pattern selection
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    // Debounce rapid clicks
+    const now = Date.now();
+    if (now - lastClickTimeRef.current < clickDebounceMs) {
+      return;
+    }
+    lastClickTimeRef.current = now;
+
     const canvas = event.currentTarget;
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
-    if (process.env.NODE_ENV === 'development') {
-      // console.log('InfiniteZoomChart - Canvas clicked at:', { x, y });
-    }
+    logDebug('chart.interaction', '[InfiniteZoomChart] Canvas clicked at:', { x, y, event: 'click' });
     
     // Check if a pattern was clicked using hit detection
     const hitPattern = getPatternAtPoint(x, y, CHART_MARGIN);
     
     if (hitPattern && patternContext) {
-      logDebug('chart.interaction', 'Pattern clicked via hit detection:', {
-        pattern: hitPattern,
-        type: hitPattern.type,
-        confidence: hitPattern.confidence
-      });
-      
-      // Set selected pattern to open modal
-      patternContext.setSelectedPattern(hitPattern);
+      // Use setTimeout to defer state updates and prevent blocking
+      setTimeout(() => {
+        logDebug('chart.interaction', 'Pattern clicked via hit detection:', {
+          pattern: hitPattern,
+          type: hitPattern.type,
+          confidence: hitPattern.confidence,
+          feedbackEnabled: (hitPattern as any).feedbackEnabled
+        });
+        
+        // Check if pattern has feedback enabled
+        if ((hitPattern as any).feedbackEnabled) {
+          // Open feedback modal for this pattern
+          patternContext.setSelectedPatternForFeedback?.(hitPattern);
+        } else {
+          // Set selected pattern to open normal pattern details modal
+          patternContext.setSelectedPattern(hitPattern);
+        }
+      }, 0);
       return; // Exit early if pattern was clicked
     }
     
-    if (transformedData.length === 0) {
-      if (process.env.NODE_ENV === 'development') {
-        // console.log('InfiniteZoomChart - No chart data available');
-      }
-      return;
-    }
-    
-    // Create scales for pattern detection
-    const visibleData = transformedData.slice(visibleDataIndices.start, visibleDataIndices.end + 1);
-    const timeScale = createSequentialTimeScale(
-      width - CHART_MARGIN.left - CHART_MARGIN.right,
-      visibleData,
-      [0, visibleData.length - 1]
-    );
-    const priceScale = createPriceScale(
-      height - CHART_MARGIN.top - CHART_MARGIN.bottom,
-      [visibleRange.minPrice, visibleRange.maxPrice]
-    );
-    
-    // Find pattern label at click position
-    let clickedPattern: Pattern | null = null;
-    const allPatterns = [...patterns];
-    
-    if (process.env.NODE_ENV === 'development') {
-      // console.log('InfiniteZoomChart - Checking patterns:', allPatterns.length, 'patterns');
-    }
-    
-    // Check each pattern directly
-    for (const pattern of allPatterns) {
-      // Simple bounds check for pattern area (can be enhanced later)
-      const startIndex = transformedData.findIndex(c => new Date(c.timestamp) >= pattern.startTime);
-      const endIndex = transformedData.findIndex(c => new Date(c.timestamp) >= pattern.endTime);
-      
-      if (startIndex >= 0 && endIndex >= 0) {
-        const xStart = timeScale.scale(pattern.startTime);
-        const xEnd = timeScale.scale(pattern.endTime);
-        
-        // Check if click is within pattern horizontal bounds
-        if (x >= xStart && x <= xEnd) {
-          clickedPattern = pattern;
-          break;
-        }
-      }
-    }
-    
-    if (process.env.NODE_ENV === 'development') {
-      // console.log('InfiniteZoomChart - Click result:', clickedPattern ? 'Pattern found' : 'No pattern found');
-    }
-    
-    if (clickedPattern && onPatternSelect) {
-      if (process.env.NODE_ENV === 'development') {
-        // console.log('InfiniteZoomChart - Calling onPatternSelect with pattern:', clickedPattern.type);
-      }
-      onPatternSelect(clickedPattern);
-    }
-  }, [patterns, transformedData, visibleDataIndices, visibleRange, onPatternSelect, width, height]);
+    // No pattern was clicked - do nothing
+    logDebug('chart.interaction', '[InfiniteZoomChart] No pattern at click location');
+  }, [patternContext]);
 
   const handleCanvasDoubleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    // Debounce rapid double-clicks with separate timer
+    const now = Date.now();
+    if (now - lastDoubleClickTimeRef.current < 200) {
+      return;
+    }
+    lastDoubleClickTimeRef.current = now;
+
+    // CRITICAL: Ensure pan state is cleared on double-click
+    if (panController?.endPan) {
+      panController.endPan();
+    }
+
     const canvas = event.currentTarget;
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+    
+    console.log('[InfiniteZoomChart] Canvas double-clicked at:', { x, y });
+    logDebug('chart.interaction', '[InfiniteZoomChart] Canvas double-clicked at:', { x, y, event: 'doubleClick' });
+    
     const hitPattern = getPatternAtPoint(x, y, CHART_MARGIN);
-    if (hitPattern && patternContext && hitPattern.type === PatternType.BLACKJACK) {
-      patternContext.setSelectedPattern(hitPattern);
-      // Optionally trigger modal open if not automatic
+    console.log('[InfiniteZoomChart] Hit pattern:', hitPattern ? {
+      type: hitPattern.type,
+      id: hitPattern.id,
+      confidence: hitPattern.confidence,
+      feedbackEnabled: (hitPattern as any).feedbackEnabled
+    } : 'none');
+    
+    if (hitPattern && patternContext) {
+      console.log('[InfiniteZoomChart] Before setTimeout - patternContext methods:', {
+        hasSetSelectedPattern: !!patternContext.setSelectedPattern,
+        hasSetSelectedPatternForFeedback: !!patternContext.setSelectedPatternForFeedback,
+        currentSelectedPattern: patternContext.selectedPattern?.type,
+        currentSelectedPatternForFeedback: patternContext.selectedPatternForFeedback?.type
+      });
+
+      // Use setTimeout to defer state updates
+      setTimeout(() => {
+        if (hitPattern.type === PatternType.BLACKJACK) {
+          console.log('[InfiniteZoomChart] Opening Blackjack modal');
+          console.log('[InfiniteZoomChart] patternContext.setSelectedPattern:', typeof patternContext.setSelectedPattern);
+          console.log('[InfiniteZoomChart] Calling setSelectedPattern with:', hitPattern);
+          patternContext.setSelectedPattern(hitPattern);
+        } else {
+          // For all other patterns, use the feedback modal
+          console.log('[InfiniteZoomChart] Opening feedback modal for:', hitPattern.type);
+          console.log('[InfiniteZoomChart] patternContext.setSelectedPatternForFeedback:', typeof patternContext.setSelectedPatternForFeedback);
+          console.log('[InfiniteZoomChart] Calling setSelectedPatternForFeedback with:', hitPattern);
+          
+          if (patternContext.setSelectedPatternForFeedback) {
+            patternContext.setSelectedPatternForFeedback(hitPattern);
+            console.log('[InfiniteZoomChart] Called setSelectedPatternForFeedback successfully');
+          } else {
+            console.error('[InfiniteZoomChart] setSelectedPatternForFeedback is not available!');
+          }
+        }
+      }, 0);
     }
-  }, [patternContext]);
+  }, [patternContext, panController]);
+
+  // Verify double-click handler is attached
+  useEffect(() => {
+    if (interactionCanvasRef.current) {
+      console.log('[InfiniteZoomChart] Interaction canvas ready, double-click handler attached');
+      
+      // Add a test listener to verify events are reaching the canvas
+      const testListener = (e: MouseEvent) => {
+        console.log('[InfiniteZoomChart] TEST: Native double-click event received');
+      };
+      
+      interactionCanvasRef.current.addEventListener('dblclick', testListener);
+      
+      return () => {
+        if (interactionCanvasRef.current) {
+          interactionCanvasRef.current.removeEventListener('dblclick', testListener);
+        }
+      };
+    }
+  }, []);
+
+  // Add non-passive wheel event listener for zooming
+  useEffect(() => {
+    const canvas = interactionCanvasRef.current;
+    if (!canvas || !controller.handleWheel) return;
+
+    // Create a native event handler that calls the controller's handleWheel
+    const handleNativeWheel = (e: WheelEvent) => {
+      // Create a React synthetic event-like object
+      const syntheticEvent = {
+        ...e,
+        currentTarget: canvas,
+        preventDefault: () => e.preventDefault(),
+        stopPropagation: () => e.stopPropagation(),
+        nativeEvent: e,
+        deltaY: e.deltaY,
+        deltaX: e.deltaX,
+        clientX: e.clientX,
+        clientY: e.clientY
+      } as unknown as React.WheelEvent<HTMLCanvasElement>;
+      
+      controller.handleWheel(syntheticEvent);
+    };
+
+    // Add non-passive wheel listener
+    canvas.addEventListener('wheel', handleNativeWheel, { passive: false });
+    
+    return () => {
+      canvas.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [controller.handleWheel]);
 
   // Render chart when data or view changes
   useEffect(() => {
-    if (isZooming) return; // Skip heavy renders
+    // Skip rendering only during pure hover (not zoom/pan)
+    // This prevents the 600ms+ re-renders when hovering over labels
 
     if (process.env.NODE_ENV === 'development') {
       logDebug('DEBUG_RENDER_FLOW', '[InfiniteZoomChart] Triggering renderChart:', { 
@@ -1138,6 +1211,21 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Add keyboard handler for arrow keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        // Pan left
+        panController.handlePanLeft();
+      } else if (e.key === 'ArrowRight') {
+        // Pan right
+        panController.handlePanRight();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [panController]);
+
   // Auto-scale when data is first loaded or changes significantly
   useEffect(() => {
     if (transformedData.length > 0 && zoomToFitController && !indicesInitializedRef.current) {
@@ -1251,16 +1339,25 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
           <canvas 
             ref={interactionCanvasRef} 
             className="interaction-canvas"
-            onDoubleClick={handleCanvasDoubleClick}
+            width={width}
+            height={height}
             onMouseDown={panController.handleMouseDown}
-            onWheel={controller.handleWheel}
-            onTouchStart={panController.handleTouchStart}
-            onTouchMove={(e) => {
-              panController.handleTouchMove(e);
-              controller.handlePinch(e);
+            onMouseMove={panController.handleMouseMove}
+            onMouseUp={panController.handleMouseUp}
+            onMouseLeave={(e) => {
+              panController.handleMouseLeave(e);
+              setIsInteracting(false); // Clear interaction flag when leaving
             }}
+            onMouseEnter={() => {
+              setIsInteracting(true); // Set interaction flag to prevent re-renders while hovering
+            }}
+            onClick={handleCanvasClick}
+            onDoubleClick={handleCanvasDoubleClick}
+            onTouchStart={panController.handleTouchStart}
+            onTouchMove={panController.handleTouchMove}
             onTouchEnd={panController.handleTouchEnd}
-            style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair' }}
+            style={{ cursor: panState.isPanning ? 'grabbing' : 'crosshair', pointerEvents: 'all' }}
+            aria-label="Interactive stock chart"
           />
           
           {/* 📤 CSV Export Controls */}
@@ -1301,20 +1398,20 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
           )}
           
           {isLoading && (
-            <div className="loading-overlay">
+            <div className="loading-overlay" style={{ pointerEvents: 'none' }}>
               <div className="loading-spinner" />
               <div className="loading-text">Loading {currentResolution?.label} data...</div>
             </div>
           )}
           
           {error && (
-            <div className="error-overlay">
+            <div className="error-overlay" style={{ pointerEvents: 'none' }}>
               <div className="error-message">{error.message}</div>
             </div>
           )}
           
           {!isLoading && !error && transformedData.length === 0 && (
-            <div className="error-overlay">
+            <div className="error-overlay" style={{ pointerEvents: 'none' }}>
               <div className="error-message">No data available. Please check symbol and date range.</div>
             </div>
           )}

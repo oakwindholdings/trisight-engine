@@ -13,14 +13,18 @@
 }
 
 .main-canvas,
-.patterns-canvas,
+.patterns-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
 .interaction-canvas {
   position: absolute;
   top: 0;
   left: 0;
-}
-
-.interaction-canvas {
+  pointer-events: all;
   cursor: crosshair;
   z-index: 10;
 }
@@ -51,6 +55,7 @@
   align-items: center;
   justify-content: center;
   z-index: 50;
+  pointer-events: none;
 }
 
 .loading-spinner {
@@ -87,6 +92,7 @@
   align-items: center;
   justify-content: center;
   z-index: 50;
+  pointer-events: none;
 }
 
 .error-message {

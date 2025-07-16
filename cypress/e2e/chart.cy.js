@@ -1,0 +1,1 @@
+describe('Chart', () => { it('zooms', () => { cy.visit('/'); cy.get('canvas').trigger('wheel', { deltaY: -100 }); }); }); 

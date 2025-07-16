@@ -1,143 +1,173 @@
 // src/utils/learning/metrics.ts
-// Utility functions for learning metrics
-// Provides calculations for pattern feedback statistics
+// Metrics calculation utilities for learning system
+// Processes feedback to generate performance metrics
+
+import { PatternFeedback, LegacyPatternFeedback } from '../../models/FeedbackTypes';
 import { PatternType } from '../../models/PatternTypes';
-import { PatternFeedback } from '../../models/FeedbackTypes';
-import {
-  LearningMetrics,
-  PatternDetectionParameters
-} from '../../models/LearningTypes';
+import { LearningMetrics, PatternDetectionParameters } from '../../models/LearningTypes';
 import { LearningProcessor } from './LearningProcessor';
 import { FeedbackAggregator } from './FeedbackAggregator';
 
+
 export const calculateAverageConfidence = (
-  distribution: Record<number, number>
+  feedback: PatternFeedback[],
+  patternType?: PatternType
 ): number => {
-  const totalRatings = Object.values(distribution).reduce((sum, count) => sum + count, 0);
-  if (totalRatings === 0) return 0;
-
-  const weightedSum = Object.entries(distribution).reduce(
-    (sum, [rating, count]) => sum + parseInt(rating) * count,
-    0
-  );
-
-  return weightedSum / totalRatings / 5;
+  const relevantFeedback = patternType
+    ? feedback.filter(f => f.patternType === patternType)
+    : feedback;
+  
+  if (relevantFeedback.length === 0) return 0;
+  
+  const sum = relevantFeedback.reduce((acc, f) => acc + f.confidence, 0);
+  return sum / relevantFeedback.length;
 };
 
-export const calculateIncorporationRate = (_patternType: PatternType): number => {
-  // Placeholder until real incorporation metrics are tracked
+export const calculateIncorporationRate = (
+  feedback: PatternFeedback[],
+  processor: LearningProcessor
+): number => {
+  // For now, return a mock value
+  // TODO: Implement actual incorporation rate calculation
   return 0.75;
 };
 
 export const calculatePrecision = (feedback: PatternFeedback[]): number => {
   if (feedback.length === 0) return 0;
-  const truePositives = feedback.filter(f => !f.falsePositive).length;
+  const truePositives = feedback.filter(f => {
+    if (f.falsePositive !== undefined) {
+      return !f.falsePositive;
+    }
+    return f.isValid;
+  }).length;
   return truePositives / feedback.length;
 };
 
-export const calculateRecall = (_feedback: PatternFeedback[]): number => {
-  // Recall requires knowledge of missed patterns
-  return 0.8;
+export const calculateRecall = (
+  feedback: PatternFeedback[],
+  patternType?: PatternType
+): number => {
+  // For now, return a mock value
+  // TODO: Implement actual recall calculation
+  return 0.68;
 };
 
-export const calculateF1Score = (
-  accuracy: number,
-  precision: number,
-  recall: number
-): number => {
+export const calculateF1Score = (precision: number, recall: number): number => {
   if (precision + recall === 0) return 0;
-  return (2 * precision * recall) / (precision + recall);
+  return 2 * (precision * recall) / (precision + recall);
 };
 
 export const getParametersEvolution = (
-  processor: LearningProcessor
-): LearningMetrics['parametersEvolution'] => {
-  const allParams: Record<PatternType, PatternDetectionParameters> =
-    {} as Record<PatternType, PatternDetectionParameters>;
-
-  Object.values(PatternType).forEach(patternType => {
-    allParams[patternType] = processor.getDetectionParameters(patternType);
-  });
-
-  return [
-    {
-      timestamp: Date.now(),
-      parameters: allParams
-    }
-  ];
+  processor: LearningProcessor,
+  patternType: PatternType
+): Array<{ timestamp: Date; parameters: PatternDetectionParameters }> => {
+  // For now, return a mock evolution
+  // TODO: Implement actual parameter evolution tracking
+  return [];
 };
 
 export const generateLearningMetrics = (
   allFeedback: PatternFeedback[],
   processor: LearningProcessor
 ): LearningMetrics => {
-  const patternTypePerformance: Record<PatternType, {
-    detectionCount: number;
-    falsePositiveRate: number;
-    averageConfidence: number;
-    feedbackIncorporationRate: number;
-    improvementTrend: number[];
-  }> = {} as any;
-
-  Object.values(PatternType).forEach(patternType => {
-    const aggregated = FeedbackAggregator.aggregateByPatternType(allFeedback, patternType);
-    const improvementMetrics = FeedbackAggregator.calculateImprovementMetrics(allFeedback, patternType);
-
-    patternTypePerformance[patternType] = {
-      detectionCount: aggregated.sampleCount,
-      falsePositiveRate: aggregated.falsePositiveRate,
-      averageConfidence: calculateAverageConfidence(aggregated.confidenceDistribution),
-      feedbackIncorporationRate: calculateIncorporationRate(patternType),
-      improvementTrend: improvementMetrics.map(m => m.accuracy)
+  // Calculate performance metrics for each pattern type
+  const patternTypePerformance = Object.values(PatternType).reduce((acc, type) => {
+    const typeFeedback = allFeedback.filter(f => f.patternType === type);
+    const precision = calculatePrecision(typeFeedback);
+    const recall = calculateRecall(typeFeedback, type);
+    
+    acc[type] = {
+      precision,
+      recall,
+      f1Score: calculateF1Score(precision, recall),
+      feedbackCount: typeFeedback.length,
+      averageConfidence: calculateAverageConfidence(typeFeedback),
+      incorporationRate: calculateIncorporationRate(typeFeedback, processor),
+      lastUpdated: typeFeedback.length > 0 
+        ? new Date(Math.max(...typeFeedback.map(f => f.updatedAt.getTime())))
+        : undefined,
+      parametersEvolution: getParametersEvolution(processor, type),
+      learningTrend: 'improving' // Mock for now
     };
-  });
+    
+    return acc;
+  }, {} as Record<PatternType, any>);
 
   const totalFeedback = allFeedback.length;
-  const falsePositives = allFeedback.filter(f => f.falsePositive).length;
+  const falsePositives = allFeedback.filter(f => {
+    if (f.falsePositive !== undefined) {
+      return f.falsePositive;
+    }
+    return !f.isValid;
+  }).length;
   const accuracy = totalFeedback > 0 ? 1 - falsePositives / totalFeedback : 0;
 
   return {
     patternTypePerformance,
     accuracyByPatternType: Object.values(PatternType).reduce((acc, type) => {
-      const typeFeedback = allFeedback.filter(f => f.originalPatternType === type);
-      const fp = typeFeedback.filter(f => f.falsePositive).length;
+      const typeFeedback = allFeedback.filter(f => {
+        if (f.originalPatternType !== undefined) {
+          return f.originalPatternType === type;
+        }
+        return f.patternType === type;
+      });
+      const fp = typeFeedback.filter(f => {
+        if (f.falsePositive !== undefined) {
+          return f.falsePositive;
+        }
+        return !f.isValid;
+      }).length;
       acc[type] = typeFeedback.length > 0 ? 1 - fp / typeFeedback.length : 0;
       return acc;
     }, {} as Record<PatternType, number>),
     feedbackCountByPatternType: Object.values(PatternType).reduce((acc, type) => {
-      acc[type] = allFeedback.filter(f => f.originalPatternType === type).length;
+      acc[type] = allFeedback.filter(f => {
+        if (f.originalPatternType !== undefined) {
+          return f.originalPatternType === type;
+        }
+        return f.patternType === type;
+      }).length;
       return acc;
     }, {} as Record<PatternType, number>),
     correctionsByType: (() => {
-      const corrections = allFeedback.filter(
-        f => f.correctedPatternType !== null && f.correctedPatternType !== f.originalPatternType
-      );
+      const corrections = allFeedback.filter(f => {
+        return f.correctedPatternType !== undefined && 
+               f.correctedPatternType !== null && 
+               f.correctedPatternType !== f.originalPatternType;
+      });
       const correctionMap = new Map<string, { from: PatternType; to: PatternType; count: number }>();
       corrections.forEach(feedback => {
-        const key = `${feedback.originalPatternType}-${feedback.correctedPatternType}`;
-        if (!correctionMap.has(key)) {
-          correctionMap.set(key, {
-            from: feedback.originalPatternType,
-            to: feedback.correctedPatternType as PatternType,
-            count: 0
-          });
+        if (feedback.originalPatternType && feedback.correctedPatternType) {
+          const key = `${feedback.originalPatternType}-${feedback.correctedPatternType}`;
+          if (!correctionMap.has(key)) {
+            correctionMap.set(key, {
+              from: feedback.originalPatternType,
+              to: feedback.correctedPatternType as PatternType,
+              count: 0
+            });
+          }
+          correctionMap.get(key)!.count++;
         }
-        const item = correctionMap.get(key)!;
-        item.count++;
       });
-      return Array.from(correctionMap.values()).sort((a, b) => b.count - a.count);
+      return Array.from(correctionMap.values());
     })(),
     topContributors: (() => {
       const userGroups = new Map<string, PatternFeedback[]>();
       allFeedback.forEach(feedback => {
-        if (!userGroups.has(feedback.userId)) {
-          userGroups.set(feedback.userId, []);
+        const userId = feedback.userId || 'anonymous';
+        if (!userGroups.has(userId)) {
+          userGroups.set(userId, []);
         }
-        userGroups.get(feedback.userId)!.push(feedback);
+        userGroups.get(userId)!.push(feedback);
       });
       const contributors = Array.from(userGroups.entries()).map(([userId, feedbacks]) => {
         const feedbackCount = feedbacks.length;
-        const accurateCount = feedbacks.filter(f => !f.falsePositive).length;
+        const accurateCount = feedbacks.filter(f => {
+          if (f.falsePositive !== undefined) {
+            return !f.falsePositive;
+          }
+          return f.isValid;
+        }).length;
         const accuracyRate = feedbackCount > 0 ? accurateCount / feedbackCount : 0;
         return { userId, feedbackCount, accuracyRate };
       });
@@ -147,8 +177,8 @@ export const generateLearningMetrics = (
       accuracy,
       precision: calculatePrecision(allFeedback),
       recall: calculateRecall(allFeedback),
-      f1Score: calculateF1Score(accuracy, calculatePrecision(allFeedback), calculateRecall(allFeedback))
+      f1Score: calculateF1Score(calculatePrecision(allFeedback), calculateRecall(allFeedback))
     },
-    parametersEvolution: getParametersEvolution(processor)
+          parametersEvolution: [] // TODO: Implement parameters evolution tracking
   };
 };

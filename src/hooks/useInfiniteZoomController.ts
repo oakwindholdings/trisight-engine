@@ -168,7 +168,8 @@ export const useInfiniteZoomController = (
     const normalized = 1 - Math.max(0, Math.min(1, (zoom - 0.1) / 10));
     const logValue = logMin + normalized * (logMax - logMin);
     
-    return Math.round(Math.exp(logValue));
+    const result = Math.round(Math.exp(logValue));
+    return result;
   }, []);
 
   // Fetch data at the appropriate resolution
@@ -407,7 +408,7 @@ export const useInfiniteZoomController = (
   const { handleWheel: smoothHandleWheel, zoomTo: smoothZoomTo } = useSmoothZoom(zoomLevel, {
     minZoom: 0.1,
     maxZoom: 10,
-    zoomSensitivity: 0.0008,  // Reduced from 0.002 for less sensitive zoom
+    zoomSensitivity: 0.003,  // Increased for more responsive zoom
     smoothingFactor: 0.15,
     onZoomChange: handleZoomChange
   });
@@ -493,7 +494,7 @@ export const useInfiniteZoomController = (
     // Skip entirely if auto-fetch is disabled and no external data yet
     if (disableAutoFetch && (!externalData || externalData.length === 0)) {
       logDebug('DEBUG_DATA_FETCH', '[useInfiniteZoomController] Auto-fetch disabled and no external data, skipping');
-      return;
+      return () => { abortController.abort(); };
     }
     
     // If external data is provided, use it instead of fetching
@@ -514,7 +515,7 @@ export const useInfiniteZoomController = (
       onDataUpdate(externalData, currentResolution);
       setLoading(false);
       setError(null);
-      return;
+      return () => { abortController.abort(); };
     }
     
     // Check cache first
@@ -528,13 +529,16 @@ export const useInfiniteZoomController = (
       setData(cached.data);
       onDataUpdate(cached.data, currentResolution);
       setLoading(false);
-      return;
+      return () => { abortController.abort(); };
     }
     
     // Mark that we're loading data
     isLoadingData.current = true;
     
-    fetchDataAtResolution(currentResolution);
+    fetchDataAtResolution(currentResolution).then(() => {
+      // Cleanup function to abort request if component unmounts or effect re-runs
+      return () => { abortController.abort(); };
+    });
     
     // Cleanup function to abort request if component unmounts or effect re-runs
     return () => {

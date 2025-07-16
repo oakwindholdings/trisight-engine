@@ -148,8 +148,11 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
         return null;
       }
 
+      // Handle both new and legacy feedback formats
+      const patternType = (feedback as any).originalPatternType || feedback.patternType;
+      
       // Snapshot current params
-      const snapshot = JSON.parse(JSON.stringify(learningProcessor.getDetectionParameters(feedback.originalPatternType)));
+      const snapshot = JSON.parse(JSON.stringify(learningProcessor.getDetectionParameters(patternType)));
 
       // Save feedback to storage
       FeedbackStorage.saveFeedback(feedback);
@@ -158,7 +161,7 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
       const result = learningProcessor.processFeedback(feedback);
 
       // Save updated parameters
-      FeedbackStorage.saveParameters(feedback.originalPatternType, result.updatedParameters);
+      FeedbackStorage.saveParameters(patternType, result.updatedParameters);
 
       // Refresh metrics
       await refreshMetrics();
@@ -247,11 +250,12 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
       try {
         const lastFeedback = feedbackHistory[feedbackHistory.length - 1];
         
-        // Ensure submittedAt is a valid Date object
-        if (!(lastFeedback.submittedAt instanceof Date)) {
+        // Ensure submittedAt is a valid Date object (handle legacy format)
+        const submittedAt = (lastFeedback as any).submittedAt || lastFeedback.createdAt;
+        if (!(submittedAt instanceof Date)) {
           // Try to convert string to Date if needed
-          if (typeof lastFeedback.submittedAt === 'string') {
-            lastFeedback.submittedAt = new Date(lastFeedback.submittedAt);
+          if (typeof submittedAt === 'string') {
+            (lastFeedback as any).submittedAt = new Date(submittedAt);
           } else {
             console.error('Invalid submittedAt date format in feedback:', lastFeedback);
             return; // Skip processing this feedback

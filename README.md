@@ -34,18 +34,33 @@ Detection and visualization of six key pattern types:
 
 ### Feedback Collection
 
-- Interactive pattern selection
-- Modal dialog for detailed feedback collection
-- Pattern type correction capability
-- Boundary adjustment tools
-- Confidence rating system
+- **Interactive Pattern Selection**: Click on any pattern with feedback enabled to provide input
+- **Comprehensive Feedback Modal**: 
+  - Accuracy rating slider (1-5 scale)
+  - Confidence level assessment (0-100%)
+  - Timing evaluation (early/perfect/late)
+  - Validity verification with reason selection
+  - Optional notes for additional context
+- **Privacy-First Approach**:
+  - Anonymous feedback collection
+  - Granular consent management
+  - 90-day automatic data retention
+  - GDPR-compliant data handling
 
 ### Learning System
 
-- Automated feedback processing
-- Pattern parameter adjustments based on user feedback
-- Accuracy metrics dashboard
-- Model export/import functionality
+- **Automated Feedback Processing**:
+  - Real-time pattern learning engine
+  - Batch processing at configurable thresholds
+  - Weighted metric calculations based on user confidence
+- **Dynamic Pattern Adjustments**:
+  - Confidence threshold adaptation
+  - Timing offset corrections
+  - Pattern enablement based on validity rates
+- **Performance Monitoring**:
+  - Feedback velocity tracking
+  - Accuracy trend analysis
+  - Model version management
 
 ## Technical Architecture
 

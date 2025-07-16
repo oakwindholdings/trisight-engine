@@ -1,0 +1,14 @@
+# File: .cursor/rules/building-process.mdc
+---
+description: Step-by-step process for building features
+alwaysApply: true
+---
+
+# Building Process
+- STEP 1: Answer user's questions fully; state agreement/disagreement.
+- STEP 2: Write two detailed paragraphs reasoning on what/how, minimizing changes.
+- STEP 3: List remaining steps; choose next one.
+- STEP 4: Write code for current step only.
+- STEP 5: Explain every change: what, where, why.
+- STEP 6: Provide concise test instructions.
+- DO NOT SKIP STEPS!

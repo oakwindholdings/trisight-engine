@@ -90,7 +90,7 @@ export interface PivotPattern extends PatternBase {
   priceReactions: number[];     // Price reactions at touch points
   strengthScore: number;        // Overall strength score
   adaptiveZoneWidth: number;    // Width of the pivot zone adjusted for volatility
-  relatedPatternIds?: string[]; // IDs of related patterns
+  relatedPatternIds?: string[] | undefined; // IDs of related patterns
 }
 
 export enum RocketmanSignalStrength {
@@ -113,7 +113,7 @@ export interface RocketmanPattern extends PatternBase {
   volumeConfirmation: number; // Volume confirmation score (0-1)
   signalStrength: RocketmanSignalStrength; // Classification of pattern strength
   adaptiveThreshold: number;  // Adjusted threshold based on market conditions
-  relatedPatternIds?: string[]; // IDs of related patterns
+  relatedPatternIds?: string[] | undefined; // IDs of related patterns
 }
 
 export interface EscalatorPattern extends PatternBase {
@@ -133,7 +133,7 @@ export interface EscalatorPattern extends PatternBase {
   volumeChanges: number[];       // Volume percent changes for each step
   averageStepHeight: number;     // Average price movement per step
   stepConsistency: number;       // Measure of how consistent the steps are (0-1)
-  relatedPatternIds?: string[];  // IDs of related patterns
+  relatedPatternIds?: string[] | undefined;  // IDs of related patterns
 }
 
 export interface BlackjackPattern extends PatternBase {
@@ -144,7 +144,7 @@ export interface BlackjackPattern extends PatternBase {
   signalStrength: BlackjackSignalStrength;
   priceChange: number[];           // Price percent changes
   volumeChange: number[];          // Volume percent changes
-  relatedPatternIds?: string[];    // IDs of related patterns
+  relatedPatternIds?: string[] | undefined;    // IDs of related patterns
 }
 
 export interface GoldenCandlePattern extends PatternBase {
@@ -177,6 +177,33 @@ export type Pattern =
   | BlackjackPattern
   | GoldenCandlePattern
   | BreakoutBoxPattern;
+
+// Enhanced pattern with feedback metadata
+export interface PatternSignal extends PatternBase {
+  // Feedback metadata
+  feedbackEnabled: boolean;
+  feedbackId?: string;
+  clickable: boolean;
+  
+  // Visual metadata for enhanced rendering
+  visualMetadata?: {
+    labelPosition: 'top' | 'bottom' | 'left' | 'right';
+    showConfidenceBar: boolean;
+    highlightOnHover: boolean;
+    pulseAnimation?: boolean;
+    customColor?: string;
+  };
+  
+  // Learning system metadata
+  modelVersion: string;
+  detectedAt: Date;
+  adjustmentHistory?: Array<{
+    timestamp: Date;
+    previousConfidence: number;
+    newConfidence: number;
+    reason: string;
+  }>;
+}
 
 export interface PatternStyle {
   color: string;

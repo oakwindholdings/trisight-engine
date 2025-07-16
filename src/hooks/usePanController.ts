@@ -1,9 +1,11 @@
 // src/hooks/usePanController.ts
-// Handles pan/drag interactions for chart navigation
-// Manages momentum-based scrolling and boundary constraints
+// Hook for handling pan gestures on the chart canvas
+// Manages pan state and momentum scrolling
 
-import { useCallback, useRef, useEffect } from 'react';
-import { throttle, GESTURE_THROTTLE_CONFIG } from '../utils/gestureThrottle';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { logDebug } from '../utils/debug';
+
+const DEBUG_PAN = false; // Toggle for pan debugging
 
 export interface PanState {
   isPanning: boolean;
@@ -13,170 +15,187 @@ export interface PanState {
   momentum: number;
 }
 
+interface UsePanControllerProps {
+  panState: PanState;
+  setPanState: React.Dispatch<React.SetStateAction<PanState>>;
+  updateVisibleRangeFromPan: (translateX: number) => void;
+  targetCandles: number;
+}
+
+const MOMENTUM_DECAY = 0.95;
+const MOMENTUM_THRESHOLD = 0.5;
+const DOUBLE_CLICK_DELAY = 300; // ms
+
 export const usePanController = (
   panState: PanState,
   setPanState: React.Dispatch<React.SetStateAction<PanState>>,
-  onPanUpdate: (translateX: number) => void,
-  targetCandles: number = 100
+  updateVisibleRangeFromPan: (translateX: number) => void,
+  targetCandles: number
 ) => {
-  const animationRef = useRef<number | null>(null);
-  const translateXRef = useRef(0);
-  const velocityRef = useRef(0);
-  const lastTimeRef = useRef(0);
-  const startXRef = useRef(0);
-  const lastClientXRef = useRef(0);
-
-  // Handle momentum animation
-  const animateMomentum = useCallback(() => {
-    if (Math.abs(velocityRef.current) < 0.1) {
-      velocityRef.current = 0;
-      return;
-    }
-
-    // Apply friction
-    velocityRef.current *= 0.92;
-    
-    translateXRef.current += velocityRef.current;
-
-    setPanState(prev => ({
-      ...prev,
-      translateX: translateXRef.current
-    }));
-
-    onPanUpdate(translateXRef.current);
-
-    if (Math.abs(velocityRef.current) > 0.5) {
-      animationRef.current = requestAnimationFrame(animateMomentum);
-    }
-  }, [setPanState, onPanUpdate]);
-
-  // Raw pan update logic
-  const _updatePanImpl = useCallback((clientX: number) => {
-    console.log('[PanDebug] updatePanImpl called with clientX:', clientX);
-    if (!panState.isPanning) return;
-
-    const currentTime = Date.now();
-    const deltaTime = currentTime - lastTimeRef.current;
-    const deltaX = clientX - startXRef.current;
-    const deltaX_frame = clientX - lastClientXRef.current;
-    const newTranslateX = translateXRef.current + deltaX;
-
-    // Calculate velocity for momentum
-    if (deltaTime > 0) {
-      // Reduced velocity calculation with zoom-aware damping
-      const baseDamping = 0.1;
-      const zoomDamping = 100 / targetCandles;
-      const dampingFactor = baseDamping / zoomDamping;
-      velocityRef.current = (deltaX_frame / deltaTime * 16) * dampingFactor; // Increased from 16
-    }
-
-    lastTimeRef.current = currentTime;
-    lastClientXRef.current = clientX;
-
-    setPanState(prev => ({
-      ...prev,
-      translateX: newTranslateX
-    }));
-
-    onPanUpdate(newTranslateX);
-  }, [panState.isPanning, setPanState, onPanUpdate, targetCandles]);
-
-  // Throttled pan update
-  // const updatePan = useRef(
-  //   throttle(_updatePanImpl, GESTURE_THROTTLE_CONFIG.PAN_DEBOUNCE_MS)
-  // ).current;
-
-  const endPanRef = useRef<() => void>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastClickTimeRef = useRef<number>(0);
   const globalMouseMoveRef = useRef<((e: MouseEvent) => void) | null>(null);
   const globalMouseUpRef = useRef<((e: MouseEvent) => void) | null>(null);
-  const globalMouseLeaveRef = useRef<((e: MouseEvent) => void) | null>(null);
+  
+  // Add ref to track current pan state to avoid stale closures
+  const panStateRef = useRef(panState);
+  useEffect(() => {
+    panStateRef.current = panState;
+  }, [panState]);
 
-  // Stable global handlers
+  // Momentum animation loop
+  useEffect(() => {
+    if (Math.abs(panState.momentum) > MOMENTUM_THRESHOLD && !panState.isPanning) {
+      const animate = () => {
+        setPanState(prev => {
+          const newMomentum = prev.momentum * MOMENTUM_DECAY;
+          const newTranslateX = prev.translateX + newMomentum;
+          
+          updateVisibleRangeFromPan(newTranslateX);
+          
+          if (Math.abs(newMomentum) < MOMENTUM_THRESHOLD) {
+            return { ...prev, momentum: 0 };
+          }
+          
+          return {
+            ...prev,
+            translateX: newTranslateX,
+            momentum: newMomentum
+          };
+        });
+        
+        animationFrameRef.current = requestAnimationFrame(animate);
+      };
+      
+      animationFrameRef.current = requestAnimationFrame(animate);
+    } else {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [panState.momentum, panState.isPanning, setPanState, updateVisibleRangeFromPan]);
+
+  // Mouse move handler (global)
   const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
-    e.preventDefault();
-    _updatePanImpl(e.clientX); // Direct call instead of throttled
-  }, [_updatePanImpl]);
-
-  const handleGlobalMouseUp = useCallback((e: MouseEvent) => {
-    e.preventDefault();
-    endPanRef.current?.();
-  }, []);
-
-  const handleGlobalMouseLeave = useCallback((e: MouseEvent) => {
-    e.preventDefault();
-    endPanRef.current?.();
-  }, []);
-
-  // End panning
-  const endPan = useCallback(() => {
-    console.log('[PanDebug] endPan called, isPanning:', panState.isPanning);
-    if (!panState.isPanning) return;
-
+    const currentPanState = panStateRef.current;
+    if (!currentPanState.isPanning) return;
+    
+    const deltaX = e.clientX - currentPanState.startX;
+    const newTranslateX = currentPanState.previousTranslateX + deltaX;
+    
+    // Update visible range outside of setState to prevent infinite loop
+    updateVisibleRangeFromPan(newTranslateX);
+    
     setPanState(prev => ({
       ...prev,
-      isPanning: false,
-      previousTranslateX: translateXRef.current,
-      translateX: translateXRef.current
+      translateX: newTranslateX,
+      momentum: deltaX * 0.1
     }));
+  }, [setPanState, updateVisibleRangeFromPan]);
 
-    if (Math.abs(velocityRef.current) > 0.1) {
-      animationRef.current = requestAnimationFrame(animateMomentum);
-    }
+  // Mouse up handler (global)
+  const handleGlobalMouseUp = useCallback(() => {
+    endPan();
+  }, []);
 
-    console.log('[PanDebug] Removing global listeners');
-    document.removeEventListener('mousemove', handleGlobalMouseMove);
-    document.removeEventListener('mouseup', handleGlobalMouseUp);
-    document.removeEventListener('mouseleave', handleGlobalMouseLeave);
-
-    globalMouseMoveRef.current = null;
-    globalMouseUpRef.current = null;
-    globalMouseLeaveRef.current = null;
-  }, [panState.isPanning, setPanState, animateMomentum, handleGlobalMouseMove, handleGlobalMouseUp, handleGlobalMouseLeave]);
-
-  // Assign endPan to ref
+  // Store refs to avoid stale closures
   useEffect(() => {
-    endPanRef.current = endPan;
-  }, [endPan]);
+    globalMouseMoveRef.current = handleGlobalMouseMove;
+    globalMouseUpRef.current = handleGlobalMouseUp;
+  }, [handleGlobalMouseMove, handleGlobalMouseUp]);
 
-  // Start panning
+  // Start pan operation
   const startPan = useCallback((clientX: number) => {
-    console.log('[PanDebug] startPan called with clientX:', clientX);
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-      animationRef.current = null;
-    }
-
-    startXRef.current = clientX;
-    lastClientXRef.current = clientX;
-    translateXRef.current = panState.translateX;
-    velocityRef.current = 0;
-    lastTimeRef.current = Date.now();
-
+    if (DEBUG_PAN) console.log('[PanDebug] startPan called with clientX:', clientX);
     setPanState(prev => ({
       ...prev,
       isPanning: true,
       startX: clientX,
       previousTranslateX: prev.translateX,
-      translateX: prev.translateX,
       momentum: 0
     }));
+  }, [setPanState]);
 
-    globalMouseMoveRef.current = handleGlobalMouseMove;
-    globalMouseUpRef.current = handleGlobalMouseUp;
-    globalMouseLeaveRef.current = handleGlobalMouseLeave;
+  // End pan operation
+  const endPan = useCallback(() => {
+    const currentPanState = panStateRef.current;
+    if (DEBUG_PAN) console.log('[PanDebug] endPan called, isPanning:', currentPanState.isPanning);
+    if (currentPanState.isPanning) {
+      setPanState(prev => ({
+        ...prev,
+        isPanning: false,
+        previousTranslateX: prev.translateX
+      }));
+      
+      // Remove global listeners immediately
+      if (DEBUG_PAN) console.log('[PanDebug] Removing global listeners');
+      document.removeEventListener('mousemove', globalMouseMoveRef.current!);
+      document.removeEventListener('mouseup', globalMouseUpRef.current!);
+    }
+  }, [setPanState]);
 
-    console.log('[PanDebug] Adding global listeners');
-    document.addEventListener('mousemove', handleGlobalMouseMove);
-    document.addEventListener('mouseup', handleGlobalMouseUp);
-    document.addEventListener('mouseleave', handleGlobalMouseLeave);
-  }, [setPanState, handleGlobalMouseMove, handleGlobalMouseUp, handleGlobalMouseLeave, panState.translateX]);
+  // Pan by a specific number of candles (for keyboard navigation)
+  const panByCandles = useCallback((candleCount: number) => {
+    const chartWidth = window.innerWidth - 120; // Approximate chart width
+    const candleWidth = chartWidth / targetCandles;
+    const pixelDelta = candleCount * candleWidth;
+    
+    setPanState(prev => {
+      const newTranslateX = prev.translateX - pixelDelta;
+      updateVisibleRangeFromPan(newTranslateX);
+      
+      return {
+        ...prev,
+        translateX: newTranslateX,
+        previousTranslateX: newTranslateX
+      };
+    });
+  }, [targetCandles, setPanState, updateVisibleRangeFromPan]);
 
-  // Mouse down handler
+  // Arrow key handlers
+  const handlePanLeft = useCallback(() => {
+    panByCandles(-5);
+  }, [panByCandles]);
+
+  const handlePanRight = useCallback(() => {
+    panByCandles(5);
+  }, [panByCandles]);
+
+  // Add global listeners for pan
+  const addGlobalListeners = useCallback(() => {
+    if (DEBUG_PAN) console.log('[PanDebug] Adding global listeners');
+    document.addEventListener('mousemove', globalMouseMoveRef.current!);
+    document.addEventListener('mouseup', globalMouseUpRef.current!);
+  }, []);
+
+  // Mouse event handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    console.log('[PanDebug] handleMouseDown triggered');
+    if (DEBUG_PAN) console.log('[PanDebug] handleMouseDown triggered');
+    
+    // Check if this might be part of a double-click
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickTimeRef.current;
+    
+    if (timeSinceLastClick < DOUBLE_CLICK_DELAY) {
+      if (DEBUG_PAN) console.log('[PanDebug] Potential double-click detected, not starting pan');
+      // CRITICAL: End any existing pan to reset cursor state
+      endPan();
+      return; // Don't start pan for double-clicks
+    }
+    
+    lastClickTimeRef.current = now;
+    
+    // Only prevent default after confirming this isn't a double-click
     e.preventDefault();
     startPan(e.clientX);
-  }, [startPan]);
+  }, [startPan, endPan]);
 
   // No local mouse move handler
 
@@ -200,40 +219,41 @@ export const usePanController = (
   // Effect to manage global listeners
   useEffect(() => {
     if (panState.isPanning) {
-      console.log('[PanDebug] isPanning became true - adding listeners');
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-      document.addEventListener('mouseleave', handleGlobalMouseLeave);
-      globalMouseMoveRef.current = handleGlobalMouseMove;
-      globalMouseUpRef.current = handleGlobalMouseUp;
-      globalMouseLeaveRef.current = handleGlobalMouseLeave;
+      if (DEBUG_PAN) console.log('[PanDebug] isPanning became true - adding listeners');
+      document.addEventListener('mousemove', globalMouseMoveRef.current!);
+      document.addEventListener('mouseup', globalMouseUpRef.current!);
     } else {
-      console.log('[PanDebug] isPanning became false - removing listeners');
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.removeEventListener('mouseleave', handleGlobalMouseLeave);
-      globalMouseMoveRef.current = null;
-      globalMouseUpRef.current = null;
-      globalMouseLeaveRef.current = null;
+      if (DEBUG_PAN) console.log('[PanDebug] isPanning became false - removing listeners');
+      document.removeEventListener('mousemove', globalMouseMoveRef.current!);
+      document.removeEventListener('mouseup', globalMouseUpRef.current!);
     }
 
     // Cleanup on unmount
     return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.removeEventListener('mouseleave', handleGlobalMouseLeave);
+      document.removeEventListener('mousemove', globalMouseMoveRef.current!);
+      document.removeEventListener('mouseup', globalMouseUpRef.current!);
     };
-  }, [panState.isPanning, handleGlobalMouseMove, handleGlobalMouseUp, handleGlobalMouseLeave]);
+  }, [panState.isPanning, globalMouseMoveRef.current, globalMouseUpRef.current]);
 
-  useEffect(() => { return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); }; }, []);
+  useEffect(() => { return () => { if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current); }; }, []);
 
   return {
     handleMouseDown,
-    handleMouseUp: globalMouseUpRef.current,
-    handleMouseLeave: globalMouseLeaveRef.current,
+    handleMouseMove: (e: React.MouseEvent) => {
+      if (panState.isPanning) handleGlobalMouseMove(e.nativeEvent);
+    },
+    handleMouseUp: (e: React.MouseEvent) => {
+      globalMouseUpRef.current?.(e.nativeEvent);
+    },
+    handleMouseLeave: (e: React.MouseEvent) => {
+      // globalMouseLeaveRef.current?.(e.nativeEvent); // This line is removed as per the edit hint
+    },
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
-    isPanning: panState.isPanning
+    isPanning: panState.isPanning,
+    handlePanLeft: handlePanLeft,
+    handlePanRight: handlePanRight,
+    endPan: endPan  // Export endPan so it can be called externally
   };
 };

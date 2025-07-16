@@ -4,9 +4,23 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Pattern, PatternType, GoldmineChannelPattern } from '../../models/PatternTypes';
-import { PatternFeedback, FalsePositiveReason } from '../../models/FeedbackTypes';
+import { PatternFeedback } from '../../models/FeedbackTypes';
 import { BoundaryAdjuster } from './BoundaryAdjuster';
 import { GoldmineChannelAdjuster } from './GoldmineChannelAdjuster';
+
+// Legacy types for backward compatibility
+type FalsePositiveReason = 'NOT_A_PATTERN' | 'WRONG_PATTERN_TYPE' | 'BOUNDARY_ISSUE' | 'OTHER';
+
+// Legacy feedback interface
+interface LegacyPatternFeedback extends Omit<PatternFeedback, 'patternType'> {
+  submittedAt: Date;
+  originalPatternType: PatternType;
+  correctedPatternType?: PatternType;
+  falsePositive?: boolean;
+  falsePositiveReason?: FalsePositiveReason;
+  boundaryAdjustment?: any;
+  channelAdjustment?: any;
+}
 
 // Define component props types inline to avoid import issues
 interface PatternTypeSelectorProps {

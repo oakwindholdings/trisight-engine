@@ -9,6 +9,7 @@ import EscalatorPatternDetails from '../PatternDetails/EscalatorPatternDetails';
 import PivotPatternDetails from '../PatternDetails/PivotPatternDetails';
 import RocketmanPatternDetails from '../PatternDetails/RocketmanPatternDetails';
 import { usePatternContext } from '../../contexts/PatternContext';
+import { useModal } from 'react-aria'; // Use in modal.
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -52,6 +53,9 @@ const PatternDetailsModal: React.FC = () => {
     }
   };
   
+  // Use useModal for focus trap and ARIA.
+  const { modalProps } = useModal();
+  
   // Ensure we return null immediately if no pattern
   if (!selectedPattern) {
     console.log('PatternDetailsModal: No selected pattern, returning null');
@@ -68,7 +72,7 @@ const PatternDetailsModal: React.FC = () => {
   
   return (
     <ModalOverlay onClick={handleOverlayClick} className="pattern-details-modal">
-      <ModalContainer>
+      <ModalContainer {...modalProps}>
         {selectedPattern.type === PatternType.BLACKJACK ? (
           <BlackjackPatternDetails 
             pattern={selectedPattern as BlackjackPattern}

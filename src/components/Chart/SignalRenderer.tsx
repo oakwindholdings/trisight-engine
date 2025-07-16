@@ -99,7 +99,8 @@ export function renderTradeActionSignals(
 
   ctx.save();
 
-  signals.forEach(signal => {
+  const visibleSignals = getVisibleSignals(signals, timeScale, dimensions);
+  visibleSignals.forEach(signal => {
     const centerX = timeScale.scale(signal.timestamp);
     const centerY = priceScale.scale(signal.price);
 
@@ -1134,6 +1135,17 @@ export function getSignalAtPoint(
     }
   }
   return null;
+}
+
+function getVisibleSignals(signals: TradeActionSignal[], timeScale: any, dimensions: ChartDimensions): TradeActionSignal[] {
+  const visibleStartX = dimensions.margin.left;
+  const visibleEndX = dimensions.width - dimensions.margin.right;
+  const visibleStartTime = timeScale.invert(visibleStartX);
+  const visibleEndTime = timeScale.invert(visibleEndX);
+  return signals.filter(signal => {
+    const signalTime = signal.timestamp.getTime();
+    return signalTime >= visibleStartTime.getTime() && signalTime <= visibleEndTime.getTime();
+  });
 }
 
 // All rendering utilities are already exported at their function definitions

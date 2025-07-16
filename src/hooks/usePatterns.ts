@@ -12,6 +12,8 @@ import { getIntrinsicScore } from '../patternEngine/blackjack';
 import { detectEscalators } from '../patternEngine/escalator';
 import { Candle } from '../types';
 import { logDebug } from '../utils/debug';
+import { PatternFeedback } from '../models/FeedbackTypes';
+import { patternLearningEngine } from '../services/PatternLearningEngine';
 
 /**
  * Hook for detecting and managing chart patterns
@@ -22,6 +24,26 @@ export function usePatterns(data: CandlestickData[]) {
   // Patterns after type filtering - what's shown to the user in the UI
   const [visiblePatterns, setVisiblePatterns] = useState<Pattern[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<Pattern | null>(null);
+  const [selectedPatternForFeedback, setSelectedPatternForFeedbackState] = useState<Pattern | null>(null);
+  
+  // Wrap setter to debug
+  const setSelectedPatternForFeedback = useCallback((pattern: Pattern | null) => {
+    console.log('[usePatterns] setSelectedPatternForFeedback called with:', {
+      pattern,
+      type: pattern?.type,
+      id: pattern?.id
+    });
+    setSelectedPatternForFeedbackState(pattern);
+  }, []);
+  
+  // Debug state updates
+  useEffect(() => {
+    console.log('[usePatterns] selectedPatternForFeedback state updated:', {
+      pattern: selectedPatternForFeedback,
+      type: selectedPatternForFeedback?.type,
+      id: selectedPatternForFeedback?.id
+    });
+  }, [selectedPatternForFeedback]);
   const [patternCounts, setPatternCounts] = useState<Record<PatternType, number>>({} as Record<PatternType, number>);
   const [isDetecting, setIsDetecting] = useState<boolean>(false);
   const [activeFilter, setActiveFilter] = useState<PatternType | null>(null);
@@ -337,21 +359,32 @@ export function usePatterns(data: CandlestickData[]) {
     // Build goldmine qualifier array
     const goldmineQual = new Array<boolean>(candles.length).fill(false);
     
-    // Build trailing stop arrays (use 0 as default for no stop)
-    const trailStop = new Array<number>(candles.length).fill(0);
-    const distToStopPct = new Array<number>(candles.length).fill(0);
+    // Create per-candle trailStop array
+    const trailStopArray = candles.map((candle, idx) => {
+      if (idx < 5) return 0;
+      const recentHigh = Math.max(...candles.slice(Math.max(0, idx - 5), idx + 1).map(c => c.high));
+      return recentHigh * (1 - 0.02); // Example: 2% trailing stop
+    });
     
-    // TODO: Populate goldmine and trailing stop arrays based on actual positions
-    
-    // Set all the arrays into context
-    setBjIntrinsic(bjIntrinsic);
-    setBjCumulative(bjCumulative);
-    setStepIndex(stepIndex);
-    setEscalatorDir(escalatorDirArray);
-    setEscalatorLength(escalatorLength);
-    setGoldmineQual(goldmineQual);
-    setTrailStop(trailStop);
-    setDistToStopPct(distToStopPct);
+    // Distance to stop as percentage
+    const distToStopPctArray = candles.map((candle, idx) => {
+      const stop = trailStopArray[idx];
+      return stop > 0 ? ((candle.close - stop) / candle.close) * 100 : 0;
+    });
+
+    // CRITICAL FIX: Batch all state updates to prevent cascading re-renders
+    // Use React's unstable_batchedUpdates or setTimeout to batch updates
+    // This prevents 15+ individual re-renders and the infinite loop
+    setTimeout(() => {
+      setBjIntrinsic(bjIntrinsic);
+      setBjCumulative(bjCumulative);
+      setStepIndex(stepIndex);
+      setEscalatorDir(escalatorDirArray);
+      setEscalatorLength(escalatorLength);
+      setGoldmineQual(goldmineQual);
+      setTrailStop(trailStopArray);
+      setDistToStopPct(distToStopPctArray);
+    }, 0);
   }, []);
   
   // Detect patterns in the provided data
@@ -388,9 +421,15 @@ export function usePatterns(data: CandlestickData[]) {
         // Use the new adaptive pattern detection service
         const detectedPatterns = adaptiveService.detectPatterns(candleData);
         
+        // Add feedbackEnabled property to all patterns
+        const patternsWithFeedback = detectedPatterns.map(pattern => ({
+          ...pattern,
+          feedbackEnabled: true // Enable feedback for all patterns
+        }));
+        
         // Calculate pattern counts by type
         const counts = Object.values(PatternType).reduce((acc, type) => {
-          acc[type] = detectedPatterns.filter(p => p.type === type).length;
+          acc[type] = patternsWithFeedback.filter(p => p.type === type).length;
           return acc;
         }, {} as Record<PatternType, number>);
         
@@ -403,7 +442,7 @@ export function usePatterns(data: CandlestickData[]) {
         
         // Filter patterns based on enabledPatternTypes preference
         const enabledTypes = preferences.enabledPatternTypes || [];
-        const filteredPatterns = detectedPatterns.filter(p => enabledTypes.includes(p.type));
+        const filteredPatterns = patternsWithFeedback.filter(p => enabledTypes.includes(p.type));
         
         const attributedPatterns = filteredPatterns.map(p => ({
           ...p,
@@ -420,7 +459,7 @@ export function usePatterns(data: CandlestickData[]) {
         setPatternCounts(counts);
         
         // After detecting patterns, populate the pattern arrays
-        populatePatternArrays(candleData, detectedPatterns);
+        populatePatternArrays(candleData, patternsWithFeedback);
         
         setIsDetecting(false);
       }, 0);
@@ -515,6 +554,50 @@ export function usePatterns(data: CandlestickData[]) {
     }
   }, [data, detectPatterns, isDetecting]);
   
+  // Handle feedback submission
+  const submitPatternFeedback = useCallback(async (feedback: Partial<PatternFeedback>): Promise<void> => {
+    if (!feedback.patternId || !feedback.patternType) {
+      throw new Error('Pattern ID and type are required for feedback');
+    }
+    
+    try {
+      // Add feedback to learning engine
+      const completeFeedback: PatternFeedback = {
+        id: `fb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...feedback
+      } as PatternFeedback;
+      
+      patternLearningEngine.addFeedback(completeFeedback);
+      
+      // Optimistically update pattern to show feedback received
+      const updatedPattern = patterns.find(p => p.id === feedback.patternId);
+      if (updatedPattern) {
+        updatePattern({
+          ...updatedPattern,
+          hasReceivedFeedback: true,
+          feedbackCount: (updatedPattern.feedbackCount || 0) + 1,
+          latestFeedbackTimestamp: Date.now()
+        });
+      }
+      
+      logDebug('feedback', 'Pattern feedback submitted', {
+        patternId: feedback.patternId,
+        patternType: feedback.patternType,
+        accuracy: feedback.accuracy,
+        isValid: feedback.isValid
+      });
+      
+      // In a real implementation, this would also send to the backend
+      // await submitFeedbackToAPI(completeFeedback);
+      
+    } catch (error) {
+      logDebug('feedback', 'Error submitting pattern feedback', error);
+      throw error;
+    }
+  }, [patterns, updatePattern]);
+  
   return {
     // Return the main patterns array for chart rendering to ensure chart functionality works correctly
     patterns,
@@ -522,6 +605,9 @@ export function usePatterns(data: CandlestickData[]) {
     visiblePatterns,
     selectedPattern,
     setSelectedPattern,
+    selectedPatternForFeedback,
+    setSelectedPatternForFeedback,
+    submitPatternFeedback,
     patternCounts,
     isDetecting,
     detectPatterns,

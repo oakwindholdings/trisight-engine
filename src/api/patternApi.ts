@@ -1,7 +1,7 @@
 // src/api/patternApi.ts
 // Local storage API for pattern feedback
 // Simulates server calls
-import { PatternFeedback, LearningMetrics, LearningModelState } from '../models/FeedbackTypes';
+import { PatternFeedback, LearningMetrics, LearningModelState, LegacyPatternFeedback } from '../models/FeedbackTypes';
 import { PatternType } from '../models/PatternTypes';
 
 // In a real implementation, this would connect to a server API
@@ -64,11 +64,14 @@ export const submitFeedback = async (feedback: PatternFeedback): Promise<void> =
   
   const feedbackData = getStoredFeedback();
   
-  // Add new feedback
-  feedbackData.push({
+  // Add new feedback with legacy fields
+  const legacyFeedback: LegacyPatternFeedback = {
     ...feedback,
     submittedAt: new Date(),
-  });
+    originalPatternType: feedback.patternType, // Map to legacy field
+  };
+  
+  feedbackData.push(legacyFeedback as PatternFeedback);
   
   saveFeedback(feedbackData);
   
@@ -101,6 +104,7 @@ export const processNewFeedback = async (feedback: PatternFeedback): Promise<voi
     model = {
       version: '1.0.0',
       lastUpdated: new Date(),
+      patternStates: {} as Record<PatternType, any>, // Initialize empty patternStates
       patternParameters: {
         [PatternType.GOLDMINE_CHANNEL]: {
           confidenceThreshold: 0.7,
@@ -199,6 +203,9 @@ export const processNewFeedback = async (feedback: PatternFeedback): Promise<voi
   }
   
   // Add to feedback history
+  if (!model.feedbackHistory) {
+    model.feedbackHistory = [];
+  }
   model.feedbackHistory.push(feedback);
   
   // Update metrics
@@ -219,6 +226,7 @@ export const getLearningMetrics = async (): Promise<LearningMetrics> => {
     model = {
       version: '1.0.0',
       lastUpdated: new Date(),
+      patternStates: {},
       patternParameters: {
         [PatternType.GOLDMINE_CHANNEL]: {
           confidenceThreshold: 0.7,

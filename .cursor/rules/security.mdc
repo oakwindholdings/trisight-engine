@@ -1,0 +1,11 @@
+# File: .cursor/rules/security.mdc
+---
+description: Security best practices
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: false
+---
+
+# Security
+- Store API keys in .env/localStorage securely; rotate TwelveData keys monthly.
+- Sanitize inputs with DOMPurify for D3; use Supabase RLS for data access.
+- Avoid hardcoding secrets; follow OWASP guidelines.

@@ -1,0 +1,13 @@
+# File: .cursor/rules/error-fixing-process.mdc
+---
+description: Step-by-step process for fixing errors
+alwaysApply: true
+---
+
+# Error Fixing Process
+- STEP 0: Read the error message carefully. 
+- STEP 1: Check the exact code structure to fix all issues properly
+- STEP 2: Write 3 detailed paragraphs exploring multiple error causes, keeping an open mind.
+- STEP 3: Explain the error in plain English.
+- STEP 4: Fix with minimal code changes.
+- STEP 5: Provide test instructions.

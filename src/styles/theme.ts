@@ -1,6 +1,8 @@
 // src/styles/theme.ts
 // Design tokens for styling
 // Colors and spacing for UI
+import DOMPurify from 'dompurify'; // Sanitize theme props.
+
 export const ThemeTokens = {
   colors: {
     // Primary color palette

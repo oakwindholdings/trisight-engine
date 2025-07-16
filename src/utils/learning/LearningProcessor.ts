@@ -1,8 +1,8 @@
 // src/utils/learning/LearningProcessor.ts
-// Processes feedback to tune detectors
-// Adjusts detection parameters
+// Processes pattern feedback to update detection parameters
+// Implements adaptive learning for pattern detection
 import { PatternType } from '../../models/PatternTypes';
-import { PatternFeedback } from '../../models/FeedbackTypes';
+import { PatternFeedback, LegacyPatternFeedback } from '../../models/FeedbackTypes';
 import { 
   PatternDetectionParameters,
   GoldmineChannelParameters,
@@ -30,7 +30,7 @@ export class LearningProcessor {
   /**
    * Process a single feedback entry and adjust parameters accordingly
    */
-  public processFeedback(feedback: PatternFeedback): ProcessingResult {
+  public processFeedback(feedback: LegacyPatternFeedback): ProcessingResult {
     // Store feedback for aggregation
     this.feedbackHistory.push(feedback);
     
@@ -75,6 +75,10 @@ export class LearningProcessor {
       updatedParameters: updatedParams,
     };
   }
+
+  public processBatch(feedbackBatch: PatternFeedback[]): ProcessingResult[] {
+    return feedbackBatch.map(fb => this.processFeedback(fb));
+  }
   
   /**
    * Process boundary adjustments from feedback
@@ -83,34 +87,36 @@ export class LearningProcessor {
     params: PatternDetectionParameters, 
     feedback: PatternFeedback
   ): void {
-    const originalStart = feedback.boundaryAdjustment.originalStart.getTime();
-    const originalEnd = feedback.boundaryAdjustment.originalEnd.getTime();
+    const originalStart = feedback.boundaryAdjustment?.originalStart?.getTime() ?? 0;
+    const originalEnd = feedback.boundaryAdjustment?.originalEnd?.getTime() ?? 0;
     
     // Calculate adjustment percentages for start and end
-    if (feedback.boundaryAdjustment.correctedStart) {
+    if (feedback.boundaryAdjustment?.correctedStart) {
       const correctedStart = feedback.boundaryAdjustment.correctedStart.getTime();
       const startDiff = correctedStart - originalStart;
       const startAdjustmentPercentage = Math.abs(startDiff / (originalEnd - originalStart));
       
-      // Adjust boundary padding based on start adjustment
-      params.boundaryPadding = this.adjustBoundaryPadding(
-        params.boundaryPadding, 
-        startAdjustmentPercentage,
-        startDiff > 0
-      );
+      if (startAdjustmentPercentage > 0.3) {
+        // Large adjustment on start boundary - increase padding
+        params.boundaryPadding = Math.min(0.5, params.boundaryPadding * 1.2);
+      } else if (startAdjustmentPercentage < 0.05) {
+        // Small adjustment, slightly decrease padding
+        params.boundaryPadding = Math.max(0.05, params.boundaryPadding * 0.9);
+      }
     }
-    
-    if (feedback.boundaryAdjustment.correctedEnd) {
+
+    if (feedback.boundaryAdjustment?.correctedEnd) {
       const correctedEnd = feedback.boundaryAdjustment.correctedEnd.getTime();
       const endDiff = correctedEnd - originalEnd;
       const endAdjustmentPercentage = Math.abs(endDiff / (originalEnd - originalStart));
       
-      // Adjust boundary padding based on end adjustment
-      params.boundaryPadding = this.adjustBoundaryPadding(
-        params.boundaryPadding, 
-        endAdjustmentPercentage,
-        endDiff > 0
-      );
+      if (endAdjustmentPercentage > 0.3) {
+        // Large adjustment on end boundary - increase padding
+        params.boundaryPadding = Math.min(0.5, params.boundaryPadding * 1.2);
+      } else if (endAdjustmentPercentage < 0.05) {
+        // Small adjustment, slightly decrease padding
+        params.boundaryPadding = Math.max(0.05, params.boundaryPadding * 0.9);
+      }
     }
   }
   
@@ -151,6 +157,33 @@ export class LearningProcessor {
       // Low confidence, decrease sensitivity
       params.sensitivity = Math.max(0.1, params.sensitivity - 0.05);
     } else if (feedback.confidenceRating >= 4) {
+      // High confidence, increase sensitivity
+      params.sensitivity = Math.min(1.0, params.sensitivity + 0.05);
+    }
+  }
+
+  private static adjustPatternConfidenceThresholds(
+    feedback: PatternFeedback,
+    params: PatternDetectionParameters
+  ): void {
+    // Scale is 1-5, convert to 0-1 scale
+    const normalizedRating = ((feedback.confidenceRating ?? 3) - 1) / 4;
+
+    // If user confidence is higher than current threshold, slightly decrease threshold
+    if (normalizedRating < 0.4) {
+      // Low confidence, increase threshold
+      params.minConfidence = Math.min(0.9, params.minConfidence + 0.05);
+    } else if (normalizedRating > 0.8) {
+      // High confidence, decrease threshold slightly
+      params.minConfidence = Math.max(0.3, params.minConfidence - 0.02);
+    }
+
+    // Adjust sensitivity based on confidence rating
+    const rating = feedback.confidenceRating ?? 3;
+    if (rating <= 2) {
+      // Low confidence, decrease sensitivity
+      params.sensitivity = Math.max(0.1, params.sensitivity - 0.05);
+    } else if (rating >= 4) {
       // High confidence, increase sensitivity
       params.sensitivity = Math.min(1.0, params.sensitivity + 0.05);
     }
@@ -239,7 +272,7 @@ export class LearningProcessor {
   private calculateBoundaryAdjustments(feedback: PatternFeedback[]): AggregatedFeedback['boundaryAdjustments'] {
     // Filter feedback with boundary adjustments
     const feedbackWithAdjustments = feedback.filter(
-      fb => fb.boundaryAdjustment.correctedStart || fb.boundaryAdjustment.correctedEnd
+      fb => fb.boundaryAdjustment && (fb.boundaryAdjustment.correctedStart || fb.boundaryAdjustment.correctedEnd)
     );
     
     if (feedbackWithAdjustments.length === 0) {
@@ -250,35 +283,30 @@ export class LearningProcessor {
       };
     }
     
-    // Calculate start delta
     let totalStartDelta = 0;
-    let startAdjustmentCount = 0;
-    
-    // Calculate end delta
     let totalEndDelta = 0;
+    let startAdjustmentCount = 0;
     let endAdjustmentCount = 0;
-    
-    // Track distribution of adjustment sizes
     const distribution: Record<string, number> = {};
-    
+
     for (const fb of feedbackWithAdjustments) {
-      if (fb.boundaryAdjustment.correctedStart) {
-        const startDelta = fb.boundaryAdjustment.correctedStart.getTime() - 
+      if (fb.boundaryAdjustment?.correctedStart) {
+        const startDelta = fb.boundaryAdjustment.correctedStart.getTime() -
                           fb.boundaryAdjustment.originalStart.getTime();
         totalStartDelta += startDelta;
         startAdjustmentCount++;
-        
+
         // Bucket start delta
         const startBucket = this.getBoundaryDeltaBucket(startDelta, fb.boundaryAdjustment.originalEnd.getTime() - fb.boundaryAdjustment.originalStart.getTime());
         distribution[startBucket] = (distribution[startBucket] || 0) + 1;
       }
-      
-      if (fb.boundaryAdjustment.correctedEnd) {
-        const endDelta = fb.boundaryAdjustment.correctedEnd.getTime() - 
+
+      if (fb.boundaryAdjustment?.correctedEnd) {
+        const endDelta = fb.boundaryAdjustment.correctedEnd.getTime() -
                         fb.boundaryAdjustment.originalEnd.getTime();
         totalEndDelta += endDelta;
         endAdjustmentCount++;
-        
+
         // Bucket end delta
         const endBucket = this.getBoundaryDeltaBucket(endDelta, fb.boundaryAdjustment.originalEnd.getTime() - fb.boundaryAdjustment.originalStart.getTime());
         distribution[endBucket] = (distribution[endBucket] || 0) + 1;
@@ -328,6 +356,19 @@ export class LearningProcessor {
       distribution[fb.confidenceRating] = (distribution[fb.confidenceRating] || 0) + 1;
     }
     
+    return distribution;
+  }
+
+  private static analyzeConfidenceDistribution(feedback: PatternFeedback[]): Record<number, number> {
+    const distribution: Record<number, number> = {};
+
+    for (const fb of feedback) {
+      const rating = fb.confidenceRating ?? 3; // Default to neutral
+      if (rating) {
+        distribution[rating] = (distribution[rating] || 0) + 1;
+      }
+    }
+
     return distribution;
   }
   

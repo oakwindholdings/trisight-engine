@@ -1,0 +1,11 @@
+# File: .cursor/rules/state-management.mdc
+---
+description: State management guidelines
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: false
+---
+
+# State Management
+- React Contexts for global state (e.g., PatternContext).
+- Persist settings to localStorage.
+- Clean up useEffect hooks.

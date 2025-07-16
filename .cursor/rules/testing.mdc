@@ -1,0 +1,12 @@
+# File: .cursor/rules/testing.mdc
+---
+description: Testing guidelines
+globs: "**/__tests__/**,tests/**"
+alwaysApply: false
+---
+
+# Testing
+- Unit tests for hooks/utils (Jest).
+- E2E tests for charting, patterns, audits (Cypress).
+- Test edge cases (e.g., empty data, API failures).
+- Aim for 80% coverage.

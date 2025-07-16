@@ -24,6 +24,9 @@ interface PatternContextType {
   visiblePatterns: Pattern[];
   selectedPattern: Pattern | null;
   setSelectedPattern: (pattern: Pattern | null) => void;
+  selectedPatternForFeedback?: Pattern | null;
+  setSelectedPatternForFeedback?: (pattern: Pattern | null) => void;
+  submitPatternFeedback?: (feedback: Partial<import('../models/FeedbackTypes').PatternFeedback>) => Promise<void>;
   detectPatterns: (data: CandlestickData[]) => void;
   patternCounts: Record<PatternType, number>;
   isDetecting: boolean;
@@ -453,7 +456,9 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     patternHook.goldenCandleSettings,
     patternHook.setGoldenCandleSettings,
     patternHook.blackjackSettings,
-    patternHook.setBlackjackSettings
+    patternHook.setBlackjackSettings,
+    patternHook.selectedPatternForFeedback,
+    patternHook.setSelectedPatternForFeedback
   ]);
   
   // Log when provider renders
@@ -466,7 +471,9 @@ export const PatternProvider: React.FC<PatternProviderProps> = ({ children }) =>
     goldenCandleEntries: patternHook.goldenCandleEntries,
     goldenCandleExits: patternHook.goldenCandleExits,
     setGoldenCandleEntries: patternHook.setGoldenCandleEntries,
-    setGoldenCandleExits: patternHook.setGoldenCandleExits
+    setGoldenCandleExits: patternHook.setGoldenCandleExits,
+    selectedPatternForFeedback: patternHook.selectedPatternForFeedback?.type,
+    selectedPatternForFeedbackId: patternHook.selectedPatternForFeedback?.id
   });
   
   return (

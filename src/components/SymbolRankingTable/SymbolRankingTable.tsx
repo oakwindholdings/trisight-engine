@@ -5,6 +5,8 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { SymbolRanking, SymbolRankingTableProps } from '../../types/SymbolRanking';
+import { List } from 'react-virtualized';
+import type { CSSProperties } from 'react';
 
 const TableContainer = styled.div`
   width: 100%;
@@ -246,33 +248,43 @@ export const SymbolRankingTable: React.FC<SymbolRankingTableProps> = ({
             </tr>
           </TableHeader>
           <TableBody>
-            {sortedRankings.map((ranking) => (
-              <TableRow
-                key={ranking.symbol}
-                selected={ranking.symbol === selectedSymbol}
-                onClick={() => onSymbolSelect(ranking.symbol)}
-              >
-                <SymbolCell>{ranking.symbol}</SymbolCell>
-                <RatingCell value={ranking.riskRating} type="risk">
-                  {ranking.riskRating}
-                </RatingCell>
-                <RatingCell value={ranking.tractionRating} type="positive">
-                  {ranking.tractionRating}
-                </RatingCell>
-                <RatingCell value={ranking.strengthRating} type="positive">
-                  {ranking.strengthRating}
-                </RatingCell>
-                <RatingCell value={ranking.timingRating} type="positive">
-                  {ranking.timingRating}
-                </RatingCell>
-                <TableCell>{formatRatio(ranking.businessModelRatio)}</TableCell>
-                <TableCell>{formatRatio(ranking.acceleration)}</TableCell>
-                <RatingCell value={ranking.sectorRating} type="positive">
-                  {ranking.sectorRating}
-                </RatingCell>
-                <PriceCell>{formatPrice(ranking.currentPrice)}</PriceCell>
-              </TableRow>
-            ))}
+            <List
+              width={600} // Table width
+              height={400} // Table height
+              rowCount={sortedRankings.length}
+              rowHeight={50} // Approximate row height
+              rowRenderer={({ index, key, style }: { index: number; key: string; style: CSSProperties }) => {
+                const ranking = sortedRankings[index];
+                return (
+                  <TableRow
+                    key={key}
+                    style={style}
+                    selected={ranking.symbol === selectedSymbol}
+                    onClick={() => onSymbolSelect(ranking.symbol)}
+                  >
+                    <SymbolCell>{ranking.symbol}</SymbolCell>
+                    <RatingCell value={ranking.riskRating} type="risk">
+                      {ranking.riskRating}
+                    </RatingCell>
+                    <RatingCell value={ranking.tractionRating} type="positive">
+                      {ranking.tractionRating}
+                    </RatingCell>
+                    <RatingCell value={ranking.strengthRating} type="positive">
+                      {ranking.strengthRating}
+                    </RatingCell>
+                    <RatingCell value={ranking.timingRating} type="positive">
+                      {ranking.timingRating}
+                    </RatingCell>
+                    <TableCell>{formatRatio(ranking.businessModelRatio)}</TableCell>
+                    <TableCell>{formatRatio(ranking.acceleration)}</TableCell>
+                    <RatingCell value={ranking.sectorRating} type="positive">
+                      {ranking.sectorRating}
+                    </RatingCell>
+                    <PriceCell>{formatPrice(ranking.currentPrice)}</PriceCell>
+                  </TableRow>
+                );
+              }}
+            />
           </TableBody>
         </Table>
       </TableWrapper>

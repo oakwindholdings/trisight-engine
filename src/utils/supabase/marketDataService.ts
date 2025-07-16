@@ -212,14 +212,11 @@ async function storeInCache(
   logDebug('DEBUG_DATA_FETCH', `Prepared ${ohlcvData.length} records for insertion`);
   logDebug('DEBUG_DATA_FETCH', 'Sample record:', ohlcvData[0]);
   
-  // Batch insert with upsert to handle duplicates
-  const results = await batchInsertOHLCV(ohlcvData);
-  
-  const failedBatches = results.filter(r => !r.success);
-  if (failedBatches.length > 0) {
-    console.error('[DEBUG_SUPABASE] Failed to insert some batches:', failedBatches);
-  } else {
-    logDebug('DEBUG_DATA_FETCH', 'All batches inserted successfully');
+  // In storeInCache, chunk ohlcvData into batches of 100 and insert with retries.
+  const batchSize = 100;
+  for (let i = 0; i < ohlcvData.length; i += batchSize) {
+    const batch = ohlcvData.slice(i, i + batchSize);
+    await insertWithRetry(batch);
   }
 
   // Update cache status
@@ -364,3 +361,5 @@ export async function clearSymbolCache(symbol: string): Promise<void> {
     .delete()
     .eq('symbol', symbol.toUpperCase());
 }
+
+async function insertWithRetry(batch: any[]) { let tries = 3; while (tries--) { try { await batchInsertOHLCV(batch); return; } catch (e) { if (tries) await new Promise(r => setTimeout(r, 1000)); else throw e; } } }

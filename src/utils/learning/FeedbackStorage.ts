@@ -2,7 +2,7 @@
 // Stores feedback in localStorage
 // Also saves learning parameters
 // NOTE: TriSight uses Canvas, not SVG. Supports DEBUG_UI channel via logDebug.
-import { PatternFeedback } from '../../models/FeedbackTypes';
+import { PatternFeedback, LegacyPatternFeedback } from '../../models/FeedbackTypes';
 import { PatternType } from '../../models/PatternTypes';
 import { PatternDetectionParameters, PatternFeedbackHistory } from '../../models/LearningTypes';
 import { logDebug } from '../debug';
@@ -21,23 +21,31 @@ const STORAGE_KEYS = {
  */
 export class FeedbackStorage {
   private static lastSubmissions: number[] = [];
+  private static mutex = Promise.resolve();
 
   /**
    * Save a new feedback entry
    */
-  public static saveFeedback(feedback: PatternFeedback): void {
-    const now = Date.now();
-    this.lastSubmissions = this.lastSubmissions.filter(t => now - t < 60000); // 1 min
-    if (this.lastSubmissions.length >= 10) throw new Error('Rate limit exceeded');
-    this.lastSubmissions.push(now);
-    
-    const existingFeedback = this.getAllFeedback();
-    existingFeedback.push(feedback);
-    
-    localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(existingFeedback));
-    
-    // Update feedback history for this pattern
-    this.updateFeedbackHistory(feedback);
+  public static async saveFeedback(feedback: PatternFeedback): Promise<void> {
+    if (localStorage.getItem('storageConsent') !== 'true') {
+      throw new Error('User has not consented to local storage');
+    }
+    this.mutex = this.mutex.then(async () => {
+      const now = Date.now();
+      this.lastSubmissions = this.lastSubmissions.filter(t => now - t < 60000); // 1 min
+      if (this.lastSubmissions.length >= 10) throw new Error('Rate limit exceeded');
+      this.lastSubmissions.push(now);
+      
+      const existingFeedback = this.getAllFeedback();
+      existingFeedback.push(feedback);
+      
+      localStorage.setItem(STORAGE_KEYS.FEEDBACK, JSON.stringify(existingFeedback));
+      
+      // Update feedback history for this pattern
+      this.updateFeedbackHistory(feedback);
+      
+      return Promise.resolve();
+    });
   }
   
   /**
@@ -77,8 +85,9 @@ export class FeedbackStorage {
    */
   public static getFeedbackByPatternType(patternType: PatternType): PatternFeedback[] {
     return this.getAllFeedback().filter(
-      feedback => feedback.originalPatternType === patternType || 
-                 feedback.correctedPatternType === patternType
+      feedback => (feedback as any).originalPatternType === patternType || 
+                 (feedback as any).correctedPatternType === patternType ||
+                 feedback.patternType === patternType
     );
   }
   
@@ -261,5 +270,9 @@ export class FeedbackStorage {
     localStorage.removeItem(STORAGE_KEYS.FEEDBACK);
     localStorage.removeItem(STORAGE_KEYS.PARAMETERS);
     localStorage.removeItem(STORAGE_KEYS.FEEDBACK_HISTORY);
+  }
+
+  public static setConsent(consent: boolean): void {
+    localStorage.setItem('storageConsent', consent.toString());
   }
 }

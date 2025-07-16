@@ -2,7 +2,7 @@
 // Main application component
 // NOTE: supports DEBUG_UI channel
 // Composes TriSight interface
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer } from 'react';
 import styled from 'styled-components';
 import './App.css';
 import './styles/globals.css';
@@ -20,6 +20,9 @@ import { InfiniteZoomChartRef } from './components/Chart/InfiniteZoomChart';
 import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithContext';
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
+import { PatternAnalysisModal } from './components/Feedback/PatternAnalysisModal';
+import { ConsentModal } from './components/privacy/ConsentModal';
+import { usePrivacyConsent } from './hooks/usePrivacyConsent';
 import { TargetReportTable } from './components/TargetReportTable'; // Dick's TriSight Target Report Table with actual formulas
 import TargetsPage from './pages/TargetsPage'; // Dedicated Targets page for independent mounting
 
@@ -44,7 +47,7 @@ import { isFeatureEnabled } from './utils/featureFlags';
 
 // Import types
 import { Pattern } from './models/PatternTypes';
-import { TradeActionBus, emitBuySignal, emitSellSignal, TradeAction, SignalType, TradeActionSignal } from './utils/trading/TradeActionSignal';
+import { TradeActionBus, TradeAction, SignalType, TradeActionSignal } from './utils/trading/TradeActionSignal';
 import { StepBox } from './types/pattern';
 import { evaluateAllPatterns } from './utils/patternHydration';
 
@@ -148,7 +151,8 @@ const saveChartHeight = (height: number): void => {
 const debugApiKey = () => {
   const key = process.env.REACT_APP_TWELVE_DATA_API_KEY;
   logDebug('DEBUG_UI', 'API Key present:', key ? `Yes (${key.length} chars)` : 'NOT SET!');
-  logDebug('DEBUG_UI', '[App] Starting TriSight with API key:', getApiKey() ? 'CONFIGURED' : 'NOT SET');
+  const API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY;
+  logDebug('DEBUG_UI', '[App] Starting TriSight with API key:', API_KEY ? 'CONFIGURED' : 'NOT SET');
 };
 
 // Legacy styled components - will be transitioned to CSS modules
@@ -292,11 +296,29 @@ function AppContent() {
   const { apiKey } = useTwelveDataApiKey();
   
   const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay, timeframe, setTimeframe } = useMarketDataContext(); 
-  const { patterns, patternCounts, selectedPattern, setSelectedPattern, detectPatterns, goldmineQual } = usePatternContext();
+  const { 
+    patterns, 
+    patternCounts, 
+    selectedPattern, 
+    setSelectedPattern, 
+    detectPatterns, 
+    goldmineQual,
+    selectedPatternForFeedback,
+    setSelectedPatternForFeedback,
+    submitPatternFeedback
+  } = usePatternContext();
   
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
   const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets'>('chart');
+  
+  // Debug render
+  console.log('[App] Component rendering, selectedPatternForFeedback:', {
+    pattern: selectedPatternForFeedback,
+    type: selectedPatternForFeedback?.type,
+    id: selectedPatternForFeedback?.id,
+    timestamp: Date.now()
+  });
   
   // Symbol selection state
   const [selectedSymbol, setSelectedSymbol] = useState(() => {
@@ -422,6 +444,44 @@ function AppContent() {
   const [chartHeight, setChartHeight] = useState(getSavedChartHeight());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getSavedDate());
+  
+  // Privacy consent for pattern feedback
+  const { hasConsent, showConsentModal, requestConsent, setShowConsentModal } = usePrivacyConsent();
+  
+  // Debug selectedPatternForFeedback changes - add deep comparison
+  useEffect(() => {
+    console.log('[App] selectedPatternForFeedback effect triggered:', {
+      pattern: selectedPatternForFeedback,
+      type: selectedPatternForFeedback?.type,
+      id: selectedPatternForFeedback?.id,
+      timestamp: Date.now()
+    });
+  }, [selectedPatternForFeedback?.id, selectedPatternForFeedback?.type]); // Use specific properties to ensure updates
+  
+  // Local state for pattern analysis modal
+  const [showPatternAnalysisModal, setShowPatternAnalysisModal] = useState(false);
+  const [analysisPattern, setAnalysisPattern] = useState<Pattern | null>(null);
+  
+  // Sync with context - use specific properties to ensure updates
+  useEffect(() => {
+    console.log('[App] Modal sync useEffect triggered:', {
+      pattern: selectedPatternForFeedback,
+      type: selectedPatternForFeedback?.type,
+      id: selectedPatternForFeedback?.id,
+      timestamp: Date.now()
+    });
+    if (selectedPatternForFeedback && selectedPatternForFeedback.id) {
+      console.log('[App] Opening pattern analysis modal for:', selectedPatternForFeedback.type);
+      console.log('[App] Setting showPatternAnalysisModal to true');
+      setShowPatternAnalysisModal(true);
+      setAnalysisPattern(selectedPatternForFeedback);
+      console.log('[App] State after update - showPatternAnalysisModal will be true on next render');
+    } else {
+      console.log('[App] Closing pattern analysis modal');
+      setShowPatternAnalysisModal(false);
+      setAnalysisPattern(null);
+    }
+  }, [selectedPatternForFeedback]); // Use the whole object to ensure any change triggers
   
   // Initialize selectedDate to the last trading day
   useEffect(() => {
@@ -1057,6 +1117,59 @@ function AppContent() {
         {!isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal && (
           <PatternDetailsModal />
         )}
+        
+        {/* New Pattern Feedback System */}
+        {(() => {
+          console.log('[App] Pattern feedback state:', selectedPatternForFeedback?.type || 'null');
+          console.log('[App] Local modal state:', showPatternAnalysisModal);
+          console.log('[App] analysisPattern:', analysisPattern?.type || 'null');
+          console.log('[App] Should render modal:', showPatternAnalysisModal && analysisPattern);
+          return null;
+        })()}
+        {showPatternAnalysisModal && analysisPattern && (
+          <>
+            {console.log('[App] PatternAnalysisModal render check:', {
+              hasPattern: !!analysisPattern,
+              patternType: analysisPattern?.type,
+              hasSetMethod: !!setSelectedPatternForFeedback,
+              typeOfSetMethod: typeof setSelectedPatternForFeedback,
+              modalIsOpen: showPatternAnalysisModal
+            })}
+            {console.log('[App] ACTUALLY RENDERING PatternAnalysisModal NOW')}
+            <PatternAnalysisModal
+              key={analysisPattern?.id || 'no-pattern'}
+              pattern={analysisPattern}
+              isOpen={showPatternAnalysisModal}
+              onClose={() => {
+                console.log('[App] onClose called in modal prop - using local state');
+                // Close using local state immediately
+                setShowPatternAnalysisModal(false);
+                setAnalysisPattern(null);
+                
+                // Also update context state
+                if (setSelectedPatternForFeedback) {
+                  console.log('[App] Also calling setSelectedPatternForFeedback(null)');
+                  setSelectedPatternForFeedback(null);
+                }
+              }}
+              onSubmit={async (feedback) => {
+                if (!hasConsent) {
+                  const granted = await requestConsent();
+                  if (!granted) return;
+                }
+                if (submitPatternFeedback) {
+                  await submitPatternFeedback(feedback);
+                }
+              }}
+            />
+          </>
+        )}
+        
+        {/* Privacy Consent Modal */}
+        <ConsentModal
+          isOpen={showConsentModal}
+          onClose={() => setShowConsentModal(false)}
+        />
         {/* Debug overlay to visualize click blocking */}
         {process.env.NODE_ENV === 'development' && (
           <>

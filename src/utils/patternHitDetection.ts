@@ -26,6 +26,14 @@ export function registerPatternHitBox(
   width: number,
   height: number
 ): void {
+  console.log('[PatternHitDetection] Registering hitbox:', {
+    type: pattern.type,
+    x,
+    y,
+    width,
+    height,
+    feedbackEnabled: (pattern as any).feedbackEnabled
+  });
   patternHitBoxes.push({
     pattern,
     x,
@@ -56,6 +64,9 @@ export function getPatternAtPoint(
   const adjustedX = x - (margin?.left || 0);
   const adjustedY = y - (margin?.top || 0);
 
+  console.log('[PatternHitDetection] Checking point:', { x, y, adjustedX, adjustedY });
+  console.log('[PatternHitDetection] Total hitboxes:', patternHitBoxes.length);
+
   // Search from end (topmost rendered patterns) to beginning
   for (let i = patternHitBoxes.length - 1; i >= 0; i--) {
     const hitBox = patternHitBoxes[i];
@@ -67,10 +78,16 @@ export function getPatternAtPoint(
       adjustedY >= hitBox.y &&
       adjustedY <= hitBox.y + hitBox.height
     ) {
+      console.log('[PatternHitDetection] Hit found:', {
+        pattern: hitBox.pattern.type,
+        hitbox: { x: hitBox.x, y: hitBox.y, width: hitBox.width, height: hitBox.height },
+        point: { adjustedX, adjustedY }
+      });
       return hitBox.pattern;
     }
   }
 
+  console.log('[PatternHitDetection] No hit found');
   return null;
 }
 
