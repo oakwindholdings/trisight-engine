@@ -1,0 +1,9 @@
+git commit -m "fix: resolve TypeScript compilation errors for deployment
+
+- Fix submittedAt to createdAt/updatedAt migration in feedback system
+- Fix Zod 4.x enum syntax compatibility issues
+- Fix optional property type checks (boundaryAdjustment, confidenceRating)
+- Add proper null/undefined handling throughout codebase
+- Update PatternFeedback interface usage for new schema
+- Successfully build production bundle (423KB gzipped)
+- Deploy to Netlify at trisight-equity-v2.windsurf.build" 

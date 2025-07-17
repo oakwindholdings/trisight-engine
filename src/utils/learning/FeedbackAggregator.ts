@@ -56,7 +56,7 @@ export class FeedbackAggregator {
   ): AggregatedFeedback['boundaryAdjustments'] {
     // Filter feedback with boundary adjustments
     const feedbackWithAdjustments = feedback.filter(
-      fb => fb.boundaryAdjustment.correctedStart || fb.boundaryAdjustment.correctedEnd
+      fb => fb.boundaryAdjustment && (fb.boundaryAdjustment.correctedStart || fb.boundaryAdjustment.correctedEnd)
     );
     
     if (feedbackWithAdjustments.length === 0) {
@@ -79,7 +79,7 @@ export class FeedbackAggregator {
     const distribution: Record<string, number> = {};
     
     for (const fb of feedbackWithAdjustments) {
-      if (fb.boundaryAdjustment.correctedStart) {
+      if (fb.boundaryAdjustment?.correctedStart) {
         const startDelta = fb.boundaryAdjustment.correctedStart.getTime() - 
                           fb.boundaryAdjustment.originalStart.getTime();
         totalStartDelta += startDelta;
@@ -90,7 +90,7 @@ export class FeedbackAggregator {
         distribution[startBucket] = (distribution[startBucket] || 0) + 1;
       }
       
-      if (fb.boundaryAdjustment.correctedEnd) {
+      if (fb.boundaryAdjustment?.correctedEnd) {
         const endDelta = fb.boundaryAdjustment.correctedEnd.getTime() - 
                         fb.boundaryAdjustment.originalEnd.getTime();
         totalEndDelta += endDelta;
@@ -144,7 +144,9 @@ export class FeedbackAggregator {
     };
     
     for (const fb of feedback) {
-      distribution[fb.confidenceRating] = (distribution[fb.confidenceRating] || 0) + 1;
+      if (fb.confidenceRating !== undefined) {
+        distribution[fb.confidenceRating] = (distribution[fb.confidenceRating] || 0) + 1;
+      }
     }
     
     return distribution;
@@ -221,7 +223,7 @@ export class FeedbackAggregator {
     // Sort feedback by submission time
     const sortedFeedback = [...feedbackEntries]
       .filter(fb => fb.originalPatternType === patternType)
-      .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime());
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
     
     if (sortedFeedback.length === 0) {
       return [];
@@ -239,7 +241,7 @@ export class FeedbackAggregator {
       const accuracy = 1 - (falsePositiveCount / feedbackGroup.length);
       
       // Calculate average confidence rating
-      const totalConfidence = feedbackGroup.reduce((sum, fb) => sum + fb.confidenceRating, 0);
+      const totalConfidence = feedbackGroup.reduce((sum, fb) => sum + (fb.confidenceRating || 0), 0);
       const avgConfidence = totalConfidence / feedbackGroup.length / 5; // Normalize to 0-1
       
       return {
@@ -260,7 +262,7 @@ export class FeedbackAggregator {
     const result: Record<string, PatternFeedback[]> = {};
     
     for (const fb of feedback) {
-      const timestamp = this.getIntervalTimestamp(fb.submittedAt, interval);
+      const timestamp = this.getIntervalTimestamp(fb.createdAt, interval);
       
       if (!result[timestamp]) {
         result[timestamp] = [];

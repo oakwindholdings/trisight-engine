@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Pattern, PatternType, GoldmineChannelPattern } from '../../models/PatternTypes';
-import { PatternFeedback } from '../../models/FeedbackTypes';
+import { PatternFeedback, FeedbackAccuracy, TimingAssessment, InvalidityReason } from '../../models/FeedbackTypes';
 import { BoundaryAdjuster } from './BoundaryAdjuster';
 import { GoldmineChannelAdjuster } from './GoldmineChannelAdjuster';
 
@@ -260,31 +260,45 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     setIsSubmitting(true);
     
     const feedback: PatternFeedback = {
+      id: `feedback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       patternId: pattern.id,
+      patternType: pattern.type,
+      userId,
+      sessionId: sessionStorage.getItem('sessionId') || `session-${Date.now()}`,
+      
+      // Core feedback data
+      accuracy: FeedbackAccuracy.NEUTRAL,
+      confidence: confidenceRating * 20, // Convert 1-5 to 0-100
+      timing: TimingAssessment.PERFECT,
+      isValid: !falsePositive,
+      ...(falsePositive && { invalidityReason: InvalidityReason.FALSE_POSITIVE }),
+      
+      // Additional context
+      notes,
+      
+      // Metadata
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      userAgent: navigator.userAgent,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      
+      // Privacy
+      consentGiven: true,
+      consentTimestamp: new Date(),
+      dataRetentionDays: 90,
+      
+      // Legacy properties
       originalPatternType: pattern.type,
       correctedPatternType,
       confidenceRating,
+      falsePositive,
+      ...(falsePositive && { falsePositiveReason }),
       boundaryAdjustment: {
         originalStart: pattern.startTime,
         originalEnd: pattern.endTime,
-        correctedStart: boundaryAdjustment.correctedStart,
-        correctedEnd: boundaryAdjustment.correctedEnd
-      },
-      // Include channel adjustment data for Goldmine Channel patterns
-      ...(isGoldmineChannel && {
-        channelAdjustment: {
-          originalUpperBoundary: (pattern as GoldmineChannelPattern).upperBoundary,
-          originalLowerBoundary: (pattern as GoldmineChannelPattern).lowerBoundary,
-          correctedUpperBoundary: channelAdjustment.upper,
-          correctedLowerBoundary: channelAdjustment.lower
-        }
-      }),
-      falsePositive,
-      // Include reason if marked as false positive
-      ...(falsePositive && { falsePositiveReason }),
-      notes,
-      submittedAt: new Date(),
-      userId
+        correctedStart: boundaryAdjustment.correctedStart || undefined,
+        correctedEnd: boundaryAdjustment.correctedEnd || undefined
+      }
     };
     
     try {
@@ -344,7 +358,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               falsePositive,
               ...(falsePositive && { falsePositiveReason }),
               notes,
-              submittedAt: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date(),
               userId
             }, null, 2)}
           </pre>

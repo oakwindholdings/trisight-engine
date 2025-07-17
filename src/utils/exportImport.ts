@@ -27,7 +27,7 @@ export const getFeedbackDateRange = (feedback: PatternFeedback[]): { startDate: 
     return { startDate: now, endDate: now };
   }
 
-  const dates = feedback.map(f => new Date(f.submittedAt));
+  const dates = feedback.map(f => new Date(f.createdAt));
   const startDate = new Date(Math.min(...dates.map(d => d.getTime())));
   const endDate = new Date(Math.max(...dates.map(d => d.getTime())));
   

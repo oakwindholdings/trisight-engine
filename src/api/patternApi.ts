@@ -67,7 +67,8 @@ export const submitFeedback = async (feedback: PatternFeedback): Promise<void> =
   // Add new feedback with legacy fields
   const legacyFeedback: LegacyPatternFeedback = {
     ...feedback,
-    submittedAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
     originalPatternType: feedback.patternType, // Map to legacy field
   };
   
@@ -226,7 +227,16 @@ export const getLearningMetrics = async (): Promise<LearningMetrics> => {
     model = {
       version: '1.0.0',
       lastUpdated: new Date(),
-      patternStates: {},
+      patternStates: {
+        [PatternType.GOLDMINE_CHANNEL]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.GOLDMINE_SHAFT]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.PIVOT]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.ROCKETMAN]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.ESCALATOR]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.BLACKJACK]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.BREAKOUTBOX]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.GOLDEN_CANDLE]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 }
+      },
       patternParameters: {
         [PatternType.GOLDMINE_CHANNEL]: {
           confidenceThreshold: 0.7,
@@ -338,6 +348,16 @@ export const exportLearningModel = async (): Promise<LearningModelState> => {
     model = {
       version: '1.0.0',
       lastUpdated: new Date(),
+      patternStates: {
+        [PatternType.GOLDMINE_CHANNEL]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.GOLDMINE_SHAFT]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.PIVOT]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.ROCKETMAN]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.ESCALATOR]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.BLACKJACK]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.BREAKOUTBOX]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 },
+        [PatternType.GOLDEN_CANDLE]: { enabled: true, confidenceMultiplier: 1.0, timingOffsetMs: 0 }
+      },
       patternParameters: {
         [PatternType.GOLDMINE_CHANNEL]: {
           confidenceThreshold: 0.7,
@@ -466,7 +486,7 @@ const updateLearningMetrics = (model: LearningModelState): void => {
   metrics.accuracyByPatternType = emptyAccuracy;
   metrics.feedbackCountByPatternType = emptyFeedbackCount;
   metrics.correctionsByType = [];
-  metrics.totalFeedbackCount = feedbackHistory.length;
+  metrics.totalFeedbackCount = feedbackHistory ? feedbackHistory.length : 0;
   
   // Group by pattern type
   const byPatternType: Record<PatternType, PatternFeedback[]> = {} as Record<PatternType, PatternFeedback[]>;
@@ -474,14 +494,17 @@ const updateLearningMetrics = (model: LearningModelState): void => {
   let falsePositiveCount = 0;
   
   // Process all feedback
-  feedbackHistory.forEach(feedback => {
+  if (feedbackHistory) {
+    feedbackHistory.forEach(feedback => {
     const { originalPatternType, correctedPatternType, falsePositive } = feedback;
     
     // Count by pattern type
-    if (!byPatternType[originalPatternType]) {
-      byPatternType[originalPatternType] = [];
+    if (originalPatternType && originalPatternType in PatternType) {
+      if (!byPatternType[originalPatternType as PatternType]) {
+        byPatternType[originalPatternType as PatternType] = [];
+      }
+      byPatternType[originalPatternType as PatternType].push(feedback);
     }
-    byPatternType[originalPatternType].push(feedback);
     
     // Count false positives
     if (falsePositive) {
@@ -518,20 +541,23 @@ const updateLearningMetrics = (model: LearningModelState): void => {
   });
   
   // Calculate false positive rate
-  metrics.falsePositiveRate = feedbackHistory.length > 0 
+  metrics.falsePositiveRate = feedbackHistory && feedbackHistory.length > 0 
     ? falsePositiveCount / feedbackHistory.length 
     : 0;
+  }
   
   // Format corrections
   metrics.correctionsByType = Object.values(corrections);
   
   // Update feedback trend (group by day)
   const trendMap = new Map<string, number>();
-  feedbackHistory.forEach(f => {
-    const date = new Date(f.submittedAt);
-    const dateStr = date.toISOString().split('T')[0];
-    trendMap.set(dateStr, (trendMap.get(dateStr) || 0) + 1);
-  });
+  if (feedbackHistory) {
+    feedbackHistory.forEach(f => {
+      const date = new Date(f.createdAt);
+      const dateStr = date.toISOString().split('T')[0];
+      trendMap.set(dateStr, (trendMap.get(dateStr) || 0) + 1);
+    });
+  }
   
   metrics.feedbackTrend = Array.from(trendMap.entries())
     .map(([dateStr, count]) => ({
@@ -542,17 +568,19 @@ const updateLearningMetrics = (model: LearningModelState): void => {
   
   // Update top contributors
   const contributorMap = new Map<string, { count: number; correct: number }>();
-  feedbackHistory.forEach(f => {
-    const userId = f.userId;
-    const current = contributorMap.get(userId) || { count: 0, correct: 0 };
-    
-    current.count++;
+  if (feedbackHistory) {
+    feedbackHistory.forEach(f => {
+      const userId = f.userId;
+      const current = contributorMap.get(userId) || { count: 0, correct: 0 };
+      
+      current.count++;
     if (!f.falsePositive && (!f.correctedPatternType || f.correctedPatternType === f.originalPatternType)) {
       current.correct++;
     }
     
     contributorMap.set(userId, current);
-  });
+    });
+  }
   
   metrics.topContributors = Array.from(contributorMap.entries())
     .map(([userId, { count, correct }]) => ({

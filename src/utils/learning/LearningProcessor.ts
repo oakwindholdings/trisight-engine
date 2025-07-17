@@ -35,7 +35,15 @@ export class LearningProcessor {
     this.feedbackHistory.push(feedback);
     
     // Get current parameters for the pattern type
-    const currentParams = this.detectionParameters[feedback.originalPatternType];
+    const patternType = feedback.originalPatternType || feedback.patternType;
+    if (!patternType) {
+      console.warn('No pattern type found in feedback:', feedback);
+      return {
+        impactScore: 0,
+        updatedParameters: {} as PatternDetectionParameters
+      };
+    }
+    const currentParams = this.detectionParameters[patternType];
     
     // Create a copy of the parameters to modify
     const updatedParams = this.copyParameters(currentParams);
@@ -50,7 +58,7 @@ export class LearningProcessor {
       impactScore = 0.7;
     } else {
       // Process boundary adjustments
-      if (feedback.boundaryAdjustment.correctedStart || feedback.boundaryAdjustment.correctedEnd) {
+      if (feedback.boundaryAdjustment?.correctedStart || feedback.boundaryAdjustment?.correctedEnd) {
         this.processBoundaryAdjustment(updatedParams, feedback);
         impactScore += 0.1;
       }
@@ -67,7 +75,7 @@ export class LearningProcessor {
     }
     
     // Update parameters for the pattern type
-    this.detectionParameters[feedback.originalPatternType] = updatedParams;
+    this.detectionParameters[patternType] = updatedParams;
     
     // Return the result
     return {
@@ -141,7 +149,7 @@ export class LearningProcessor {
     feedback: PatternFeedback
   ): void {
     // Scale is 1-5, convert to 0-1 scale
-    const normalizedRating = (feedback.confidenceRating - 1) / 4;
+    const normalizedRating = ((feedback.confidenceRating || 3) - 1) / 4;
     
     // If user confidence is higher than current threshold, slightly decrease threshold
     if (normalizedRating < 0.4) {
@@ -153,10 +161,11 @@ export class LearningProcessor {
     }
     
     // Adjust sensitivity based on confidence rating
-    if (feedback.confidenceRating <= 2) {
+    const rating = feedback.confidenceRating || 3;
+    if (rating <= 2) {
       // Low confidence, decrease sensitivity
       params.sensitivity = Math.max(0.1, params.sensitivity - 0.05);
-    } else if (feedback.confidenceRating >= 4) {
+    } else if (rating >= 4) {
       // High confidence, increase sensitivity
       params.sensitivity = Math.min(1.0, params.sensitivity + 0.05);
     }
@@ -353,7 +362,9 @@ export class LearningProcessor {
     };
     
     for (const fb of feedback) {
-      distribution[fb.confidenceRating] = (distribution[fb.confidenceRating] || 0) + 1;
+      if (fb.confidenceRating !== undefined) {
+        distribution[fb.confidenceRating] = (distribution[fb.confidenceRating] || 0) + 1;
+      }
     }
     
     return distribution;

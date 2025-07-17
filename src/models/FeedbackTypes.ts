@@ -174,7 +174,9 @@ export const PatternFeedbackSchema = z.object({
 export const PrivacyConsentSchema = z.object({
   sessionId: z.string(),
   consentGiven: z.boolean(),
-  consentType: z.union([z.literal('feedback'), z.literal('analytics'), z.literal('all')]),
+  consentType: z.string().refine((val) => ['feedback', 'analytics', 'all'].includes(val), {
+    message: "Must be 'feedback', 'analytics', or 'all'"
+  }),
   timestamp: z.date(),
   ipHash: z.string().optional(),
   expiresAt: z.date(),

@@ -250,14 +250,14 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
       try {
         const lastFeedback = feedbackHistory[feedbackHistory.length - 1];
         
-        // Ensure submittedAt is a valid Date object (handle legacy format)
-        const submittedAt = (lastFeedback as any).submittedAt || lastFeedback.createdAt;
-        if (!(submittedAt instanceof Date)) {
+        // Ensure createdAt is a valid Date object
+        const createdAt = lastFeedback.createdAt;
+        if (!(createdAt instanceof Date)) {
           // Try to convert string to Date if needed
-          if (typeof submittedAt === 'string') {
-            (lastFeedback as any).submittedAt = new Date(submittedAt);
+          if (typeof createdAt === 'string') {
+            lastFeedback.createdAt = new Date(createdAt);
           } else {
-            console.error('Invalid submittedAt date format in feedback:', lastFeedback);
+            console.error('Invalid createdAt date format in feedback:', lastFeedback);
             return; // Skip processing this feedback
           }
         }
@@ -266,11 +266,11 @@ export const useLearning = (feedbackHistory: PatternFeedback[]) => {
         const storedFeedback = FeedbackStorage.getFeedbackByPatternId(lastFeedback.patternId);
         const isAlreadyProcessed = storedFeedback.some(fb => {
           // Ensure stored feedback dates are also Date objects
-          const storedDate = fb.submittedAt instanceof Date ? 
-            fb.submittedAt : 
-            new Date(fb.submittedAt);
+          const storedDate = fb.createdAt instanceof Date ? 
+            fb.createdAt : 
+            new Date(fb.createdAt);
             
-          return storedDate.getTime() === lastFeedback.submittedAt.getTime();
+          return storedDate.getTime() === lastFeedback.createdAt.getTime();
         });
         
         if (!isAlreadyProcessed) {

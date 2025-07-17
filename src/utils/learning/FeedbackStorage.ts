@@ -63,7 +63,8 @@ export class FeedbackStorage {
       // Convert string dates back to Date objects
       return parsedFeedback.map((feedback: any) => ({
         ...feedback,
-        submittedAt: new Date(feedback.submittedAt),
+        createdAt: new Date(feedback.createdAt || feedback.submittedAt),
+        updatedAt: new Date(feedback.updatedAt || feedback.submittedAt),
         boundaryAdjustment: {
           ...feedback.boundaryAdjustment,
           originalStart: new Date(feedback.boundaryAdjustment.originalStart),
@@ -226,7 +227,8 @@ export class FeedbackStorage {
         ...history,
         feedbackEntries: history.feedbackEntries.map((feedback: any) => ({
           ...feedback,
-          submittedAt: new Date(feedback.submittedAt),
+          createdAt: new Date(feedback.createdAt || feedback.submittedAt),
+          updatedAt: new Date(feedback.updatedAt || feedback.submittedAt),
           boundaryAdjustment: {
             ...feedback.boundaryAdjustment,
             originalStart: new Date(feedback.boundaryAdjustment.originalStart),

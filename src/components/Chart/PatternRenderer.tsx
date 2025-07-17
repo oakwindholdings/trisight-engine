@@ -1196,7 +1196,7 @@ const PatternRendererImpl = {
           const labelWidth = metrics.width + 10; // Add padding
           const labelHeight = 20; // Approximate height
           registerPatternHitBox(
-            { ...pattern, feedbackEnabled: true },
+            pattern,
             labelX - labelWidth / 2,
             labelY - labelHeight / 2,
             labelWidth,
@@ -1227,7 +1227,7 @@ const PatternRendererImpl = {
           const labelWidth = metrics.width + 10; // Add padding
           const labelHeight = 20; // Approximate height
           registerPatternHitBox(
-            { ...pattern, feedbackEnabled: true },
+            pattern,
             labelX - labelWidth / 2,
             labelY - labelHeight / 2,
             labelWidth,
@@ -1257,7 +1257,7 @@ const PatternRendererImpl = {
           const labelWidth = metrics.width + 10; // Add padding
           const labelHeight = 20; // Approximate height
           registerPatternHitBox(
-            { ...pattern, feedbackEnabled: true },
+            pattern,
             labelX - labelWidth / 2,
             labelY - labelHeight / 2,
             labelWidth,
