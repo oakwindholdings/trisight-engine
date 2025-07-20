@@ -427,9 +427,19 @@ export function usePatterns(data: CandlestickData[]) {
           feedbackEnabled: true // Enable feedback for all patterns
         }));
         
-        // Calculate pattern counts by type
+        // Emit to feed & dev console
+        import('../utils/feed/patternFeed').then(({ emitPatternFeedEvent }) => {
+          patternsWithFeedback.forEach(p => emitPatternFeedEvent(p));
+        });
+
+        // Dev diagnostic – aggregate per detector
         const counts = Object.values(PatternType).reduce((acc, type) => {
-          acc[type] = patternsWithFeedback.filter(p => p.type === type).length;
+          const n = patternsWithFeedback.filter(p => p.type === type).length;
+          if (n > 0) {
+            // eslint-disable-next-line no-console
+            console.log(`[DEBUG] ${type} detected ${n} pattern(s) for`, patternsWithFeedback[0]?.symbol || 'UNKNOWN');
+          }
+          acc[type] = n;
           return acc;
         }, {} as Record<PatternType, number>);
         
