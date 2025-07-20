@@ -437,8 +437,8 @@ export function renderSignalCandleAction(
   // Filter signals by confidence threshold
   const qualifyingSignals = signals.filter(signal => signal.confidence >= confidenceThreshold);
   
-  // Debug logging
-  console.log(`[SignalRenderer] Processing ${qualifyingSignals.length} qualifying signals (threshold: ${confidenceThreshold})`);
+  // Debug logging (gated)
+  signalDebugLog(`[SignalRenderer] Processing ${qualifyingSignals.length} qualifying signals (threshold: ${confidenceThreshold})`);
 
   qualifyingSignals.forEach((signal, idx) => {
     // Find the corresponding candle by timestamp or index
@@ -447,7 +447,7 @@ export function renderSignalCandleAction(
     // If candleIndex is missing or invalid, use timestamp matching
     if (candleIndex === undefined || candleIndex < 0 || candleIndex >= candles.length) {
       candleIndex = findCandleIndex(candles, signal.timestamp);
-      console.log(`[SignalRenderer] Signal ${idx}: Using timestamp matching, found candleIndex: ${candleIndex}`);
+      signalDebugLog(`[SignalRenderer] Signal ${idx}: Using timestamp matching, found candleIndex: ${candleIndex}`);
     }
     
     if (candleIndex === -1 || candleIndex >= candles.length) {
@@ -468,7 +468,7 @@ export function renderSignalCandleAction(
       centerX < dimensions.margin.left ||
       centerX > dimensions.width - dimensions.margin.right
     ) {
-      console.log(`[SignalRenderer] Signal ${idx}: Outside viewport, centerX=${centerX}`);
+      signalDebugLog(`[SignalRenderer] Signal ${idx}: Outside viewport, centerX=${centerX}`);
       return;
     }
 
@@ -478,7 +478,7 @@ export function renderSignalCandleAction(
     const highY = priceScale.scale(candle.high);
     const lowY = priceScale.scale(candle.low);
     
-    console.log(`[SignalRenderer] Signal ${idx}: Rendering black candle at x=${centerX}, action=${signal.action}, price=${signal.price}`);
+    signalDebugLog(`[SignalRenderer] Signal ${idx}: Rendering black candle at x=${centerX}, action=${signal.action}, price=${signal.price}`);
 
     // Render black candle override
     renderBlackCandle(ctx, centerX, openY, closeY, highY, lowY);
@@ -1149,3 +1149,30 @@ function getVisibleSignals(signals: TradeActionSignal[], timeScale: any, dimensi
 }
 
 // All rendering utilities are already exported at their function definitions
+
+// ============================================================================
+// 🛠  SignalRenderer Debug Controls
+// ----------------------------------------------------------------------------
+// High-volume console output from this renderer can overwhelm DevTools.  We
+// now gate these logs behind an opt-in flag so analysts can enable them when
+// needed without touching the code again:
+//     localStorage.setItem('trisight_signals_debug', '1');
+// Disable with:
+//     localStorage.removeItem('trisight_signals_debug');
+// ============================================================================
+
+const signalDebugEnabled: boolean = (() => {
+  if (typeof localStorage === 'undefined') return false;
+  try {
+    return localStorage.getItem('trisight_signals_debug') === '1';
+  } catch {
+    return false;
+  }
+})();
+
+function signalDebugLog(...args: any[]) {
+  if (signalDebugEnabled) {
+    // eslint-disable-next-line no-console
+    console.log(...args);
+  }
+}
