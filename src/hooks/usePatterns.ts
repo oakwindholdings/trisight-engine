@@ -437,7 +437,8 @@ export function usePatterns(data: CandlestickData[]) {
           const n = patternsWithFeedback.filter(p => p.type === type).length;
           if (n > 0) {
             // eslint-disable-next-line no-console
-            console.log(`[DEBUG] ${type} detected ${n} pattern(s) for`, patternsWithFeedback[0]?.symbol || 'UNKNOWN');
+            const sym = (patternsWithFeedback[0] as any)?.symbol || (patternsWithFeedback[0] as any)?.ticker || 'UNKNOWN';
+            console.log(`[DEBUG] ${type} detected ${n} pattern(s) for`, sym);
           }
           acc[type] = n;
           return acc;
