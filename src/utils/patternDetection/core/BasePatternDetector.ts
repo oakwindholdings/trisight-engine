@@ -60,6 +60,32 @@ export abstract class BasePatternDetector<T extends Pattern> {
    * Main method to detect patterns in the given data with market context
    */
   public detect(data: CandlestickData[], context?: MarketContext): T[] {
+    /*
+     * PatternDetectorDiagnostics: Entry-point log so we can verify that every
+     * detector is actually invoked during a chart load / scroll.
+     * We attempt to resolve the currently viewed symbol from the same
+     * localStorage location used by the navigation bar.
+     */
+    let currentSymbol: string = 'UNKNOWN';
+    try {
+      // The navbar persists symbol info under this key
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('trisight_navbar_symbol_info');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          currentSymbol = parsed?.symbol || 'UNKNOWN';
+        }
+      }
+    } catch {
+      /* Ignore JSON parsing / storage access errors – fallback to UNKNOWN */
+    }
+
+    // Always emit this diagnostic – independent of enableLogging flag
+    // so that even “silent” detectors surface in the console.
+    // Format: [DEBUG] Running <PatternType> detector for <SYMBOL>
+    // Example: [DEBUG] Running ROCKETMAN detector for AAPL
+    console.log(`[DEBUG] Running ${this.getPatternType()} detector for`, currentSymbol);
+
     const startTime = performance.now();
     
     // Use provided context or create a minimal default one
@@ -90,7 +116,12 @@ export abstract class BasePatternDetector<T extends Pattern> {
       ? processedPatterns.reduce((sum, p) => sum + p.confidence, 0) / processedPatterns.length
       : 0;
     
-    if (this.options.enableLogging) {
+    // Exit-point summary – always emit if no patterns were found so we can
+    // identify detectors that are returning empty silently. When patterns are
+    // found we defer to the existing enableLogging guard to avoid spamming.
+    if (processedPatterns.length === 0) {
+      console.log(`[DEBUG] ${this.getPatternType()} detector returned 0 patterns for`, currentSymbol);
+    } else if (this.options.enableLogging) {
       logDebug('DEBUG_PATTERN_DETECT', `[${this.getPatternType()}] Detected ${processedPatterns.length} patterns. `
        + `Avg confidence: ${this.detectionStats.avgConfidence.toFixed(2)}`);
     }
