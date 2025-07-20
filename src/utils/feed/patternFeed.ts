@@ -42,7 +42,7 @@ export async function emitPatternFeedEvent(pattern: Pattern): Promise<void> {
   if (!isSupabaseConfigured()) return;
 
   try {
-    const { error } = await supabase!.from('pattern_feed').insert(row, { returning: 'minimal' });
+    const { error } = await supabase!.from('pattern_feed').insert([row]);
     if (error) {
       // eslint-disable-next-line no-console
       console.error('[PatternFeed] Supabase insert error:', error);
