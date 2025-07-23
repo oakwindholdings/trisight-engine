@@ -3,6 +3,10 @@
 // Enables pattern modal activation by detecting clicks on pattern areas
 
 import { Pattern, PatternType } from '../models/PatternTypes';
+import { emitPatternFeedSignal } from '../framework/emitPatternFeedSignal';
+
+// Prevent double-emits when detector already called emitPatternFeedSignal
+const emittedPatternIds: Set<string> = new Set();
 
 export interface PatternHitBox {
   pattern: Pattern;
@@ -34,6 +38,21 @@ export function registerPatternHitBox(
     height,
     feedbackEnabled: (pattern as any).feedbackEnabled
   });
+
+  // Feed emission for visual patterns that reached render layer
+  const symbol = (pattern as any).symbol ?? (pattern as any).ticker ?? 'UNKNOWN';
+
+  // Emit feed only if we haven’t emitted this pattern id yet this session
+  if (pattern.id && emittedPatternIds.has(pattern.id)) {
+    // no-op
+  } else {
+    emitPatternFeedSignal(pattern.type, { 
+      id: pattern.id,
+      x, y, width, height 
+    }, symbol);
+    if (pattern.id) emittedPatternIds.add(pattern.id);
+  }
+
   patternHitBoxes.push({
     pattern,
     x,

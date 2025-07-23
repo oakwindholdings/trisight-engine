@@ -12,5 +12,16 @@ module.exports = {
     
     // Downgrade mixed operators to warnings
     'no-mixed-operators': 'warn'
-  }
+  },
+  overrides: [
+    {
+      files: ['**/*.test.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+      rules: {
+        'testing-library/no-container': 'warn',
+        'testing-library/no-node-access': 'warn',
+        'testing-library/no-unnecessary-act': 'warn',
+        'jest/no-conditional-expect': 'warn'
+      }
+    }
+  ]
 };

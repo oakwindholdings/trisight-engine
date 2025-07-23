@@ -36,6 +36,7 @@ import DebugSettingsPanel from './components/Settings/DebugSettingsPanel';
 import SettingsPanel from './components/Settings/SettingsPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
 import { SupabaseTestPanel } from './components/SupabaseTestPanel';
+import { FeedSidebar } from './feed/components/FeedSidebar';
 
 // Import context providers
 import AppProviders from './components/AppProviders';
@@ -885,9 +886,15 @@ function AppContent() {
     window.history.replaceState({}, '', newUrl);
   }, [selectedPattern]);
 
+  const ENABLE_FEED = process.env.REACT_APP_ENABLE_PATTERN_FEED !== 'false';
+
   return (
     <ChartProvider>
-      <div className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}>
+      {ENABLE_FEED && <FeedSidebar />}
+      <div
+        className={isFeatureEnabled('NEW_LAYOUT') ? mainGridStyles.mainGrid : 'app-container'}
+        style={ENABLE_FEED ? { marginLeft: 300, width: 'calc(100% - 300px)' } : undefined}
+      >
       {isFeatureEnabled('NEW_LAYOUT') ? (
         // New UI using wrapper components
         <>

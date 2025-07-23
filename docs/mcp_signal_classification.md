@@ -1,0 +1,10 @@
+| eventType      | Usage                                                                      | Expected Fields                                             | Source Module                             |
+|:---------------|:---------------------------------------------------------------------------|:------------------------------------------------------------|:------------------------------------------|
+| TRADE_ENTRY    | Issued when a pattern triggers an actionable entry point                   | symbol, patternType, confidence, timestamp, eventType       | TradeEngine / AdaptiveDetector.emit()     |
+| STOP_EXIT      | Emitted when a trailing stop or risk logic exits a position                | symbol, patternType, confidence, timestamp, eventType       | StopLossManager / TradeLifecycle          |
+| TRADE_BIAS     | Signals direction or conviction shift without triggering a trade           | symbol, patternType, confidence, timestamp, direction       | RiskModule / ConvictionScorer             |
+| PATTERN        | Standard pattern detection, rendered on chart and labeled                  | symbol, patternType, confidence, timestamp, eventType       | AdaptivePatternDetectionService           |
+| LABEL          | Annotation-only overlay (e.g. STEP, ZONE, WARNING)                         | symbol, patternType, labelType, timestamp, humanSummary     | StepBox.tsx / HoverTooltip / ChartLabels  |
+| CLUSTER_SIGNAL | Composite overlays like Conviction-Mass-Cloud or diagnostic clusters       | symbol, patternType, confidence, timestamp, metadata        | ConvictionCloudRenderer / SignalIntegrity |
+| FEEDBACK       | Human-analyst response to a pattern or signal (confirmation, disagreement) | symbol, patternType, userId, timestamp, feedbackType, notes | PatternAnalysisModal / AnalystFeedbackBus |
+| SYSTEM_EVENT   | Systemic changes (e.g. configuration load, model version shift)            | timestamp, source, message, context                         | AppProviders.tsx / SessionContext.ts      |

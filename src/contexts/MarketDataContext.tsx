@@ -1,7 +1,7 @@
 // src/contexts/MarketDataContext.tsx
 // Context providing market data with Supabase caching
 // Wraps useMarketDataWithSupabase hook for global cache-first strategy
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 import { useMarketDataWithSupabase } from '../hooks/useMarketDataWithSupabase';
 import useTwelveDataApiKey from '../hooks/useTwelveDataApiKey';
@@ -73,6 +73,13 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
   // This provides automatic caching, incremental updates, and better performance
   const marketData = useMarketDataWithSupabase();
   
+  // Expose current symbol globally for feed fallback
+  useEffect(() => {
+    if (typeof window !== 'undefined' && marketData.symbol) {
+      (window as any).trisightSymbol = marketData.symbol;
+    }
+  }, [marketData.symbol]);
+
   // Note: initialSymbol and initialTimeframe are handled by the context consumer
   // The hook uses the context values set by components like ContextBar
   

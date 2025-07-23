@@ -335,6 +335,11 @@ const ContextBar: React.FC<ContextBarProps> = ({
     if (onSymbolSelect) {
       onSymbolSelect(newSymbol, name, exchange);
     }
+
+    // Expose globally for feed emitter fallback
+    if (typeof window !== 'undefined') {
+      (window as any).trisightSymbol = newSymbol;
+    }
   };
   
   // Validate date format MM/DD/YYYY

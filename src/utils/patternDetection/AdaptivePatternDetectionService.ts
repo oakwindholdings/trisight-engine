@@ -208,6 +208,15 @@ export class AdaptivePatternDetectionService {
     // Time the detection process
     const startTime = performance.now();
     this.lastDetectionResult = this.orchestrator.detectPatterns(filteredData);
+    
+    logDebug('DEBUG_PATTERN_DETECT', '[AdaptivePatternDetectionService] Detection result:', {
+      totalPatterns: this.lastDetectionResult.patterns.length,
+      byType: Object.entries(this.lastDetectionResult.patternsByType).map(([type, patterns]) => ({
+        type,
+        count: patterns.length
+      }))
+    });
+    
     const elapsedTime = performance.now() - startTime;
     
     logDebug('DEBUG_PATTERN_DETECT', `Pattern detection completed in ${elapsedTime.toFixed(2)}ms`);
@@ -363,6 +372,11 @@ export class AdaptivePatternDetectionService {
       const saved = localStorage.getItem(STORAGE_KEY_DETECTION_SETTINGS);
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Migration: Ensure ESCALATOR is included if it's missing
+        if (parsed.enabledPatternTypes && !parsed.enabledPatternTypes.includes(PatternType.ESCALATOR)) {
+          parsed.enabledPatternTypes.push(PatternType.ESCALATOR);
+          logDebug('DEBUG_PATTERN_DETECT', 'Migration: Added ESCALATOR to enabledPatternTypes');
+        }
         return { ...DEFAULT_PREFERENCES, ...parsed };
       }
     } catch (e) {

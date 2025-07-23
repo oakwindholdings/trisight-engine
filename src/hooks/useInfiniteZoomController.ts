@@ -46,6 +46,7 @@ interface UseInfiniteZoomControllerReturn {
   resetZoom: () => void;
   zoomTo: (targetLevel: number) => void;
   zoomToFit: () => void;
+  zoomToIndices?: (startIdx: number, endIdx: number, totalCandles: number) => void;
   handleWheel: (e: React.WheelEvent<HTMLCanvasElement>) => void;
   handlePinch: (e: React.TouchEvent<HTMLCanvasElement>) => void;
   setPanState: React.Dispatch<React.SetStateAction<PanState>>;

@@ -125,15 +125,15 @@ SELECT
   
   -- Timing distribution
   jsonb_object_agg(
-    timing::TEXT,
+    timing_counts.timing::TEXT,
     timing_count
-  ) FILTER (WHERE timing IS NOT NULL) as timing_distribution,
+  ) FILTER (WHERE timing_counts.timing IS NOT NULL) as timing_distribution,
   
   -- Invalidity reasons distribution
   jsonb_object_agg(
-    invalidity_reason::TEXT,
+    reason_counts.invalidity_reason::TEXT,
     reason_count
-  ) FILTER (WHERE invalidity_reason IS NOT NULL) as invalidity_reasons,
+  ) FILTER (WHERE reason_counts.invalidity_reason IS NOT NULL) as invalidity_reasons,
   
   -- Temporal metrics
   MIN(created_at) as first_feedback_at,

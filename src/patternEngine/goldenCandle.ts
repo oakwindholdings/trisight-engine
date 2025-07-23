@@ -11,6 +11,7 @@ import { convertToHeikinAshi } from '../utils/candleTransform';
 import { isNearMissGoldenCandle } from '../utils/patternQualifiers';
 import { logDebug } from '../utils/debug';
 import { canEmitSignal } from '../utils/patternDebounceManager';
+import { emitPatternFeedSignal } from '../framework/emitPatternFeedSignal';
 
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
@@ -168,6 +169,9 @@ export function detectGoldenCandle(
     }
 
     goldenCandles.push(goldenCandle);
+
+    emitPatternFeedSignal('GOLDEN_CANDLE', { confidence: confidence, direction }, (candles[i] as any)?.symbol || 'UNKNOWN');
+    if (DEBUG_MODE) console.log('[DEBUG] GOLDEN_CANDLE detected for', (candles[i] as any)?.symbol);
   }
 
   if (DEBUG_MODE) logDebug('DEBUG_PATTERN_DETECT', `[HA GoldenCandle] Detection complete. Found ${goldenCandles.length} golden candles`);

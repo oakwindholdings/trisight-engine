@@ -306,6 +306,34 @@ export function useInfiniteZoomController(opts: InfiniteZoomOptions) {
       if (!animationRef.current) {
         animationRef.current = requestAnimationFrame(animateZoom);
       }
+    },
+    zoomToIndices: (startIdx: number, endIdx: number, totalCandles: number) => {
+      // Calculate zoom level needed to fit range
+      const rangeCandleCount = endIdx - startIdx + 1;
+      const targetCandleCount = Math.max(21, rangeCandleCount + 20); // Pad with 10 on each side
+      const newZoom = totalCandles / targetCandleCount;
+      
+      // Set zoom
+      targetZoomRef.current = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+      
+      // Calculate pan offset to center the range
+      const centerIdx = (startIdx + endIdx) / 2;
+      const centerRatio = centerIdx / totalCandles;
+      const panOffset = -(centerRatio - 0.5) * (width - margin.left - margin.right) * newZoom;
+      
+      // Apply pan
+      setPanState({
+        isPanning: false,
+        startX: 0,
+        previousTranslateX: panOffset,
+        translateX: panOffset,
+        momentum: 0
+      });
+      
+      // Start animation
+      if (!animationRef.current) {
+        animationRef.current = requestAnimationFrame(animateZoom);
+      }
     }
   };
 }

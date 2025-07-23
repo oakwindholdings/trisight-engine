@@ -6,6 +6,7 @@ import { Candle } from "../types/pattern";
 import { TradeActionSignal, TradeAction, SignalType } from "../utils/trading/TradeActionSignal";
 import { stopExitTraceAnalyzer } from '../utils/audit/StopExitTraceAnalyzer';
 import { emitTradeSignal } from "../framework/tradeActionEmitter";
+import { emitPatternFeedSignal } from "../framework/emitPatternFeedSignal";
 import { logDebug } from "../utils/debug";
 
 type StopLossType = "LONG" | "SHORT";
@@ -257,6 +258,18 @@ function emitStop(
 
   // Emit the signal through the centralized framework
   emitTradeSignal(signal);
+
+  // Feed emission – STOP_EXIT
+  try {
+    emitPatternFeedSignal(
+      tracker.pattern?.toUpperCase() || 'STOPLOSS',
+      { stopLoss: signal.stopLoss, price: signal.price },
+      undefined,
+      'STOP_EXIT'
+    );
+  } catch (err) {
+    console.error('[PatternFeed] Failed to emit STOP_EXIT', err);
+  }
 
   logDebug('STOP_LOSS_MANAGER', `Stop loss triggered for ${tracker.positionId}`, {
     type: tracker.type,

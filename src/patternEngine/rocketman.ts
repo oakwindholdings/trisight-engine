@@ -14,6 +14,7 @@ import { CandlestickData } from '../models/ChartTypes';
 import { RocketmanPattern } from '../models/PatternTypes';
 import { TradeActionSignal, TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
+import { emitPatternFeedSignal } from '../framework/emitPatternFeedSignal';
 import { registerStopLoss } from '../engine/StopLossManager';
 import { canEmitSignal } from '../utils/patternDebounceManager';
 
@@ -113,6 +114,12 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
       signalStrength: pattern.signalStrength,
       adaptiveThreshold: pattern.adaptiveThreshold
     };
+  });
+
+  // Emit feed signals
+  detections.forEach(det => {
+    emitPatternFeedSignal('ROCKETMAN', { confidence: det.confidence, accelerationRate: det.accelerationRate }, (candles[det.peakIndex] as any)?.symbol || 'UNKNOWN');
+    if (DEBUG_MODE) console.log('[DEBUG] ROCKETMAN detected for', (candles[det.peakIndex] as any)?.symbol);
   });
 
   logDebug('DEBUG_PATTERN_DETECT', `[HA Rocketman] Converted ${detections.length} patterns to detections`);

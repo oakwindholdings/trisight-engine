@@ -1211,6 +1211,106 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Listen for zoom-to-pattern events dispatched by FeedSidebar Analyze
+  useEffect(() => {
+    console.log('[InfiniteZoomChart] Setting up zoom-to-pattern listener');
+    
+    function handleZoomToPattern(e: CustomEvent<{ patternId: string }>) {
+      console.log('[InfiniteZoomChart] handleZoomToPattern received event:', e.detail);
+      const { patternId } = e.detail || {};
+      if (!patternId || !patternContext.patterns?.length) return;
+      
+      console.log('[InfiniteZoomChart] Looking for pattern with id:', patternId);
+      console.log('[InfiniteZoomChart] Available patterns:', patternContext.patterns.length);
+
+      const pat = patternContext.patterns.find(p => p.id === patternId);
+      if (!pat) {
+        console.warn('[InfiniteZoomChart] Pattern not found with id:', patternId);
+        return;
+      }
+      
+      console.log('[InfiniteZoomChart] Pattern found:', pat);
+
+      // Determine index range in transformedData
+      const startIdx = transformedData.findIndex(c => c.timestamp >= pat.startTime.getTime());
+      const endIdx = transformedData.findIndex(c => c.timestamp >= pat.endTime.getTime());
+      console.log('[InfiniteZoomChart] Index range:', { startIdx, endIdx });
+      
+      if (startIdx === -1 || endIdx === -1) {
+        console.warn('[InfiniteZoomChart] Could not find pattern time range in data');
+        return;
+      }
+
+      // Use the new zoomToIndices method for precise control
+      if (controller?.zoomToIndices) {
+        console.log('[InfiniteZoomChart] Calling controller.zoomToIndices');
+        controller.zoomToIndices(startIdx, endIdx, transformedData.length);
+      } else {
+        console.warn('[InfiniteZoomChart] controller.zoomToIndices not available');
+      }
+    }
+
+    window.addEventListener('trisight-zoom-to-pattern', handleZoomToPattern as EventListener);
+    console.log('[InfiniteZoomChart] Zoom listener added');
+    
+    return () => {
+      window.removeEventListener('trisight-zoom-to-pattern', handleZoomToPattern as EventListener);
+    };
+  }, [transformedData, patternContext.patterns, controller]);
+
+  // Listen for zoom-to-indices events for synthetic patterns
+  useEffect(() => {
+    function handleZoomToIndices(e: CustomEvent<{ startIndex: number; endIndex: number }>) {
+      console.log('[InfiniteZoomChart] handleZoomToIndices received event:', e.detail);
+      const { startIndex, endIndex } = e.detail || {};
+      
+      if (startIndex == null || endIndex == null) {
+        console.warn('[InfiniteZoomChart] Cannot zoom - missing indices');
+        return;
+      }
+      
+      // Calculate the zoom level needed to show ~21 candles
+      const rangeSize = endIndex - startIndex + 1;
+      const targetCandleCount = Math.max(21, rangeSize + 10); // Show pattern with some padding
+      const newZoomLevel = 100 / targetCandleCount;
+      
+      console.log('[InfiniteZoomChart] Calculated zoom:', {
+        rangeSize,
+        targetCandleCount,
+        newZoomLevel,
+        startIndex,
+        endIndex
+      });
+      
+      // Apply zoom
+      if (controller?.zoomTo) {
+        controller.zoomTo(newZoomLevel);
+      }
+      
+      // Calculate pan to center the pattern
+      const centerIndex = (startIndex + endIndex) / 2;
+      const visibleCount = Math.round(100 / newZoomLevel);
+      const newStartIndex = Math.max(0, Math.round(centerIndex - visibleCount / 2));
+      
+      // Update visible indices
+      if (setVisibleDataIndices) {
+        setVisibleDataIndices({
+          start: newStartIndex,
+          end: Math.min(transformedData.length - 1, newStartIndex + visibleCount - 1)
+        });
+      }
+       
+      // Force redraw
+      indicesInitializedRef.current = false;
+    }
+
+    window.addEventListener('trisight-zoom-to-indices', handleZoomToIndices as EventListener);
+    
+    return () => {
+      window.removeEventListener('trisight-zoom-to-indices', handleZoomToIndices as EventListener);
+    };
+  }, [transformedData, controller]);
+
   // Add keyboard handler for arrow keys
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

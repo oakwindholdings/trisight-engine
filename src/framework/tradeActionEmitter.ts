@@ -3,6 +3,7 @@
 // Handles all pattern detector signal emission with debug logging and validation
 
 import { TradeActionSignal, TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
+import { emitPatternFeedSignal } from './emitPatternFeedSignal';
 import { logDebug, isChannelEnabled } from '../utils/debug';
 import { TradeSignalValidator, SignalValidationResult } from '../utils/signalValidation/TradeSignalValidator';
 import { CandlestickData } from '../models/ChartTypes';
@@ -91,6 +92,18 @@ export function emitTradeSignal(signal: TradeActionSignal): void {
     }
     
     logDebug('DEBUG_TRADE_SIGNALS', `[TradeSignal] ${signal.action} signal emitted`, debugData);
+  }
+
+  // Feed emission – TRADE_ENTRY
+  try {
+    emitPatternFeedSignal(
+      (signal.pattern || 'UNKNOWN').toUpperCase(),
+      { confidence: signal.confidence, price: signal.price },
+      undefined,
+      'TRADE_ENTRY'
+    );
+  } catch (err) {
+    console.error('[PatternFeed] Failed to emit TRADE_ENTRY', err);
   }
 }
 

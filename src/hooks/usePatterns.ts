@@ -2,7 +2,7 @@
 // Pattern detection integration with adaptive services
 // Manages both pattern entities and candle-aligned metric arrays
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
 import { Pattern, PatternType, ThrustDirection } from '../models/PatternTypes';
 import { PatternEvent } from './usePatternBus';
@@ -14,11 +14,15 @@ import { Candle } from '../types';
 import { logDebug } from '../utils/debug';
 import { PatternFeedback } from '../models/FeedbackTypes';
 import { patternLearningEngine } from '../services/PatternLearningEngine';
+import { useMarketDataContext } from '../contexts/MarketDataContext';
 
 /**
  * Hook for detecting and managing chart patterns
  */
 export function usePatterns(data: CandlestickData[]) {
+  // Get current symbol from market data context
+  const { symbol: currentSymbol } = useMarketDataContext();
+  
   // All detected patterns
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   // Patterns after type filtering - what's shown to the user in the UI
@@ -321,7 +325,7 @@ export function usePatterns(data: CandlestickData[]) {
     // Compute step indices from detected escalator steps
     const stepIndex = new Array(candles.length).fill(null);
     escalatorRuns.forEach(escalator => {
-      escalator.steps.forEach(step => {
+      escalator.steps.forEach((step: any) => {
         for (let i = step.startIndex; i <= step.endIndex; i++) {
           if (i < candles.length) {
             stepIndex[i] = i - step.startIndex + 1;
@@ -335,7 +339,7 @@ export function usePatterns(data: CandlestickData[]) {
     
     escalatorRuns.forEach(escalator => {
       // Fill in the direction for all candles in this escalator run
-      escalator.steps.forEach((step) => {
+      escalator.steps.forEach((step: any) => {
         for (let i = step.startIndex; i <= step.endIndex; i++) {
           if (i < candles.length) {
             const dir = escalator.direction === 'BULLISH' ? 'RISING' : 'FALLING';
@@ -406,20 +410,36 @@ export function usePatterns(data: CandlestickData[]) {
       return;
     }
     
-    setIsDetecting(true);
-    
-    // Safely handle timer - check if there's already a timer running
     try {
-      console.time('pattern-detection');
-    } catch (e) {
-      // Timer might already exist, continue silently
-    }
-    
-    try {
-      // Use setTimeout to avoid blocking the UI for large datasets
+      setIsDetecting(true);
       setTimeout(() => {
+        if (!data || data.length === 0) {
+          setPatterns([]);
+          setIsDetecting(false);
+          return;
+        }
+        
+        console.time('pattern-detection');
+        
+        // Filter data to only what is on screen (visible range)
+        const candleData = data.map((d: any) => ({
+          open: d.open,
+          high: d.high,
+          low: d.low,
+          close: d.close,
+          volume: d.volume || 0,
+          timestamp: d.timestamp,
+          datetime: new Date(d.timestamp).toISOString()
+        }));
+        
         // Use the new adaptive pattern detection service
         const detectedPatterns = adaptiveService.detectPatterns(candleData);
+        
+        console.log('[usePatterns] Raw detected patterns:', {
+          total: detectedPatterns.length,
+          types: Array.from(new Set(detectedPatterns.map(p => p.type))),
+          escalatorCount: detectedPatterns.filter(p => p.type === 'ESCALATOR').length
+        });
         
         // Add feedbackEnabled property to all patterns
         const patternsWithFeedback = detectedPatterns.map(pattern => ({
@@ -442,12 +462,20 @@ export function usePatterns(data: CandlestickData[]) {
         
         // Filter patterns based on enabledPatternTypes preference
         const enabledTypes = preferences.enabledPatternTypes || [];
+        console.log('[usePatterns] Filter preferences:', {
+          enabledTypes,
+          hasEscalator: enabledTypes.includes('ESCALATOR' as any)
+        });
+        console.log('[usePatterns] Enabled pattern types:', enabledTypes);
+        console.log('[usePatterns] Is ESCALATOR in PatternType enum?', 'ESCALATOR' in PatternType);
+        console.log('[usePatterns] PatternType.ESCALATOR value:', PatternType.ESCALATOR);
+        
         const filteredPatterns = patternsWithFeedback.filter(p => enabledTypes.includes(p.type));
         
         const attributedPatterns = filteredPatterns.map(p => ({
           ...p,
-          symbol: (p as any).symbol || (p as any).ticker?.toUpperCase() || 'UNKNOWN',
-          ticker: (p as any).ticker || 'UNKNOWN',
+          symbol: currentSymbol || (p as any).symbol || (p as any).ticker?.toUpperCase() || 'UNKNOWN',
+          ticker: currentSymbol || (p as any).ticker || 'UNKNOWN',
         }));
         setPatterns(attributedPatterns);
         // Update visible patterns based on active filter
@@ -466,7 +494,7 @@ export function usePatterns(data: CandlestickData[]) {
     } catch (error) {
       setIsDetecting(false);
     }
-  }, [activeFilter, adaptiveService, isDetecting, preferences.enabledPatternTypes, populatePatternArrays]);
+  }, [activeFilter, adaptiveService, isDetecting, preferences.enabledPatternTypes, currentSymbol, data]);
   
   // Update a pattern (e.g., after receiving feedback)
   const updatePattern = useCallback((updatedPattern: Pattern) => {
@@ -553,6 +581,53 @@ export function usePatterns(data: CandlestickData[]) {
       detectPatterns(data);
     }
   }, [data, detectPatterns, isDetecting]);
+  
+  // Track last processed escalator steps to prevent re-processing
+  const lastProcessedStepsRef = useRef<number>(0);
+  
+  // Temporary: Convert escalatorSteps to patterns when AdaptiveEscalatorDetector isn't finding them
+  useEffect(() => {
+    if (escalatorSteps.length > 0 && escalatorSteps.length !== lastProcessedStepsRef.current) {
+      lastProcessedStepsRef.current = escalatorSteps.length;
+      
+      console.log('[usePatterns] Converting escalatorSteps to patterns:', escalatorSteps.length);
+      
+      // Extract unique ESCALATOR events (not ESCALATOR_STEP)
+      const escalatorEvents = escalatorSteps.filter(step => step.type === 'ESCALATOR');
+      
+      // Convert to Pattern objects
+      const escalatorPatterns: Pattern[] = escalatorEvents.map(event => {
+        const data = event.data;
+        return {
+          id: `esc_${data.startIndex}_${data.endIndex}_${event.timestamp}`,
+          type: PatternType.ESCALATOR,
+          startTime: new Date(event.timestamp),
+          endTime: new Date(data.endTime || event.timestamp),
+          highPrice: Math.max(...(data.steps || []).map((s: any) => s.ceiling || 0)),
+          lowPrice: Math.min(...(data.steps || []).map((s: any) => s.floor || 0)),
+          confidence: data.consistency || 0.5,
+          hasReceivedFeedback: false,
+          direction: data.direction,
+          symbol: currentSymbol || 'UNKNOWN',
+          ticker: currentSymbol || 'UNKNOWN',
+        } as any;
+      });
+      
+      console.log('[usePatterns] Created escalator patterns:', escalatorPatterns.length);
+      
+      // Only update if we have patterns to add
+      if (escalatorPatterns.length > 0) {
+        setPatterns(prev => {
+          const nonEscalator = prev.filter(p => p.type !== PatternType.ESCALATOR);
+          return [...nonEscalator, ...escalatorPatterns];
+        });
+        setVisiblePatterns(prev => {
+          const nonEscalator = prev.filter(p => p.type !== PatternType.ESCALATOR);
+          return [...nonEscalator, ...escalatorPatterns];
+        });
+      }
+    }
+  }, [escalatorSteps, currentSymbol]);
   
   // Handle feedback submission
   const submitPatternFeedback = useCallback(async (feedback: Partial<PatternFeedback>): Promise<void> => {

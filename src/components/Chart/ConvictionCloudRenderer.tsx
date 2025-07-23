@@ -5,6 +5,7 @@
 import React from 'react';
 import { logConvictionCloudRender, measureRenderPerformance } from './RenderDiagnostics';
 import { CandlestickData } from '../../models/ChartTypes';
+import { emitPatternFeedSignal } from '../../framework/emitPatternFeedSignal';
 
 export interface ConvictionCloudItem {
   symbol: string;
@@ -105,9 +106,15 @@ export const renderConvictionCloud = (
     })
     .slice(0, settings.maxItems);
 
+  // Emit feed signal once per render with aggregate strength (dev)
+  if (filteredItems.length) {
+    emitPatternFeedSignal('CMC', { itemCount: filteredItems.length }, filteredItems[0].symbol);
+    console.log('[DEBUG] CMC rendered with', filteredItems.length, 'items');
+  }
+
   // Generate positions for cloud items with collision detection
   const positions = measureRenderPerformance('ConvictionCloud Item Positioning', () => {
-    console.log(`[ConvictionCloud] 🎯 AUDIT: Rendering ${filteredItems.length} labels at canvas coordinates (${cloudArea.x}, ${cloudArea.y})`);
+    console.log(`[ConvictionCloud] 🎯 AUDIT: Positioning ${filteredItems.length} labels at canvas coordinates (${cloudArea.x}, ${cloudArea.y})`);
     return generateCloudPositions(ctx, filteredItems, cloudArea, effectiveSettings);
   });
 

@@ -7,6 +7,10 @@ import { PatternProvider } from '../contexts/PatternContext';
 import { FeedbackProvider } from '../contexts/FeedbackContext';
 import { LearningProvider } from '../contexts/LearningContext';
 import { UIStateProvider } from '../contexts/UIStateContext';
+import { UserInterestProvider } from '../contexts/UserInterestContext';
+import { FeedProvider } from '../feed/contexts/FeedContext';
+import { PatternFeedBridge } from '../feed/components/PatternFeedBridge';
+// PatternFeed ingest will be mounted via internal bridge component to ensure correct provider order.
 import { ChartSettingsProvider } from '../contexts/ChartSettingsContext';
 import { SymbolSetProvider } from '../contexts/SymbolSetContext';
 import { Timeframe } from '../models/ChartTypes';
@@ -23,6 +27,7 @@ interface AppProvidersProps {
 }
 
 function AppProviders({ children }: AppProvidersProps) {
+  const ENABLE_PATTERN_FEED = process.env.REACT_APP_ENABLE_PATTERN_FEED !== 'false';
   // Read persisted values from localStorage
   const getInitialSymbol = (): string => {
     try {
@@ -52,11 +57,17 @@ function AppProviders({ children }: AppProvidersProps) {
   };
 
   const initialSymbol = getInitialSymbol();
+  // Set global fallback symbol for feed emitter on app init
+  if (typeof window !== 'undefined') {
+    (window as any).trisightSymbol = initialSymbol;
+  }
   const initialTimeframe = getInitialTimeframe();
 
   logDebug('DEBUG_CONTEXT_UPDATE', '[AppProviders] Initializing with persisted values: symbol=' + initialSymbol + ', timeframe=' + initialTimeframe);
 
   return (
+    <FeedProvider>
+    <UserInterestProvider>
     <UIStateProvider>
       <ChartSettingsProvider>
         <MarketDataProvider 
@@ -68,6 +79,7 @@ function AppProviders({ children }: AppProvidersProps) {
               <FeedbackProvider>
                 <LearningProvider>
                   {children}
+                    {ENABLE_PATTERN_FEED && <PatternFeedBridge />}
                 </LearningProvider>
               </FeedbackProvider>
             </PatternProvider>
@@ -75,6 +87,8 @@ function AppProviders({ children }: AppProvidersProps) {
         </MarketDataProvider>
       </ChartSettingsProvider>
     </UIStateProvider>
+    </UserInterestProvider>
+    </FeedProvider>
   );
 }
 

@@ -130,6 +130,12 @@ export class AdaptiveEscalatorDetector extends BasePatternDetector<EscalatorPatt
   protected detectEscalatorPatterns(data: CandlestickData[], context: MarketContext): EscalatorPattern[] {
     const startTime = performance.now();
     
+    logDebug('DEBUG_PATTERN_DETECT', '[AdaptiveEscalatorDetector] detectEscalatorPatterns called with', {
+      dataLength: data.length,
+      context: context,
+      minSteps: this.getOption('minSteps', this.DEFAULT_MIN_STEPS)
+    });
+    
     if (data.length < this.getOption('minSteps', this.DEFAULT_MIN_STEPS) * 2) {
       this.logInfo('Escalator detection', `Not enough data: ${data.length} candles`);
       return []; // Not enough data
@@ -142,14 +148,28 @@ export class AdaptiveEscalatorDetector extends BasePatternDetector<EscalatorPatt
     // Combine and filter all patterns
     const patterns = [...bullishPatterns, ...bearishPatterns];
     
+    logDebug('DEBUG_PATTERN_DETECT', '[AdaptiveEscalatorDetector] Raw patterns before filtering:', {
+      total: patterns.length,
+      bullish: bullishPatterns.length,
+      bearish: bearishPatterns.length,
+      confidences: patterns.map(p => p.confidence),
+      scores: patterns.map(p => p.cumulativeScore)
+    });
+    
     // Sort by confidence
     patterns.sort((a, b) => b.confidence - a.confidence);
     
     // Filter out patterns below minimum confidence threshold
     const filteredPatterns = patterns.filter(p => 
-      p.confidence >= this.getOption('minimumConfidence', 0.5) &&
-      Math.abs(p.cumulativeScore) >= this.getOption('minScore', this.DEFAULT_MIN_SCORE)
+      p.confidence >= this.getOption('minimumConfidence', 0.1) &&  // Lowered from 0.5
+      Math.abs(p.cumulativeScore) >= this.getOption('minScore', 0.5)  // Lowered from 2.0
     );
+    
+    logDebug('DEBUG_PATTERN_DETECT', '[AdaptiveEscalatorDetector] After filtering:', {
+      filtered: filteredPatterns.length,
+      minConfidence: this.getOption('minimumConfidence', 0.1),
+      minScore: this.getOption('minScore', 0.5)
+    });
     
     this.logInfo('Escalator detection', `Detected ${filteredPatterns.length} escalator patterns`);
     return filteredPatterns;
