@@ -143,10 +143,14 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
       // Emit custom event for chart zoom (listener inside chart component)
       // Delay slightly to ensure state updates propagate
       setTimeout(() => {
-        console.log('[FeedCard] Dispatching zoom event with patternId:', target.id);
-        window.dispatchEvent(
-          new CustomEvent('trisight-zoom-to-pattern', { detail: { patternId: target.id } })
-        );
+        if (target) {
+          console.log('[FeedCard] Dispatching zoom event with patternId:', target.id);
+          window.dispatchEvent(
+            new CustomEvent('trisight-zoom-to-pattern', { detail: { patternId: target.id } })
+          );
+        } else {
+          console.log('[FeedCard] No target for zoom event.');
+        }
       }, 50);
     } else {
       // Create a synthetic pattern from the feed entry metadata

@@ -24,6 +24,7 @@ interface AreaDataPoint {
 
 interface RocketmanVisualizationProps {
   pattern: RocketmanPattern;
+  isVisible?: boolean;
   xScale: any;
   yScale: any;
   onClick?: (pattern: RocketmanPattern) => void;
@@ -38,7 +39,8 @@ const RocketmanVisualization: React.FC<RocketmanVisualizationProps> = ({
   pattern,
   xScale,
   yScale,
-  onClick
+  onClick,
+  isVisible = true
 }) => {
   const { 
     startTime, 
@@ -87,10 +89,10 @@ const RocketmanVisualization: React.FC<RocketmanVisualizationProps> = ({
     y2: direction === ThrustDirection.BULLISH ? pattern.lowPrice : pattern.highPrice
   }));
   
-  // Define colors based on direction
-  const baseColor = direction === ThrustDirection.BULLISH ? "#4CAF50" : "#F44336";
-  const peakColor = direction === ThrustDirection.BULLISH ? "#00C853" : "#D50000";
-  const areaColor = direction === ThrustDirection.BULLISH ? "rgba(76, 175, 80, 0.2)" : "rgba(244, 67, 54, 0.2)";
+  // Decouple visual from logic: use transparent color if pattern is hidden
+  const baseColor = isVisible ? (direction === ThrustDirection.BULLISH ? "#4CAF50" : "#F44336") : "rgba(0,0,0,0)";
+  const peakColor = isVisible ? (direction === ThrustDirection.BULLISH ? "#00C853" : "#D50000") : "rgba(0,0,0,0)";
+  const areaColor = isVisible ? (direction === ThrustDirection.BULLISH ? "rgba(76, 175, 80, 0.2)" : "rgba(244, 67, 54, 0.2)") : "rgba(0,0,0,0)";
   
   // Format pattern information for tooltip
   const formatPercent = format(".2f");

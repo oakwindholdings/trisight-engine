@@ -129,6 +129,18 @@ const CandleTypeDescription: Record<CandleType, string> = {
   heikin_ashi: 'Heikin-Ashi candles smooth price data to highlight trends and reduce noise.'
 };
 
+// Signal label types
+const SIGNAL_LABELS = ['BUY', 'SELL', 'COVER', 'SHORT'] as const;
+
+type SignalLabelType = typeof SIGNAL_LABELS[number];
+
+function getDefaultSignalLabelSettings() {
+  return SIGNAL_LABELS.reduce((acc, label) => {
+    acc[label] = true;
+    return acc;
+  }, {} as Record<SignalLabelType, boolean>);
+}
+
 interface ChartSettingsPanelProps {
   className?: string;
 }
@@ -159,6 +171,16 @@ export function ChartSettingsPanel({ className }: ChartSettingsPanelProps) {
       logDebug('DEBUG_UI', '[ChartSettingsPanel] ConvictionCloud visibility defaulting to false (off)');
     }
   }, []);
+
+  // Signal label toggles
+  const [signalLabelSettings, setSignalLabelSettings] = useState<Record<SignalLabelType, boolean>>(() => {
+    const saved = localStorage.getItem('trisight.chart.signalLabelSettings');
+    return saved ? JSON.parse(saved) : getDefaultSignalLabelSettings();
+  });
+
+  useEffect(() => {
+    localStorage.setItem('trisight.chart.signalLabelSettings', JSON.stringify(signalLabelSettings));
+  }, [signalLabelSettings]);
 
   const handleCandleTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newType = event.target.value as CandleType;
@@ -205,6 +227,10 @@ export function ChartSettingsPanel({ className }: ChartSettingsPanelProps) {
     }));
   };
 
+  const handleSignalLabelToggle = (label: SignalLabelType) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSignalLabelSettings(prev => ({ ...prev, [label]: e.target.checked }));
+  };
+
   return (
     <PanelContainer className={className}>
       <HeaderRow onClick={() => setIsOpen(!isOpen)}>
@@ -213,6 +239,26 @@ export function ChartSettingsPanel({ className }: ChartSettingsPanelProps) {
       </HeaderRow>
       
       <ContentArea $open={isOpen}>
+        {/* Signal Label Toggles */}
+        <SettingRow>
+          <SettingLabel>
+            Signal Label Visibility
+            <HelpText>Show/hide signal labels on chart. Does not affect detection or analytics.</HelpText>
+          </SettingLabel>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {SIGNAL_LABELS.map(label => (
+              <label key={label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Checkbox
+                  type="checkbox"
+                  checked={signalLabelSettings[label]}
+                  onChange={handleSignalLabelToggle(label)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </SettingRow>
+
         {/* Candle Type Selection */}
         <SettingRow>
           <SettingLabel htmlFor="candle-type-select">

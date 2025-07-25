@@ -11,60 +11,32 @@ interface EscalatorVisualizationProps {
   width: number;
   height: number;
   onPatternClick?: (pattern: EscalatorPattern) => void;
+  isVisible?: boolean;
 }
 
-const Container = styled.div<{ width: number; height: number }>`
-  width: ${props => props.width}px;
-  height: ${props => props.height}px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-`;
-
-const StepsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const StepBar = styled.div<{ 
-  direction: ThrustDirection; 
-  isConsolidation: boolean;
-  strength: EscalatorSignalStrength; 
-}>`
-  height: 18px;
-  border-radius: 3px;
-  cursor: pointer;
+// Styled-component for StepBar
+const StepBar = styled.div<{ direction: ThrustDirection; isConsolidation: boolean; strength: EscalatorSignalStrength; isVisible?: boolean }>`
   background-color: ${props => {
-    if (props.isConsolidation) {
-      return '#E0E0E0'; // Gray for consolidation steps
-    }
-    
-    // Different colors for bullish vs bearish direction
-    if (props.direction === ThrustDirection.BULLISH) {
-      switch (props.strength) {
-        case EscalatorSignalStrength.VERY_STRONG: return '#0A5D36'; // Dark green
-        case EscalatorSignalStrength.STRONG: return '#0F8A3C'; // Green
-        case EscalatorSignalStrength.MODERATE: return '#4CAF50'; // Light green
-        default: return '#8BC34A'; // Pale green
-      }
-    } else {
-      switch (props.strength) {
-        case EscalatorSignalStrength.VERY_STRONG: return '#7B1FA2'; // Dark purple
-        case EscalatorSignalStrength.STRONG: return '#9C27B0'; // Purple
-        case EscalatorSignalStrength.MODERATE: return '#BA68C8'; // Light purple
-        default: return '#D1C4E9'; // Pale purple
-      }
+    if (props.isVisible === false) return 'rgba(0,0,0,0)';
+    // Example color logic, adjust as needed
+    if (props.isConsolidation) return 'rgba(200,200,200,0.7)';
+    switch (props.strength) {
+      case EscalatorSignalStrength.VERY_STRONG: return '#0A5D36';
+      case EscalatorSignalStrength.STRONG: return '#0F8A3C';
+      case EscalatorSignalStrength.MODERATE: return '#4CAF50';
+      default: return '#8BC34A';
     }
   }};
+  height: 20px;
+  margin: 2px 0;
+  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: bold;
-  font-size: 12px;
-  opacity: ${props => props.isConsolidation ? 0.6 : 0.85};
-  
+  cursor: pointer;
+  opacity: 0.8;
   &:hover {
     opacity: 1;
   }
@@ -116,11 +88,26 @@ const DetailValue = styled.span<{ positive?: boolean }>`
     props.positive ? '#4CAF50' : '#E91E63'};
 `;
 
+const Container = styled.div<{ width: number; height: number }>`
+  width: ${props => props.width}px;
+  height: ${props => props.height}px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+`;
+
+const StepsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+`;
+
 export const EscalatorVisualization: React.FC<EscalatorVisualizationProps> = ({ 
   pattern, 
   width, 
   height,
-  onPatternClick
+  onPatternClick,
+  isVisible = true
 }) => {
   const handleClick = () => {
     if (onPatternClick) {
@@ -177,6 +164,7 @@ export const EscalatorVisualization: React.FC<EscalatorVisualizationProps> = ({
               direction={pattern.direction}
               isConsolidation={step.isConsolidation}
               strength={pattern.signalStrength}
+              isVisible={isVisible}
               onClick={handleClick}
               title={`${step.isConsolidation ? 'Consolidation' : 'Movement'} Step ${index + 1}`}
             >

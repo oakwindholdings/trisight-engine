@@ -3,6 +3,28 @@
 // Simulates server calls
 import { PatternFeedback, LearningMetrics, LearningModelState, LegacyPatternFeedback } from '../models/FeedbackTypes';
 import { PatternType } from '../models/PatternTypes';
+import { supabase } from '../utils/supabase/client';
+
+// Recursively clamp all numeric fields in an object to 9.99
+function clampNumericFields(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(clampNumericFields);
+  }
+  if (obj && typeof obj === 'object') {
+    const result: any = {};
+    for (const key in obj) {
+      if (typeof obj[key] === 'number') {
+        result[key] = Math.min(9.99, obj[key]);
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        result[key] = clampNumericFields(obj[key]);
+      } else {
+        result[key] = obj[key];
+      }
+    }
+    return result;
+  }
+  return obj;
+}
 
 // In a real implementation, this would connect to a server API
 // For now, we'll persist data in localStorage with a simulated API delay
@@ -61,21 +83,47 @@ const saveLearningModel = (model: LearningModelState): void => {
 // Submit new feedback
 export const submitFeedback = async (feedback: PatternFeedback): Promise<void> => {
   await simulateNetworkDelay();
-  
-  const feedbackData = getStoredFeedback();
-  
-  // Add new feedback with legacy fields
-  const legacyFeedback: LegacyPatternFeedback = {
-    ...feedback,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    originalPatternType: feedback.patternType, // Map to legacy field
+  // Validate and serialize payload for Supabase
+  const feedbackRow = {
+    ...clampNumericFields(feedback),
+    createdAt: (feedback.createdAt instanceof Date ? feedback.createdAt.toISOString() : String(feedback.createdAt)),
+    updatedAt: (feedback.updatedAt instanceof Date ? feedback.updatedAt.toISOString() : String(feedback.updatedAt)),
+    patternType: String(feedback.patternType),
+    timing: String(feedback.timing),
+    invalidityReason: feedback.invalidityReason ? String(feedback.invalidityReason) : undefined,
+    originalPatternType: feedback.originalPatternType ? String(feedback.originalPatternType) : undefined,
+    correctedPatternType: feedback.correctedPatternType ? String(feedback.correctedPatternType) : undefined,
+    consentTimestamp: feedback.consentTimestamp instanceof Date ? feedback.consentTimestamp.toISOString() : String(feedback.consentTimestamp),
+    suggestedAdjustment: feedback.suggestedAdjustment ? JSON.stringify(clampNumericFields(feedback.suggestedAdjustment)) : undefined,
+    viewport: feedback.viewport ? JSON.stringify(feedback.viewport) : undefined,
+    boundaryAdjustment: feedback.boundaryAdjustment ? JSON.stringify(feedback.boundaryAdjustment) : undefined,
   };
-  
-  feedbackData.push(legacyFeedback as PatternFeedback);
-  
-  saveFeedback(feedbackData);
-  
+
+  // Debug: log payload and client status
+  console.log('[submitFeedback] Supabase client:', supabase);
+  console.log('[submitFeedback] Payload:', feedbackRow);
+
+  if (supabase) {
+    const { error } = await supabase
+      .from('pattern_feedback')
+      .insert([feedbackRow]);
+    if (error) {
+      console.error('[submitFeedback] Supabase feedback insert error:', error);
+      // Fallback to local storage
+      const feedbackData = getStoredFeedback();
+      feedbackData.push(feedback);
+      saveFeedback(feedbackData);
+      throw new Error('Failed to submit feedback to Supabase. Saved locally. ' + error.message);
+    }
+  } else {
+    // Supabase not configured, fallback to local storage
+    console.error('[submitFeedback] Supabase client not configured.');
+    const feedbackData = getStoredFeedback();
+    feedbackData.push(feedback);
+    saveFeedback(feedbackData);
+    throw new Error('Supabase client not configured. Saved feedback locally.');
+  }
+
   // After submitting feedback, update the learning model
   await processNewFeedback(feedback);
 };

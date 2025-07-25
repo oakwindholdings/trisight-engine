@@ -161,7 +161,19 @@ export async function submitPatternFeedback(feedback: Partial<PatternFeedback>):
     }
     
     logDebug('feedback', '[PatternFeedbackService] Feedback submitted successfully');
-    
+
+    // Dispatch custom event for real-time metrics updates
+    window.dispatchEvent(new CustomEvent('pattern-feedback-submitted', {
+      detail: {
+        patternId: feedback.patternId,
+        patternType: feedback.patternType,
+        accuracy: feedback.accuracy,
+        confidence: feedback.confidence,
+        isValid: feedback.isValid,
+        timestamp: new Date()
+      }
+    }));
+
     // Also emit to pattern feed for real-time updates
     try {
       const { emitPatternFeedSignal } = await import('../../framework/emitPatternFeedSignal');

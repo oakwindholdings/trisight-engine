@@ -81,12 +81,13 @@ const TouchesGrid = styled.div`
   font-size: 12px;
 `;
 
-const TouchItem = styled.div<{ $strength: number }>`
+const TouchItem = styled.div<{ $strength: number; isVisible?: boolean }>`
   display: flex;
   flex-direction: column;
   padding: 6px;
   border-radius: 4px;
   background-color: ${props => {
+    if (props.isVisible === false) return 'rgba(0,0,0,0)';
     const alpha = Math.max(0.1, Math.min(0.9, props.$strength));
     return `rgba(0, 86, 179, ${alpha})`;
   }};
@@ -119,6 +120,7 @@ const ResistanceIndicator = styled.div`
 interface PivotVisualizationProps {
   pattern: PivotPattern;
   isSelected?: boolean;
+  isVisible?: boolean;
 }
 
 const PivotVisualization: React.FC<PivotVisualizationProps> = ({ pattern, isSelected }) => {

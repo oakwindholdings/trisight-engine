@@ -1152,13 +1152,16 @@ function AppContent() {
                 // Close using local state immediately
                 setShowPatternAnalysisModal(false);
                 setAnalysisPattern(null);
-                
+
+                // Clear selected pattern to hide the right panel
+                setSelectedPattern(null);
+
                 // Also update context state
                 if (setSelectedPatternForFeedback) {
                   console.log('[App] Also calling setSelectedPatternForFeedback(null)');
                   setSelectedPatternForFeedback(null);
                 }
-                
+
                 // Dispatch restore-zoom event to revert chart zoom
                 console.log('[App] Dispatching restore-zoom event');
                 window.dispatchEvent(new CustomEvent('trisight-restore-zoom'));

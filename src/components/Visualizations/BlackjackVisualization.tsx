@@ -11,34 +11,31 @@ interface BlackjackVisualizationProps {
   width: number;
   height: number;
   onPatternClick?: (pattern: BlackjackPattern) => void;
+  isVisible?: boolean;
 }
 
-const Container = styled.div<{ width: number; height: number }>`
-  width: ${props => props.width}px;
-  height: ${props => props.height}px;
-  position: relative;
-`;
-
-const ScoreBar = styled.div<{ positive: boolean; strength: BlackjackSignalStrength }>`
-  height: 20px;
-  margin: 2px 0;
+// Styled-component for ScoreBar
+const ScoreBar = styled.div<{ positive: boolean; strength: BlackjackSignalStrength; isVisible?: boolean }>`
   background-color: ${props => {
+    if (props.isVisible === false) return 'rgba(0,0,0,0)';
     if (props.positive) {
       switch (props.strength) {
-        case BlackjackSignalStrength.VERY_STRONG: return '#0A5D36'; // Dark green
-        case BlackjackSignalStrength.STRONG: return '#0F8A3C'; // Green
-        case BlackjackSignalStrength.MODERATE: return '#4CAF50'; // Light green
-        default: return '#8BC34A'; // Pale green
+        case BlackjackSignalStrength.VERY_STRONG: return '#0A5D36';
+        case BlackjackSignalStrength.STRONG: return '#0F8A3C';
+        case BlackjackSignalStrength.MODERATE: return '#4CAF50';
+        default: return '#8BC34A';
       }
     } else {
       switch (props.strength) {
-        case BlackjackSignalStrength.VERY_STRONG: return '#7B1FA2'; // Dark purple
-        case BlackjackSignalStrength.STRONG: return '#9C27B0'; // Purple
-        case BlackjackSignalStrength.MODERATE: return '#BA68C8'; // Light purple
-        default: return '#D1C4E9'; // Pale purple
+        case BlackjackSignalStrength.VERY_STRONG: return '#7B1FA2';
+        case BlackjackSignalStrength.STRONG: return '#9C27B0';
+        case BlackjackSignalStrength.MODERATE: return '#BA68C8';
+        default: return '#D1C4E9';
       }
     }
   }};
+  height: 20px;
+  margin: 2px 0;
   border-radius: 2px;
   display: flex;
   align-items: center;
@@ -47,10 +44,15 @@ const ScoreBar = styled.div<{ positive: boolean; strength: BlackjackSignalStreng
   font-weight: bold;
   cursor: pointer;
   opacity: 0.8;
-  
   &:hover {
     opacity: 1;
   }
+`;
+
+const Container = styled.div<{ width: number; height: number }>`
+  width: ${props => props.width}px;
+  height: ${props => props.height}px;
+  position: relative;
 `;
 
 const ScoreLabel = styled.span`
@@ -104,7 +106,8 @@ export const BlackjackVisualization: React.FC<BlackjackVisualizationProps> = ({
   pattern, 
   width, 
   height,
-  onPatternClick
+  onPatternClick,
+  isVisible
 }) => {
   const isPositive = pattern.cumulativeScore > 0;
   
@@ -153,6 +156,7 @@ export const BlackjackVisualization: React.FC<BlackjackVisualizationProps> = ({
         strength={pattern.signalStrength}
         onClick={handleClick}
         title={`BlackJack pattern (${pattern.signalStrength})`}
+        isVisible={isVisible}
       >
         <ScoreLabel>{scoreDisplay}</ScoreLabel>
       </ScoreBar>

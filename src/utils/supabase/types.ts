@@ -138,11 +138,43 @@ export interface Database {
         Insert: Omit<FetchQueue, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<FetchQueue, 'id' | 'created_at' | 'updated_at'>>;
       };
+      pattern_feedback: {
+        Row: PatternFeedbackRow;
+        Insert: Omit<PatternFeedbackRow, 'id' | 'createdAt' | 'updatedAt'>;
+        Update: Partial<Omit<PatternFeedbackRow, 'id' | 'createdAt' | 'updatedAt'>>;
+      };
     };
   };
 }
 
 // Interval mapping for consistency
+// Feedback row type for Supabase
+export interface PatternFeedbackRow {
+  id: string;
+  patternId: string;
+  patternType: string;
+  userId?: string;
+  sessionId: string;
+  accuracy: number;
+  confidence: number;
+  timing: string;
+  isValid: boolean;
+  invalidityReason?: string;
+  notes?: string;
+  suggestedAdjustment?: object;
+  createdAt: string;
+  updatedAt: string;
+  userAgent: string;
+  viewport: object;
+  consentGiven: boolean;
+  consentTimestamp: string;
+  dataRetentionDays: number;
+  falsePositive?: boolean;
+  originalPatternType?: string;
+  correctedPatternType?: string | null;
+  confidenceRating?: number;
+  boundaryAdjustment?: object;
+}
 export const INTERVAL_MAP = {
   '1m': '1min',
   '5m': '5min',

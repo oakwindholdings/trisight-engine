@@ -1,8 +1,51 @@
 // src/components/Patterns/BlackjackSettingsPanel.tsx
 // Settings for Blackjack detector
 // Edit scoring parameters
-import React, { useState, useEffect } from 'react';
+// ...existing code...
 import styled from 'styled-components';
+import React, { useState, useEffect } from 'react';
+// ...existing code...
+// ...existing code...
+const InfoIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e0eafc;
+  color: #0056b3;
+  font-size: 13px;
+  font-weight: bold;
+  margin-left: 8px;
+  cursor: pointer;
+  border: 1px solid #b3c2e0;
+`;
+
+const Tooltip = styled.div`
+  position: fixed;
+  background: #fff;
+  color: #222;
+  border: 1px solid #b3c2e0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+  max-width: 260px;
+`;
+
+const helpText: Record<string, string> = {
+  enabled: 'Enable or disable Blackjack pattern detection. Default: enabled.',
+  showLabels: 'Show pattern labels for Blackjack regions. Default: enabled.',
+  lookbackPeriods: 'Number of periods to look back for pattern detection. Default: 7. Range: 3–21.',
+  minScore: 'Minimum score required for a valid Blackjack pattern. Default: 3. Range: 1–7.',
+  showContextTimeframe: 'Show context timeframe for detection. Default: disabled.',
+  contextTimeframeMultiplier: 'Multiplier for context timeframe, expands detection window. Default: 2. Range: 2–10.',
+  basePriceChangeThreshold: 'Minimum price change (%) for pattern detection. Default: 0.2. Range: 0.05–1.0.',
+  baseVolumeChangeThreshold: 'Minimum volume change (%) for pattern detection. Default: 0.5. Range: 0.1–2.0.',
+};
+// ...existing code...
 
 interface BlackjackSettings {
   enabled: boolean;
@@ -65,6 +108,21 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
   settings,
   onSettingsChange
 }) => {
+  // Tooltip state for info bubbles
+  const [tooltip, setTooltip] = useState<{ key: string; pos: { x: number; y: number } } | null>(null);
+
+  // Helper to show tooltip down and to the left of icon
+  function showTooltip(key: string, e: React.MouseEvent | React.FocusEvent) {
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const tooltipWidth = 260;
+    let x = rect.left - tooltipWidth - 8;
+    if (x < 8) x = 8;
+    const y = rect.bottom + 8;
+    setTooltip({ key, pos: { x, y } });
+  }
+  function hideTooltip() {
+    setTooltip(null);
+  }
   // Load settings from localStorage on component mount
   useEffect(() => {
     try {
@@ -129,8 +187,17 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           id="enableBlackjack"
           checked={settings.enabled}
           onChange={handleEnableChange}
+          aria-label="Enable BlackJack Detection"
         />
         <SettingsLabel htmlFor="enableBlackjack">Enable BlackJack Detection</SettingsLabel>
+        <InfoIcon
+          tabIndex={0}
+          aria-label="Info: Enable BlackJack Detection"
+          onMouseEnter={e => showTooltip('enabled', e)}
+          onMouseLeave={hideTooltip}
+          onFocus={e => showTooltip('enabled', e)}
+          onBlur={hideTooltip}
+        >i</InfoIcon>
       </SettingsRow>
       
       <SettingsRow>
@@ -139,8 +206,17 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           id="showBlackjackLabels"
           checked={settings.showLabels}
           onChange={handleShowLabelsChange}
+          aria-label="Show Labels"
         />
         <SettingsLabel htmlFor="showBlackjackLabels">Show Labels</SettingsLabel>
+        <InfoIcon
+          tabIndex={0}
+          aria-label="Info: Show Labels"
+          onMouseEnter={e => showTooltip('showLabels', e)}
+          onMouseLeave={hideTooltip}
+          onFocus={e => showTooltip('showLabels', e)}
+          onBlur={hideTooltip}
+        >i</InfoIcon>
       </SettingsRow>
       
       <SettingsRow>
@@ -152,8 +228,17 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           step={2}
           value={settings.lookbackPeriods}
           onChange={handleLookbackChange}
+          aria-label="Lookback Periods"
         />
         <SettingsValue>{settings.lookbackPeriods}</SettingsValue>
+        <InfoIcon
+          tabIndex={0}
+          aria-label="Info: Lookback Periods"
+          onMouseEnter={e => showTooltip('lookbackPeriods', e)}
+          onMouseLeave={hideTooltip}
+          onFocus={e => showTooltip('lookbackPeriods', e)}
+          onBlur={hideTooltip}
+        >i</InfoIcon>
       </SettingsRow>
       
       <SettingsRow>
@@ -165,8 +250,17 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           step={1}
           value={settings.minScore}
           onChange={handleMinScoreChange}
+          aria-label="Minimum Score"
         />
         <SettingsValue>{settings.minScore}</SettingsValue>
+        <InfoIcon
+          tabIndex={0}
+          aria-label="Info: Minimum Score"
+          onMouseEnter={e => showTooltip('minScore', e)}
+          onMouseLeave={hideTooltip}
+          onFocus={e => showTooltip('minScore', e)}
+          onBlur={hideTooltip}
+        >i</InfoIcon>
       </SettingsRow>
       
       <SettingsRow>
@@ -175,8 +269,17 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           id="showContext"
           checked={settings.showContextTimeframe}
           onChange={handleShowContextChange}
+          aria-label="Show Context Timeframe"
         />
         <SettingsLabel htmlFor="showContext">Show Context Timeframe</SettingsLabel>
+        <InfoIcon
+          tabIndex={0}
+          aria-label="Info: Show Context Timeframe"
+          onMouseEnter={e => showTooltip('showContextTimeframe', e)}
+          onMouseLeave={hideTooltip}
+          onFocus={e => showTooltip('showContextTimeframe', e)}
+          onBlur={hideTooltip}
+        >i</InfoIcon>
       </SettingsRow>
       
       {settings.showContextTimeframe && (
@@ -189,8 +292,17 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
             step={1}
             value={settings.contextTimeframeMultiplier}
             onChange={handleContextMultiplierChange}
+            aria-label="Context Multiplier"
           />
           <SettingsValue>{settings.contextTimeframeMultiplier}x</SettingsValue>
+          <InfoIcon
+            tabIndex={0}
+            aria-label="Info: Context Multiplier"
+            onMouseEnter={e => showTooltip('contextTimeframeMultiplier', e)}
+            onMouseLeave={hideTooltip}
+            onFocus={e => showTooltip('contextTimeframeMultiplier', e)}
+            onBlur={hideTooltip}
+          >i</InfoIcon>
         </SettingsRow>
       )}
       
@@ -203,8 +315,17 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           step={0.05}
           value={settings.basePriceChangeThreshold}
           onChange={handleBasePriceThresholdChange}
+          aria-label="Price Change Threshold (%)"
         />
         <SettingsValue>{settings.basePriceChangeThreshold.toFixed(2)}</SettingsValue>
+        <InfoIcon
+          tabIndex={0}
+          aria-label="Info: Price Change Threshold (%)"
+          onMouseEnter={e => showTooltip('basePriceChangeThreshold', e)}
+          onMouseLeave={hideTooltip}
+          onFocus={e => showTooltip('basePriceChangeThreshold', e)}
+          onBlur={hideTooltip}
+        >i</InfoIcon>
       </SettingsRow>
       
       <SettingsRow>
@@ -216,9 +337,23 @@ export const BlackjackSettingsPanel: React.FC<BlackjackSettingsPanelProps> = ({
           step={0.1}
           value={settings.baseVolumeChangeThreshold}
           onChange={handleBaseVolumeThresholdChange}
+          aria-label="Volume Change Threshold (%)"
         />
         <SettingsValue>{settings.baseVolumeChangeThreshold.toFixed(1)}</SettingsValue>
+        <InfoIcon
+          tabIndex={0}
+          aria-label="Info: Volume Change Threshold (%)"
+          onMouseEnter={e => showTooltip('baseVolumeChangeThreshold', e)}
+          onMouseLeave={hideTooltip}
+          onFocus={e => showTooltip('baseVolumeChangeThreshold', e)}
+          onBlur={hideTooltip}
+        >i</InfoIcon>
       </SettingsRow>
+      {tooltip && (
+        <Tooltip style={{ left: tooltip.pos.x, top: tooltip.pos.y }}>
+          {helpText[tooltip.key]}
+        </Tooltip>
+      )}
     </SettingsContainer>
   );
 };

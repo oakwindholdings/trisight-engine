@@ -95,7 +95,18 @@ export async function submitDynamicPatternFeedback(feedback: DynamicFeedbackPayl
     }
     
     logDebug('feedback', '[DynamicPatternFeedbackService] Feedback submitted successfully');
-    
+
+    // Dispatch custom event for real-time metrics updates
+    window.dispatchEvent(new CustomEvent('pattern-feedback-submitted', {
+      detail: {
+        patternId: feedback.pattern_id,
+        patternType: feedback.pattern_type,
+        symbol: feedback.symbol,
+        notes: feedback.notes,
+        timestamp: new Date()
+      }
+    }));
+
     // Also emit to pattern feed for real-time updates
     try {
       const { emitPatternFeedSignal } = await import('../../framework/emitPatternFeedSignal');

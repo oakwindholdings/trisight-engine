@@ -28,7 +28,7 @@ interface ChartSettingsContextType extends ChartSettings {
 }
 
 const defaultSettings: ChartSettings = {
-  candleType: 'ohlc',
+  candleType: 'heikin_ashi',
   showVolume: true,
   showGrid: true
 };

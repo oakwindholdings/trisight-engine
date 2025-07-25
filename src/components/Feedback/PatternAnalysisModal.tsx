@@ -14,6 +14,7 @@ import {
 import { usePrivacyConsent } from '../../hooks/usePrivacyConsent';
 import { logDebug } from '../../utils/debug';
 import { submitPatternFeedback } from '../../utils/supabase/patternFeedbackService';
+import { usePatternContext } from '../../contexts/PatternContext';
 import './PatternAnalysisModal.css';
 
 interface PatternAnalysisModalProps {
@@ -55,6 +56,7 @@ export const PatternAnalysisModal: React.FC<PatternAnalysisModalProps> = ({
   onSubmit
 }) => {
   const { hasConsent, requestConsent } = usePrivacyConsent();
+  const { setSelectedPattern } = usePatternContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -276,6 +278,7 @@ export const PatternAnalysisModal: React.FC<PatternAnalysisModalProps> = ({
       setTimeout(() => {
         console.log('[PatternAnalysisModal] Timeout fired - calling onClose');
         onClose();
+        setSelectedPattern(null); // Ensure PatternPanel closes
       }, 1000);
       
     } catch (err) {
@@ -293,6 +296,7 @@ export const PatternAnalysisModal: React.FC<PatternAnalysisModalProps> = ({
       logDebug('feedback', 'PatternAnalysisModal: Closing modal');
       console.log('[PatternAnalysisModal] Calling onClose()');
       onClose();
+      setSelectedPattern(null); // Ensure PatternPanel closes
     }
   };
   
@@ -602,4 +606,4 @@ export const PatternAnalysisModal: React.FC<PatternAnalysisModalProps> = ({
       </div>
     </div>
   );
-}; 
+};
