@@ -1,0 +1,151 @@
+{
+    "patternTypes": {
+      "GOLDMINE_CHANNEL": {
+        "description": "Horizontal, ascending, or descending price channel formations",
+        "directions": ["HORIZONTAL", "ASCENDING", "DESCENDING"],
+        "confidence": "0.0 to 1.0",
+        "signalStrength": ["WEAK", "MODERATE", "STRONG", "VERY_STRONG"]
+      },
+      "GOLDMINE_SHAFT": {
+        "description": "Thrust and retrace patterns with Fibonacci validation",
+        "directions": ["BULLISH", "BEARISH"],
+        "confidence": "0.0 to 1.0",
+        "retracementLevels": [0.382, 0.5, 0.618]
+      },
+      "PIVOT": {
+        "description": "Support and resistance levels with multiple touch confirmations",
+        "types": ["SUPPORT", "RESISTANCE"],
+        "minTouchPoints": 3,
+        "confidence": "0.0 to 1.0"
+      },
+      "ROCKETMAN": {
+        "description": "Rapid price acceleration patterns with volume confirmation",
+        "directions": ["BULLISH", "BEARISH"],
+        "signalStrength": ["WEAK", "MODERATE", "STRONG", "VERY_STRONG"],
+        "confidence": "0.0 to 1.0"
+      },
+      "ESCALATOR": {
+        "description": "Step-like price movements forming HH+HL or LL+LH sequences",
+        "directions": ["BULLISH", "BEARISH"],
+        "minSteps": 2,
+        "signalStrength": ["WEAK", "MODERATE", "STRONG", "VERY_STRONG"]
+      },
+      "BLACKJACK": {
+        "description": "Price-volume correlation scoring system",
+        "scoreTypes": ["INTRINSIC", "CUMULATIVE", "ROLLING", "TARGET"],
+        "thresholds": {
+          "LONG": 2,
+          "SHORT": -2
+        },
+        "signalStrength": ["WEAK", "MODERATE", "STRONG", "VERY_STRONG"]
+      },
+      "BREAKOUTBOX": {
+        "description": "Floor-ceiling consolidation boxes with breakout detection",
+        "directions": ["RISING", "FALLING"],
+        "boxTypes": ["consolidation", "compression"],
+        "qualifiesForGoldmine": "boolean"
+      },
+      "GOLDEN_CANDLE": {
+        "description": "High-confidence breakout candles with strong Blackjack scores",
+        "directions": ["LONG", "SHORT"],
+        "requiredContinuanceCount": 2,
+        "intrinsicScoreRequirement": 1
+      }
+    },
+    
+    "patternEventTypes": {
+      "ESCALATOR": "Complete escalator run detection",
+      "ESCALATOR_STEP": "Individual step within an escalator",
+      "GOLDMINE": "Goldmine signal from escalator patterns",
+      "STOP_EVENT": "Stop-loss trigger event",
+      "BREAKOUT_BOX": "Breakout box pattern detection",
+      "BLACKJACK_ROLLING": "Rolling blackjack score per candle",
+      "BLACKJACK_TARGET": "Target blackjack score for breakout boxes",
+      "ROCKETMAN": "Rocketman acceleration pattern",
+      "PIVOT": "Pivot support/resistance level",
+      "GOLDMINE_CHANNEL": "Goldmine channel pattern",
+      "GOLDEN_CANDLE": "Golden candle breakout",
+      "GOLDMINE_FORENSICS": "Goldmine pattern forensics data",
+      "GOLDEN_NEAR_MISS": "Near-miss golden candle candidates"
+    },
+    
+    "tradeActionTypes": {
+      "BUY": "Long entry signal",
+      "SELL": "Long exit signal",
+      "SHORT": "Short entry signal",
+      "COVER": "Short exit signal",
+      "TRADE_BIAS": "Non-executable directional bias"
+    },
+    
+    "signalTypes": {
+      "LONG_ENTRY": "Enter long position",
+      "LONG_EXIT": "Exit long position",
+      "SHORT_ENTRY": "Enter short position",
+      "SHORT_EXIT": "Exit short position",
+      "BIAS_LONG": "Bullish bias (non-actionable)",
+      "BIAS_SHORT": "Bearish bias (non-actionable)"
+    },
+    
+    "patternFeedEventTypes": {
+      "TRADE_ENTRY": "Actionable buy/short trigger",
+      "STOP_EXIT": "Stop-loss or cover event",
+      "TRADE_BIAS": "Non-actionable sentiment (LONG_BIAS/SHORT_BIAS)",
+      "PATTERN": "Raw pattern detection from PatternBus",
+      "LABEL": "Chart-only annotations (STEP#, ZONE)",
+      "CLUSTER_SIGNAL": "Composite overlays (Conviction-Mass-Cloud)",
+      "FEEDBACK": "Human or ML feedback on patterns",
+      "SYSTEM_EVENT": "Infrastructure/lifecycle notices"
+    },
+    
+    "patternMetadata": {
+      "commonFields": {
+        "id": "Unique pattern identifier",
+        "type": "Pattern type enum",
+        "startTime": "Pattern start timestamp",
+        "endTime": "Pattern end timestamp",
+        "startIndex": "Starting candle index",
+        "endIndex": "Ending candle index",
+        "confidence": "0.0 to 1.0 confidence score",
+        "hasReceivedFeedback": "Boolean feedback flag",
+        "symbol": "Trading symbol (e.g., NVDA)"
+      },
+      
+      "tradeSignalFields": {
+        "action": "TradeAction enum",
+        "signalType": "SignalType enum",
+        "pattern": "Source pattern name",
+        "price": "Execution price",
+        "timestamp": "Signal timestamp",
+        "reason": "Optional explanation",
+        "riskLevel": "LOW | MEDIUM | HIGH",
+        "stopLoss": "Stop loss price",
+        "targetPrice": "Target price",
+        "escalatorStepCount": "Acceleration metric",
+        "blackjackTrailing5": "Intrinsic strength",
+        "blackjackScore": "Current BJ score",
+        "triSightRating": "0-100 rating"
+      }
+    },
+    
+    "supportedTimeframes": ["1min", "5min", "15min", "30min", "1h", "4h", "1day"],
+    
+    "adaptiveDetectors": [
+      "AdaptiveGoldmineChannelDetector",
+      "AdaptiveGoldmineShaftDetector",
+      "AdaptivePivotDetector",
+      "AdaptiveRocketmanDetector",
+      "AdaptiveEscalatorDetector",
+      "AdaptiveBlackjackDetector"
+    ],
+    
+    "visualizationColors": {
+      "GOLDMINE_CHANNEL": "#1E88E5",
+      "GOLDMINE_SHAFT": "#43A047",
+      "PIVOT": "#FB8C00",
+      "ROCKETMAN": "#D81B60",
+      "ESCALATOR": "#8E24AA",
+      "BLACKJACK": "#3949AB",
+      "BREAKOUTBOX": "#2196F3",
+      "GOLDEN_CANDLE": "#FFD700"
+    }
+  }

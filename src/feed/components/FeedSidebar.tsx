@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { usePatternFeed } from '../hooks/usePatternFeed';
 import { useUserInterest } from '../../contexts/UserInterestContext';
 import { usePatternContext } from '../../contexts/PatternContext';
+import { PatternFeedEntry } from '../types/PatternFeedTypes';
 
 // Utility – pick interesting metadata keys for quick view
 function extractHighlights(meta: Record<string, any>): Array<[string, any]> {
@@ -134,15 +135,19 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
       if (target && (target as any).confidence == null && entry.confidence != null) {
         (target as any).confidence = entry.confidence;
       }
-      console.log('[FeedCard] Calling setSelectedPattern...');
+      
+      // Update pattern context for chart interaction and modal
       patternCtx.setSelectedPattern?.(target);
       patternCtx.setSelectedPatternForFeedback?.(target);
 
       // Emit custom event for chart zoom (listener inside chart component)
-      console.log('[FeedCard] Dispatching zoom event with patternId:', target.id);
-      window.dispatchEvent(
-        new CustomEvent('trisight-zoom-to-pattern', { detail: { patternId: target.id } })
-      );
+      // Delay slightly to ensure state updates propagate
+      setTimeout(() => {
+        console.log('[FeedCard] Dispatching zoom event with patternId:', target.id);
+        window.dispatchEvent(
+          new CustomEvent('trisight-zoom-to-pattern', { detail: { patternId: target.id } })
+        );
+      }, 50);
     } else {
       // Create a synthetic pattern from the feed entry metadata
       console.log('[FeedCard] Creating synthetic pattern from feed entry');
@@ -169,22 +174,117 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
         };
         
         console.log('[FeedCard] Setting synthetic pattern:', syntheticPattern);
+        
+        // Update pattern context
         patternCtx.setSelectedPattern?.(syntheticPattern as any);
         patternCtx.setSelectedPatternForFeedback?.(syntheticPattern as any);
         
-        // Try to zoom based on indices
-        if (entry.metadata.startIndex != null && entry.metadata.endIndex != null) {
-          window.dispatchEvent(
-            new CustomEvent('trisight-zoom-to-indices', { 
-              detail: { 
-                startIndex: entry.metadata.startIndex,
-                endIndex: entry.metadata.endIndex
-              } 
-            })
-          );
-        }
+        // Try to zoom based on indices - delay slightly to ensure state updates
+        setTimeout(() => {
+          if (entry.metadata.startIndex != null && entry.metadata.endIndex != null) {
+            console.log('[FeedCard] Dispatching zoom to indices:', { 
+              startIndex: entry.metadata.startIndex, 
+              endIndex: entry.metadata.endIndex 
+            });
+            window.dispatchEvent(
+              new CustomEvent('trisight-zoom-to-indices', { 
+                detail: { 
+                  startIndex: entry.metadata.startIndex,
+                  endIndex: entry.metadata.endIndex
+                } 
+              })
+            );
+          } else {
+            console.log('[FeedCard] No indices available for zoom');
+          }
+        }, 50);
       } else {
-        console.warn('[FeedCard] Cannot create synthetic pattern - missing metadata');
+        // For other pattern types or missing metadata, create synthetic pattern
+        console.log('[FeedCard] Creating minimal synthetic pattern for modal');
+        
+        // Extract time boundaries from metadata or use timestamp
+        let startTime = new Date(entry.timestamp);
+        let endTime = new Date(entry.timestamp);
+        
+        // Try to find better time boundaries from various sources
+        if (entry.metadata?.startTime) {
+          startTime = new Date(entry.metadata.startTime);
+        }
+        if (entry.metadata?.endTime) {
+          endTime = new Date(entry.metadata.endTime);
+        }
+        
+        // For patterns without explicit time boundaries, estimate from timestamp
+        // Most patterns span 5-20 candles, so let's estimate a 10-minute window around the timestamp
+        if (startTime.getTime() === endTime.getTime()) {
+          const timestampMs = new Date(entry.timestamp).getTime();
+          startTime = new Date(timestampMs - 5 * 60 * 1000); // 5 minutes before
+          endTime = new Date(timestampMs + 5 * 60 * 1000);   // 5 minutes after
+        }
+        
+        const minimalPattern = {
+          id: `synthetic_${entry.id}`,
+          type: entry.patternType,
+          startTime: startTime,
+          endTime: endTime,
+          highPrice: entry.metadata?.highPrice || 100,
+          lowPrice: entry.metadata?.lowPrice || 90,
+          confidence: entry.confidence || 0.5,
+          hasReceivedFeedback: false,
+          symbol: entry.symbol,
+          ticker: entry.symbol,
+          ...entry.metadata
+        };
+        
+        console.log('[FeedCard] Created minimal pattern:', {
+          id: minimalPattern.id,
+          type: minimalPattern.type,
+          startTime: minimalPattern.startTime,
+          endTime: minimalPattern.endTime,
+          hasValidTimeRange: minimalPattern.startTime.getTime() !== minimalPattern.endTime.getTime()
+        });
+        
+        // Update pattern context
+        patternCtx.setSelectedPattern?.(minimalPattern as any);
+        patternCtx.setSelectedPatternForFeedback?.(minimalPattern as any);
+        
+        // Try to dispatch zoom event - delay to ensure state updates
+        setTimeout(() => {
+          // First priority: Use indices if available
+          if (entry.metadata?.startIndex != null && entry.metadata?.endIndex != null) {
+            // Zoom using indices if available
+            console.log('[FeedCard] Dispatching zoom to indices for non-escalator:', { 
+              startIndex: entry.metadata.startIndex, 
+              endIndex: entry.metadata.endIndex 
+            });
+            window.dispatchEvent(
+              new CustomEvent('trisight-zoom-to-indices', { 
+                detail: { 
+                  startIndex: entry.metadata.startIndex,
+                  endIndex: entry.metadata.endIndex
+                } 
+              })
+            );
+          } 
+          // Second priority: Use pattern ID and let chart figure it out from context or time boundaries
+          else if (minimalPattern.id) {
+            console.log('[FeedCard] Dispatching zoom to pattern with full pattern object:', {
+              patternId: minimalPattern.id,
+              patternType: minimalPattern.type,
+              hasTimeRange: minimalPattern.startTime && minimalPattern.endTime
+            });
+            window.dispatchEvent(
+              new CustomEvent('trisight-zoom-to-pattern', { 
+                detail: { 
+                  patternId: minimalPattern.id,
+                  pattern: minimalPattern // Pass the full pattern for time boundary calculation
+                } 
+              })
+            );
+          } else {
+            console.log('[FeedCard] No zoom data available for minimal pattern');
+          }
+        }, 50);
       }
     }
   };

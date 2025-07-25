@@ -20,7 +20,7 @@ import { InfiniteZoomChartRef } from './components/Chart/InfiniteZoomChart';
 import FeedbackModalWithContext from './components/Feedback/FeedbackModalWithContext';
 import LearningDashboard from './components/Dashboard/LearningDashboard';
 import PatternDetailsModal from './components/Modals/PatternDetailsModal';
-import { PatternAnalysisModal } from './components/Feedback/PatternAnalysisModal';
+import { DynamicPatternAnalysisModal } from './components/Feedback/DynamicPatternAnalysisModal';
 import { ConsentModal } from './components/privacy/ConsentModal';
 import { usePrivacyConsent } from './hooks/usePrivacyConsent';
 import { TargetReportTable } from './components/TargetReportTable'; // Dick's TriSight Target Report Table with actual formulas
@@ -1135,15 +1135,15 @@ function AppContent() {
         })()}
         {showPatternAnalysisModal && analysisPattern && (
           <>
-            {console.log('[App] PatternAnalysisModal render check:', {
+            {console.log('[App] DynamicPatternAnalysisModal render check:', {
               hasPattern: !!analysisPattern,
               patternType: analysisPattern?.type,
               hasSetMethod: !!setSelectedPatternForFeedback,
               typeOfSetMethod: typeof setSelectedPatternForFeedback,
               modalIsOpen: showPatternAnalysisModal
             })}
-            {console.log('[App] ACTUALLY RENDERING PatternAnalysisModal NOW')}
-            <PatternAnalysisModal
+            {console.log('[App] ACTUALLY RENDERING DynamicPatternAnalysisModal NOW')}
+            <DynamicPatternAnalysisModal
               key={analysisPattern?.id || 'no-pattern'}
               pattern={analysisPattern}
               isOpen={showPatternAnalysisModal}
@@ -1158,8 +1158,12 @@ function AppContent() {
                   console.log('[App] Also calling setSelectedPatternForFeedback(null)');
                   setSelectedPatternForFeedback(null);
                 }
+                
+                // Dispatch restore-zoom event to revert chart zoom
+                console.log('[App] Dispatching restore-zoom event');
+                window.dispatchEvent(new CustomEvent('trisight-restore-zoom'));
               }}
-              onSubmit={async (feedback) => {
+              onSubmit={async (feedback: any) => {
                 if (!hasConsent) {
                   const granted = await requestConsent();
                   if (!granted) return;
@@ -1167,6 +1171,10 @@ function AppContent() {
                 if (submitPatternFeedback) {
                   await submitPatternFeedback(feedback);
                 }
+                
+                // After successful submission, also restore zoom
+                console.log('[App] Dispatching restore-zoom event after submission');
+                window.dispatchEvent(new CustomEvent('trisight-restore-zoom'));
               }}
             />
           </>

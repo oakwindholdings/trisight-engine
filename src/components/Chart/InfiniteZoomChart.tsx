@@ -177,6 +177,12 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
   const [isInteracting, setIsInteracting] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [pixelOffset, setPixelOffset] = useState(0);
+  
+  // Add ref to store zoom state before pattern analysis
+  const prePatternZoomStateRef = useRef<{
+    zoomLevel: number;
+    visibleIndices: { start: number; end: number };
+  } | null>(null);
 
   // Chart data state
   const [error, setError] = useState<Error | null>(null);
@@ -1215,38 +1221,124 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
   useEffect(() => {
     console.log('[InfiniteZoomChart] Setting up zoom-to-pattern listener');
     
-    function handleZoomToPattern(e: CustomEvent<{ patternId: string }>) {
+    function handleZoomToPattern(e: CustomEvent<{ patternId: string; pattern?: any }>) {
       console.log('[InfiniteZoomChart] handleZoomToPattern received event:', e.detail);
-      const { patternId } = e.detail || {};
-      if (!patternId || !patternContext.patterns?.length) return;
+      const { patternId, pattern: eventPattern } = e.detail || {};
+      if (!patternId) return;
       
-      console.log('[InfiniteZoomChart] Looking for pattern with id:', patternId);
-      console.log('[InfiniteZoomChart] Available patterns:', patternContext.patterns.length);
-
-      const pat = patternContext.patterns.find(p => p.id === patternId);
+      // First try to use the pattern passed in the event
+      let pat = eventPattern;
+      
+      // If no pattern in event, look it up in context
+      if (!pat && patternContext.patterns?.length) {
+        console.log('[InfiniteZoomChart] Looking for pattern with id:', patternId);
+        console.log('[InfiniteZoomChart] Available patterns:', patternContext.patterns.length);
+        pat = patternContext.patterns.find(p => p.id === patternId);
+      }
+      
       if (!pat) {
         console.warn('[InfiniteZoomChart] Pattern not found with id:', patternId);
         return;
       }
       
       console.log('[InfiniteZoomChart] Pattern found:', pat);
+      
+      // Save current zoom state before changing
+      if (controller) {
+        prePatternZoomStateRef.current = {
+          zoomLevel: controller.zoomLevel,
+          visibleIndices: { ...visibleDataIndices }
+        };
+        console.log('[InfiniteZoomChart] Saved pre-pattern zoom state:', prePatternZoomStateRef.current);
+      }
 
       // Determine index range in transformedData
-      const startIdx = transformedData.findIndex(c => c.timestamp >= pat.startTime.getTime());
-      const endIdx = transformedData.findIndex(c => c.timestamp >= pat.endTime.getTime());
+      let startIdx = -1;
+      let endIdx = -1;
+      
+      // Use pattern's time boundaries to find indices
+      if (pat.startTime && pat.endTime) {
+        const startTimeMs = pat.startTime instanceof Date ? pat.startTime.getTime() : new Date(pat.startTime).getTime();
+        const endTimeMs = pat.endTime instanceof Date ? pat.endTime.getTime() : new Date(pat.endTime).getTime();
+        
+        console.log('[InfiniteZoomChart] Looking for time range:', {
+          startTime: new Date(startTimeMs).toISOString(),
+          endTime: new Date(endTimeMs).toISOString(),
+          dataRange: transformedData.length > 0 ? {
+            firstCandle: new Date(transformedData[0].timestamp).toISOString(),
+            lastCandle: new Date(transformedData[transformedData.length - 1].timestamp).toISOString()
+          } : 'No data'
+        });
+        
+        startIdx = transformedData.findIndex(c => c.timestamp >= startTimeMs);
+        endIdx = transformedData.findIndex(c => c.timestamp >= endTimeMs);
+        
+        // If endIdx is the same as startIdx, look for the last candle within the pattern time range
+        if (endIdx === startIdx || endIdx === -1) {
+          endIdx = transformedData.findIndex((c, i) => i > startIdx && c.timestamp > endTimeMs) - 1;
+          if (endIdx < 0) endIdx = transformedData.length - 1;
+        }
+        
+        // If we still don't have valid indices, try a more flexible approach
+        if (startIdx === -1 || endIdx === -1) {
+          console.log('[InfiniteZoomChart] Exact time match failed, trying nearest candles');
+          
+          // Find the nearest candles to the pattern times
+          let nearestStartIdx = -1;
+          let nearestEndIdx = -1;
+          let minStartDiff = Infinity;
+          let minEndDiff = Infinity;
+          
+          transformedData.forEach((candle, idx) => {
+            const startDiff = Math.abs(candle.timestamp - startTimeMs);
+            const endDiff = Math.abs(candle.timestamp - endTimeMs);
+            
+            if (startDiff < minStartDiff) {
+              minStartDiff = startDiff;
+              nearestStartIdx = idx;
+            }
+            
+            if (endDiff < minEndDiff) {
+              minEndDiff = endDiff;
+              nearestEndIdx = idx;
+            }
+          });
+          
+          if (nearestStartIdx !== -1 && nearestEndIdx !== -1) {
+            startIdx = Math.min(nearestStartIdx, nearestEndIdx);
+            endIdx = Math.max(nearestStartIdx, nearestEndIdx);
+            console.log('[InfiniteZoomChart] Using nearest candles:', { startIdx, endIdx });
+          }
+        }
+      }
+      
       console.log('[InfiniteZoomChart] Index range:', { startIdx, endIdx });
       
       if (startIdx === -1 || endIdx === -1) {
-        console.warn('[InfiniteZoomChart] Could not find pattern time range in data');
-        return;
+        console.warn('[InfiniteZoomChart] Could not find pattern time range in data - attempting zoom anyway');
+        // Use a default range around the current view
+        const currentCenter = Math.floor((visibleDataIndices.start + visibleDataIndices.end) / 2);
+        startIdx = Math.max(0, currentCenter - 10);
+        endIdx = Math.min(transformedData.length - 1, currentCenter + 10);
       }
 
-      // Use the new zoomToIndices method for precise control
-      if (controller?.zoomToIndices) {
-        console.log('[InfiniteZoomChart] Calling controller.zoomToIndices');
-        controller.zoomToIndices(startIdx, endIdx, transformedData.length);
-      } else {
-        console.warn('[InfiniteZoomChart] controller.zoomToIndices not available');
+      // Zoom to show the pattern with some padding
+      const padding = 10; // Show 10 candles before and after
+      const newStartIdx = Math.max(0, startIdx - padding);
+      const newEndIdx = Math.min(transformedData.length - 1, endIdx + padding);
+      const visibleCandles = newEndIdx - newStartIdx + 1;
+      
+      // Update visible indices directly
+      setVisibleDataIndices({
+        start: newStartIdx,
+        end: newEndIdx
+      });
+      
+      // Calculate and set appropriate zoom level
+      const newZoomLevel = 100 / visibleCandles;
+      if (controller?.zoomTo) {
+        console.log('[InfiniteZoomChart] Zooming to level:', newZoomLevel);
+        controller.zoomTo(newZoomLevel);
       }
     }
 
@@ -1256,7 +1348,34 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     return () => {
       window.removeEventListener('trisight-zoom-to-pattern', handleZoomToPattern as EventListener);
     };
-  }, [transformedData, patternContext.patterns, controller]);
+  }, [transformedData, patternContext.patterns, controller, visibleDataIndices]);
+  
+  // Listen for restore-zoom events when modal closes
+  useEffect(() => {
+    function handleRestoreZoom() {
+      console.log('[InfiniteZoomChart] handleRestoreZoom received event');
+      
+      if (prePatternZoomStateRef.current && controller) {
+        const { zoomLevel, visibleIndices } = prePatternZoomStateRef.current;
+        console.log('[InfiniteZoomChart] Restoring zoom state:', { zoomLevel, visibleIndices });
+        
+        // Restore visible indices
+        setVisibleDataIndices(visibleIndices);
+        
+        // Restore zoom level
+        controller.zoomTo(zoomLevel);
+        
+        // Clear the saved state
+        prePatternZoomStateRef.current = null;
+      }
+    }
+    
+    window.addEventListener('trisight-restore-zoom', handleRestoreZoom);
+    
+    return () => {
+      window.removeEventListener('trisight-restore-zoom', handleRestoreZoom);
+    };
+  }, [controller]);
 
   // Listen for zoom-to-indices events for synthetic patterns
   useEffect(() => {
@@ -1267,6 +1386,15 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
       if (startIndex == null || endIndex == null) {
         console.warn('[InfiniteZoomChart] Cannot zoom - missing indices');
         return;
+      }
+      
+      // Save current zoom state before changing
+      if (controller) {
+        prePatternZoomStateRef.current = {
+          zoomLevel: controller.zoomLevel,
+          visibleIndices: { ...visibleDataIndices }
+        };
+        console.log('[InfiniteZoomChart] Saved pre-pattern zoom state:', prePatternZoomStateRef.current);
       }
       
       // Calculate the zoom level needed to show ~21 candles
@@ -1309,7 +1437,7 @@ const InfiniteZoomChartInner: React.ForwardRefRenderFunction<InfiniteZoomChartRe
     return () => {
       window.removeEventListener('trisight-zoom-to-indices', handleZoomToIndices as EventListener);
     };
-  }, [transformedData, controller]);
+  }, [transformedData, controller, visibleDataIndices]);
 
   // Add keyboard handler for arrow keys
   useEffect(() => {

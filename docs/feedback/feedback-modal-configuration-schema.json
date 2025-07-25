@@ -1,0 +1,586 @@
+{
+    "ESCALATOR": {
+      "displayName": "Escalator Pattern",
+      "metadataFields": ["startIndex", "endIndex", "direction", "steps", "averageStepHeight", "stepConsistency", "signalStrength"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Pattern Accuracy",
+          "field": "accuracy"
+        },
+        {
+          "type": "thumbs",
+          "label": "Valid Pattern?",
+          "field": "isValid"
+        },
+        {
+          "type": "multiselect",
+          "label": "Step Quality Issues",
+          "field": "stepIssues",
+          "options": ["missing_steps", "false_steps", "inconsistent_height", "wrong_direction"]
+        },
+        {
+          "type": "timing-scale",
+          "label": "Entry Timing",
+          "field": "timingAssessment"
+        },
+        {
+          "type": "text",
+          "label": "Additional Notes",
+          "field": "notes"
+        }
+      ],
+      "notesMergeTemplate": "Escalator {{direction}} with {{steps.length}} steps. Analyst: {{notes}}",
+      "feedEventTypes": ["PATTERN", "TRADE_ENTRY"],
+      "color": "#8E24AA"
+    },
+    
+    "ESCALATOR_STEP": {
+      "displayName": "Escalator Step",
+      "metadataFields": ["stepRef", "direction", "floor", "ceiling", "height", "startIndex", "endIndex"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Valid Step?",
+          "field": "isValidStep"
+        },
+        {
+          "type": "multiselect",
+          "label": "Step Issues",
+          "field": "stepBoundaryIssues",
+          "options": ["floor_incorrect", "ceiling_incorrect", "not_a_step", "merged_steps"]
+        },
+        {
+          "type": "text",
+          "label": "Step Notes",
+          "field": "stepNotes"
+        }
+      ],
+      "notesMergeTemplate": "Step {{stepRef}} {{direction}}. Floor: {{floor}}, Ceiling: {{ceiling}}. {{stepNotes}}",
+      "feedEventTypes": ["LABEL"],
+      "color": "#8E24AA"
+    },
+    
+    "BLACKJACK": {
+      "displayName": "Blackjack Signal",
+      "metadataFields": ["intrinsicScores", "cumulativeScore", "signalStrength", "priceChange", "volumeChange"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Score Accuracy",
+          "field": "scoreAccuracy"
+        },
+        {
+          "type": "thumbs",
+          "label": "Actionable Signal?",
+          "field": "isActionable"
+        },
+        {
+          "type": "multiselect",
+          "label": "Signal Context",
+          "field": "contextFactors",
+          "options": ["earnings_nearby", "news_driven", "sector_rotation", "market_conditions"]
+        },
+        {
+          "type": "text",
+          "label": "Market Context Notes",
+          "field": "contextNotes"
+        }
+      ],
+      "notesMergeTemplate": "Blackjack score: {{cumulativeScore}} ({{signalStrength}}). Context: {{contextNotes}}",
+      "feedEventTypes": ["PATTERN", "TRADE_BIAS"],
+      "color": "#3949AB"
+    },
+    
+    "BLACKJACK_ROLLING": {
+      "displayName": "Rolling Blackjack",
+      "metadataFields": ["timestamp", "score", "lookbackPeriod"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Score Reasonable?",
+          "field": "scoreReasonable"
+        },
+        {
+          "type": "text",
+          "label": "Score Notes",
+          "field": "scoreNotes"
+        }
+      ],
+      "notesMergeTemplate": "Rolling BJ score: {{score}} at {{timestamp}}. {{scoreNotes}}",
+      "feedEventTypes": ["PATTERN"],
+      "color": "#3949AB"
+    },
+    
+    "BLACKJACK_TARGET": {
+      "displayName": "Target Blackjack",
+      "metadataFields": ["stepRef", "score", "qualifiesForGoldmine"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Goldmine Qualification Correct?",
+          "field": "qualificationCorrect"
+        },
+        {
+          "type": "confidence-slider",
+          "label": "Target Score Accuracy",
+          "field": "targetAccuracy"
+        },
+        {
+          "type": "text",
+          "label": "Qualification Notes",
+          "field": "qualificationNotes"
+        }
+      ],
+      "notesMergeTemplate": "Target BJ for {{stepRef}}: {{score}}. Goldmine: {{qualifiesForGoldmine}}. {{qualificationNotes}}",
+      "feedEventTypes": ["PATTERN"],
+      "color": "#3949AB"
+    },
+    
+    "GOLDMINE_CHANNEL": {
+      "displayName": "Goldmine Channel",
+      "metadataFields": ["direction", "upperBoundary", "lowerBoundary", "touchPoints", "confidence", "channelWidth"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Channel Quality",
+          "field": "channelQuality"
+        },
+        {
+          "type": "thumbs",
+          "label": "Valid Channel?",
+          "field": "isValidChannel"
+        },
+        {
+          "type": "multiselect",
+          "label": "Channel Issues",
+          "field": "channelIssues",
+          "options": ["boundaries_incorrect", "false_touches", "too_wide", "too_narrow", "premature_break"]
+        },
+        {
+          "type": "timing-scale",
+          "label": "Breakout Timing",
+          "field": "breakoutTiming"
+        },
+        {
+          "type": "text",
+          "label": "Channel Analysis",
+          "field": "channelAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "{{direction}} channel, width: {{channelWidth}}%, touches: {{touchPoints.length}}. {{channelAnalysis}}",
+      "feedEventTypes": ["PATTERN", "TRADE_ENTRY"],
+      "color": "#1E88E5"
+    },
+    
+    "GOLDMINE_SHAFT": {
+      "displayName": "Goldmine Shaft",
+      "metadataFields": ["direction", "thrustPercent", "retracementPercentage", "fibonacciLevel", "confidence"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Shaft Pattern Quality",
+          "field": "shaftQuality"
+        },
+        {
+          "type": "thumbs",
+          "label": "Valid Thrust/Retrace?",
+          "field": "isValidShaft"
+        },
+        {
+          "type": "multiselect",
+          "label": "Fibonacci Accuracy",
+          "field": "fibAccuracy",
+          "options": ["perfect_382", "perfect_500", "perfect_618", "between_levels", "beyond_618"]
+        },
+        {
+          "type": "timing-scale",
+          "label": "Entry Timing",
+          "field": "entryTiming"
+        },
+        {
+          "type": "text",
+          "label": "Retrace Analysis",
+          "field": "retraceAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "{{direction}} shaft, thrust: {{thrustPercent}}%, retrace: {{retracementPercentage}}% ({{fibonacciLevel}}). {{retraceAnalysis}}",
+      "feedEventTypes": ["PATTERN", "TRADE_ENTRY"],
+      "color": "#43A047"
+    },
+    
+    "GOLDMINE_FORENSICS": {
+      "displayName": "Goldmine Forensics",
+      "metadataFields": ["candidateCount", "nearMissCount", "qualifiedCount", "reasons"],
+      "feedbackControls": [
+        {
+          "type": "multiselect",
+          "label": "Forensic Insights",
+          "field": "forensicInsights",
+          "options": ["threshold_too_strict", "missing_candidates", "false_positives", "timing_issues"]
+        },
+        {
+          "type": "text",
+          "label": "Forensic Notes",
+          "field": "forensicNotes"
+        }
+      ],
+      "notesMergeTemplate": "Goldmine forensics: {{candidateCount}} candidates, {{qualifiedCount}} qualified. {{forensicNotes}}",
+      "feedEventTypes": ["PATTERN"],
+      "color": "#43A047"
+    },
+    
+    "GOLDEN_CANDLE": {
+      "displayName": "Golden Candle",
+      "metadataFields": ["direction", "goldenScore", "intrinsicScore", "cumulativeScore", "stepIntrinsicCount", "stepBreakoutCount", "confidence"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Golden Signal Quality",
+          "field": "goldenQuality"
+        },
+        {
+          "type": "thumbs",
+          "label": "True Golden Candle?",
+          "field": "isTrueGolden"
+        },
+        {
+          "type": "timing-scale",
+          "label": "Entry Timing",
+          "field": "goldenTiming"
+        },
+        {
+          "type": "multiselect",
+          "label": "Breakout Characteristics",
+          "field": "breakoutCharacteristics",
+          "options": ["volume_surge", "gap_up", "momentum_continuation", "reversal_signal"]
+        },
+        {
+          "type": "text",
+          "label": "Golden Analysis",
+          "field": "goldenAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "Golden {{direction}} candle, score: {{goldenScore}}, continuance: {{stepContinuanceCount}}. {{goldenAnalysis}}",
+      "feedEventTypes": ["PATTERN", "TRADE_ENTRY"],
+      "color": "#FFD700"
+    },
+    
+    "GOLDEN_NEAR_MISS": {
+      "displayName": "Golden Near Miss",
+      "metadataFields": ["direction", "missingCriteria", "intrinsicScore", "cumulativeScore", "continuanceCount"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Should Be Golden?",
+          "field": "shouldQualify"
+        },
+        {
+          "type": "multiselect",
+          "label": "Missing Criteria",
+          "field": "criteriaAdjustment",
+          "options": ["lower_continuance_threshold", "adjust_intrinsic_requirement", "include_context", "timing_flexibility"]
+        },
+        {
+          "type": "text",
+          "label": "Near Miss Analysis",
+          "field": "nearMissAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "Near miss golden: {{missingCriteria}}. Score: {{cumulativeScore}}, continuance: {{continuanceCount}}. {{nearMissAnalysis}}",
+      "feedEventTypes": ["PATTERN"],
+      "color": "#FFD700"
+    },
+    
+    "ROCKETMAN": {
+      "displayName": "Rocketman Pattern",
+      "metadataFields": ["direction", "accelerationRate", "peakPrice", "intensity", "momentumScore", "volumeConfirmation", "signalStrength"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Acceleration Quality",
+          "field": "accelerationQuality"
+        },
+        {
+          "type": "thumbs",
+          "label": "Valid Rocketman?",
+          "field": "isValidRocket"
+        },
+        {
+          "type": "timing-scale",
+          "label": "Peak Timing",
+          "field": "peakTiming"
+        },
+        {
+          "type": "multiselect",
+          "label": "Rocket Type",
+          "field": "rocketType",
+          "options": ["parabolic", "linear_acceleration", "gap_driven", "news_catalyst", "squeeze_breakout"]
+        },
+        {
+          "type": "text",
+          "label": "Acceleration Analysis",
+          "field": "accelerationAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "Rocketman {{direction}}, acceleration: {{accelerationRate}}, peak: {{peakPrice}}. {{accelerationAnalysis}}",
+      "feedEventTypes": ["PATTERN", "TRADE_ENTRY"],
+      "color": "#D81B60"
+    },
+    
+    "PIVOT": {
+      "displayName": "Pivot Level",
+      "metadataFields": ["pivotType", "pivotLevel", "touchPoints", "touchStrength", "strengthScore", "adaptiveZoneWidth"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Pivot Strength",
+          "field": "pivotStrength"
+        },
+        {
+          "type": "thumbs",
+          "label": "Valid Pivot?",
+          "field": "isValidPivot"
+        },
+        {
+          "type": "multiselect",
+          "label": "Touch Quality",
+          "field": "touchQuality",
+          "options": ["clean_bounces", "penetrations", "false_breaks", "weakening_touches"]
+        },
+        {
+          "type": "timing-scale",
+          "label": "Pivot Timing",
+          "field": "pivotTiming"
+        },
+        {
+          "type": "text",
+          "label": "Pivot Analysis",
+          "field": "pivotAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "{{pivotType}} at {{pivotLevel}}, touches: {{touchPoints.length}}, strength: {{strengthScore}}. {{pivotAnalysis}}",
+      "feedEventTypes": ["PATTERN", "TRADE_BIAS"],
+      "color": "#FB8C00"
+    },
+    
+    "BREAKOUTBOX": {
+      "displayName": "Breakout Box",
+      "metadataFields": ["direction", "floor", "ceiling", "boxType", "blackjackScore", "qualifiesForGoldmine"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Box Quality",
+          "field": "boxQuality"
+        },
+        {
+          "type": "thumbs",
+          "label": "Valid Breakout?",
+          "field": "isValidBreakout"
+        },
+        {
+          "type": "multiselect",
+          "label": "Breakout Type",
+          "field": "breakoutType",
+          "options": ["genuine_breakout", "false_breakout", "retest_needed", "continuation", "reversal"]
+        },
+        {
+          "type": "timing-scale",
+          "label": "Breakout Timing",
+          "field": "breakoutTiming"
+        },
+        {
+          "type": "text",
+          "label": "Box Analysis",
+          "field": "boxAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "{{direction}} breakout box ({{boxType}}), range: {{floor}}-{{ceiling}}. BJ: {{blackjackScore}}. {{boxAnalysis}}",
+      "feedEventTypes": ["PATTERN", "TRADE_ENTRY"],
+      "color": "#2196F3"
+    },
+    
+    "CMC": {
+      "displayName": "Conviction Mass Cloud",
+      "metadataFields": ["density", "centerPrice", "spread", "dominantBias", "clusterCount"],
+      "feedbackControls": [
+        {
+          "type": "confidence-slider",
+          "label": "Cloud Significance",
+          "field": "cloudSignificance"
+        },
+        {
+          "type": "thumbs",
+          "label": "Actionable Cloud?",
+          "field": "isActionableCloud"
+        },
+        {
+          "type": "multiselect",
+          "label": "Cloud Interpretation",
+          "field": "cloudInterpretation",
+          "options": ["support_forming", "resistance_forming", "breakout_imminent", "consolidation", "indecision"]
+        },
+        {
+          "type": "text",
+          "label": "Cloud Analysis",
+          "field": "cloudAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "CMC density: {{density}}, center: {{centerPrice}}, bias: {{dominantBias}}. {{cloudAnalysis}}",
+      "feedEventTypes": ["CLUSTER_SIGNAL"],
+      "color": "#9C27B0"
+    },
+    
+    "TRADE_ENTRY": {
+      "displayName": "Trade Entry Signal",
+      "metadataFields": ["action", "pattern", "price", "confidence", "stopLoss", "targetPrice", "riskLevel"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Good Entry?",
+          "field": "isGoodEntry"
+        },
+        {
+          "type": "timing-scale",
+          "label": "Entry Timing",
+          "field": "entryTiming"
+        },
+        {
+          "type": "multiselect",
+          "label": "Entry Quality",
+          "field": "entryQuality",
+          "options": ["perfect_entry", "early", "late", "chase_entry", "scaled_entry"]
+        },
+        {
+          "type": "confidence-slider",
+          "label": "Risk/Reward",
+          "field": "riskRewardRating"
+        },
+        {
+          "type": "text",
+          "label": "Trade Notes",
+          "field": "tradeNotes"
+        }
+      ],
+      "notesMergeTemplate": "{{action}} @ {{price}} via {{pattern}} ({{confidence}}%). Stop: {{stopLoss}}, Target: {{targetPrice}}. {{tradeNotes}}",
+      "feedEventTypes": ["TRADE_ENTRY"],
+      "color": "#4CAF50"
+    },
+    
+    "STOP_EXIT": {
+      "displayName": "Stop Exit Signal",
+      "metadataFields": ["action", "pattern", "price", "reason", "originalEntry", "profitLoss"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Appropriate Stop?",
+          "field": "isAppropriateStop"
+        },
+        {
+          "type": "multiselect",
+          "label": "Stop Type",
+          "field": "stopType",
+          "options": ["trailing_stop", "fixed_stop", "volatility_stop", "time_stop", "pattern_invalidation"]
+        },
+        {
+          "type": "text",
+          "label": "Exit Analysis",
+          "field": "exitAnalysis"
+        }
+      ],
+      "notesMergeTemplate": "Stop {{action}} @ {{price}}, reason: {{reason}}. P/L: {{profitLoss}}. {{exitAnalysis}}",
+      "feedEventTypes": ["STOP_EXIT"],
+      "color": "#F44336"
+    },
+    
+    "TRADE_BIAS": {
+      "displayName": "Trade Bias Signal",
+      "metadataFields": ["signalType", "pattern", "confidence", "reason"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Agree with Bias?",
+          "field": "agreeWithBias"
+        },
+        {
+          "type": "confidence-slider",
+          "label": "Bias Strength",
+          "field": "biasStrength"
+        },
+        {
+          "type": "text",
+          "label": "Bias Context",
+          "field": "biasContext"
+        }
+      ],
+      "notesMergeTemplate": "{{signalType}} bias from {{pattern}} ({{confidence}}%). Reason: {{reason}}. {{biasContext}}",
+      "feedEventTypes": ["TRADE_BIAS"],
+      "color": "#FF9800"
+    },
+    
+    "STEP_LABEL": {
+      "displayName": "Step Label",
+      "metadataFields": ["stepNumber", "stepRef", "direction"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Label Correct?",
+          "field": "isLabelCorrect"
+        },
+        {
+          "type": "text",
+          "label": "Label Notes",
+          "field": "labelNotes"
+        }
+      ],
+      "notesMergeTemplate": "Step #{{stepNumber}} ({{stepRef}}) {{direction}}. {{labelNotes}}",
+      "feedEventTypes": ["LABEL"],
+      "color": "#607D8B"
+    },
+    
+    "ZONE": {
+      "displayName": "Zone Marker",
+      "metadataFields": ["zoneType", "startPrice", "endPrice", "significance"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Valid Zone?",
+          "field": "isValidZone"
+        },
+        {
+          "type": "multiselect",
+          "label": "Zone Type",
+          "field": "zoneCharacteristics",
+          "options": ["supply_zone", "demand_zone", "accumulation", "distribution", "neutral"]
+        },
+        {
+          "type": "text",
+          "label": "Zone Notes",
+          "field": "zoneNotes"
+        }
+      ],
+      "notesMergeTemplate": "{{zoneType}} zone: {{startPrice}}-{{endPrice}}, significance: {{significance}}. {{zoneNotes}}",
+      "feedEventTypes": ["LABEL"],
+      "color": "#795548"
+    },
+    
+    "SYSTEM_EVENT": {
+      "displayName": "System Event",
+      "metadataFields": ["eventType", "message", "severity", "timestamp"],
+      "feedbackControls": [
+        {
+          "type": "thumbs",
+          "label": "Event Handled Well?",
+          "field": "eventHandledWell"
+        },
+        {
+          "type": "text",
+          "label": "System Notes",
+          "field": "systemNotes"
+        }
+      ],
+      "notesMergeTemplate": "System {{eventType}}: {{message}} ({{severity}}). {{systemNotes}}",
+      "feedEventTypes": ["SYSTEM_EVENT"],
+      "color": "#9E9E9E"
+    }
+  }
