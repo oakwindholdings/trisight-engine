@@ -18,7 +18,7 @@ interface FeedbackBuffer {
   lastProcessed: Date;
 }
 
-interface LearningMetrics {
+interface PatternLearningMetrics {
   patternType: PatternType;
   averageAccuracy: number;
   confidenceAdjustment: number;
@@ -36,7 +36,7 @@ interface ModelUpdateRequest {
     customThresholds?: Record<string, number>;
   };
   reason: string;
-  metrics: LearningMetrics;
+  metrics: PatternLearningMetrics;
 }
 
 export class PatternLearningEngine {
@@ -174,7 +174,7 @@ export class PatternLearningEngine {
   /**
    * Calculate comprehensive metrics from feedback batch
    */
-  private calculateMetrics(feedbacks: PatternFeedback[]): LearningMetrics {
+  private calculateMetrics(feedbacks: PatternFeedback[]): PatternLearningMetrics {
     const patternType = feedbacks[0].patternType;
     const avgAccuracy = this.calculateAverageAccuracy(feedbacks);
     const validityRate = this.calculateValidityRate(feedbacks);
@@ -201,7 +201,7 @@ export class PatternLearningEngine {
   /**
    * Evaluate if model update is needed based on metrics
    */
-  private evaluateModelUpdate(metrics: LearningMetrics): ModelUpdateRequest | null {
+  private evaluateModelUpdate(metrics: PatternLearningMetrics): ModelUpdateRequest | null {
     const reasons: string[] = [];
     const adjustments: ModelUpdateRequest['adjustments'] = {
       confidenceMultiplier: 1.0,

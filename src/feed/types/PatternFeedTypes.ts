@@ -43,12 +43,40 @@ export interface PatternFeedEntry {
   confidence?: number | null;
   timestamp: string; // ISO 8601 string
   humanSummary: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown> & {
+    interval?: string; // Chart interval (1m, 5m, 15m, 1h, etc.)
+  };
   renderHints?: {
     emphasis?: 'bull' | 'bear';
   };
   mcpVersion: '0.1.0';
   userId?: string;
+}
+
+// Time window options for filtering
+export interface TimeWindow {
+  label: string;
+  value: string;
+  minutes: number;
+}
+
+// Chart interval options
+export interface ChartInterval {
+  label: string;
+  value: string;
+}
+
+// Enhanced filter interface with time and interval support
+export interface EnhancedPatternFeedFilters {
+  symbol?: string;
+  patternType?: string;
+  sector?: string;
+  timeWindow?: string;
+  interval?: string;
+  confidence?: {
+    min?: number;
+    max?: number;
+  };
 }
 
 // ────────────────────────────────────────────────────────────────────────────

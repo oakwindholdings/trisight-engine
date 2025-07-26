@@ -191,8 +191,8 @@ export const FeedbackSubmissionSchema = z.object({
   consent: PrivacyConsentSchema,
 });
 
-// Learning system types
-export interface LearningMetrics {
+// Learning system types - DEPRECATED: Use LearningMetrics from LearningTypes.ts instead
+export interface LegacyLearningMetrics {
   patternType: PatternType;
   averageAccuracy: number;
   confidenceAdjustment: number;

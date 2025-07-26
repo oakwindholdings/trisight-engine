@@ -1,11 +1,13 @@
-// path // FeedSidebar.tsx // Left-hand rail feed UI.
+// path // FeedSidebar.tsx // Left-hand rail feed UI with enhanced filtering.
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { usePatternFeed } from '../hooks/usePatternFeed';
 import { useUserInterest } from '../../contexts/UserInterestContext';
 import { usePatternContext } from '../../contexts/PatternContext';
 import { PatternFeedEntry } from '../types/PatternFeedTypes';
+import { FeedFilterProvider, useFeedFilter } from '../contexts/FeedFilterContext';
+import { FilterBar } from './FilterBar';
 
 // Utility – pick interesting metadata keys for quick view
 function extractHighlights(meta: Record<string, any>): Array<[string, any]> {
@@ -40,10 +42,23 @@ const Sidebar = styled.aside`
   top: 60px; /* header height */
   bottom: 0;
   width: 300px;
-  overflow-y: auto;
   background: #fafafa;
   border-right: 1px solid #e0e0e0;
   z-index: 30;
+  display: flex;
+  flex-direction: column;
+`;
+
+const FeedContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+`;
+
+const EmptyState = styled.div`
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
 `;
 
 const Card = styled.div`
@@ -142,15 +157,12 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
 
       // Emit custom event for chart zoom (listener inside chart component)
       // Delay slightly to ensure state updates propagate
+      const targetId = target.id; // Capture the ID to avoid undefined reference in callback
       setTimeout(() => {
-        if (target) {
-          console.log('[FeedCard] Dispatching zoom event with patternId:', target.id);
-          window.dispatchEvent(
-            new CustomEvent('trisight-zoom-to-pattern', { detail: { patternId: target.id } })
-          );
-        } else {
-          console.log('[FeedCard] No target for zoom event.');
-        }
+        console.log('[FeedCard] Dispatching zoom event with patternId:', targetId);
+        window.dispatchEvent(
+          new CustomEvent('trisight-zoom-to-pattern', { detail: { patternId: targetId } })
+        );
       }, 50);
     } else {
       // Create a synthetic pattern from the feed entry metadata
@@ -336,15 +348,51 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
   );
 };
 
-export const FeedSidebar: React.FC = () => {
-  const filters = useUserInterest();
-  const feed = usePatternFeed(filters);
+// Internal component that uses the filter context
+const FeedSidebarContent: React.FC = () => {
+  const userInterestFilters = useUserInterest();
+  const { filters, updatePatternTypeCounts } = useFeedFilter();
+
+  // Combine user interest filters with feed filters
+  const combinedFilters = {
+    ...userInterestFilters,
+    ...filters
+  };
+
+  const { entries, filteredCount, totalCount, patternTypeCounts } = usePatternFeed({
+    filters: combinedFilters
+  });
+
+  // Update pattern type counts in filter context
+  useEffect(() => {
+    updatePatternTypeCounts(patternTypeCounts);
+  }, [patternTypeCounts, updatePatternTypeCounts]);
 
   return (
     <Sidebar>
-      {feed.map((e) => (
-        <FeedCard key={e.id} entry={e} />
-      ))}
+      <FilterBar
+        totalCount={totalCount}
+        filteredCount={filteredCount}
+      />
+      <FeedContent>
+        {entries.map((e) => (
+          <FeedCard key={e.id} entry={e} />
+        ))}
+        {entries.length === 0 && (
+          <EmptyState>
+            {totalCount === 0 ? 'No patterns found' : 'No patterns match current filters'}
+          </EmptyState>
+        )}
+      </FeedContent>
     </Sidebar>
   );
-}; 
+};
+
+// Main component with filter provider
+export const FeedSidebar: React.FC = () => {
+  return (
+    <FeedFilterProvider>
+      <FeedSidebarContent />
+    </FeedFilterProvider>
+  );
+};
