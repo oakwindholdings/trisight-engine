@@ -7,7 +7,7 @@ import { calcStepBlackjack } from './blackjack';
 
 export { detectEscalators, detectEscalatorTradeSignals, monitorEscalatorExitSignals } from './escalator';
 export { detectEscalatorSteps, detectStepContinuation } from './escalatorStep';
-export { detectBreakoutBoxes, type BreakoutBox } from './breakoutBox';
+export { detectBreakoutBoxes, evaluateBreakoutBoxForEntry, type BreakoutBox } from './breakoutBox';
 export {
   getIntrinsicScore,
   computeRollingBlackjackScores,

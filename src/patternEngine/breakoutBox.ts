@@ -115,7 +115,8 @@ export function detectBreakoutBoxes(
                 floor,
                 ceiling,
                 height: ceiling - floor,
-                breakoutCandle: breakoutHACandle
+                breakoutCandle: breakoutHACandle,
+                state: BreakoutBoxState.TRIGGERED  // Set state to TRIGGERED so signals can be emitted
               };
               
               // Calculate HA-based Blackjack score for stall candles
@@ -193,13 +194,15 @@ export function detectBreakoutBoxes(
             // HA stall too short, continue searching
             i++;
           }
-          break; // Exit inner while loop after processing breakout, continue outer loop
+          break; // Exit inner while loop after checking for breakout
         }
       }
       
-      // If we reached end of HA candles without breakout, move on
+      // If we reached end of HA candles without breakout, skip this potential stall
       if (stallEnd >= haCandles.length - 1) {
-        i = haCandles.length;
+        // Don't set i to haCandles.length - that would exit the main loop!
+        // Instead, just increment i to continue searching from the next position
+        i++;
       }
     } else {
       i++;
@@ -228,6 +231,9 @@ export function detectBreakoutBoxes(
       dickOLearyCompliant: true
     });
   }
+  
+  // Evaluate each breakout box for trade entry signals
+  boxes.forEach(evaluateBreakoutBoxForEntry);
   
   return boxes;
 }

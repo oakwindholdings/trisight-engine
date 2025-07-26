@@ -4,6 +4,7 @@
 // Pattern detector factories
 import PivotDetectorFactory from './PivotDetectorFactory';
 import RocketmanDetectorFactory from './RocketmanDetectorFactory';
+import AdaptiveBreakoutBoxDetector from './AdaptiveBreakoutBoxDetector';
 
 // Core pattern detection
 import { DetectionOptions, BasePatternDetector } from './core/BasePatternDetector';
@@ -16,7 +17,7 @@ PatternRegistry.registerDetectorFactory('rocketman', RocketmanDetectorFactory.cr
 
 // Export main components
 export { PatternRegistry };
-export { PivotDetectorFactory, RocketmanDetectorFactory };
+export { PivotDetectorFactory, RocketmanDetectorFactory, AdaptiveBreakoutBoxDetector };
 
 // Export types using export type syntax
 export { BasePatternDetector };

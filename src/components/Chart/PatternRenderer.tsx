@@ -197,6 +197,14 @@ const PatternRendererImpl = {
       });
     }
     
+    // Render breakout boxes
+    if (breakoutBoxes.length > 0) {
+      console.log(`[PatternRenderer] Rendering ${breakoutBoxes.length} breakout boxes`);
+      breakoutBoxes.forEach((box, index) => {
+        this.renderBreakoutBox(ctx, box, dimensions, timeScale, priceScale);
+      });
+    }
+    
     // Render Golden Candle near-miss overlays if present (Dick O'Leary Compliance)
     if (goldenCandleSettings.showNearMiss && goldenNearMisses && goldenNearMisses.length > 0 && haCandles && haCandles.length > 0) {
       this.renderGoldenNearMisses(ctx, goldenNearMisses, haCandles, timeScale, priceScale, dimensions);

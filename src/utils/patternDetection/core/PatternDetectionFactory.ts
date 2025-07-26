@@ -11,6 +11,7 @@ import { AdaptiveEscalatorDetector } from '../AdaptiveEscalatorDetector';
 import AdaptivePivotDetector from '../AdaptivePivotDetector';
 import AdaptiveRocketmanDetector from '../AdaptiveRocketmanDetector';
 import RocketmanDetectorFactory from '../RocketmanDetectorFactory';
+import AdaptiveBreakoutBoxDetector from '../AdaptiveBreakoutBoxDetector';
 
 /**
  * Factory for creating pattern detectors and orchestrators
@@ -41,6 +42,7 @@ export class PatternDetectionFactory {
     detectors.set(PatternType.ROCKETMAN, PatternDetectionFactory.createRocketmanDetector());
     detectors.set(PatternType.PIVOT, PatternDetectionFactory.createPivotDetector());
     detectors.set(PatternType.BLACKJACK, PatternDetectionFactory.createBlackjackDetector());
+    detectors.set(PatternType.BREAKOUTBOX, PatternDetectionFactory.createBreakoutBoxDetector());
     
     // Create orchestrator with all detectors
     return new PatternDetectionOrchestrator(detectors, options);
@@ -101,6 +103,15 @@ export class PatternDetectionFactory {
   }
   
   /**
+   * Create a Breakout Box detector
+   */
+  public static createBreakoutBoxDetector(
+    options: Partial<DetectionOptions> = {}
+  ): AdaptiveBreakoutBoxDetector {
+    return new AdaptiveBreakoutBoxDetector(options);
+  }
+  
+  /**
    * Create an individual detector by type
    */
   public static createDetector(
@@ -120,6 +131,8 @@ export class PatternDetectionFactory {
         return PatternDetectionFactory.createPivotDetector(options);
       case PatternType.ROCKETMAN:
         return PatternDetectionFactory.createRocketmanDetector(options);
+      case PatternType.BREAKOUTBOX:
+        return PatternDetectionFactory.createBreakoutBoxDetector(options);
       // All pattern types are now supported
       default:
         throw new Error(`Detector not implemented for pattern type: ${type}`);
