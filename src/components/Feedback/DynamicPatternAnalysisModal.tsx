@@ -2,11 +2,11 @@
 // Dynamic modal for pattern analysis and feedback
 // Renders UI controls based on JSON configuration
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pattern, PatternType } from '../../models/PatternTypes';
 import { PatternFeedback } from '../../models/FeedbackTypes';
 import { usePrivacyConsent } from '../../hooks/usePrivacyConsent';
-import { logDebug } from '../../utils/debug';
+// import { logDebug } from '../../utils/debug';
 import { submitPatternFeedback } from '../../utils/supabase/dynamicPatternFeedbackService';
 import { getModalConfig, interpolateTemplate, ModalConfig, FeedbackControl } from '../../config/feedbackModalConfig';
 import './PatternAnalysisModal.css';
@@ -141,10 +141,10 @@ export const DynamicPatternAnalysisModal: React.FC<DynamicPatternAnalysisModalPr
   const [formValues, setFormValues] = useState<Record<string, any>>({});
   const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
   
-  // Draggable state
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  // Draggable state - disabled for centered modal
+  // const [position, setPosition] = useState({ x: 0, y: 0 });
+  // const [isDragging, setIsDragging] = useState(false);
+  // const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
   // Get pattern type from either pattern or metadata
   const patternType = pattern?.type || patternMetadata?.patternType || patternMetadata?.type;
@@ -180,7 +180,7 @@ export const DynamicPatternAnalysisModal: React.FC<DynamicPatternAnalysisModalPr
       setFormValues(initialValues);
       setError(null);
       setShowSuccess(false);
-      setPosition({ x: 0, y: 0 });
+      // setPosition({ x: 0, y: 0 }); // Disabled for centered modal
     }
   }, [patternType]);
   
@@ -203,39 +203,39 @@ export const DynamicPatternAnalysisModal: React.FC<DynamicPatternAnalysisModalPr
     };
   }, [isOpen, isSubmitting, onClose]);
   
-  // Dragging handlers
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
-    });
-  }, [isDragging, dragStart]);
-  
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-  
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  // Dragging handlers - disabled for centered modal
+  // const handleMouseMove = useCallback((e: MouseEvent) => {
+  //   if (!isDragging) return;
+  //   setPosition({
+  //     x: e.clientX - dragStart.x,
+  //     y: e.clientY - dragStart.y
+  //   });
+  // }, [isDragging, dragStart]);
+
+  // const handleMouseUp = useCallback(() => {
+  //   setIsDragging(false);
+  // }, []);
+
+  // useEffect(() => {
+  //   if (isDragging) {
+  //     document.addEventListener('mousemove', handleMouseMove);
+  //     document.addEventListener('mouseup', handleMouseUp);
+  //     return () => {
+  //       document.removeEventListener('mousemove', handleMouseMove);
+  //       document.removeEventListener('mouseup', handleMouseUp);
+  //     };
+  //   }
+  // }, [isDragging, handleMouseMove, handleMouseUp]);
   
   if (!isOpen || !modalConfig) return null;
   
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-  };
+  // const handleMouseDown = (e: React.MouseEvent) => {
+  //   setIsDragging(true);
+  //   setDragStart({
+  //     x: e.clientX - position.x,
+  //     y: e.clientY - position.y
+  //   });
+  // };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,19 +331,13 @@ export const DynamicPatternAnalysisModal: React.FC<DynamicPatternAnalysisModalPr
         }
       }}
     >
-      <div 
-        className="pattern-analysis-modal" 
-        style={{
-          transform: `translate(${position.x}px, ${position.y}px)`,
-          userSelect: isDragging ? 'none' : 'auto'
-        }}
+      <div
+        className="pattern-analysis-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        <div 
-          className="modal-header" 
-          onMouseDown={handleMouseDown} 
-          style={{ 
-            cursor: 'move',
+        <div
+          className="modal-header"
+          style={{
             backgroundColor: modalConfig.color + '20',
             borderBottom: `2px solid ${modalConfig.color}`
           }}

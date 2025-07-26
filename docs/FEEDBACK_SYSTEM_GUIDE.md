@@ -35,22 +35,22 @@ const pattern: PatternSignal = {
 
 The feedback system requires three main components:
 
-1. **PatternAnalysisModal** - Main feedback form
+1. **DynamicPatternAnalysisModal** - Dynamic feedback form with pattern-specific controls
 2. **ConsentModal** - Privacy consent dialog
 3. **PatternContext** - State management
 
 ```tsx
-import { PatternAnalysisModal } from './components/Feedback/PatternAnalysisModal';
+import { DynamicPatternAnalysisModal } from './components/Feedback/DynamicPatternAnalysisModal';
 import { ConsentModal } from './components/privacy/ConsentModal';
 import { usePatternContext } from './contexts/PatternContext';
 
 function ChartView() {
   const { selectedPatternForFeedback, submitPatternFeedback } = usePatternContext();
-  
+
   return (
     <>
       <InfiniteZoomChart {...props} />
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={selectedPatternForFeedback}
         isOpen={!!selectedPatternForFeedback}
         onClose={() => setSelectedPatternForFeedback(null)}

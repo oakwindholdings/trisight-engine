@@ -15,10 +15,31 @@ export function emitPatternFeedSignal(
   symbol?: string,
   overrideEventType?: string
 ) {
+  // Use pattern's market timestamp if available, otherwise fall back to detection time
+  let patternTimestamp = Date.now(); // Default to current time
+
+  // Check for various timestamp fields that patterns might have
+  if (data?.startTime) {
+    // Pattern has startTime (most common case)
+    patternTimestamp = new Date(data.startTime).getTime();
+  } else if (data?.endTime) {
+    // Pattern has endTime but no startTime
+    patternTimestamp = new Date(data.endTime).getTime();
+  } else if (data?.timestamp) {
+    // Pattern has explicit timestamp field
+    patternTimestamp = new Date(data.timestamp).getTime();
+  } else if (data?.peakTime) {
+    // Rocketman pattern has peakTime
+    patternTimestamp = new Date(data.peakTime).getTime();
+  } else if (data?.datetime) {
+    // Pattern has datetime field (candle format)
+    patternTimestamp = new Date(data.datetime).getTime();
+  }
+
   const evt: PatternEvent = {
     type: rawType as any,
     data: { symbol, ...data },
-    timestamp: Date.now(),
+    timestamp: patternTimestamp,
   } as PatternEvent;
 
   // Build feed entry and persist

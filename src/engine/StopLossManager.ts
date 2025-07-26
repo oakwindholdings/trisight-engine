@@ -263,7 +263,12 @@ function emitStop(
   try {
     emitPatternFeedSignal(
       tracker.pattern?.toUpperCase() || 'STOPLOSS',
-      { stopLoss: signal.stopLoss, price: signal.price },
+      {
+        stopLoss: signal.stopLoss,
+        price: signal.price,
+        timestamp: signal.timestamp,
+        action: signal.action
+      },
       undefined,
       'STOP_EXIT'
     );

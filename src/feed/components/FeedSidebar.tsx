@@ -8,6 +8,7 @@ import { usePatternContext } from '../../contexts/PatternContext';
 import { PatternFeedEntry } from '../types/PatternFeedTypes';
 import { FeedFilterProvider, useFeedFilter } from '../contexts/FeedFilterContext';
 import { FilterBar } from './FilterBar';
+import { ReviewedIndicator } from './ReviewedIndicator';
 
 // Utility – pick interesting metadata keys for quick view
 function extractHighlights(meta: Record<string, any>): Array<[string, any]> {
@@ -197,20 +198,35 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
         
         // Try to zoom based on indices - delay slightly to ensure state updates
         setTimeout(() => {
+          // Debug: Log the full metadata to see what's available
+          console.log('[FeedCard] Full metadata for zoom debug:', entry.metadata);
+          console.log('[FeedCard] Checking indices:', {
+            startIndex: entry.metadata.startIndex,
+            endIndex: entry.metadata.endIndex,
+            startIndexType: typeof entry.metadata.startIndex,
+            endIndexType: typeof entry.metadata.endIndex,
+            hasStartIndex: entry.metadata.startIndex != null,
+            hasEndIndex: entry.metadata.endIndex != null
+          });
+
           if (entry.metadata.startIndex != null && entry.metadata.endIndex != null) {
-            console.log('[FeedCard] Dispatching zoom to indices:', { 
-              startIndex: entry.metadata.startIndex, 
-              endIndex: entry.metadata.endIndex 
+            console.log('[FeedCard] Dispatching zoom to indices:', {
+              startIndex: entry.metadata.startIndex,
+              endIndex: entry.metadata.endIndex
             });
             window.dispatchEvent(
-              new CustomEvent('trisight-zoom-to-indices', { 
-                detail: { 
+              new CustomEvent('trisight-zoom-to-indices', {
+                detail: {
                   startIndex: entry.metadata.startIndex,
                   endIndex: entry.metadata.endIndex
-                } 
+                }
               })
             );
           } else {
+            console.log('[FeedCard] ZOOM DEBUG - Full metadata:', entry.metadata);
+            console.log('[FeedCard] ZOOM DEBUG - Metadata keys:', Object.keys(entry.metadata || {}));
+            console.log('[FeedCard] ZOOM DEBUG - startIndex value:', entry.metadata?.startIndex);
+            console.log('[FeedCard] ZOOM DEBUG - endIndex value:', entry.metadata?.endIndex);
             console.log('[FeedCard] No indices available for zoom');
           }
         }, 50);
@@ -266,22 +282,33 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
         
         // Try to dispatch zoom event - delay to ensure state updates
         setTimeout(() => {
+          // Debug: Log the full metadata to see what's available
+          console.log('[FeedCard] Full metadata for non-escalator zoom debug:', entry.metadata);
+          console.log('[FeedCard] Checking indices for non-escalator:', {
+            startIndex: entry.metadata?.startIndex,
+            endIndex: entry.metadata?.endIndex,
+            startIndexType: typeof entry.metadata?.startIndex,
+            endIndexType: typeof entry.metadata?.endIndex,
+            hasStartIndex: entry.metadata?.startIndex != null,
+            hasEndIndex: entry.metadata?.endIndex != null
+          });
+
           // First priority: Use indices if available
           if (entry.metadata?.startIndex != null && entry.metadata?.endIndex != null) {
             // Zoom using indices if available
-            console.log('[FeedCard] Dispatching zoom to indices for non-escalator:', { 
-              startIndex: entry.metadata.startIndex, 
-              endIndex: entry.metadata.endIndex 
+            console.log('[FeedCard] Dispatching zoom to indices for non-escalator:', {
+              startIndex: entry.metadata.startIndex,
+              endIndex: entry.metadata.endIndex
             });
             window.dispatchEvent(
-              new CustomEvent('trisight-zoom-to-indices', { 
-                detail: { 
+              new CustomEvent('trisight-zoom-to-indices', {
+                detail: {
                   startIndex: entry.metadata.startIndex,
                   endIndex: entry.metadata.endIndex
-                } 
+                }
               })
             );
-          } 
+          }
           // Second priority: Use pattern ID and let chart figure it out from context or time boundaries
           else if (minimalPattern.id) {
             console.log('[FeedCard] Dispatching zoom to pattern with full pattern object:', {
@@ -332,6 +359,16 @@ const FeedCard: React.FC<FeedCardProps> = ({ entry }) => {
           ))}
         </ul>
       )}
+
+      {/* Reviewed Status Indicator */}
+      <div style={{ marginTop: 6 }}>
+        <ReviewedIndicator
+          reviewed={entry.reviewed}
+          reviewedBy={entry.reviewedBy}
+          reviewedAt={entry.reviewedAt}
+        />
+      </div>
+
       {/* AI-introspectable full JSON */}
       <details style={{ marginTop: 4 }}>
         <summary style={{ cursor: 'pointer', fontSize: 11, color: '#888' }}>raw</summary>

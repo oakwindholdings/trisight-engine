@@ -1,6 +1,6 @@
 // src/components/Feedback/PatternAnalysisModal.tsx
-// Modal for pattern analysis and feedback
-// Provides UI for pattern quality assessment
+// DEPRECATED: Use DynamicPatternAnalysisModal instead
+// This file is kept for backward compatibility only
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Pattern, PatternType } from '../../models/PatternTypes';
@@ -49,19 +49,24 @@ const invalidityReasonLabels: Record<InvalidityReason, string> = {
   [InvalidityReason.OTHER]: 'Other Reason'
 };
 
+/**
+ * @deprecated Use DynamicPatternAnalysisModal instead
+ * This component is kept for backward compatibility only
+ */
 export const PatternAnalysisModal: React.FC<PatternAnalysisModalProps> = ({
   pattern,
   isOpen,
   onClose,
   onSubmit
 }) => {
+  console.warn('[PatternAnalysisModal] DEPRECATED: Use DynamicPatternAnalysisModal instead');
   const { hasConsent, requestConsent } = usePrivacyConsent();
   const { setSelectedPattern } = usePatternContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   
-  // Draggable state
+  // Draggable state - Initialize to center the modal
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });

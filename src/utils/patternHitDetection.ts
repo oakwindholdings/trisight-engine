@@ -46,9 +46,14 @@ export function registerPatternHitBox(
   if (pattern.id && emittedPatternIds.has(pattern.id)) {
     // no-op
   } else {
-    emitPatternFeedSignal(pattern.type, { 
+    emitPatternFeedSignal(pattern.type, {
       id: pattern.id,
-      x, y, width, height 
+      startTime: pattern.startTime,
+      endTime: pattern.endTime,
+      confidence: pattern.confidence,
+      highPrice: pattern.highPrice,
+      lowPrice: pattern.lowPrice,
+      x, y, width, height
     }, symbol);
     if (pattern.id) emittedPatternIds.add(pattern.id);
   }

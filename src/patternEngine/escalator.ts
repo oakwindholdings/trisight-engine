@@ -158,8 +158,18 @@ export function evaluateEscalatorForEntry(escalatorRun: EscalatorRun): void {
       price: latestStep.level,
       timestamp: latestStep.endTime,
       reason: `Escalator confirmed (${direction === ThrustDirection.BULLISH ? 'BULLISH' : 'BEARISH'})`,
-      riskLevel: 'MEDIUM'
-    });
+      riskLevel: 'MEDIUM',
+      // Include escalator pattern indices for zoom functionality
+      candleIndex: latestStep.startIndex,
+      escalatorStepCount: steps.length,
+      // Add escalator run data as additional properties
+      startIndex: escalatorRun.startIndex,
+      endIndex: escalatorRun.endIndex,
+      direction: escalatorRun.direction,
+      steps: escalatorRun.steps,
+      averageStepHeight: escalatorRun.averageStepHeight,
+      consistency: escalatorRun.consistency
+    } as any);
 
     // Register stop loss for this entry position
     const positionId = `ESCALATOR_${latestStep.startIndex}_${direction}`;

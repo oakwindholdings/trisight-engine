@@ -51,6 +51,11 @@ export interface PatternFeedEntry {
   };
   mcpVersion: '0.1.0';
   userId?: string;
+
+  // Reviewed status fields
+  reviewed?: boolean;
+  reviewedBy?: string; // user ID of reviewer
+  reviewedAt?: string; // ISO 8601 string
 }
 
 // Time window options for filtering
@@ -99,13 +104,31 @@ export function usePatternEventMapper() {
 
     const confidence: number | undefined = (evt.data as any)?.confidence;
 
+    // Enhanced timestamp extraction - use pattern's market timestamp if available
+    let patternTimestamp = evt.timestamp || Date.now();
+
+    // Check for various timestamp fields that patterns might have in their data
+    if (evt.data) {
+      if (evt.data.startTime) {
+        patternTimestamp = new Date(evt.data.startTime).getTime();
+      } else if (evt.data.endTime) {
+        patternTimestamp = new Date(evt.data.endTime).getTime();
+      } else if (evt.data.timestamp) {
+        patternTimestamp = new Date(evt.data.timestamp).getTime();
+      } else if (evt.data.peakTime) {
+        patternTimestamp = new Date(evt.data.peakTime).getTime();
+      } else if (evt.data.datetime) {
+        patternTimestamp = new Date(evt.data.datetime).getTime();
+      }
+    }
+
     return {
       id: generateId(),
       symbol: baseSymbol.toUpperCase(),
       patternType: evt.type,
       eventType: mapEventType(evt.type),
       confidence: confidence ?? null,
-      timestamp: new Date(evt.timestamp || Date.now()).toISOString(),
+      timestamp: new Date(patternTimestamp).toISOString(),
       humanSummary: `${baseSymbol.toUpperCase()} triggered ${evt.type}`,
       metadata: evt.data as Record<string, unknown>,
       mcpVersion: '0.1.0'

@@ -118,8 +118,17 @@ export function detectRocketman(candles: Candle[]): RocketmanDetection[] {
 
   // Emit feed signals
   detections.forEach(det => {
-    emitPatternFeedSignal('ROCKETMAN', { confidence: det.confidence, accelerationRate: det.accelerationRate }, (candles[det.peakIndex] as any)?.symbol || 'UNKNOWN');
-    if (DEBUG_MODE) console.log('[DEBUG] ROCKETMAN detected for', (candles[det.peakIndex] as any)?.symbol);
+    const peakCandle = candles[det.peakIndex];
+    emitPatternFeedSignal('ROCKETMAN', {
+      confidence: det.confidence,
+      accelerationRate: det.accelerationRate,
+      peakTime: det.peakTime,
+      peakPrice: det.peakPrice,
+      direction: det.direction,
+      intensity: det.intensity,
+      momentumScore: det.momentumScore
+    }, (peakCandle as any)?.symbol || 'UNKNOWN');
+    if (DEBUG_MODE) console.log('[DEBUG] ROCKETMAN detected for', (peakCandle as any)?.symbol);
   });
 
   logDebug('DEBUG_PATTERN_DETECT', `[HA Rocketman] Converted ${detections.length} patterns to detections`);

@@ -7,6 +7,8 @@ import { Pattern, PatternType, GoldmineChannelPattern } from '../../models/Patte
 import { PatternFeedback, FeedbackAccuracy, TimingAssessment, InvalidityReason } from '../../models/FeedbackTypes';
 import { BoundaryAdjuster } from './BoundaryAdjuster';
 import { GoldmineChannelAdjuster } from './GoldmineChannelAdjuster';
+import { PatternTypeSelector } from './PatternTypeSelector';
+import { ConfidenceRating } from './ConfidenceRating';
 
 // Legacy types for backward compatibility
 type FalsePositiveReason = 'NOT_A_PATTERN' | 'WRONG_PATTERN_TYPE' | 'BOUNDARY_ISSUE' | 'OTHER';
@@ -40,13 +42,6 @@ interface BoundaryAdjusterProps {
   onChange: (start: Date | null, end: Date | null) => void;
 }
 
-// Import components using require and cast to React components with the appropriate prop types
-// Import the implementation files with their Impl suffix and rename to the expected component names
-// @ts-ignore - Ignore TypeScript module resolution errors
-const PatternTypeSelector = require('./PatternTypeSelector').default as React.FC<PatternTypeSelectorProps>;
-// @ts-ignore - Ignore TypeScript module resolution errors
-const ConfidenceRating = require('./ConfidenceRating').default as React.FC<ConfidenceRatingProps>;
-// @ts-ignore - Ignore TypeScript module resolution errors
 // Use the renamed component to avoid identifier conflicts
 const LocalBoundaryAdjuster = BoundaryAdjuster as React.FC<BoundaryAdjusterProps>;
 

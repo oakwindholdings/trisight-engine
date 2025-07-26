@@ -4,7 +4,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PatternAnalysisModal } from '../components/Feedback/PatternAnalysisModal';
+import { DynamicPatternAnalysisModal } from '../components/Feedback/DynamicPatternAnalysisModal';
 import { ConsentModal } from '../components/privacy/ConsentModal';
 import { usePrivacyConsent } from '../hooks/usePrivacyConsent';
 import { patternLearningEngine } from '../services/PatternLearningEngine';
@@ -41,7 +41,7 @@ const mockPattern: Pattern = {
   volumeChange: [15, 20, -5, 25]
 } as Pattern;
 
-describe('PatternAnalysisModal', () => {
+describe('DynamicPatternAnalysisModal', () => {
   const mockOnClose = jest.fn();
   const mockOnSubmit = jest.fn();
   const mockRequestConsent = jest.fn();
@@ -56,7 +56,7 @@ describe('PatternAnalysisModal', () => {
   
   it('renders correctly when open with pattern', () => {
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={true}
         onClose={mockOnClose}
@@ -71,7 +71,7 @@ describe('PatternAnalysisModal', () => {
   
   it('does not render when closed', () => {
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={false}
         onClose={mockOnClose}
@@ -84,7 +84,7 @@ describe('PatternAnalysisModal', () => {
   
   it('handles accuracy rating changes', () => {
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={true}
         onClose={mockOnClose}
@@ -100,7 +100,7 @@ describe('PatternAnalysisModal', () => {
   
   it('handles confidence level changes', () => {
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={true}
         onClose={mockOnClose}
@@ -116,7 +116,7 @@ describe('PatternAnalysisModal', () => {
   
   it('shows invalidity reason when pattern marked invalid', async () => {
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={true}
         onClose={mockOnClose}
@@ -138,7 +138,7 @@ describe('PatternAnalysisModal', () => {
     });
     
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={true}
         onClose={mockOnClose}
@@ -157,7 +157,7 @@ describe('PatternAnalysisModal', () => {
     mockOnSubmit.mockResolvedValue(undefined);
     
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={true}
         onClose={mockOnClose}
@@ -197,7 +197,7 @@ describe('PatternAnalysisModal', () => {
     mockOnSubmit.mockResolvedValue(undefined);
     
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPattern}
         isOpen={true}
         onClose={mockOnClose}

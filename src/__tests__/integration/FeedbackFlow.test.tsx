@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { PatternProvider } from '../../contexts/PatternContext';
 import { MarketDataProvider } from '../../contexts/MarketDataContext';
 import InfiniteZoomChart from '../../components/Chart/InfiniteZoomChart';
-import { PatternAnalysisModal } from '../../components/Feedback/PatternAnalysisModal';
+import { DynamicPatternAnalysisModal } from '../../components/Feedback/DynamicPatternAnalysisModal';
 import { ConsentModal } from '../../components/privacy/ConsentModal';
 import { patternLearningEngine } from '../../services/PatternLearningEngine';
 import { Pattern, PatternType } from '../../models/PatternTypes';
@@ -69,7 +69,7 @@ describe('Feedback Flow Integration', () => {
               width={800}
               height={600}
             />
-            <PatternAnalysisModal
+            <DynamicPatternAnalysisModal
               pattern={null}
               isOpen={false}
               onClose={() => {}}
@@ -132,7 +132,7 @@ describe('Feedback Flow Integration', () => {
       <MarketDataProvider>
         <PatternProvider>
           <div>
-            <PatternAnalysisModal
+            <DynamicPatternAnalysisModal
               pattern={mockPatternWithFeedback}
               isOpen={true}
               onClose={() => {}}
@@ -190,7 +190,7 @@ describe('Feedback Flow Integration', () => {
     render(
       <MarketDataProvider>
         <PatternProvider>
-          <PatternAnalysisModal
+          <DynamicPatternAnalysisModal
             pattern={mockPatternWithFeedback}
             isOpen={true}
             onClose={() => {}}
@@ -249,7 +249,7 @@ describe('Feedback Flow Integration', () => {
     const mockSubmit = jest.fn().mockRejectedValue(new Error('Validation failed'));
     
     render(
-      <PatternAnalysisModal
+      <DynamicPatternAnalysisModal
         pattern={mockPatternWithFeedback}
         isOpen={true}
         onClose={() => {}}

@@ -58,7 +58,17 @@
     },
     "userId": {
       "type": "string"
+    },
+    "reviewed": {
+      "type": "boolean"
+    },
+    "reviewedBy": {
+      "type": "string"
+    },
+    "reviewedAt": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "additionalProperties": true
-} 
+}

@@ -170,7 +170,15 @@ export function detectGoldenCandle(
 
     goldenCandles.push(goldenCandle);
 
-    emitPatternFeedSignal('GOLDEN_CANDLE', { confidence: confidence, direction }, (candles[i] as any)?.symbol || 'UNKNOWN');
+    emitPatternFeedSignal('GOLDEN_CANDLE', {
+      confidence: confidence,
+      direction,
+      timestamp: goldenCandle.timestamp,
+      candlePrice: goldenCandle.candlePrice,
+      goldenScore: goldenCandle.goldenScore,
+      intrinsicScore: goldenCandle.intrinsicScore,
+      cumulativeScore: goldenCandle.cumulativeScore
+    }, (candles[i] as any)?.symbol || 'UNKNOWN');
     if (DEBUG_MODE) console.log('[DEBUG] GOLDEN_CANDLE detected for', (candles[i] as any)?.symbol);
   }
 

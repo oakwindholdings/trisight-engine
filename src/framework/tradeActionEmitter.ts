@@ -96,9 +96,29 @@ export function emitTradeSignal(signal: TradeActionSignal): void {
 
   // Feed emission – TRADE_ENTRY
   try {
+    // Include all signal properties in feed metadata for pattern zoom functionality
+    const feedMetadata = {
+      confidence: signal.confidence,
+      price: signal.price,
+      timestamp: signal.timestamp,
+      action: signal.action,
+      signalType: signal.signalType,
+      // Include pattern-specific properties for zoom functionality
+      startIndex: (signal as any).startIndex,
+      endIndex: (signal as any).endIndex,
+      direction: (signal as any).direction,
+      steps: (signal as any).steps,
+      averageStepHeight: (signal as any).averageStepHeight,
+      consistency: (signal as any).consistency,
+      candleIndex: signal.candleIndex,
+      escalatorStepCount: (signal as any).escalatorStepCount,
+      riskLevel: signal.riskLevel,
+      reason: signal.reason
+    };
+
     emitPatternFeedSignal(
       (signal.pattern || 'UNKNOWN').toUpperCase(),
-      { confidence: signal.confidence, price: signal.price },
+      feedMetadata,
       undefined,
       'TRADE_ENTRY'
     );

@@ -3,11 +3,11 @@
 // Handles feedback submission and retrieval
 
 import { supabase } from './client';
-import { 
-  PatternFeedback, 
-  FeedbackAccuracy, 
-  TimingAssessment, 
-  InvalidityReason 
+import {
+  PatternFeedback,
+  FeedbackAccuracy,
+  TimingAssessment,
+  InvalidityReason
 } from '../../models/FeedbackTypes';
 import { PatternType } from '../../models/PatternTypes';
 import { logDebug } from '../debug';
@@ -161,6 +161,25 @@ export async function submitPatternFeedback(feedback: Partial<PatternFeedback>):
     }
     
     logDebug('feedback', '[PatternFeedbackService] Feedback submitted successfully');
+
+    // Mark pattern as reviewed when feedback is submitted
+    if (feedback.patternId && supabase) {
+      try {
+        const reviewedAt = new Date().toISOString();
+        await supabase
+          .from('pattern_feed')
+          .update({
+            reviewed: true,
+            reviewed_by: feedback.userId || null,
+            reviewed_at: reviewedAt
+          })
+          .eq('id', feedback.patternId);
+        logDebug('feedback', '[PatternFeedbackService] Pattern marked as reviewed');
+      } catch (reviewError) {
+        console.warn('[PatternFeedbackService] Failed to mark pattern as reviewed:', reviewError);
+        // Don't fail the feedback submission if review marking fails
+      }
+    }
 
     // Dispatch custom event for real-time metrics updates
     window.dispatchEvent(new CustomEvent('pattern-feedback-submitted', {

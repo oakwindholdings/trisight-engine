@@ -166,6 +166,7 @@ export interface BreakoutBoxPattern extends PatternBase {
   direction: 'RISING' | 'FALLING';
   floor: number;
   ceiling: number;
+  boxType?: string;
 }
 
 export type Pattern =
