@@ -3,14 +3,8 @@
 // Enables per-pattern settings
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { PatternDetectionPreferences, EscalatorDetectionOptions } from '../../utils/patternDetection/AdaptivePatternDetectionService';
-import BlackjackSettingsPanel from './BlackjackSettingsPanel';
-import EscalatorSettingsPanel from './EscalatorSettingsPanel';
-import PivotSettingsPanel from '../Settings/PivotSettingsPanel';
-import GoldmineChannelSettingsPanel from './GoldmineChannelSettingsPanel';
-import GoldmineShaftSettingsPanel from './GoldmineShaftSettingsPanel';
-import RocketmanSettingsPanel from './RocketmanSettingsPanel';
-import { ThrustDirection, PatternType, PivotType, ChannelDirection } from '../../models/PatternTypes';
+import { PatternDetectionPreferences } from '../../utils/patternDetection/AdaptivePatternDetectionService';
+import { ThrustDirection, ChannelDirection } from '../../models/PatternTypes';
 
 const Container = styled.div`
   display: flex;

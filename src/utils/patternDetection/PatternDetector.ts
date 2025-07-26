@@ -3,10 +3,10 @@
 // Identifies occurrences in price data
 import { CandlestickData } from '../../models/ChartTypes';
 import { Pattern, PatternType } from '../../models/PatternTypes';
-import { v4 as uuidv4 } from 'uuid';
+
 import { PatternDetectionFactory } from './core/PatternDetectionFactory';
 import { BasePatternDetector } from './core/BasePatternDetector';
-import { MarketContext } from './core/MarketContext';
+
 import { MarketStructureAnalyzer } from './core/MarketStructureAnalyzer';
 import RocketmanDetectorFactory from './RocketmanDetectorFactory';
 import { logDebug } from '../../utils/debug';

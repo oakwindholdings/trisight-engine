@@ -10,7 +10,7 @@ import { Candle } from '../types/pattern';
 import { PivotType } from '../models/PatternTypes';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
-import { TradeActionSignal, TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
+import { TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
 import { registerStopLoss } from '../engine/StopLossManager';
 import { canEmitSignal } from '../utils/patternDebounceManager';

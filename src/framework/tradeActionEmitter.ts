@@ -2,7 +2,7 @@
 // Centralized trade signal emission framework with unified TradeActionBus
 // Handles all pattern detector signal emission with debug logging and validation
 
-import { TradeActionSignal, TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
+import { TradeActionSignal } from '../utils/trading/TradeActionSignal';
 import { emitPatternFeedSignal } from './emitPatternFeedSignal';
 import { logDebug, isChannelEnabled } from '../utils/debug';
 import { TradeSignalValidator, SignalValidationResult } from '../utils/signalValidation/TradeSignalValidator';

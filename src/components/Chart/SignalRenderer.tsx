@@ -6,7 +6,7 @@
 // SUPPORTED BIAS TYPES: BIAS_LONG, BIAS_SHORT
 // BIAS signals modulate the opacity/color intensity of underlying trade signals
 
-import React from 'react';
+
 import { TradeActionSignal, TradeAction, SignalType } from '../../utils/trading/TradeActionSignal';
 import { CandlestickData } from '../../models/ChartTypes';
 import { TimeScaleType, PriceScaleType } from '../Chart/ChartComponents';

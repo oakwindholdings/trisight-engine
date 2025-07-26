@@ -2,9 +2,7 @@
 // Canvas-based renderer for TriSight Conviction Clouds
 // Renders score-weighted signal aggregations as dynamic label clouds
 
-import React from 'react';
 import { logConvictionCloudRender, measureRenderPerformance } from './RenderDiagnostics';
-import { CandlestickData } from '../../models/ChartTypes';
 import { emitPatternFeedSignal } from '../../framework/emitPatternFeedSignal';
 
 export interface ConvictionCloudItem {

@@ -8,11 +8,9 @@
 import { MIN_ESCALATOR_LENGTH, MAX_STEP_DURATION } from '../constants';
 import { Candle, EscalatorRun, StepBox } from '../types';
 import { ThrustDirection } from '../models/PatternTypes';
-import { debugLog, summaryLog, DEBUG_MODE, logDebug } from '../utils/debug';
+import { DEBUG_MODE, logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // Enforce HA-only detection
-import { 
-  TradeAction, 
-  SignalType, 
+import {
   TradeActionSignal,
   emitBuySignal,
   emitShortSignal,

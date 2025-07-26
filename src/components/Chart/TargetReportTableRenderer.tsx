@@ -4,7 +4,7 @@
 
 import { logTargetReportTableRender, measureRenderPerformance } from './RenderDiagnostics';
 
-import React from 'react';
+
 
 export interface TargetReportRow {
   symbol: string;

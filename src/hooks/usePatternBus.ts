@@ -7,29 +7,24 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Candle, EscalatorRun } from '../types';
-import { 
-  detectEscalators, 
+import {
+  detectEscalators,
   detectBreakoutBoxes,
-  detectGoldmine, 
   detectRocketman,
   getIntrinsicScore,
   computeRollingBlackjackScores,
   computeTargetBlackjackScore,
   detectStepContinuation, // Phase 4: Continuation Linking
   detectPivots, // Added import for detectPivots
-  detectGoldmineChannel, // Added import for detectGoldmineChannel
-  detectGoldenCandle, // Added import for detectGoldenCandle
-  detectGoldenCandleCandidates, // Added import for detectGoldenCandleCandidates forensics
-  detectGoldenNearMisses // Added import for detectGoldenNearMisses
+  detectGoldmineChannel // Added import for detectGoldmineChannel
 } from '../patternEngine';
 import type { GoldmineSignal } from '../patternEngine';
-import { computeEscalatorStop, StopLossEvent } from '../riskEngine/trailingStop';
+import { StopLossEvent } from '../riskEngine/trailingStop';
 import { usePatternContext } from '../contexts/PatternContext';
 import { logDebug, logDebugHAAlignmentMismatch } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform'; // HA transformation for pattern detection
 import { evaluateStopLoss, getActiveStopLosses } from '../engine/StopLossManager';
-import { patternEngineTracker, dataAnalysisLock, LifecycleInstrumentation, FIDELITY_MODE_SETTINGS } from '../utils/signalFidelityPatch';
-import { debounce } from 'lodash';
+import { patternEngineTracker, dataAnalysisLock, LifecycleInstrumentation } from '../utils/signalFidelityPatch';
 
 export interface Position {
   side: 'LONG' | 'SHORT';

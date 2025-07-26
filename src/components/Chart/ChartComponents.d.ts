@@ -3,7 +3,7 @@
 // Used for canvas renderers
 import { CandlestickData } from '../../models/ChartTypes';
 import { Pattern } from '../../models/PatternTypes';
-import React from 'react';
+
 
 // Common interfaces
 export interface ChartDimensions {

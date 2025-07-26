@@ -11,22 +11,21 @@ import { useInfiniteZoomController } from '../../hooks/useInfiniteZoomController
 import { usePanController, PanState } from '../../hooks/usePanController';
 import { renderChart } from './RenderOrchestrator';
 import ResolutionIndicator from './ResolutionIndicator';
-import { ResolutionConfig, getOptimalResolution } from '../../utils/dataResolution';
+import { ResolutionConfig } from '../../utils/dataResolution';
 import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import { createPriceScale } from '../../utils/scaling';
-import { ChartPatternLayer } from './ChartPatternLayer';
-import { PatternProvider, usePatternContext } from '../../contexts/PatternContext';
 import { useHoverMetrics } from '../../hooks/useHoverMetrics';
 import { HoverTooltipZones } from './HoverTooltipZones';
 import { UnifiedHoverProvider } from '../../contexts/UnifiedHoverContext';
 import { usePatternBus } from '../../hooks/usePatternBus';
+import { usePatternContext } from '../../contexts/PatternContext';
 import { Candle } from '../../types';
 import { logDebug } from '../../utils/debug';
 import { useHeikinAshiTransform } from '../../hooks/useHeikinAshiTransform';
 import { useChartSettings } from '../../contexts/ChartSettingsContext';
 import { getPatternAtPoint } from '../../utils/patternHitDetection';
 import './InfiniteZoomChart.css';
-import * as d3 from 'd3';
+
 
 // TradeActionSignal Integration
 import { TradeActionBus } from '../../utils/trading/TradeActionSignal';
@@ -34,8 +33,7 @@ import { getTradeActionSignals } from '../../framework/tradeActionEmitter';
 
 // ConvictionCloud & TargetReportTable Integration
 import { ConvictionCloudItem, defaultConvictionCloudSettings } from './ConvictionCloudRenderer';
-import { evaluateAllPatterns } from '../../utils/patternHydration';
-import { useLivePolling } from '../../hooks/useLivePolling';
+
 
 import ExportControls from './ExportControls';
 import DevHUD from './DevHUD';

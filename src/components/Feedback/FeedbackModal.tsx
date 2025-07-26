@@ -13,24 +13,6 @@ import { ConfidenceRating } from './ConfidenceRating';
 // Legacy types for backward compatibility
 type FalsePositiveReason = 'NOT_A_PATTERN' | 'WRONG_PATTERN_TYPE' | 'BOUNDARY_ISSUE' | 'OTHER';
 
-// Legacy feedback interface
-interface LegacyPatternFeedback extends Omit<PatternFeedback, 'patternType'> {
-  submittedAt: Date;
-  originalPatternType: PatternType;
-  correctedPatternType?: PatternType;
-  falsePositive?: boolean;
-  falsePositiveReason?: FalsePositiveReason;
-  boundaryAdjustment?: any;
-  channelAdjustment?: any;
-}
-
-// Define component props types inline to avoid import issues
-interface PatternTypeSelectorProps {
-  selectedType: PatternType;
-  originalType: PatternType;
-  onSelect: (type: PatternType) => void;
-}
-
 interface ConfidenceRatingProps {
   value: number;
   onChange: (value: number) => void;

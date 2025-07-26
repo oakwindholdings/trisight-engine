@@ -6,7 +6,7 @@
 // All pattern drawing uses Canvas 2D context methods (fillRect, strokeRect, etc.)
 // HA Infrastructure Alignment Patch v1.0.0: All overlay rendering now uses HA context arrays for consistency with detection logic
 
-import React from 'react';
+
 import { Pattern, PatternType, patternStyles } from '../../models/PatternTypes';
 import { adjustColorSaturation, adjustOpacityHex } from '../../utils/scaling';
 import { logDebugHAAlignmentMismatch } from '../../utils/debug';

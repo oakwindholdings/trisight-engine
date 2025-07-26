@@ -10,9 +10,9 @@ import { Candle } from '../types/pattern';
 import { logDebug } from '../utils/debug';
 import { convertToHeikinAshi } from '../utils/candleTransform';
 import AdaptiveRocketmanDetector from '../utils/patternDetection/AdaptiveRocketmanDetector';
-import { CandlestickData } from '../models/ChartTypes';
+
 import { RocketmanPattern } from '../models/PatternTypes';
-import { TradeActionSignal, TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
+import { TradeAction, SignalType, emitTradeBiasSignal } from '../utils/trading/TradeActionSignal';
 import { emitTradeSignal } from '../framework/tradeActionEmitter';
 import { emitPatternFeedSignal } from '../framework/emitPatternFeedSignal';
 import { registerStopLoss } from '../engine/StopLossManager';

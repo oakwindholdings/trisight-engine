@@ -8,13 +8,12 @@ import { DynamicPatternAnalysisModal } from '../components/Feedback/DynamicPatte
 import { ConsentModal } from '../components/privacy/ConsentModal';
 import { usePrivacyConsent } from '../hooks/usePrivacyConsent';
 import { patternLearningEngine } from '../services/PatternLearningEngine';
-import { 
-  PatternFeedback, 
-  FeedbackAccuracy, 
-  TimingAssessment,
-  InvalidityReason 
+import {
+  PatternFeedback,
+  FeedbackAccuracy,
+  TimingAssessment
 } from '../models/FeedbackTypes';
-import { Pattern, PatternType } from '../models/PatternTypes';
+import { Pattern } from '../models/PatternTypes';
 
 // Mock dependencies
 jest.mock('../utils/debug', () => ({

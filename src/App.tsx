@@ -2,12 +2,12 @@
 // Main application component
 // NOTE: supports DEBUG_UI channel
 // Composes TriSight interface
-import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import './App.css';
 import './styles/globals.css';
 import { logDebug } from './utils/debug';
-import { getApiKey } from './api/twelveDataApi';
+
 import { ChartProvider } from './contexts/ChartContext';
 // Removed react-datepicker - using HTML5 date input instead
 import mainGridStyles from './styles/MainGrid.module.css';
@@ -32,7 +32,7 @@ import ChartWorkspace from './components/Chart/ChartWorkspace';
 import ChartControlBar from './components/Chart/ChartControlBar';
 import PatternPanel from './components/Patterns/PatternPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
-import DebugSettingsPanel from './components/Settings/DebugSettingsPanel';
+
 import SettingsPanel from './components/Settings/SettingsPanel';
 import { TimeRangeOption } from './components/Chart/TimeRangeSelector';
 import { SupabaseTestPanel } from './components/SupabaseTestPanel';
@@ -48,8 +48,8 @@ import { isFeatureEnabled } from './utils/featureFlags';
 
 // Import types
 import { Pattern } from './models/PatternTypes';
-import { TradeActionBus, TradeAction, SignalType, TradeActionSignal } from './utils/trading/TradeActionSignal';
-import { StepBox } from './types/pattern';
+import { TradeActionBus } from './utils/trading/TradeActionSignal';
+
 import { evaluateAllPatterns } from './utils/patternHydration';
 
 // Import hooks
@@ -60,10 +60,7 @@ import { mockSymbolRankings } from './utils/mockData/symbolRankings';
 import { SymbolRanking } from './types/SymbolRanking';
 
 // Styled components
-const SymbolRankingContainer = styled.div`
-  margin-top: 16px;
-  width: 100%;
-`;
+
 
 // Constants for localStorage keys
 const STORAGE_KEY_DATE = 'trisight_selected_date';
@@ -294,7 +291,7 @@ const App: React.FC = () => {
 // Main App content component
 function AppContent() {
   // Initialize API key from localStorage
-  const { apiKey } = useTwelveDataApiKey();
+  useTwelveDataApiKey();
   
   const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay, timeframe, setTimeframe } = useMarketDataContext(); 
   const { 
@@ -597,7 +594,7 @@ function AppContent() {
   }
   
   // Viewport state for chart controls
-  const [viewportState, setViewportState] = useState({
+  const [viewportState] = useState({
     autoScaled: false,
     resetView: false
   });

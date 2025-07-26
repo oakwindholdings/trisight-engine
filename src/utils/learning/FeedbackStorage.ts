@@ -2,7 +2,7 @@
 // Stores feedback in localStorage
 // Also saves learning parameters
 // NOTE: TriSight uses Canvas, not SVG. Supports DEBUG_UI channel via logDebug.
-import { PatternFeedback, LegacyPatternFeedback } from '../../models/FeedbackTypes';
+import { PatternFeedback } from '../../models/FeedbackTypes';
 import { PatternType } from '../../models/PatternTypes';
 import { PatternDetectionParameters, PatternFeedbackHistory } from '../../models/LearningTypes';
 import { logDebug } from '../debug';

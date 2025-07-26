@@ -9,8 +9,7 @@ import {
   Candle, 
   StepBox
 } from '../types/pattern';
-import { 
-  getIntrinsicScore, 
+import {
   calcStepBlackjack
 } from './blackjack';
 import { 

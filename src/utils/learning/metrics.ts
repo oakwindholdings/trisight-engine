@@ -2,11 +2,11 @@
 // Metrics calculation utilities for learning system
 // Processes feedback to generate performance metrics
 
-import { PatternFeedback, LegacyPatternFeedback } from '../../models/FeedbackTypes';
+import { PatternFeedback } from '../../models/FeedbackTypes';
 import { PatternType } from '../../models/PatternTypes';
 import { LearningMetrics, PatternDetectionParameters } from '../../models/LearningTypes';
 import { LearningProcessor } from './LearningProcessor';
-import { FeedbackAggregator } from './FeedbackAggregator';
+
 
 
 export const calculateAverageConfidence = (

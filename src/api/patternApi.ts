@@ -1,7 +1,7 @@
 // src/api/patternApi.ts
 // Local storage API for pattern feedback
 // Simulates server calls
-import { PatternFeedback, LearningModelState, LegacyPatternFeedback } from '../models/FeedbackTypes';
+import { PatternFeedback, LearningModelState } from '../models/FeedbackTypes';
 import { LearningMetrics } from '../models/LearningTypes';
 import { PatternType } from '../models/PatternTypes';
 import { supabase } from '../utils/supabase/client';
