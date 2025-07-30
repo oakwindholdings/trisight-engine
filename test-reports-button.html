@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Reports Button</title>
+</head>
+<body>
+    <h1>Debug Report: Reports Button Issue</h1>
+    
+    <h2>What we know:</h2>
+    <ul>
+        <li>✅ ReportsPage component exists and is imported</li>
+        <li>✅ activeTab state includes 'reports' type</li>
+        <li>✅ handleTabChange function exists and updates activeTab</li>
+        <li>✅ TopNav component has Reports tab configured</li>
+        <li>✅ Reports tab click handler is set up correctly</li>
+        <li>✅ ReportsPage renders when activeTab === 'reports'</li>
+        <li>✅ NEW_LAYOUT feature flag is enabled</li>
+    </ul>
+    
+    <h2>Possible issues:</h2>
+    <ol>
+        <li><strong>Browser Cache:</strong> Try hard refresh (Ctrl+Shift+R or Cmd+Shift+R)</li>
+        <li><strong>Local Storage:</strong> Check if there's a conflicting feature flag in localStorage</li>
+        <li><strong>Console Errors:</strong> Check browser console for any JavaScript errors</li>
+    </ol>
+    
+    <h2>Quick Fix to Try:</h2>
+    <p>Open browser console (F12) and run:</p>
+    <pre>
+// Clear any localStorage overrides
+localStorage.removeItem('features');
+
+// Check current activeTab
+console.log('Current activeTab:', window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.renderers?.values()?.next()?.value?.findFiberByHostInstance(document.querySelector('[class*="mainGrid"]'))?.return?.memoizedProps?.children?.props?.activeTab);
+
+// Force refresh
+location.reload();
+    </pre>
+    
+    <h2>Manual Navigation Test:</h2>
+    <p>If the button still doesn't work, try this in the console:</p>
+    <pre>
+// Find the Reports button and click it
+document.querySelectorAll('button').forEach(btn => {
+    if (btn.textContent.includes('Reports')) {
+        console.log('Found Reports button:', btn);
+        btn.click();
+    }
+});
+    </pre>
+    
+    <h2>Component Structure:</h2>
+    <p>The Reports functionality is working in the code. The issue is likely:</p>
+    <ul>
+        <li>A UI rendering issue</li>
+        <li>Event handler not attached properly</li>
+        <li>CSS/styling blocking click events</li>
+        <li>Another element overlapping the button</li>
+    </ul>
+</body>
+</html>

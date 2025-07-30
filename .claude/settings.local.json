@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(npm test:*)",
+      "Bash(npm install:*)",
+      "Bash(set \"CI=\")",
+      "Bash(dir)",
+      "Bash(npm start)",
+      "Bash(dir srccomponentsReports)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate"
+    ],
+    "deny": []
+  }
+}

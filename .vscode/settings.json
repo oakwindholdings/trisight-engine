@@ -1,0 +1,9 @@
+"ai.customModel": {
+  "provider": "anthropic",
+  "apiKey": "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",
+  "model": "claude-opus-4-20250514",
+  "apiBaseUrl": "https://api.anthropic.com"
+}
+
+
+

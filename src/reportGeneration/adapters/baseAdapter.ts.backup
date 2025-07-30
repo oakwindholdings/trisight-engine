@@ -1,0 +1,208 @@
+// src/reportGeneration/adapters/baseAdapter.ts
+// Base class for all data source adapters
+// Context: Provides common functionality for error handling, caching, and rate limiting
+
+import { DataCache } from '../utils/dataCache';
+import { 
+  withRetry, 
+  wrapDataFetchError, 
+  RetryConfig, 
+  DEFAULT_RETRY_CONFIG 
+} from '../utils/errorHandler';
+import { logDebug, logError } from '../../utils/logger';
+
+/**
+ * Configuration for adapter behavior
+ * Each data source can customize these settings
+ */
+export interface AdapterConfig {
+  name: string;
+  cache?: DataCache;
+  retry?: RetryConfig;
+  rateLimitPerSecond?: number;
+  timeout?: number;
+  headers?: Record<string, string>;
+}
+
+/**
+ * Base adapter class that all data sources extend
+ * Provides consistent error handling, caching, and monitoring
+ */
+export abstract class BaseAdapter {
+  protected config: AdapterConfig;
+  protected cache: DataCache;
+  private requestCount = 0;
+  private lastRequestTime = 0;
+  
+  constructor(config: AdapterConfig) {
+    this.config = {
+      retry: DEFAULT_RETRY_CONFIG,
+      timeout: 30000, // 30 second default
+      ...config
+    };
+    
+    // Use provided cache or create adapter-specific one
+    this.cache = config.cache || new DataCache({
+      defaultTTLMs: 5 * 60 * 1000, // 5 minutes
+      maxSize: 500
+    });
+  }
+  
+  /**
+   * Makes an HTTP request with all our infrastructure
+   * This is the main method that subclasses will use
+   */
+  protected async fetchWithRetry<T>(
+    url: string,
+    options: RequestInit = {},
+    cacheKey?: string,
+    cacheTTLMs?: number
+  ): Promise<T> {
+    // Check cache first if key provided
+    if (cacheKey) {
+      const cached = this.cache.get<T>(cacheKey, cacheTTLMs);
+      if (cached !== null) {
+        logDebug(this.config.name, `Cache hit for: ${cacheKey}`);
+        return cached;
+      }
+    }
+    
+    // Apply rate limiting if configured
+    if (this.config.rateLimitPerSecond) {
+      await this.enforceRateLimit();
+    }
+    
+    // Make request with retry logic
+    const result = await withRetry(
+      async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          this.config.timeout!
+        );
+        
+        try {
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+            headers: {
+              ...this.config.headers,
+              ...options.headers
+            }
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          this.requestCount++;
+          
+          // Cache successful response
+          if (cacheKey) {
+            this.cache.set(cacheKey, data, cacheTTLMs);
+          }
+          
+          return data as T;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
+        }
+      },
+      this.config.retry,
+      (attempt, error, delayMs) => {
+        logDebug(
+          this.config.name,
+          `Retry attempt ${attempt} after ${delayMs}ms due to: ${error.message}`
+        );
+      }
+    );
+    
+    return result;
+  }
+  
+  /**
+   * Transforms raw API data to our internal format
+   * Subclasses should override this for their specific transformations
+   */
+  protected abstract transformData<TRaw, TTransformed>(
+    data: TRaw,
+    context?: any
+  ): TTransformed;
+  
+  /**
+   * Validates that required configuration is present
+   * Subclasses can override to add their own validation
+   */
+  protected validateConfig(): void {
+    // Base validation - subclasses can extend
+    if (!this.config.name) {
+      throw new Error('Adapter name is required');
+    }
+  }
+  
+  /**
+   * Gets adapter statistics for monitoring
+   */
+  public getStats() {
+    return {
+      name: this.config.name,
+      requestCount: this.requestCount,
+      cacheStats: this.cache.getStats(),
+      lastRequestTime: this.lastRequestTime
+    };
+  }
+  
+  /**
+   * Clears the adapter's cache
+   */
+  public clearCache(pattern?: string | RegExp): void {
+    if (pattern) {
+      this.cache.invalidate(pattern);
+    } else {
+      this.cache.clear();
+    }
+  }
+  
+  /**
+   * Enforces rate limiting between requests
+   */
+  private async enforceRateLimit(): Promise<void> {
+    if (!this.config.rateLimitPerSecond) return;
+    
+    const minInterval = 1000 / this.config.rateLimitPerSecond;
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    
+    if (timeSinceLastRequest < minInterval) {
+      const delay = minInterval - timeSinceLastRequest;
+      logDebug(this.config.name, `Rate limiting: waiting ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+    
+    this.lastRequestTime = Date.now();
+  }
+  
+  /**
+   * Handles errors consistently across all adapters
+   */
+  protected handleError(error: any, operation: string, ticker?: string): never {
+    const wrappedError = wrapDataFetchError(error, {
+      source: this.config.name,
+      operation,
+      ticker
+    });
+    
+    logError(this.config.name, wrappedError.message, error);
+    throw wrappedError;
+  }
+  
+  /**
+   * Creates a standardized cache key
+   */
+  protected createCacheKey(...parts: (string | number)[]): string {
+    return DataCache.createKey(this.config.name, ...parts);
+  }
+}

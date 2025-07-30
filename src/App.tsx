@@ -25,9 +25,11 @@ import { ConsentModal } from './components/privacy/ConsentModal';
 import { usePrivacyConsent } from './hooks/usePrivacyConsent';
 import { TargetReportTable } from './components/TargetReportTable'; // Dick's TriSight Target Report Table with actual formulas
 import TargetsPage from './pages/TargetsPage'; // Dedicated Targets page for independent mounting
+import ReportsPage from './pages/ReportsPage'; // World-class report generation command center
 
 // Import components
 import ContextBar from './components/Navigation/ContextBar';
+import { TopNav } from './components/Navigation/TopNav';
 import ChartWorkspace from './components/Chart/ChartWorkspace';
 import ChartControlBar from './components/Chart/ChartControlBar';
 import PatternPanel from './components/Patterns/PatternPanel';
@@ -308,7 +310,7 @@ function AppContent() {
   
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
-  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets' | 'reports'>('chart');
   
   // Debug render
   console.log('[App] Component rendering, selectedPatternForFeedback:', {
@@ -435,7 +437,7 @@ function AppContent() {
   }, [symbolRankings]);
   
   // Type-safe tab change handler
-  const handleTabChange = (tab: 'chart' | 'dashboard' | 'targets') => {
+  const handleTabChange = (tab: 'chart' | 'dashboard' | 'targets' | 'reports') => {
     setActiveTab(tab);
   };
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -783,7 +785,6 @@ function AppContent() {
 
   // UI state for panels and modals
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
-  const [showSupabaseTest, setShowSupabaseTest] = useState(false);
 
   // Refs
   const chartRef = useRef<InfiniteZoomChartRef>(null);
@@ -895,6 +896,7 @@ function AppContent() {
       {isFeatureEnabled('NEW_LAYOUT') ? (
         // New UI using wrapper components
         <>
+          <TopNav activeTab={activeTab} onTabChange={handleTabChange} />
           <div className={mainGridStyles.header}>
             <ContextBar
               selectedDate={selectedDate}
@@ -966,6 +968,8 @@ function AppContent() {
               </>
             ) : activeTab === 'targets' ? (
               <TargetsPage />
+            ) : activeTab === 'reports' ? (
+              <ReportsPage />
             ) : (
               <LearningDashboard />
             )}
@@ -1023,6 +1027,12 @@ function AppContent() {
               onClick={() => setActiveTab('targets')}
             >
               Targets Analysis
+            </Tab>
+            <Tab 
+              $active={activeTab === 'reports'} 
+              onClick={() => setActiveTab('reports')}
+            >
+              Reports
             </Tab>
           </TabBar>
           <ContentArea>
@@ -1101,6 +1111,9 @@ function AppContent() {
               )}
               {activeTab === 'targets' && (
                 <TargetsPage />
+              )}
+              {activeTab === 'reports' && (
+                <ReportsPage />
               )}
             </>
           </ContentArea>
@@ -1185,77 +1198,6 @@ function AppContent() {
           isOpen={showConsentModal}
           onClose={() => setShowConsentModal(false)}
         />
-        {/* Debug overlay to visualize click blocking */}
-        {process.env.NODE_ENV === 'development' && (
-          <>
-            <div 
-              id="debug-click-test" 
-              style={{
-                position: 'fixed',
-                bottom: 10,
-                right: 10,
-                padding: '10px',
-                background: 'rgba(255, 0, 0, 0.8)',
-                color: 'white',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                zIndex: 9999,
-                pointerEvents: 'auto',
-              }}
-              onClick={() => {
-                logDebug('DEBUG_UI', 'Debug button clicked successfully!');
-                // Removed unused import: debugClickBlocking
-                // Force clear any blocking state
-                setSelectedPattern(null);
-                setShowFeedbackModal(false);
-                // Also check for any CSS issues
-                const appDiv = document.querySelector('.App');
-                if (appDiv) {
-                  const computedStyle = window.getComputedStyle(appDiv);
-                  logDebug('DEBUG_UI', 'App div pointer-events:', computedStyle.pointerEvents);
-                }
-              }}
-            >
-              Debug Click Issues
-            </div>
-            
-            {/* Supabase Test Button */}
-            <div 
-              style={{
-                position: 'fixed',
-                bottom: 10,
-                right: 150,
-                padding: '10px',
-                background: '#10b981',
-                color: 'white',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                zIndex: 9999,
-                pointerEvents: 'auto',
-              }}
-              onClick={() => setShowSupabaseTest(!showSupabaseTest)}
-            >
-              {showSupabaseTest ? 'Hide' : 'Test'} Supabase
-            </div>
-            
-            {/* Supabase Test Panel */}
-            {showSupabaseTest && (
-              <div 
-                style={{
-                  position: 'fixed',
-                  bottom: 60,
-                  right: 10,
-                  width: '400px',
-                  maxHeight: '500px',
-                  overflow: 'auto',
-                  zIndex: 9999,
-                }}
-              >
-                <SupabaseTestPanel />
-              </div>
-            )}
-          </>
-        )}
         
         {/* Settings Panel */}
         <SettingsPanel 

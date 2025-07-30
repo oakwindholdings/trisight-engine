@@ -130,8 +130,8 @@ const SummaryLabel = styled.div`
 interface ContextBarProps {
   selectedDate: Date;
   onDateChange: (date: Date | null) => void;
-  activeTab: 'chart' | 'dashboard' | 'targets';
-  onTabChange: (tab: 'chart' | 'dashboard' | 'targets') => void;
+  activeTab: 'chart' | 'dashboard' | 'targets' | 'reports';
+  onTabChange: (tab: 'chart' | 'dashboard' | 'targets' | 'reports') => void;
   onSettingsToggle: () => void;
   onSymbolSelect?: (symbol: string, name?: string, exchange?: string) => void;
   onToggleRightPanel?: () => void;
