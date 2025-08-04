@@ -8,6 +8,7 @@ import '@testing-library/jest-dom';
 import InfiniteZoomChart from '../InfiniteZoomChart';
 import { CandlestickData } from '../../../models/ChartTypes';
 import { MarketDataContext } from '../../../contexts/MarketDataContext';
+import { ChartSettingsProvider } from '../../../contexts/ChartSettingsContext';
 
 // Mock the pattern bus hook
 jest.mock('../../../hooks/usePatternBus');
@@ -49,16 +50,18 @@ const mockMarketDataContext = {
 describe('InfiniteZoomChart Pattern Rendering', () => {
   it('renders pattern markers correctly', () => {
     const { container } = render(
-      <MarketDataContext.Provider value={mockMarketDataContext}>
-        <InfiniteZoomChart
-          symbol="TEST"
-          patterns={[]}
-          width={800}
-          height={600}
-          onPatternSelect={jest.fn()}
-          selectedPattern={null}
-        />
-      </MarketDataContext.Provider>
+      <ChartSettingsProvider>
+        <MarketDataContext.Provider value={mockMarketDataContext}>
+          <InfiniteZoomChart
+            symbol="TEST"
+            patterns={[]}
+            width={800}
+            height={600}
+            onPatternSelect={jest.fn()}
+            selectedPattern={null}
+          />
+        </MarketDataContext.Provider>
+      </ChartSettingsProvider>
     );
 
     // Verify basic structure is rendered

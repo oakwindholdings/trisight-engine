@@ -6,13 +6,17 @@ import { BaseAdapter } from '../core/baseAdapter';
 import { FirecrawlAdapter } from './firecrawlAdapter';
 import { RetryableError, ErrorCategory, wrapDataFetchError } from '../utils/errorHandler';
 import { NewsItem, NewsSentiment, NewsEvent } from '../models/reportTypes';
+import { logDebug } from '../../utils/logger';
+import axios from 'axios';
 
 /**
  * Configuration for News adapter
  */
 interface NewsAdapterConfig {
   firecrawlAdapter?: FirecrawlAdapter;
-  newsApiKey?: string; // For potential future integration with News API
+  newsApiKey?: string; // NewsAPI.org API key
+  alphaVantageApiKey?: string; // Alpha Vantage for news & sentiment
+  finnhubApiKey?: string; // Finnhub for financial news
   sentimentThreshold?: number;
   defaultTimeRange?: 'day' | 'week' | 'month' | 'quarter';
   includeUnverifiedSources?: boolean;
@@ -44,6 +48,14 @@ interface SentimentAggregation {
 export class NewsAdapter extends BaseAdapter {
   private firecrawl: FirecrawlAdapter;
   private sentimentThreshold: number;
+  private newsApiKey?: string;
+  private alphaVantageApiKey?: string;
+  private finnhubApiKey?: string;
+  
+  // API endpoints
+  private readonly NEWS_API_URL = 'https://newsapi.org/v2';
+  private readonly ALPHA_VANTAGE_URL = 'https://www.alphavantage.co/query';
+  private readonly FINNHUB_URL = 'https://finnhub.io/api/v1';
   
   // Define reputable financial news sources with credibility weights
   private readonly TRUSTED_SOURCES = [
@@ -74,11 +86,13 @@ export class NewsAdapter extends BaseAdapter {
     // Use provided Firecrawl adapter or create new one
     this.firecrawl = config.firecrawlAdapter || new FirecrawlAdapter({
       cache: config.cache,
-      debugMode: config.debugMode,
-      apiKey: process.env.FIRECRAWL_API_KEY || 'fc-79d2302cc006490fbde0e0373a4227fe'
+      debugMode: config.debugMode
     });
     
     this.sentimentThreshold = config.sentimentThreshold || 0.6;
+    this.newsApiKey = config.newsApiKey || process.env.REACT_APP_NEWS_API_KEY;
+    this.alphaVantageApiKey = config.alphaVantageApiKey || process.env.REACT_APP_ALPHA_VANTAGE_API_KEY;
+    this.finnhubApiKey = config.finnhubApiKey || process.env.REACT_APP_FINNHUB_API_KEY;
     
     // Create cached versions of methods
     this.getCompanyNews = this.createCachedMethod(
@@ -112,26 +126,64 @@ export class NewsAdapter extends BaseAdapter {
       // Get company name if not provided
       const name = companyName || await this.getCompanyName(ticker);
       
-      // Use Firecrawl to search and extract news
-      let newsItems = await this.firecrawl.getCompanyNews(name, ticker, limit * 1.5);
+      logDebug('NewsAdapter', `Fetching news for ${ticker} (${name})`);
+      
+      // Fetch from multiple sources in parallel
+      const newsPromises: Promise<NewsItem[]>[] = [];
+      
+      // 1. Finnhub Financial News (if API key available)
+      if (this.finnhubApiKey) {
+        newsPromises.push(this.fetchFinnhubNews(ticker));
+      }
+      
+      // 2. Alpha Vantage News & Sentiment (if API key available)
+      if (this.alphaVantageApiKey) {
+        newsPromises.push(this.fetchAlphaVantageNews(ticker));
+      }
+      
+      // 3. NewsAPI.org (if API key available)
+      if (this.newsApiKey) {
+        newsPromises.push(this.fetchNewsApiNews(name, ticker));
+      }
+      
+      // 4. Firecrawl as fallback or supplementary source
+      newsPromises.push(this.firecrawl.getCompanyNews(name, ticker, limit));
+      
+      // Await all sources
+      const allNewsArrays = await Promise.allSettled(newsPromises);
+      
+      // Combine results from successful sources
+      let newsItems: NewsItem[] = [];
+      allNewsArrays.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          logDebug('NewsAdapter', `Source ${index} returned ${result.value.length} items`);
+          newsItems = newsItems.concat(result.value);
+        } else {
+          logDebug('NewsAdapter', `Source ${index} failed: ${result.reason}`);
+        }
+      });
+      
+      // Deduplicate by URL
+      const uniqueItems = this.deduplicateNews(newsItems);
       
       // Enrich news items with additional analysis
-      newsItems = await this.enrichNewsItems(newsItems, ticker, options);
+      const enrichedItems = await this.enrichNewsItems(uniqueItems, ticker, options);
       
       // Sort by composite score (relevance, credibility, temporal, impact)
-      newsItems.sort((a, b) => {
+      enrichedItems.sort((a, b) => {
         const scoreA = this.calculateNewsScore(a);
         const scoreB = this.calculateNewsScore(b);
         return scoreB - scoreA;
       });
       
       // Filter by time range if specified
+      let filteredItems = enrichedItems;
       if (options.timeRange) {
-        newsItems = this.filterByTimeRange(newsItems, options.timeRange);
+        filteredItems = this.filterByTimeRange(enrichedItems, options.timeRange);
       }
       
       // Return top items
-      return newsItems.slice(0, limit);
+      return filteredItems.slice(0, limit);
       
     } catch (error) {
       throw wrapDataFetchError(error as Error, {
@@ -849,5 +901,185 @@ export class NewsAdapter extends BaseAdapter {
     return items.filter(item => 
       new Date(item.publishedDate).getTime() > cutoff
     );
+  }
+  
+  /**
+   * Fetches news from Finnhub financial news API
+   */
+  private async fetchFinnhubNews(ticker: string): Promise<NewsItem[]> {
+    try {
+      const toDate = new Date().toISOString().split('T')[0];
+      const fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      const response = await axios.get(`${this.FINNHUB_URL}/company-news`, {
+        params: {
+          symbol: ticker,
+          from: fromDate,
+          to: toDate,
+          token: this.finnhubApiKey
+        },
+        timeout: 10000
+      });
+      
+      if (!response.data || !Array.isArray(response.data)) {
+        return [];
+      }
+      
+      return response.data.map((article: any) => ({
+        id: `finnhub_${article.id}`,
+        title: article.headline,
+        summary: article.summary,
+        url: article.url,
+        source: article.source,
+        publishedDate: new Date(article.datetime * 1000).toISOString(),
+        sentiment: this.categorizeSentiment(article.sentiment),
+        relevanceScore: 0.8, // Finnhub is highly relevant
+        metadata: {
+          provider: 'finnhub',
+          category: article.category,
+          imageUrl: article.image,
+          relatedTickers: article.related ? article.related.split(',') : [ticker]
+        }
+      }));
+    } catch (error) {
+      logDebug('NewsAdapter', `Finnhub fetch failed: ${error.message}`);
+      return [];
+    }
+  }
+  
+  /**
+   * Fetches news from Alpha Vantage news & sentiment API
+   */
+  private async fetchAlphaVantageNews(ticker: string): Promise<NewsItem[]> {
+    try {
+      const response = await axios.get(this.ALPHA_VANTAGE_URL, {
+        params: {
+          function: 'NEWS_SENTIMENT',
+          tickers: ticker,
+          apikey: this.alphaVantageApiKey,
+          limit: 50
+        },
+        timeout: 10000
+      });
+      
+      if (!response.data?.feed || !Array.isArray(response.data.feed)) {
+        return [];
+      }
+      
+      return response.data.feed.map((article: any) => {
+        // Find ticker-specific sentiment
+        const tickerSentiment = article.ticker_sentiment?.find(
+          (ts: any) => ts.ticker === ticker
+        ) || {};
+        
+        return {
+          id: `av_${article.url.split('/').pop()}`,
+          title: article.title,
+          summary: article.summary,
+          url: article.url,
+          source: article.source || article.source_domain,
+          publishedDate: article.time_published,
+          sentiment: this.mapAlphaVantageSentiment(tickerSentiment.ticker_sentiment_label),
+          relevanceScore: parseFloat(tickerSentiment.relevance_score || '0.5'),
+          metadata: {
+            provider: 'alphavantage',
+            authors: article.authors,
+            topics: article.topics?.map((t: any) => t.topic),
+            overallSentimentScore: parseFloat(article.overall_sentiment_score || '0'),
+            tickerSentimentScore: parseFloat(tickerSentiment.ticker_sentiment_score || '0')
+          }
+        };
+      });
+    } catch (error) {
+      logDebug('NewsAdapter', `Alpha Vantage fetch failed: ${error.message}`);
+      return [];
+    }
+  }
+  
+  /**
+   * Fetches news from NewsAPI.org
+   */
+  private async fetchNewsApiNews(companyName: string, ticker: string): Promise<NewsItem[]> {
+    try {
+      const query = `"${companyName}" OR "${ticker}" stock market`;
+      
+      const response = await axios.get(`${this.NEWS_API_URL}/everything`, {
+        params: {
+          q: query,
+          sortBy: 'relevancy',
+          language: 'en',
+          pageSize: 50,
+          apiKey: this.newsApiKey
+        },
+        timeout: 10000
+      });
+      
+      if (!response.data?.articles || !Array.isArray(response.data.articles)) {
+        return [];
+      }
+      
+      return response.data.articles
+        .filter((article: any) => article.url && article.title)
+        .map((article: any) => ({
+          id: `newsapi_${article.url.split('/').pop()}`,
+          title: article.title,
+          summary: article.description || article.content?.substring(0, 200),
+          url: article.url,
+          source: article.source.name,
+          publishedDate: article.publishedAt,
+          sentiment: 'neutral', // NewsAPI doesn't provide sentiment
+          relevanceScore: 0.6, // Default relevance
+          metadata: {
+            provider: 'newsapi',
+            author: article.author,
+            imageUrl: article.urlToImage
+          }
+        }));
+    } catch (error) {
+      logDebug('NewsAdapter', `NewsAPI fetch failed: ${error.message}`);
+      return [];
+    }
+  }
+  
+  /**
+   * Deduplicates news items by URL
+   */
+  private deduplicateNews(items: NewsItem[]): NewsItem[] {
+    const seen = new Set<string>();
+    return items.filter(item => {
+      const normalizedUrl = item.url.toLowerCase().replace(/[?#].*$/, '');
+      if (seen.has(normalizedUrl)) {
+        return false;
+      }
+      seen.add(normalizedUrl);
+      return true;
+    });
+  }
+  
+  /**
+   * Maps Alpha Vantage sentiment labels to our format
+   */
+  private mapAlphaVantageSentiment(label?: string): 'positive' | 'neutral' | 'negative' {
+    if (!label) return 'neutral';
+    
+    const normalized = label.toLowerCase();
+    if (normalized.includes('bullish') || normalized.includes('positive')) {
+      return 'positive';
+    }
+    if (normalized.includes('bearish') || normalized.includes('negative')) {
+      return 'negative';
+    }
+    return 'neutral';
+  }
+  
+  /**
+   * Categorizes numeric sentiment scores
+   */
+  private categorizeSentiment(score?: number): 'positive' | 'neutral' | 'negative' {
+    if (score === undefined || score === null) return 'neutral';
+    
+    if (score > 0.2) return 'positive';
+    if (score < -0.2) return 'negative';
+    return 'neutral';
   }
 }

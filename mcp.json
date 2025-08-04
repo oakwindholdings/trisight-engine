@@ -1,0 +1,139 @@
+{
+  "name": "trisight-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for TriSight report generation and market analysis",
+  "main": "mcp-server.js",
+  "tools": [
+    {
+      "name": "generate_report",
+      "description": "Generate a financial report for a given ticker symbol",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "description": "Stock ticker symbol (e.g., AAPL, MSFT)"
+          },
+          "template": {
+            "type": "string",
+            "enum": ["technical-analysis", "fundamental-analysis", "market-overview", "earnings-analysis"],
+            "description": "Report template to use"
+          },
+          "title": {
+            "type": "string",
+            "description": "Report title"
+          },
+          "author": {
+            "type": "string",
+            "description": "Report author name",
+            "default": "TriSight AI"
+          },
+          "outputFormat": {
+            "type": "string",
+            "enum": ["pptx", "pdf", "html"],
+            "default": "pptx",
+            "description": "Output format for the report"
+          }
+        },
+        "required": ["ticker", "template", "title"]
+      }
+    },
+    {
+      "name": "list_reports",
+      "description": "List all generated reports",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of reports to return",
+            "default": 10
+          },
+          "ticker": {
+            "type": "string",
+            "description": "Filter by ticker symbol (optional)"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_market_data",
+      "description": "Fetch market data for a ticker symbol",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "description": "Stock ticker symbol"
+          },
+          "interval": {
+            "type": "string",
+            "enum": ["1min", "5min", "15min", "30min", "1h", "1day", "1week", "1month"],
+            "default": "1day",
+            "description": "Time interval for data points"
+          },
+          "outputSize": {
+            "type": "number",
+            "description": "Number of data points to return",
+            "default": 30
+          }
+        },
+        "required": ["ticker"]
+      }
+    },
+    {
+      "name": "analyze_pattern",
+      "description": "Analyze chart patterns for a ticker",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "description": "Stock ticker symbol"
+          },
+          "patterns": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["goldmine-channel", "goldmine-shaft", "pivot", "rocketman", "escalator", "blackjack"]
+            },
+            "description": "Specific patterns to look for (optional, defaults to all)"
+          },
+          "timeframe": {
+            "type": "string",
+            "enum": ["1day", "1week", "1month", "3months", "1year"],
+            "default": "1month",
+            "description": "Timeframe for pattern analysis"
+          }
+        },
+        "required": ["ticker"]
+      }
+    },
+    {
+      "name": "get_report_status",
+      "description": "Check the status of a report generation",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "description": "Report generation ID"
+          }
+        },
+        "required": ["reportId"]
+      }
+    }
+  ],
+  "configuration": {
+    "api_endpoint": {
+      "type": "string",
+      "description": "Base URL for the TriSight API",
+      "default": "https://trisight.vercel.app/api"
+    },
+    "api_key": {
+      "type": "string",
+      "description": "API key for authentication (if required)",
+      "required": false
+    }
+  }
+}

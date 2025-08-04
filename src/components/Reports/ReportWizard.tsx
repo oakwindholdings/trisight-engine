@@ -7,17 +7,22 @@ import styled from 'styled-components';
 import { 
   FileText, Settings, Database, BarChart3, 
   ChevronRight, ChevronLeft, Sparkles, AlertCircle,
-  TrendingUp, Shield, Clock, Target
+  TrendingUp, Shield, Clock, Target, Eye
 } from 'lucide-react';
 import { useAutomatedReportGeneration } from '../../hooks/useAutomatedReportGeneration';
+import { getStorageService } from '../../services/reportStorageService';
+import { reportApiService } from '../../services/reportApiService';
+import { logDebug, logError } from '../../utils/logger';
 
 const WizardContainer = styled.div`
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   background: #ffffff;
-  position: relative;
-  overflow: hidden;
 `;
 
 const ProgressBar = styled.div`
@@ -87,7 +92,7 @@ const ContentArea = styled.div`
   padding: 2rem;
   overflow-y: auto;
   min-height: 0;
-  flex-shrink: 1;
+  margin-top: 72px; /* Reserve space for ActionBar */
 `;
 
 const StepTitle = styled.h2`
@@ -380,17 +385,18 @@ const ToggleSwitch = styled.input.attrs({ type: 'checkbox' })`
 `;
 
 const ActionBar = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
-  flex-shrink: 0;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   min-height: 72px;
-  position: sticky;
-  bottom: 0;
   z-index: 10;
 `;
 
@@ -504,11 +510,13 @@ const templates = [
 interface ReportWizardProps {
   currentReport?: any;
   onReportChange?: (report: any) => void;
+  onViewReport?: (report: any) => void;
 }
 
 export const ReportWizard: React.FC<ReportWizardProps> = ({ 
   currentReport,
-  onReportChange 
+  onReportChange,
+  onViewReport
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [reportConfig, setReportConfig] = useState({
@@ -563,29 +571,143 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({
   };
 
   const handleGenerateReport = async () => {
+    logDebug('ReportWizard', 'Generate Report clicked with config:', reportConfig);
+    
     try {
-      await generateReport({
+      // Show loading state
+      setCurrentStep(-1); // Use -1 to indicate loading
+      
+      const config = {
         ticker: reportConfig.ticker,
         reportType: reportConfig.template,
         sections: Object.keys(reportConfig.sections)
           .filter(key => reportConfig.sections[key as keyof typeof reportConfig.sections])
           .map(key => key.replace(/([A-Z])/g, '-$1').toLowerCase()),
         timeframe: reportConfig.timeframe,
-        format: 'pdf'
-      });
+        format: 'pdf',
+        template: reportConfig.template,
+        title: reportConfig.title,
+        author: reportConfig.author,
+        dataSources: reportConfig.dataSources,
+        visualizations: reportConfig.visualizations,
+        outputFormat: 'pdf' as const
+      };
       
+      logDebug('ReportWizard', 'Calling reportApiService.generateReport with:', config);
+      
+      // Use the new API service for serverless compatibility
+      const result = await reportApiService.generateReport(config);
+      
+      logDebug('ReportWizard', 'Report generated successfully:', result);
+      
+      // The report is already saved on the server side by generateReport
+      // We just need to format it for the UI
+      const completeReport = {
+        id: result.generationId || result.reportId || `report-${Date.now()}`,
+        ticker: reportConfig.ticker,
+        title: reportConfig.title,
+        template: reportConfig.template,
+        author: reportConfig.author,
+        createdAt: new Date(),
+        status: 'completed',
+        outputFormat: result.downloadInfo?.format || result.format || 'pdf',
+        fileSize: result.fileSize || 0,
+        downloadUrl: result.downloadInfo?.filename || result.downloadUrl,
+        reportData: result,
+        slides: result.slides || [],
+        metadata: result.metadata || {},
+        companyData: result.companyData || {},
+        tags: [],
+        ...reportConfig
+      };
+      
+      // Update parent with the complete report
       if (onReportChange) {
-        onReportChange({
-          ...currentReport,
-          ...reportConfig
-        });
+        onReportChange(completeReport);
       }
+      
+      // Dispatch event to notify other components about the new report
+      window.dispatchEvent(new CustomEvent('reportGenerated', {
+        detail: { report: completeReport }
+      }));
+      
+      // Instead of just showing alert, transition to a success state
+      setCurrentStep(steps.length); // Move beyond last step to show completion
+      
     } catch (error) {
-      console.error('Failed to generate report:', error);
+      logError('ReportWizard', 'Failed to generate report:', error);
+      alert(`Report generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Reset to last step
+      setCurrentStep(steps.length - 1);
     }
   };
 
   const renderStepContent = () => {
+    // Loading state
+    if (currentStep === -1) {
+      return (
+        <>
+          <StepTitle>Generating Report...</StepTitle>
+          <StepDescription>
+            Please wait while we create your {reportConfig.template} report for {reportConfig.ticker}
+          </StepDescription>
+          
+          <AIRecommendation>
+            <AIIcon><Sparkles /></AIIcon>
+            <AIContent>
+              <AITitle>Processing</AITitle>
+              <AIText>
+                {status?.currentTask || 'Initializing report generation...'}
+              </AIText>
+            </AIContent>
+          </AIRecommendation>
+        </>
+      );
+    }
+    
+    // Completion state - show report summary
+    if (currentStep === steps.length) {
+      return (
+        <>
+          <StepTitle>Report Generated Successfully!</StepTitle>
+          <StepDescription>
+            Your {reportConfig.template} report for {reportConfig.ticker} has been created.
+          </StepDescription>
+          
+          <FormSection>
+            <h3>Report Summary</h3>
+            <ul>
+              <li>Total slides: {currentReport?.slides?.length || 0}</li>
+              <li>Generated: {currentReport?.completedAt ? new Date(currentReport.completedAt).toLocaleString() : 'Just now'}</li>
+              <li>Template: {reportConfig.template}</li>
+              <li>Ticker: {reportConfig.ticker}</li>
+            </ul>
+            
+            {currentReport?.slides && currentReport.slides.length > 0 && (
+              <>
+                <h4>Report Contents:</h4>
+                <ol>
+                  {currentReport.slides.map((slide: any, index: number) => (
+                    <li key={index}>{slide.title || `Slide ${index + 1}`}</li>
+                  ))}
+                </ol>
+              </>
+            )}
+          </FormSection>
+          
+          <AIRecommendation>
+            <AIIcon><Eye /></AIIcon>
+            <AIContent>
+              <AITitle>Next Steps</AITitle>
+              <AIText>
+                Your report is now available in the Reports tab. You can view, edit, or export it from there.
+              </AIText>
+            </AIContent>
+          </AIRecommendation>
+        </>
+      );
+    }
+    
     console.log('[ReportWizard] Rendering step:', steps[currentStep].id, 'Selected template:', reportConfig.template);
     switch (steps[currentStep].id) {
       case 'template':
@@ -949,25 +1071,69 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({
 
       <ActionBar>
         <StatusText>
-          {status?.currentStep || `Step ${currentStep + 1} of ${steps.length}`}
+          {currentStep === -1 
+            ? (status?.currentTask || 'Generating report...') 
+            : currentStep === steps.length
+            ? 'Report completed successfully'
+            : (status?.currentStep || `Step ${currentStep + 1} of ${steps.length}`)
+          }
         </StatusText>
         
         <ActionButtons>
-          {currentStep > 0 && (
-            <Button $variant="ghost" onClick={handleBack}>
-              <ChevronLeft />
-              Back
+          {currentStep === -1 ? (
+            <Button $variant="ghost" disabled>
+              Generating...
             </Button>
+          ) : currentStep === steps.length ? (
+            <>
+              <Button $variant="ghost" onClick={() => setCurrentStep(0)}>
+                Create New Report
+              </Button>
+              <Button 
+                $variant="primary" 
+                onClick={() => {
+                  if (onViewReport && currentReport) {
+                    // Ensure report has correct status for preview
+                    const reportForPreview = {
+                      ...currentReport,
+                      status: 'completed'
+                    };
+                    onViewReport(reportForPreview);
+                  } else {
+                    // Fallback: emit event to switch tabs
+                    const reportForPreview = {
+                      ...currentReport,
+                      status: 'completed'
+                    };
+                    window.dispatchEvent(new CustomEvent('viewReport', {
+                      detail: { report: reportForPreview }
+                    }));
+                  }
+                }}
+              >
+                <Eye />
+                View in Reports Tab
+              </Button>
+            </>
+          ) : (
+            <>
+              {currentStep > 0 && (
+                <Button $variant="ghost" onClick={handleBack}>
+                  <ChevronLeft />
+                  Back
+                </Button>
+              )}
+              
+              <Button
+                $variant="primary"
+                onClick={handleNext}
+                disabled={!isValid()}
+              >
+                {currentStep === steps.length - 1 ? 'Generate Report' : 'Next'}
+                <ChevronRight />
+              </Button>
+            </>
           )}
-          
-          <Button
-            $variant="primary"
-            onClick={handleNext}
-            disabled={!isValid()}
-          >
-            {currentStep === steps.length - 1 ? 'Generate Report' : 'Next'}
-            <ChevronRight />
-          </Button>
         </ActionButtons>
       </ActionBar>
     </WizardContainer>

@@ -4,7 +4,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
-import GridLayout, { Layout, Layouts } from 'react-grid-layout';
+import GridLayout, { Responsive as ResponsiveGridLayout, Layout, Layouts } from 'react-grid-layout';
 import { 
   FileText, 
   Plus, 
@@ -38,6 +38,7 @@ const PageContainer = styled.div`
   background: #f9fafb;
   display: flex;
   flex-direction: column;
+  margin-left: 180px; // Account for pattern feed sidebar
 `;
 
 const PageHeader = styled.div`
@@ -173,6 +174,8 @@ const Widget = styled.div<{ $maximized?: boolean }>`
     bottom: 0;
     z-index: 1000;
     border-radius: 0;
+    background: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   `}
 `;
 
@@ -229,6 +232,8 @@ const WidgetContent = styled.div<{ $widgetId?: string }>`
   flex: 1;
   overflow: ${props => props.$widgetId === 'wizard' ? 'hidden' : 'auto'};
   position: relative;
+  display: flex;
+  flex-direction: column;
 `;
 
 const EmptyState = styled.div`
@@ -331,17 +336,23 @@ const widgetConfigs: Record<WidgetType, WidgetConfig> = {
 };
 
 // Default layout configuration
+const getDefaultLayout = (): Layout[] => [
+  { i: 'wizard', x: 0, y: 0, w: 6, h: 8, minW: 4, minH: 6, static: false },
+  { i: 'templates', x: 6, y: 0, w: 3, h: 4, minW: 2, minH: 3, static: false },
+  { i: 'dataSources', x: 9, y: 0, w: 3, h: 4, minW: 2, minH: 3, static: false },
+  { i: 'preview', x: 0, y: 8, w: 6, h: 6, minW: 4, minH: 4, static: false },
+  { i: 'history', x: 6, y: 4, w: 3, h: 6, minW: 2, minH: 4, static: false },
+  { i: 'metrics', x: 9, y: 4, w: 3, h: 3, minW: 2, minH: 2, static: false },
+  { i: 'export', x: 6, y: 10, w: 3, h: 4, minW: 2, minH: 3, static: false },
+  { i: 'insights', x: 9, y: 7, w: 3, h: 7, minW: 2, minH: 4, static: false }
+];
+
 const defaultLayouts: Layouts = {
-  lg: [
-    { i: 'wizard', x: 0, y: 0, w: 6, h: 8 },
-    { i: 'templates', x: 6, y: 0, w: 3, h: 8 },
-    { i: 'dataSources', x: 9, y: 0, w: 3, h: 8 },
-    { i: 'preview', x: 0, y: 8, w: 6, h: 10 },
-    { i: 'history', x: 6, y: 8, w: 3, h: 6 },
-    { i: 'metrics', x: 9, y: 8, w: 3, h: 4 },
-    { i: 'export', x: 6, y: 14, w: 3, h: 6 },
-    { i: 'insights', x: 9, y: 12, w: 3, h: 8 }
-  ]
+  lg: getDefaultLayout(),
+  md: getDefaultLayout(),
+  sm: getDefaultLayout(),
+  xs: getDefaultLayout(),
+  xxs: getDefaultLayout()
 };
 
 const ReportsPage: React.FC = () => {
@@ -352,6 +363,7 @@ const ReportsPage: React.FC = () => {
   const [maximizedWidget, setMaximizedWidget] = useState<WidgetType | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentReport, setCurrentReport] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
   
   // Load saved layout from localStorage
   useEffect(() => {
@@ -368,6 +380,9 @@ const ReportsPage: React.FC = () => {
       // Clear corrupted data
       localStorage.removeItem('trisight-reports-layout');
     }
+    console.log('[ReportsPage] Initial layouts:', layouts);
+    console.log('[ReportsPage] Active widgets:', Array.from(activeWidgets));
+    setMounted(true);
   }, []);
   
   // Handle layout changes
@@ -402,7 +417,14 @@ const ReportsPage: React.FC = () => {
   
   // Reset layout to default
   const resetLayout = useCallback(() => {
-    setLayouts(defaultLayouts);
+    const newLayouts = {
+      lg: getDefaultLayout(),
+      md: getDefaultLayout(),
+      sm: getDefaultLayout(),
+      xs: getDefaultLayout(),
+      xxs: getDefaultLayout()
+    };
+    setLayouts(newLayouts);
     setActiveWidgets(new Set(Object.keys(widgetConfigs) as WidgetType[]));
     localStorage.removeItem('trisight-reports-layout');
   }, []);
@@ -421,15 +443,52 @@ const ReportsPage: React.FC = () => {
     setMaximizedWidget('wizard');
   }, []);
   
+  // View report handler
+  const handleViewReport = useCallback((report: any) => {
+    console.log('[ReportsPage] Viewing report:', report);
+    
+    // Update current report
+    setCurrentReport(report);
+    
+    // Show preview widget and maximize it
+    setActiveWidgets(prev => new Set([...prev, 'preview']));
+    setMaximizedWidget('preview');
+    
+    // Close wizard if it was open
+    if (maximizedWidget === 'wizard') {
+      setMaximizedWidget('preview');
+    }
+  }, [maximizedWidget]);
+  
+  // Listen for report view events
+  useEffect(() => {
+    const handleViewReportEvent = (event: CustomEvent) => {
+      const { report } = event.detail;
+      handleViewReport(report);
+    };
+    
+    window.addEventListener('viewReport', handleViewReportEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('viewReport', handleViewReportEvent as EventListener);
+    };
+  }, [handleViewReport]);
+  
   // Render widget content
-  const renderWidget = (widgetId: WidgetType) => {
+  const renderWidget = (widgetId: WidgetType, forMaximized: boolean = false) => {
     const config = widgetConfigs[widgetId];
     const Component = config.component;
     const Icon = config.icon;
     const isMaximized = maximizedWidget === widgetId;
     
-    return (
-      <Widget key={widgetId} $maximized={isMaximized}>
+    // Only render if it matches the forMaximized state
+    if (forMaximized !== isMaximized) {
+      return forMaximized ? null : null;
+    }
+    
+    // For grid items, add key directly to Widget component
+    const widget = (
+      <Widget key={!forMaximized ? widgetId : undefined} $maximized={isMaximized}>
         <WidgetHeader>
           <WidgetTitle>
             <Icon />
@@ -439,7 +498,7 @@ const ReportsPage: React.FC = () => {
             <WidgetButton onClick={() => toggleMaximize(widgetId)}>
               {isMaximized ? <Minimize2 /> : <Maximize2 />}
             </WidgetButton>
-            {isEditMode && (
+            {isEditMode && !isMaximized && (
               <WidgetButton onClick={() => toggleWidget(widgetId)}>
                 <X />
               </WidgetButton>
@@ -450,10 +509,13 @@ const ReportsPage: React.FC = () => {
           <Component 
             currentReport={currentReport}
             onReportChange={setCurrentReport}
+            onViewReport={widgetId === 'wizard' ? handleViewReport : undefined}
           />
         </WidgetContent>
       </Widget>
     );
+    
+    return widget;
   };
   
   return (
@@ -494,23 +556,59 @@ const ReportsPage: React.FC = () => {
       </PageHeader>
       
       <GridContainer>
-        <GridLayout
-          className="layout"
-          layouts={layouts}
-          onLayoutChange={handleLayoutChange}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-          rowHeight={30}
-          isDraggable={isEditMode}
-          isResizable={isEditMode}
-          margin={[16, 16]}
-          containerPadding={[0, 0]}
-        >
-          {Array.from(activeWidgets).map(widgetId => (
-            <div key={widgetId}>
-              {renderWidget(widgetId)}
-            </div>
-          ))}
-        </GridLayout>
+        {mounted && (
+          <GridLayout
+            className="layout"
+            layout={layouts.lg}
+            cols={12}
+            rowHeight={60}
+            width={1200}
+            isDraggable={isEditMode}
+            isResizable={isEditMode}
+            margin={[16, 16]}
+            containerPadding={[0, 0]}
+            compactType="vertical"
+            useCSSTransforms={true}
+            onLayoutChange={(layout) => handleLayoutChange(layout, layouts)}
+          >
+            {Array.from(activeWidgets).map(widgetId => {
+              const config = widgetConfigs[widgetId];
+              const Component = config.component;
+              const Icon = config.icon;
+              
+              return (
+                <Widget key={widgetId}>
+                  <WidgetHeader>
+                    <WidgetTitle>
+                      <Icon />
+                      {config.title}
+                    </WidgetTitle>
+                    <WidgetActions>
+                      <WidgetButton onClick={() => toggleMaximize(widgetId)}>
+                        <Maximize2 />
+                      </WidgetButton>
+                      {isEditMode && (
+                        <WidgetButton onClick={() => toggleWidget(widgetId)}>
+                          <X />
+                        </WidgetButton>
+                      )}
+                    </WidgetActions>
+                  </WidgetHeader>
+                  <WidgetContent $widgetId={widgetId}>
+                    <Component 
+                      currentReport={currentReport}
+                      onReportChange={setCurrentReport}
+                      onViewReport={widgetId === 'wizard' ? handleViewReport : undefined}
+                    />
+                  </WidgetContent>
+                </Widget>
+              );
+            })}
+          </GridLayout>
+        )}
+        
+        {/* Render maximized widget outside of grid */}
+        {maximizedWidget && renderWidget(maximizedWidget, true)}
       </GridContainer>
     </PageContainer>
   );

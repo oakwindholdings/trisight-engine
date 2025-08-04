@@ -10,6 +10,7 @@ export * from './models/financialMetrics';
 export { DataFetcher } from './core/dataFetcher';
 export { DataProcessor } from './core/dataProcessor';
 export { ReportAssembler } from './core/reportAssembler';
+export { generateComprehensiveSlides } from './core/comprehensiveSlideGenerator';
 export { AISummarizer } from './utils/aiSummarizer';
 export { ChartGenerator } from './utils/chartGenerator';
 export * from './utils/errorHandler';

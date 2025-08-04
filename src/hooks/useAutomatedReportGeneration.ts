@@ -3,30 +3,34 @@
 // Context: Connects report generation to React components
 
 import { useState, useCallback } from 'react';
-import { ReportConfig, ProcessingStatus, GeneratedReport } from '../reportGeneration/models/reportTypes';
-import { createReportGenerator } from '../reportGeneration';
+import { ReportConfig, ProcessingStatus, GeneratedReport } from '../types/reportTypes';
+import { reportApiService } from '../services/reportApiService';
 
 export function useAutomatedReportGeneration() {
   const [status, setStatus] = useState<ProcessingStatus | null>(null);
   const [report, setReport] = useState<GeneratedReport | null>(null);
-  const [generator, setGenerator] = useState<any>(null);
 
-  const generateReport = useCallback(async (config: ReportConfig) => {
+  const generateReport = useCallback(async (config: ReportConfig | any) => {
     try {
-      const gen = createReportGenerator(config);
-      setGenerator(gen);
+      // Use config as-is, mapping will be done server-side
+      let reportConfig = config;
       
-      // Listen for status updates
-      const handleStatus = (event: any) => {
-        setStatus(event.detail);
-      };
+      // Ensure output format is set
+      reportConfig.outputFormat = config.format || config.outputFormat || 'pdf';
       
-      window.addEventListener('reportGenerationStatus', handleStatus);
+      // Update status
+      setStatus({
+        stage: 'processing',
+        progress: 0,
+        currentTask: 'Generating report...',
+        errors: [],
+        startTime: Date.now()
+      });
       
-      const generatedReport = await gen.generateReport();
+      // Use the report API service which handles serverless vs local
+      const generatedReport = await reportApiService.generateReport(reportConfig);
+      
       setReport(generatedReport);
-      
-      window.removeEventListener('reportGenerationStatus', handleStatus);
       
       return generatedReport;
     } catch (error) {
@@ -35,11 +39,20 @@ export function useAutomatedReportGeneration() {
     }
   }, []);
 
-  const cancelGeneration = useCallback(() => {
-    if (generator) {
-      generator.cancel();
+  const cancelGeneration = useCallback(async () => {
+    if (status?.stage === 'processing') {
+      try {
+        await reportApiService.cancelReport(report?.id || '');
+        setStatus({
+          ...status,
+          stage: 'error',
+          currentTask: 'Report generation cancelled'
+        });
+      } catch (error) {
+        console.error('Failed to cancel report generation:', error);
+      }
     }
-  }, [generator]);
+  }, [status]);
 
   return {
     generateReport,

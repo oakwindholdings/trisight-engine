@@ -2,9 +2,11 @@
 // Data source management widget
 // Context: Shows connected data sources and their status
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Database, Check, X, RefreshCw, AlertCircle } from 'lucide-react';
+import { checkMarketStatus } from '../../api/twelveDataApi';
+import { logDebug } from '../../utils/logger';
 
 const Container = styled.div`
   padding: 1rem;
@@ -141,54 +143,181 @@ interface DataSource {
   coverage?: string;
 }
 
-const dataSources: DataSource[] = [
-  {
-    id: 'twelvedata',
-    name: 'TwelveData API',
-    status: 'connected',
-    lastSync: '2 min ago',
-    dataPoints: 142300,
-    latency: 45,
-    coverage: 'Real-time'
-  },
-  {
-    id: 'financials',
-    name: 'Financial Statements',
-    status: 'connected',
-    lastSync: '1 hour ago',
-    dataPoints: 8432,
-    coverage: 'Quarterly'
-  },
-  {
-    id: 'patterns',
-    name: 'Pattern Detection',
-    status: 'syncing',
-    lastSync: 'Syncing...',
-    dataPoints: 1247
-  },
-  {
-    id: 'sentiment',
-    name: 'News Sentiment',
-    status: 'disconnected',
-    lastSync: 'Not connected'
-  },
-  {
-    id: 'analyst',
-    name: 'Analyst Ratings',
-    status: 'error',
-    lastSync: 'Error',
-    dataPoints: 0
-  }
-];
-
 interface DataSourceManagerProps {
   currentReport?: any;
   onReportChange?: (report: any) => void;
 }
 
 export const DataSourceManager: React.FC<DataSourceManagerProps> = () => {
-  const handleRefresh = (sourceId: string) => {
-    console.log('Refreshing source:', sourceId);
+  const [dataSources, setDataSources] = useState<DataSource[]>([
+    {
+      id: 'twelvedata',
+      name: 'TwelveData API',
+      status: 'disconnected',
+      lastSync: 'Checking...',
+      dataPoints: 0,
+      latency: 0,
+      coverage: 'Real-time'
+    },
+    {
+      id: 'financials',
+      name: 'Financial Statements',
+      status: 'disconnected',
+      lastSync: 'Not synced',
+      dataPoints: 0,
+      coverage: 'Quarterly'
+    },
+    {
+      id: 'patterns',
+      name: 'Pattern Detection',
+      status: 'disconnected',
+      lastSync: 'Not synced',
+      dataPoints: 0
+    },
+    {
+      id: 'news',
+      name: 'News & Sentiment',
+      status: 'disconnected',
+      lastSync: 'Not connected'
+    },
+    {
+      id: 'ai',
+      name: 'AI Analysis',
+      status: 'disconnected',
+      lastSync: 'Not connected',
+      dataPoints: 0
+    }
+  ]);
+  
+  const [refreshing, setRefreshing] = useState<Set<string>>(new Set());
+  
+  useEffect(() => {
+    checkDataSources();
+    const interval = setInterval(checkDataSources, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+  
+  const checkDataSources = async () => {
+    const newSources = [...dataSources];
+    
+    // Check TwelveData API
+    try {
+      const apiKey = localStorage.getItem('twelvedata_api_key') || process.env.REACT_APP_TWELVE_DATA_API_KEY;
+      if (apiKey) {
+        const startTime = Date.now();
+        const marketStatus = await checkMarketStatus();
+        const latency = Date.now() - startTime;
+        
+        const twelveDataSource = newSources.find(s => s.id === 'twelvedata');
+        if (twelveDataSource) {
+          twelveDataSource.status = 'connected';
+          twelveDataSource.lastSync = 'Just now';
+          twelveDataSource.latency = latency;
+          // Get cached data count
+          const cachedData = JSON.parse(localStorage.getItem('trisight_market_data_cache') || '{}');
+          twelveDataSource.dataPoints = Object.keys(cachedData).length;
+        }
+      } else {
+        const twelveDataSource = newSources.find(s => s.id === 'twelvedata');
+        if (twelveDataSource) {
+          twelveDataSource.status = 'disconnected';
+          twelveDataSource.lastSync = 'API key required';
+        }
+      }
+    } catch (error) {
+      const twelveDataSource = newSources.find(s => s.id === 'twelvedata');
+      if (twelveDataSource) {
+        twelveDataSource.status = 'error';
+        twelveDataSource.lastSync = 'Connection failed';
+      }
+    }
+    
+    // Check Financial Statements (from report storage)
+    try {
+      const reports = JSON.parse(localStorage.getItem('trisight_reports') || '[]');
+      const financialReports = reports.filter((r: any) => r.companyData?.financials);
+      const financialsSource = newSources.find(s => s.id === 'financials');
+      if (financialsSource) {
+        if (financialReports.length > 0) {
+          financialsSource.status = 'connected';
+          const lastReport = financialReports[financialReports.length - 1];
+          const lastUpdate = new Date(lastReport.createdAt);
+          const minutesAgo = Math.floor((Date.now() - lastUpdate.getTime()) / 60000);
+          financialsSource.lastSync = minutesAgo < 60 ? `${minutesAgo} min ago` : `${Math.floor(minutesAgo / 60)} hours ago`;
+          financialsSource.dataPoints = financialReports.length;
+        } else {
+          financialsSource.status = 'disconnected';
+          financialsSource.lastSync = 'No data';
+        }
+      }
+    } catch (error) {
+      logDebug('DataSourceManager', 'Error checking financial data:', error);
+    }
+    
+    // Check Pattern Detection
+    try {
+      const patterns = JSON.parse(localStorage.getItem('trisight_patterns') || '[]');
+      const patternSource = newSources.find(s => s.id === 'patterns');
+      if (patternSource) {
+        if (patterns.length > 0) {
+          patternSource.status = 'connected';
+          patternSource.dataPoints = patterns.length;
+          patternSource.lastSync = 'Active';
+        } else {
+          patternSource.status = 'disconnected';
+          patternSource.lastSync = 'No patterns';
+        }
+      }
+    } catch (error) {
+      logDebug('DataSourceManager', 'Error checking pattern data:', error);
+    }
+    
+    // Check News (from Anthropic API)
+    const newsSource = newSources.find(s => s.id === 'news');
+    if (newsSource) {
+      const anthropicKey = process.env.REACT_APP_ANTHROPIC_API_KEY;
+      if (anthropicKey) {
+        newsSource.status = 'connected';
+        newsSource.lastSync = 'Available';
+      } else {
+        newsSource.status = 'disconnected';
+        newsSource.lastSync = 'API key required';
+      }
+    }
+    
+    // Check AI Analysis
+    const aiSource = newSources.find(s => s.id === 'ai');
+    if (aiSource) {
+      const anthropicKey = process.env.REACT_APP_ANTHROPIC_API_KEY;
+      if (anthropicKey) {
+        aiSource.status = 'connected';
+        aiSource.lastSync = 'Ready';
+      } else {
+        aiSource.status = 'disconnected';
+        aiSource.lastSync = 'API key required';
+      }
+    }
+    
+    setDataSources(newSources);
+  };
+  
+  const handleRefresh = async (sourceId: string) => {
+    setRefreshing(prev => new Set([...prev, sourceId]));
+    
+    // Update the source to syncing status
+    setDataSources(prev => prev.map(source => 
+      source.id === sourceId ? { ...source, status: 'syncing', lastSync: 'Syncing...' } : source
+    ));
+    
+    // Simulate refresh with actual check
+    setTimeout(async () => {
+      await checkDataSources();
+      setRefreshing(prev => {
+        const next = new Set(prev);
+        next.delete(sourceId);
+        return next;
+      });
+    }, 2000);
   };
 
   const getStatusIcon = (status: string) => {

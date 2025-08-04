@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist/reportGeneration",
+    "rootDir": "./src/reportGeneration",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "allowJs": true,
+    "noEmit": false,
+    "isolatedModules": false,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "src/reportGeneration/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/reportGeneration/**/*.test.ts",
+    "src/reportGeneration/**/*.test.tsx",
+    "src/reportGeneration/examples/**/*"
+  ]
+}

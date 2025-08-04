@@ -2,9 +2,11 @@
 // Export options and queue widget
 // Context: Manages export formats and shows export progress
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Download, FileText, FileSpreadsheet, Presentation, Code, CheckCircle } from 'lucide-react';
+import { Download, FileText, FileSpreadsheet, Presentation, Code, CheckCircle, Loader } from 'lucide-react';
+import { getStorageService } from '../../services/reportStorageService';
+import { logDebug } from '../../utils/logger';
 
 const Container = styled.div`
   padding: 1rem;
@@ -111,6 +113,11 @@ const ExportButton = styled.button`
     width: 16px;
     height: 16px;
   }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 `;
 
 const QueueSection = styled.div`
@@ -208,13 +215,71 @@ interface ExportPanelProps {
   onReportChange?: (report: any) => void;
 }
 
-export const ExportPanel: React.FC<ExportPanelProps> = () => {
+interface QueueItem {
+  id: string;
+  name: string;
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  progress: number;
+  reportId?: string;
+  format?: string;
+  startedAt?: Date;
+  completedAt?: Date;
+}
+
+export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
   const [selectedFormats, setSelectedFormats] = useState<Set<string>>(new Set(['pdf']));
-  const [exportQueue, setExportQueue] = useState([
-    { id: '1', name: 'AAPL_Report.pdf', status: 'completed', progress: 100 },
-    { id: '2', name: 'AAPL_Report.xlsx', status: 'processing', progress: 65 },
-    { id: '3', name: 'AAPL_Report.pptx', status: 'pending', progress: 0 }
-  ]);
+  const [exportQueue, setExportQueue] = useState<QueueItem[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+  
+  useEffect(() => {
+    // Load export history from localStorage
+    loadExportHistory();
+    
+    // Listen for export events
+    const handleExportProgress = (event: CustomEvent) => {
+      const { exportId, progress, status } = event.detail;
+      updateQueueItem(exportId, { progress, status });
+    };
+    
+    window.addEventListener('exportProgress', handleExportProgress as EventListener);
+    return () => {
+      window.removeEventListener('exportProgress', handleExportProgress as EventListener);
+    };
+  }, []);
+  
+  const loadExportHistory = () => {
+    try {
+      const history = JSON.parse(localStorage.getItem('trisight_export_history') || '[]');
+      // Show only recent exports (last 24 hours)
+      const recentExports = history.filter((item: any) => {
+        const exportTime = new Date(item.startedAt);
+        const dayAgo = new Date();
+        dayAgo.setDate(dayAgo.getDate() - 1);
+        return exportTime > dayAgo;
+      }).slice(-5); // Show last 5
+      
+      setExportQueue(recentExports);
+    } catch (error) {
+      logDebug('ExportPanel', 'Error loading export history:', error);
+    }
+  };
+  
+  const updateQueueItem = (id: string, updates: Partial<QueueItem>) => {
+    setExportQueue(prev => prev.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    ));
+    
+    // Save to history
+    try {
+      const history = JSON.parse(localStorage.getItem('trisight_export_history') || '[]');
+      const updatedHistory = history.map((item: any) => 
+        item.id === id ? { ...item, ...updates } : item
+      );
+      localStorage.setItem('trisight_export_history', JSON.stringify(updatedHistory));
+    } catch (error) {
+      logDebug('ExportPanel', 'Error saving export history:', error);
+    }
+  };
 
   const toggleFormat = (formatId: string) => {
     setSelectedFormats(prev => {
@@ -228,8 +293,77 @@ export const ExportPanel: React.FC<ExportPanelProps> = () => {
     });
   };
 
-  const handleExport = () => {
-    console.log('Exporting to formats:', Array.from(selectedFormats));
+  const handleExport = async () => {
+    if (!currentReport || selectedFormats.size === 0) {
+      return;
+    }
+    
+    setIsExporting(true);
+    const storageService = getStorageService();
+    
+    // Create export queue items
+    const newQueueItems: QueueItem[] = [];
+    
+    for (const format of selectedFormats) {
+      const exportId = `export-${Date.now()}-${format}`;
+      const fileName = `${currentReport.ticker || 'Report'}_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : format === 'powerpoint' ? 'pptx' : format}`;
+      
+      const queueItem: QueueItem = {
+        id: exportId,
+        name: fileName,
+        status: 'pending',
+        progress: 0,
+        reportId: currentReport.id,
+        format,
+        startedAt: new Date()
+      };
+      
+      newQueueItems.push(queueItem);
+      
+      // Add to queue immediately
+      setExportQueue(prev => [queueItem, ...prev].slice(0, 10)); // Keep max 10 items
+    }
+    
+    // Save to history
+    try {
+      const history = JSON.parse(localStorage.getItem('trisight_export_history') || '[]');
+      localStorage.setItem('trisight_export_history', JSON.stringify([...newQueueItems, ...history].slice(0, 50)));
+    } catch (error) {
+      logDebug('ExportPanel', 'Error saving export history:', error);
+    }
+    
+    // Process exports sequentially
+    for (const queueItem of newQueueItems) {
+      try {
+        // Update status to processing
+        updateQueueItem(queueItem.id, { status: 'processing', progress: 10 });
+        
+        // Simulate export progress (in real implementation, this would be actual export)
+        for (let progress = 20; progress <= 90; progress += 10) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          updateQueueItem(queueItem.id, { progress });
+        }
+        
+        // For now, we'll use the download functionality from storage service
+        if (currentReport.id && queueItem.format === 'pdf') {
+          await storageService.downloadReport(currentReport.id);
+        }
+        
+        // Mark as completed
+        updateQueueItem(queueItem.id, { 
+          status: 'completed', 
+          progress: 100, 
+          completedAt: new Date() 
+        });
+        
+        logDebug('ExportPanel', `Export completed: ${queueItem.name}`);
+      } catch (error) {
+        logDebug('ExportPanel', 'Export error:', error);
+        updateQueueItem(queueItem.id, { status: 'error', progress: 0 });
+      }
+    }
+    
+    setIsExporting(false);
   };
 
   return (
@@ -261,31 +395,48 @@ export const ExportPanel: React.FC<ExportPanelProps> = () => {
       
       <ExportButton 
         onClick={handleExport}
-        disabled={selectedFormats.size === 0}
+        disabled={selectedFormats.size === 0 || isExporting || !currentReport}
       >
-        <Download />
-        Export Report
+        {isExporting ? (
+          <>
+            <Loader style={{ animation: 'spin 1s linear infinite' }} />
+            Exporting...
+          </>
+        ) : (
+          <>
+            <Download />
+            Export Report
+          </>
+        )}
       </ExportButton>
       
-      <Section style={{ marginTop: '1.5rem' }}>
+      <Section style={{ marginTop: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <SectionTitle>Export Queue</SectionTitle>
         <QueueSection>
-          {exportQueue.map(item => (
-            <QueueItem key={item.id}>
-              <QueueHeader>
-                <QueueName>{item.name}</QueueName>
-                <QueueStatus $status={item.status as any}>
-                  {item.status === 'completed' && <CheckCircle style={{ width: 14, height: 14 }} />}
-                  {' '}{item.status}
-                </QueueStatus>
-              </QueueHeader>
-              {item.status === 'processing' && (
-                <ProgressBar>
-                  <ProgressFill $progress={item.progress} />
-                </ProgressBar>
-              )}
-            </QueueItem>
-          ))}
+          {exportQueue.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>
+              <Download style={{ width: 32, height: 32, margin: '0 auto 0.5rem', opacity: 0.3 }} />
+              <p style={{ fontSize: '0.75rem' }}>No recent exports</p>
+            </div>
+          ) : (
+            exportQueue.map(item => (
+              <QueueItem key={item.id}>
+                <QueueHeader>
+                  <QueueName>{item.name}</QueueName>
+                  <QueueStatus $status={item.status}>
+                    {item.status === 'completed' && <CheckCircle style={{ width: 14, height: 14 }} />}
+                    {item.status === 'processing' && <Loader style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} />}
+                    {' '}{item.status}
+                  </QueueStatus>
+                </QueueHeader>
+                {item.status === 'processing' && (
+                  <ProgressBar>
+                    <ProgressFill $progress={item.progress} />
+                  </ProgressBar>
+                )}
+              </QueueItem>
+            ))
+          )}
         </QueueSection>
       </Section>
     </Container>

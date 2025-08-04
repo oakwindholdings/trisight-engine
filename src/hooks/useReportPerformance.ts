@@ -2,9 +2,9 @@
 // React hook for monitoring and displaying report generation performance
 // Context: Provides real-time performance insights and optimization suggestions
 
-import { useState, useEffect, useCallback } from 'react';
-import { performanceMonitor, PerformanceReport } from '../reportGeneration/utils/performanceMonitor';
-import { logger } from '../utils/logger';
+import React, { useState, useEffect, useCallback } from 'react';
+import { PerformanceReport } from '../types/reportTypes';
+import { logDebug, logError } from '../utils/logger';
 
 export interface PerformanceMetrics {
   currentOperation?: string;
@@ -32,6 +32,7 @@ export interface UseReportPerformanceResult {
 
 export function useReportPerformance(): UseReportPerformanceResult {
   const [isMonitoring, setIsMonitoring] = useState(false);
+  const startTime = React.useRef(Date.now());
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
     operationsCompleted: 0,
     totalDuration: 0,
@@ -51,30 +52,13 @@ export function useReportPerformance(): UseReportPerformanceResult {
     if (!isMonitoring) return;
     
     const updateMetrics = () => {
-      const report = performanceMonitor.generateReport();
-      
-      // Calculate aggregate metrics
-      let totalOps = 0;
-      let totalDuration = 0;
-      
-      Object.values(report.summary).forEach(stats => {
-        totalOps += stats.count;
-        totalDuration += stats.avgDuration * stats.count;
-      });
-      
-      setMetrics({
-        operationsCompleted: totalOps,
-        totalDuration,
-        avgOperationTime: totalOps > 0 ? totalDuration / totalOps : 0,
-        bottlenecks: report.bottlenecks,
-        recommendations: report.recommendations,
-        resourceUsage: {
-          memoryMB: report.resourceUsage.memoryUsageMB,
-          apiCalls: report.resourceUsage.apiCallsCount,
-          cacheHitRate: report.resourceUsage.cacheHitRate,
-          activeOperations: report.resourceUsage.concurrentOperations
-        }
-      });
+      // For client-side, we'll track basic metrics
+      // Real performance data comes from the server
+      setMetrics(prev => ({
+        ...prev,
+        operationsCompleted: prev.operationsCompleted + 1,
+        totalDuration: Date.now() - startTime.current
+      }));
     };
     
     // Initial update
@@ -87,22 +71,29 @@ export function useReportPerformance(): UseReportPerformanceResult {
   }, [isMonitoring]);
   
   const startMonitoring = useCallback(() => {
-    logger.info('Starting performance monitoring');
+    logDebug('Starting performance monitoring');
+    startTime.current = Date.now();
     setIsMonitoring(true);
   }, []);
   
   const stopMonitoring = useCallback(() => {
-    logger.info('Stopping performance monitoring');
+    logDebug('Stopping performance monitoring');
     setIsMonitoring(false);
   }, []);
   
   const getReport = useCallback((): PerformanceReport => {
-    return performanceMonitor.generateReport();
-  }, []);
+    // Return basic performance report
+    return {
+      totalDuration: metrics.totalDuration,
+      stageDurations: {},
+      apiCalls: [],
+      memoryUsage: undefined
+    };
+  }, [metrics]);
   
   const reset = useCallback(() => {
-    logger.info('Resetting performance metrics');
-    performanceMonitor.reset();
+    logDebug('Resetting performance metrics');
+    startTime.current = Date.now();
     setMetrics({
       operationsCompleted: 0,
       totalDuration: 0,

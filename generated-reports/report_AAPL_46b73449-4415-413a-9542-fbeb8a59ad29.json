@@ -1,0 +1,287 @@
+{
+  "reportId": "46b73449-4415-413a-9542-fbeb8a59ad29",
+  "config": {
+    "ticker": "AAPL",
+    "companyName": "Apple",
+    "reportType": "technical-analysis",
+    "reportDate": "2025-07-31",
+    "timeframe": "1Y",
+    "author": "TriSight Analytics",
+    "sections": [],
+    "dataSourcePriorities": [
+      {
+        "dataType": "marketdata",
+        "sources": [
+          "twelvedata",
+          "cache"
+        ]
+      },
+      {
+        "dataType": "financials",
+        "sources": [
+          "twelvedata",
+          "edgar",
+          "cache"
+        ]
+      }
+    ],
+    "chartConfigs": [
+      {
+        "type": "candlestick",
+        "title": "Price History",
+        "dataSource": "historicalPrices",
+        "indicators": [
+          "sma20",
+          "sma50",
+          "volume"
+        ],
+        "timeframe": "dynamic"
+      },
+      {
+        "type": "candlestick",
+        "title": "Price History",
+        "dataSource": "historicalPrices",
+        "indicators": [
+          "volume"
+        ],
+        "timeframe": "dynamic"
+      },
+      {
+        "type": "candlestick",
+        "title": "Detected Patterns",
+        "dataSource": "historicalPrices",
+        "overlays": [
+          "patterns",
+          "signals"
+        ],
+        "annotations": true
+      },
+      {
+        "type": "bar",
+        "title": "Revenue Growth",
+        "dataSource": "incomeStatement",
+        "series": [
+          "revenue",
+          "netIncome"
+        ],
+        "yAxis": "currency",
+        "showGrowthRate": true
+      }
+    ],
+    "outputFormat": "pdf",
+    "includeCharts": true,
+    "template": {
+      "id": "technical-analysis",
+      "name": "Technical Analysis Report",
+      "description": "Chart patterns, indicators, and trading signals",
+      "requiredSections": [
+        "price-analysis",
+        "indicators",
+        "patterns",
+        "signals"
+      ],
+      "optionalSections": [
+        "volume-analysis",
+        "momentum",
+        "support-resistance"
+      ],
+      "defaultCharts": [
+        "candlestick",
+        "volume",
+        "rsi",
+        "macd",
+        "bollinger"
+      ],
+      "defaultTimeframe": "6M",
+      "dataRequirements": [
+        "market-data",
+        "technical-indicators"
+      ],
+      "estimatedPages": 10,
+      "targetAudience": "Active traders, technical analysts",
+      "slideTemplates": [
+        {
+          "id": "title",
+          "title": "Title Slide",
+          "order": 1,
+          "layout": "title",
+          "requiredData": [
+            "company-info"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "{{ticker}} Technical Analysis"
+            },
+            {
+              "type": "text",
+              "template": "Chart Patterns & Trading Signals"
+            },
+            {
+              "type": "text",
+              "template": "{{reportDate}}"
+            }
+          ]
+        },
+        {
+          "id": "price-overview",
+          "title": "Price Overview",
+          "order": 2,
+          "layout": "chart",
+          "requiredData": [
+            "price-data"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Price Action Overview"
+            },
+            {
+              "type": "chart",
+              "dataSource": "candlestick-chart"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "price-statistics"
+            }
+          ]
+        },
+        {
+          "id": "trend-analysis",
+          "title": "Trend Analysis",
+          "order": 3,
+          "layout": "mixed",
+          "requiredData": [
+            "moving-averages"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Trend Analysis"
+            },
+            {
+              "type": "chart",
+              "dataSource": "price-with-ma"
+            },
+            {
+              "type": "table",
+              "dataSource": "trend-signals"
+            },
+            {
+              "type": "text",
+              "dataSource": "trend-assessment"
+            }
+          ]
+        },
+        {
+          "id": "momentum-indicators",
+          "title": "Momentum Indicators",
+          "order": 4,
+          "layout": "chart",
+          "requiredData": [
+            "momentum-data"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Momentum Analysis"
+            },
+            {
+              "type": "chart",
+              "dataSource": "rsi-chart"
+            },
+            {
+              "type": "chart",
+              "dataSource": "macd-chart"
+            },
+            {
+              "type": "bullets",
+              "dataSource": "momentum-signals"
+            }
+          ]
+        },
+        {
+          "id": "pattern-detection",
+          "title": "Pattern Detection",
+          "order": 5,
+          "layout": "mixed",
+          "requiredData": [
+            "detected-patterns"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Chart Patterns"
+            },
+            {
+              "type": "chart",
+              "dataSource": "patterns-overlay"
+            },
+            {
+              "type": "table",
+              "dataSource": "pattern-list"
+            },
+            {
+              "type": "text",
+              "dataSource": "pattern-implications"
+            }
+          ]
+        },
+        {
+          "id": "support-resistance",
+          "title": "Support & Resistance",
+          "order": 6,
+          "layout": "chart",
+          "requiredData": [
+            "support-resistance-levels"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Key Levels"
+            },
+            {
+              "type": "chart",
+              "dataSource": "sr-levels-chart"
+            },
+            {
+              "type": "table",
+              "dataSource": "level-details"
+            }
+          ]
+        },
+        {
+          "id": "trading-signals",
+          "title": "Trading Signals",
+          "order": 7,
+          "layout": "content",
+          "requiredData": [
+            "trading-signals"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Trading Signals Summary"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "signal-strength"
+            },
+            {
+              "type": "table",
+              "dataSource": "active-signals"
+            },
+            {
+              "type": "text",
+              "dataSource": "trading-recommendation"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "generatedAt": "2025-07-31T00:57:04.152Z",
+  "message": "Report generation service is operational. Full implementation coming soon.",
+  "ticker": "AAPL",
+  "companyName": "Apple"
+}

@@ -57,8 +57,7 @@ import { evaluateAllPatterns } from './utils/patternHydration';
 // Import hooks
 import useTwelveDataApiKey from './hooks/useTwelveDataApiKey';
 
-// Import mock data
-import { mockSymbolRankings } from './utils/mockData/symbolRankings';
+// Import types
 import { SymbolRanking } from './types/SymbolRanking';
 
 // Styled components
@@ -310,7 +309,28 @@ function AppContent() {
   
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
-  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets' | 'reports'>('chart');
+  
+  // Initialize activeTab based on URL path
+  const getInitialTab = (): 'chart' | 'dashboard' | 'targets' | 'reports' => {
+    const path = window.location.pathname;
+    if (path === '/dashboard') return 'dashboard';
+    if (path === '/targets') return 'targets';
+    if (path === '/reports') return 'reports';
+    return 'chart';
+  };
+  
+  const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets' | 'reports'>(getInitialTab());
+  
+  // Handle browser navigation (back/forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const tab = getInitialTab();
+      setActiveTab(tab);
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   
   // Debug render
   console.log('[App] Component rendering, selectedPatternForFeedback:', {
@@ -326,8 +346,8 @@ function AppContent() {
     return saved || 'AAPL';
   });
   
-  // State for symbol rankings - initialize with mock data
-  const [symbolRankings, setSymbolRankings] = useState<SymbolRanking[]>(mockSymbolRankings);
+  // State for symbol rankings - initialize empty
+  const [symbolRankings, setSymbolRankings] = useState<SymbolRanking[]>([]);
   
   // UI panel visibility state with localStorage persistence
   const [showRightPanel, setShowRightPanel] = useState(() => {
@@ -439,6 +459,9 @@ function AppContent() {
   // Type-safe tab change handler
   const handleTabChange = (tab: 'chart' | 'dashboard' | 'targets' | 'reports') => {
     setActiveTab(tab);
+    // Update URL to match the selected tab
+    const path = tab === 'chart' ? '/' : `/${tab}`;
+    window.history.pushState({}, '', path);
   };
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [chartHeight, setChartHeight] = useState(getSavedChartHeight());

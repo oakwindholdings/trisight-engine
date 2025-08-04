@@ -2,9 +2,11 @@
 // Past reports list with search and filtering
 // Context: Shows previously generated reports for quick access
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Search, Filter, Calendar, Download, Eye, Trash2, Clock, FileText } from 'lucide-react';
+import { getStorageService } from '../../services/reportStorageService';
+import { logDebug, logError } from '../../utils/logger';
 
 const HistoryContainer = styled.div`
   padding: 1.5rem;
@@ -197,46 +199,71 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [reports, setReports] = useState<any[]>([]);
   
-  // Mock data for reports
-  const reports = [
-    {
-      id: '1',
-      title: 'Q4 2024 Market Analysis',
-      description: 'Comprehensive analysis of technology sector performance with focus on AI-driven companies',
-      createdAt: new Date('2024-11-15'),
-      format: 'pdf',
-      size: '2.4 MB'
-    },
-    {
-      id: '2',
-      title: 'Portfolio Performance Review',
-      description: 'Monthly performance metrics and risk assessment for diversified portfolio',
-      createdAt: new Date('2024-11-10'),
-      format: 'pptx',
-      size: '5.1 MB'
-    },
-    {
-      id: '3',
-      title: 'Emerging Markets Opportunities',
-      description: 'Deep dive into APAC market trends and investment opportunities',
-      createdAt: new Date('2024-11-05'),
-      format: 'pdf',
-      size: '3.2 MB'
-    },
-    {
-      id: '4',
-      title: 'Risk Assessment Report',
-      description: 'Volatility analysis and hedging strategies for current market conditions',
-      createdAt: new Date('2024-11-01'),
-      format: 'xlsx',
-      size: '1.8 MB'
+  // Load reports from StorageService
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const storageService = getStorageService();
+        const storedReports = await storageService.listReports();
+        logDebug('ReportHistory', `Loaded ${storedReports.length} reports from storage`);
+        
+        // Transform stored reports to match display format
+        const transformedReports = storedReports.map(report => ({
+          id: report.id,
+          title: report.title || 'Untitled Report',
+          description: report.metadata?.description || `${report.format?.toUpperCase() || 'Report'} for ${report.ticker}`,
+          ticker: report.ticker,
+          template: report.metadata?.template || 'custom',
+          author: report.metadata?.author || 'TriSight Analytics',
+          createdAt: new Date(report.generatedAt || report.created || Date.now()),
+          format: report.format || 'pdf',
+          size: formatFileSize(report.size ? report.size / (1024 * 1024) : 0), // Convert bytes to MB
+          status: report.metadata?.status || 'completed',
+          tags: report.metadata?.tags || [],
+          reportData: report.metadata?.reportData || {},
+          // Include slides and other report content
+          slides: report.slides || report.metadata?.slides || [],
+          companyData: report.companyData || report.metadata?.companyData || {},
+          metadata: report.metadata || {},
+          completedAt: report.completedAt || report.metadata?.completedAt || report.generatedAt,
+          downloadUrl: report.downloadUrl || report.metadata?.downloadUrl
+        }));
+        
+        setReports(transformedReports);
+      } catch (error) {
+        logError('ReportHistory', 'Error loading reports:', error);
+        setReports([]);
+      }
+    };
+    
+    loadReports();
+    
+    // Listen for new reports
+    const handleReportAdded = () => loadReports();
+    window.addEventListener('reportGenerated', handleReportAdded);
+    
+    // Refresh periodically
+    const refreshInterval = setInterval(loadReports, 30000); // Every 30 seconds
+    
+    return () => {
+      window.removeEventListener('reportGenerated', handleReportAdded);
+      clearInterval(refreshInterval);
+    };
+  }, []);
+  
+  const formatFileSize = (sizeInMB: number): string => {
+    if (sizeInMB < 1) {
+      return `${Math.round(sizeInMB * 1024)} KB`;
     }
-  ];
+    return `${sizeInMB.toFixed(1)} MB`;
+  };
   
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         report.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         report.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (report.ticker && report.ticker.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesFilter = filterType === 'all' || report.format === filterType;
     return matchesSearch && matchesFilter;
   });
@@ -301,13 +328,83 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
               <ReportHeader>
                 <ReportTitle>{report.title}</ReportTitle>
                 <ReportActions>
-                  <ActionButton title="View report">
+                  <ActionButton 
+                    title="View report"
+                    onClick={() => {
+                      console.log('[ReportHistory] Viewing report:', report);
+                      // Ensure all report data is included for preview
+                      const reportForViewing = {
+                        ...report,
+                        status: report.status || 'completed',
+                        slides: report.slides || [],
+                        companyData: report.companyData || {},
+                        metadata: report.metadata || {},
+                        reportData: {
+                          ...report.reportData,
+                          slides: report.slides || report.reportData?.slides || []
+                        }
+                      };
+                      onReportChange(reportForViewing);
+                      
+                      // Emit event to switch to preview widget
+                      window.dispatchEvent(new CustomEvent('viewReport', {
+                        detail: { report: reportForViewing }
+                      }));
+                    }}
+                  >
                     <Eye />
                   </ActionButton>
-                  <ActionButton title="Download">
+                  <ActionButton 
+                    title="Download"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        if (report.downloadUrl) {
+                          // Use the downloadUrl directly from the report
+                          const link = document.createElement('a');
+                          link.href = report.downloadUrl;
+                          link.download = `${report.ticker}_${report.template}_${new Date(report.createdAt).toISOString().split('T')[0]}.${report.format || 'pdf'}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        } else {
+                          // Fallback to using storage service
+                          const storageService = getStorageService();
+                          const blob = await storageService.downloadReport(report.id);
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `${report.ticker}_report.${report.format || 'pdf'}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          URL.revokeObjectURL(url);
+                        }
+                      } catch (error) {
+                        logError('ReportHistory', 'Download failed:', error);
+                        alert('Failed to download report');
+                      }
+                    }}
+                  >
                     <Download />
                   </ActionButton>
-                  <ActionButton title="Delete">
+                  <ActionButton 
+                    title="Delete"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to delete this report?')) {
+                        try {
+                          const storageService = getStorageService();
+                          await storageService.deleteReport(report.id);
+                          // Trigger refresh
+                          window.dispatchEvent(new Event('reportGenerated'));
+                        } catch (error) {
+                          logError('ReportHistory', 'Delete failed:', error);
+                          alert('Failed to delete report');
+                        }
+                      }
+                    }}
+                  >
                     <Trash2 />
                   </ActionButton>
                 </ReportActions>

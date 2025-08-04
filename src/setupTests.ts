@@ -70,15 +70,11 @@ global.requestAnimationFrame = jest.fn((cb) => {
 global.cancelAnimationFrame = jest.fn();
 
 // Mock IntersectionObserver
-const mockIntersectionObserver = jest.fn(() => ({
+global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
-Object.defineProperty(window, 'IntersectionObserver', {
-  writable: true,
-  value: mockIntersectionObserver,
-});
 
 // Mock the TwelveData API module
 jest.mock('./api/twelveDataApi', () => ({
@@ -88,3 +84,37 @@ jest.mock('./api/twelveDataApi', () => ({
     searchSymbols: jest.fn().mockResolvedValue([]),
   }
 }));
+
+// Mock Supabase
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => {
+    const { mockSupabaseClient } = require('./__mocks__/supabaseTestClient');
+    return mockSupabaseClient;
+  })
+}));
+
+// Mock environment variables for tests
+process.env.REACT_APP_SUPABASE_URL = 'https://test.supabase.co';
+process.env.REACT_APP_SUPABASE_ANON_KEY = 'test-anon-key';
+process.env.REACT_APP_TWELVE_DATA_API_KEY = 'test-api-key';
+
+// Suppress console errors during tests unless explicitly checking for them
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args: any[]) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('Warning: ReactDOM.render is no longer supported')
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
+
+afterAll(() => {
+  console.error = originalError;
+});
+
+// Global test timeout
+jest.setTimeout(30000);

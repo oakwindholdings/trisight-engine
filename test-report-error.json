@@ -1,0 +1,5 @@
+{
+  "message": "Cannot read properties of undefined (reading 'includes')",
+  "stack": "TypeError: Cannot read properties of undefined (reading 'includes')\n    at Object.condition (C:\\Users\\bobstewart\\dev\\projects\\emerald\\trisight\\dist\\reportGeneration\\index.js:8835:59)\n    at C:\\Users\\bobstewart\\dev\\projects\\emerald\\trisight\\dist\\reportGeneration\\index.js:9257:55\n    at Array.forEach (<anonymous>)\n    at generateSlidesFromTemplate (C:\\Users\\bobstewart\\dev\\projects\\emerald\\trisight\\dist\\reportGeneration\\index.js:9255:29)\n    at ReportGenerator.assembleReport (C:\\Users\\bobstewart\\dev\\projects\\emerald\\trisight\\dist\\reportGeneration\\index.js:4123:71)\n    at ReportGenerator.generateReport (C:\\Users\\bobstewart\\dev\\projects\\emerald\\trisight\\dist\\reportGeneration\\index.js:3942:39)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async testReportGeneration (C:\\Users\\bobstewart\\dev\\projects\\emerald\\trisight\\test-report-gen.js:43:20)",
+  "name": "TypeError"
+}

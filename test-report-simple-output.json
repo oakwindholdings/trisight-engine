@@ -1,0 +1,3887 @@
+{
+  "config": {
+    "outputFormat": "pdf",
+    "includeCharts": true,
+    "debugMode": true,
+    "currentDate": "2025-07-31",
+    "ticker": "NVDA",
+    "reportType": "technical-analysis",
+    "title": "NVIDIA Corporation Technical Analysis",
+    "author": "TriSight",
+    "sections": [
+      {
+        "id": "price-analysis",
+        "title": "Price Analysis",
+        "type": "chart",
+        "required": true
+      }
+    ],
+    "dataSources": [
+      "market-data",
+      "financials",
+      "patterns"
+    ],
+    "apiKey": "764fb86962cc46ebbe5e1c89a1761623",
+    "firecrawlApiKey": "fc-79d2302cc006490fbde0e0373a4227fe",
+    "skipAIGeneration": true,
+    "template": {
+      "id": "technical-analysis",
+      "name": "Technical Analysis Report",
+      "description": "Chart patterns, indicators, and trading signals",
+      "requiredSections": [
+        "price-analysis",
+        "indicators",
+        "patterns",
+        "signals"
+      ],
+      "optionalSections": [
+        "volume-analysis",
+        "momentum",
+        "support-resistance"
+      ],
+      "defaultCharts": [
+        "candlestick",
+        "volume",
+        "rsi",
+        "macd",
+        "bollinger"
+      ],
+      "defaultTimeframe": "6M",
+      "dataRequirements": [
+        "market-data",
+        "technical-indicators"
+      ],
+      "estimatedPages": 10,
+      "targetAudience": "Active traders, technical analysts",
+      "slideTemplates": [
+        {
+          "id": "title",
+          "title": "Title Slide",
+          "order": 1,
+          "layout": "title",
+          "requiredData": [
+            "company-info"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "{{ticker}} Technical Analysis"
+            },
+            {
+              "type": "text",
+              "template": "Chart Patterns & Trading Signals"
+            },
+            {
+              "type": "text",
+              "template": "{{reportDate}}"
+            }
+          ]
+        },
+        {
+          "id": "price-overview",
+          "title": "Price Overview",
+          "order": 2,
+          "layout": "chart",
+          "requiredData": [
+            "price-data"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Price Action Overview"
+            },
+            {
+              "type": "chart",
+              "dataSource": "candlestick-chart"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "price-statistics"
+            }
+          ]
+        },
+        {
+          "id": "trend-analysis",
+          "title": "Trend Analysis",
+          "order": 3,
+          "layout": "mixed",
+          "requiredData": [
+            "moving-averages"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Trend Analysis"
+            },
+            {
+              "type": "chart",
+              "dataSource": "price-with-ma"
+            },
+            {
+              "type": "table",
+              "dataSource": "trend-signals"
+            },
+            {
+              "type": "text",
+              "dataSource": "trend-assessment"
+            }
+          ]
+        },
+        {
+          "id": "momentum-indicators",
+          "title": "Momentum Indicators",
+          "order": 4,
+          "layout": "chart",
+          "requiredData": [
+            "momentum-data"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Momentum Analysis"
+            },
+            {
+              "type": "chart",
+              "dataSource": "rsi-chart"
+            },
+            {
+              "type": "chart",
+              "dataSource": "macd-chart"
+            },
+            {
+              "type": "bullets",
+              "dataSource": "momentum-signals"
+            }
+          ]
+        },
+        {
+          "id": "pattern-detection",
+          "title": "Pattern Detection",
+          "order": 5,
+          "layout": "mixed",
+          "requiredData": [
+            "detected-patterns"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Chart Patterns"
+            },
+            {
+              "type": "chart",
+              "dataSource": "patterns-overlay"
+            },
+            {
+              "type": "table",
+              "dataSource": "pattern-list"
+            },
+            {
+              "type": "text",
+              "dataSource": "pattern-implications"
+            }
+          ]
+        },
+        {
+          "id": "support-resistance",
+          "title": "Support & Resistance",
+          "order": 6,
+          "layout": "chart",
+          "requiredData": [
+            "support-resistance-levels"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Key Levels"
+            },
+            {
+              "type": "chart",
+              "dataSource": "sr-levels-chart"
+            },
+            {
+              "type": "table",
+              "dataSource": "level-details"
+            }
+          ]
+        },
+        {
+          "id": "trading-signals",
+          "title": "Trading Signals",
+          "order": 7,
+          "layout": "content",
+          "requiredData": [
+            "trading-signals"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Trading Signals Summary"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "signal-strength"
+            },
+            {
+              "type": "table",
+              "dataSource": "active-signals"
+            },
+            {
+              "type": "text",
+              "dataSource": "trading-recommendation"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "companyData": {
+    "ticker": "NVDA",
+    "companyName": "NVIDIA Corporation",
+    "description": "",
+    "sector": "Technology",
+    "industry": "Technology",
+    "financials": {
+      "incomeStatement": [
+        {
+          "date": "2025-01-31",
+          "period": "annual",
+          "revenue": 130497000000,
+          "grossProfit": 97858000000,
+          "operatingIncome": 81453000000,
+          "netIncome": 72880000000,
+          "eps": 2.97,
+          "fiscal_date": "2025-01-31",
+          "year": 2025,
+          "sales": 130497000000,
+          "cost_of_goods": 32639000000,
+          "gross_profit": 97858000000,
+          "operating_expense": {
+            "research_and_development": 12914000000,
+            "selling_general_and_administrative": 3491000000,
+            "other_operating_expenses": null
+          },
+          "operating_income": 81453000000,
+          "non_operating_interest": {
+            "income": 1786000000,
+            "expense": 247000000
+          },
+          "other_income_expense": 1034000000,
+          "pretax_income": 84026000000,
+          "income_tax": 11146000000,
+          "net_income": 72880000000,
+          "eps_basic": 2.97,
+          "eps_diluted": 2.94,
+          "basic_shares_outstanding": 24555000000,
+          "diluted_shares_outstanding": 24555000000,
+          "ebit": 84273000000,
+          "ebitda": 86137000000,
+          "net_income_continuous_operations": 72880000000,
+          "minority_interests": null,
+          "preferred_stock_dividends": null
+        },
+        {
+          "date": "2024-01-31",
+          "period": "annual",
+          "revenue": 60922000000,
+          "grossProfit": 44301000000,
+          "operatingIncome": 32972000000,
+          "netIncome": 29760000000,
+          "eps": 1.205,
+          "fiscal_date": "2024-01-31",
+          "year": 2024,
+          "sales": 60922000000,
+          "cost_of_goods": 16621000000,
+          "gross_profit": 44301000000,
+          "operating_expense": {
+            "research_and_development": 8675000000,
+            "selling_general_and_administrative": 2654000000,
+            "other_operating_expenses": null
+          },
+          "operating_income": 32972000000,
+          "non_operating_interest": {
+            "income": 866000000,
+            "expense": 257000000
+          },
+          "other_income_expense": 237000000,
+          "pretax_income": 33818000000,
+          "income_tax": 4058000000,
+          "net_income": 29760000000,
+          "eps_basic": 1.205,
+          "eps_diluted": 1.193,
+          "basic_shares_outstanding": 24690000000,
+          "diluted_shares_outstanding": 24690000000,
+          "ebit": 34075000000,
+          "ebitda": 35583000000,
+          "net_income_continuous_operations": 29760000000,
+          "minority_interests": null,
+          "preferred_stock_dividends": null
+        },
+        {
+          "date": "2023-01-31",
+          "period": "annual",
+          "revenue": 26974000000,
+          "grossProfit": 15356000000,
+          "operatingIncome": 5577000000,
+          "netIncome": 4368000000,
+          "eps": 0.176,
+          "fiscal_date": "2023-01-31",
+          "year": 2023,
+          "sales": 26974000000,
+          "cost_of_goods": 11618000000,
+          "gross_profit": 15356000000,
+          "operating_expense": {
+            "research_and_development": 7339000000,
+            "selling_general_and_administrative": 2440000000,
+            "other_operating_expenses": null
+          },
+          "operating_income": 5577000000,
+          "non_operating_interest": {
+            "income": 267000000,
+            "expense": 262000000
+          },
+          "other_income_expense": -1401000000,
+          "pretax_income": 4181000000,
+          "income_tax": -187000000,
+          "net_income": 4368000000,
+          "eps_basic": 0.176,
+          "eps_diluted": 0.174,
+          "basic_shares_outstanding": 24870000000,
+          "diluted_shares_outstanding": 24870000000,
+          "ebit": 4443000000,
+          "ebitda": 7340000000,
+          "net_income_continuous_operations": 4368000000,
+          "minority_interests": null,
+          "preferred_stock_dividends": null
+        },
+        {
+          "date": "2022-01-31",
+          "period": "annual",
+          "revenue": 26914000000,
+          "grossProfit": 17475000000,
+          "operatingIncome": 10041000000,
+          "netIncome": 9752000000,
+          "eps": 0.391,
+          "fiscal_date": "2022-01-31",
+          "year": 2022,
+          "sales": 26914000000,
+          "cost_of_goods": 9439000000,
+          "gross_profit": 17475000000,
+          "operating_expense": {
+            "research_and_development": 5268000000,
+            "selling_general_and_administrative": 2166000000,
+            "other_operating_expenses": null
+          },
+          "operating_income": 10041000000,
+          "non_operating_interest": {
+            "income": 29000000,
+            "expense": 236000000
+          },
+          "other_income_expense": 107000000,
+          "pretax_income": 9941000000,
+          "income_tax": 189000000,
+          "net_income": 9752000000,
+          "eps_basic": 0.391,
+          "eps_diluted": 0.385,
+          "basic_shares_outstanding": 24960000000,
+          "diluted_shares_outstanding": 24960000000,
+          "ebit": 10177000000,
+          "ebitda": 11351000000,
+          "net_income_continuous_operations": 9752000000,
+          "minority_interests": null,
+          "preferred_stock_dividends": null
+        },
+        {
+          "date": "2021-01-31",
+          "period": "annual",
+          "revenue": 16675000000,
+          "grossProfit": 10396000000,
+          "operatingIncome": 4532000000,
+          "netIncome": 4332000000,
+          "eps": 0.1755,
+          "fiscal_date": "2021-01-31",
+          "year": 2021,
+          "sales": 16675000000,
+          "cost_of_goods": 6279000000,
+          "gross_profit": 10396000000,
+          "operating_expense": {
+            "research_and_development": 3924000000,
+            "selling_general_and_administrative": 1940000000,
+            "other_operating_expenses": null
+          },
+          "operating_income": 4532000000,
+          "non_operating_interest": {
+            "income": 57000000,
+            "expense": 184000000
+          },
+          "other_income_expense": 4000000,
+          "pretax_income": 4409000000,
+          "income_tax": 77000000,
+          "net_income": 4332000000,
+          "eps_basic": 0.1755,
+          "eps_diluted": 0.1725,
+          "basic_shares_outstanding": 24680000000,
+          "diluted_shares_outstanding": 24680000000,
+          "ebit": 4593000000,
+          "ebitda": 5691000000,
+          "net_income_continuous_operations": 4332000000,
+          "minority_interests": null,
+          "preferred_stock_dividends": null
+        },
+        {
+          "date": "2020-01-31",
+          "period": "annual",
+          "revenue": 10918000000,
+          "grossProfit": 6768000000,
+          "operatingIncome": 2846000000,
+          "netIncome": 2796000000,
+          "eps": 0.11475,
+          "fiscal_date": "2020-01-31",
+          "year": 2020,
+          "sales": 10918000000,
+          "cost_of_goods": 4150000000,
+          "gross_profit": 6768000000,
+          "operating_expense": {
+            "research_and_development": 2829000000,
+            "selling_general_and_administrative": 1093000000,
+            "other_operating_expenses": null
+          },
+          "operating_income": 2846000000,
+          "non_operating_interest": {
+            "income": 178000000,
+            "expense": 52000000
+          },
+          "other_income_expense": -2000000,
+          "pretax_income": 2970000000,
+          "income_tax": 174000000,
+          "net_income": 2796000000,
+          "eps_basic": 0.11475,
+          "eps_diluted": 0.113,
+          "basic_shares_outstanding": 24360000000,
+          "diluted_shares_outstanding": 24360000000,
+          "ebit": 3022000000,
+          "ebitda": 3403000000,
+          "net_income_continuous_operations": 2796000000,
+          "minority_interests": null,
+          "preferred_stock_dividends": null
+        }
+      ],
+      "balanceSheet": [
+        {
+          "date": "2025-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2025-01-31",
+          "year": 2025,
+          "assets": {
+            "current_assets": {
+              "cash": null,
+              "cash_equivalents": null,
+              "cash_and_cash_equivalents": 8589000000,
+              "other_short_term_investments": 34621000000,
+              "accounts_receivable": 23065000000,
+              "other_receivables": null,
+              "inventory": 10080000000,
+              "prepaid_assets": null,
+              "restricted_cash": null,
+              "assets_held_for_sale": null,
+              "hedging_assets": null,
+              "other_current_assets": 3771000000,
+              "total_current_assets": 80126000000
+            },
+            "non_current_assets": {
+              "properties": 1793000000,
+              "land_and_improvements": 511000000,
+              "machinery_furniture_equipment": 7568000000,
+              "construction_in_progress": 529000000,
+              "leases": null,
+              "accumulated_depreciation": -4401000000,
+              "goodwill": 11183000000,
+              "investment_properties": null,
+              "financial_assets": null,
+              "intangible_assets": 807000000,
+              "investments_and_advances": 3387000000,
+              "other_non_current_assets": 11930000000,
+              "total_non_current_assets": 31475000000
+            },
+            "total_assets": 111601000000
+          },
+          "liabilities": {
+            "current_liabilities": {
+              "accounts_payable": 6310000000,
+              "accrued_expenses": 8130000000,
+              "short_term_debt": 288000000,
+              "deferred_revenue": 837000000,
+              "tax_payable": 881000000,
+              "pensions": null,
+              "other_current_liabilities": 228000000,
+              "total_current_liabilities": 18047000000
+            },
+            "non_current_liabilities": {
+              "long_term_provisions": null,
+              "long_term_debt": 9982000000,
+              "provision_for_risks_and_charges": 2304000000,
+              "deferred_liabilities": 886000000,
+              "derivative_product_liabilities": null,
+              "other_non_current_liabilities": 79000000,
+              "total_non_current_liabilities": 14227000000
+            },
+            "total_liabilities": 32274000000
+          },
+          "shareholders_equity": {
+            "common_stock": 24000000,
+            "retained_earnings": 68038000000,
+            "other_shareholders_equity": 28000000,
+            "total_shareholders_equity": 79327000000,
+            "additional_paid_in_capital": 11237000000,
+            "treasury_stock": null,
+            "minority_interest": null
+          }
+        },
+        {
+          "date": "2024-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2024-01-31",
+          "year": 2024,
+          "assets": {
+            "current_assets": {
+              "cash": null,
+              "cash_equivalents": null,
+              "cash_and_cash_equivalents": 7280000000,
+              "other_short_term_investments": 18704000000,
+              "accounts_receivable": 9999000000,
+              "other_receivables": null,
+              "inventory": 5282000000,
+              "prepaid_assets": null,
+              "restricted_cash": null,
+              "assets_held_for_sale": null,
+              "hedging_assets": null,
+              "other_current_assets": 3080000000,
+              "total_current_assets": 44345000000
+            },
+            "non_current_assets": {
+              "properties": 1346000000,
+              "land_and_improvements": 218000000,
+              "machinery_furniture_equipment": 5200000000,
+              "construction_in_progress": 189000000,
+              "leases": null,
+              "accumulated_depreciation": -3509000000,
+              "goodwill": 9972000000,
+              "investment_properties": null,
+              "financial_assets": null,
+              "intangible_assets": 1112000000,
+              "investments_and_advances": 1546000000,
+              "other_non_current_assets": 6213000000,
+              "total_non_current_assets": 21383000000
+            },
+            "total_assets": 65728000000
+          },
+          "liabilities": {
+            "current_liabilities": {
+              "accounts_payable": 2699000000,
+              "accrued_expenses": 4780000000,
+              "short_term_debt": 1478000000,
+              "deferred_revenue": 764000000,
+              "tax_payable": 296000000,
+              "pensions": null,
+              "other_current_liabilities": 199000000,
+              "total_current_liabilities": 10631000000
+            },
+            "non_current_liabilities": {
+              "long_term_provisions": null,
+              "long_term_debt": 9578000000,
+              "provision_for_risks_and_charges": 1441000000,
+              "deferred_liabilities": 462000000,
+              "derivative_product_liabilities": null,
+              "other_non_current_liabilities": 65000000,
+              "total_non_current_liabilities": 12119000000
+            },
+            "total_liabilities": 22750000000
+          },
+          "shareholders_equity": {
+            "common_stock": 2000000,
+            "retained_earnings": 29817000000,
+            "other_shareholders_equity": 27000000,
+            "total_shareholders_equity": 42978000000,
+            "additional_paid_in_capital": 13132000000,
+            "treasury_stock": null,
+            "minority_interest": null
+          }
+        },
+        {
+          "date": "2023-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2023-01-31",
+          "year": 2023,
+          "assets": {
+            "current_assets": {
+              "cash": null,
+              "cash_equivalents": null,
+              "cash_and_cash_equivalents": 3389000000,
+              "other_short_term_investments": 9907000000,
+              "accounts_receivable": 3827000000,
+              "other_receivables": null,
+              "inventory": 5159000000,
+              "prepaid_assets": null,
+              "restricted_cash": null,
+              "assets_held_for_sale": null,
+              "hedging_assets": null,
+              "other_current_assets": 791000000,
+              "total_current_assets": 23073000000
+            },
+            "non_current_assets": {
+              "properties": 1038000000,
+              "land_and_improvements": 218000000,
+              "machinery_furniture_equipment": 4303000000,
+              "construction_in_progress": 382000000,
+              "leases": null,
+              "accumulated_depreciation": -2694000000,
+              "goodwill": 10420000000,
+              "investment_properties": null,
+              "financial_assets": null,
+              "intangible_assets": 1676000000,
+              "investments_and_advances": 299000000,
+              "other_non_current_assets": 3541000000,
+              "total_non_current_assets": 18109000000
+            },
+            "total_assets": 41182000000
+          },
+          "liabilities": {
+            "current_liabilities": {
+              "accounts_payable": 1193000000,
+              "accrued_expenses": 2946000000,
+              "short_term_debt": 1426000000,
+              "deferred_revenue": 354000000,
+              "tax_payable": 467000000,
+              "pensions": null,
+              "other_current_liabilities": 69000000,
+              "total_current_liabilities": 6563000000
+            },
+            "non_current_liabilities": {
+              "long_term_provisions": null,
+              "long_term_debt": 10605000000,
+              "provision_for_risks_and_charges": 1385000000,
+              "deferred_liabilities": 247000000,
+              "derivative_product_liabilities": null,
+              "other_non_current_liabilities": 63000000,
+              "total_non_current_liabilities": 12518000000
+            },
+            "total_liabilities": 19081000000
+          },
+          "shareholders_equity": {
+            "common_stock": 2000000,
+            "retained_earnings": 10171000000,
+            "other_shareholders_equity": -43000000,
+            "total_shareholders_equity": 22101000000,
+            "additional_paid_in_capital": 11971000000,
+            "treasury_stock": null,
+            "minority_interest": null
+          }
+        },
+        {
+          "date": "2022-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2022-01-31",
+          "year": 2022,
+          "assets": {
+            "current_assets": {
+              "cash": null,
+              "cash_equivalents": null,
+              "cash_and_cash_equivalents": 1990000000,
+              "other_short_term_investments": 19218000000,
+              "accounts_receivable": 4650000000,
+              "other_receivables": null,
+              "inventory": 2605000000,
+              "prepaid_assets": 366000000,
+              "restricted_cash": null,
+              "assets_held_for_sale": null,
+              "hedging_assets": null,
+              "other_current_assets": 366000000,
+              "total_current_assets": 28829000000
+            },
+            "non_current_assets": {
+              "properties": 829000000,
+              "land_and_improvements": 218000000,
+              "machinery_furniture_equipment": 2852000000,
+              "construction_in_progress": 737000000,
+              "leases": null,
+              "accumulated_depreciation": -1903000000,
+              "goodwill": 11037000000,
+              "investment_properties": null,
+              "financial_assets": null,
+              "intangible_assets": 2339000000,
+              "investments_and_advances": 266000000,
+              "other_non_current_assets": 1288000000,
+              "total_non_current_assets": 15358000000
+            },
+            "total_assets": 44187000000
+          },
+          "liabilities": {
+            "current_liabilities": {
+              "accounts_payable": 1783000000,
+              "accrued_expenses": 1605000000,
+              "short_term_debt": 144000000,
+              "deferred_revenue": 300000000,
+              "tax_payable": 132000000,
+              "pensions": null,
+              "other_current_liabilities": 371000000,
+              "total_current_liabilities": 4335000000
+            },
+            "non_current_liabilities": {
+              "long_term_provisions": null,
+              "long_term_debt": 11687000000,
+              "provision_for_risks_and_charges": 1057000000,
+              "deferred_liabilities": 245000000,
+              "derivative_product_liabilities": null,
+              "other_non_current_liabilities": 49000000,
+              "total_non_current_liabilities": 13240000000
+            },
+            "total_liabilities": 17575000000
+          },
+          "shareholders_equity": {
+            "common_stock": 3000000,
+            "retained_earnings": 16235000000,
+            "other_shareholders_equity": -11000000,
+            "total_shareholders_equity": 26612000000,
+            "additional_paid_in_capital": 10385000000,
+            "treasury_stock": 0,
+            "minority_interest": null
+          }
+        },
+        {
+          "date": "2021-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2021-01-31",
+          "year": 2021,
+          "assets": {
+            "current_assets": {
+              "cash": null,
+              "cash_equivalents": null,
+              "cash_and_cash_equivalents": 847000000,
+              "other_short_term_investments": 10714000000,
+              "accounts_receivable": 2429000000,
+              "other_receivables": null,
+              "inventory": 1826000000,
+              "prepaid_assets": 239000000,
+              "restricted_cash": null,
+              "assets_held_for_sale": null,
+              "hedging_assets": null,
+              "other_current_assets": 239000000,
+              "total_current_assets": 16055000000
+            },
+            "non_current_assets": {
+              "properties": 707000000,
+              "land_and_improvements": 218000000,
+              "machinery_furniture_equipment": 1985000000,
+              "construction_in_progress": 558000000,
+              "leases": 385000000,
+              "accumulated_depreciation": -1408000000,
+              "goodwill": 11123000000,
+              "investment_properties": null,
+              "financial_assets": null,
+              "intangible_assets": 2737000000,
+              "investments_and_advances": 144000000,
+              "other_non_current_assets": 1009000000,
+              "total_non_current_assets": 12736000000
+            },
+            "total_assets": 28791000000
+          },
+          "liabilities": {
+            "current_liabilities": {
+              "accounts_payable": 1149000000,
+              "accrued_expenses": 979000000,
+              "short_term_debt": 999000000,
+              "deferred_revenue": 288000000,
+              "tax_payable": 61000000,
+              "pensions": null,
+              "other_current_liabilities": 510000000,
+              "total_current_liabilities": 3925000000
+            },
+            "non_current_liabilities": {
+              "long_term_provisions": null,
+              "long_term_debt": 6598000000,
+              "provision_for_risks_and_charges": 836000000,
+              "deferred_liabilities": 241000000,
+              "derivative_product_liabilities": null,
+              "other_non_current_liabilities": 135000000,
+              "total_non_current_liabilities": 7973000000
+            },
+            "total_liabilities": 11898000000
+          },
+          "shareholders_equity": {
+            "common_stock": 3000000,
+            "retained_earnings": 18908000000,
+            "other_shareholders_equity": 19000000,
+            "total_shareholders_equity": 16893000000,
+            "additional_paid_in_capital": 8719000000,
+            "treasury_stock": 10756000000,
+            "minority_interest": null
+          }
+        },
+        {
+          "date": "2020-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2020-01-31",
+          "year": 2020,
+          "assets": {
+            "current_assets": {
+              "cash": null,
+              "cash_equivalents": null,
+              "cash_and_cash_equivalents": 10896000000,
+              "other_short_term_investments": 1000000,
+              "accounts_receivable": 1657000000,
+              "other_receivables": null,
+              "inventory": 979000000,
+              "prepaid_assets": 157000000,
+              "restricted_cash": null,
+              "assets_held_for_sale": null,
+              "hedging_assets": null,
+              "other_current_assets": 157000000,
+              "total_current_assets": 13690000000
+            },
+            "non_current_assets": {
+              "properties": 1150000000,
+              "land_and_improvements": 218000000,
+              "machinery_furniture_equipment": 982000000,
+              "construction_in_progress": 320000000,
+              "leases": 293000000,
+              "accumulated_depreciation": -1011000000,
+              "goodwill": 1285000000,
+              "investment_properties": null,
+              "financial_assets": null,
+              "intangible_assets": 49000000,
+              "investments_and_advances": 77000000,
+              "other_non_current_assets": 580000000,
+              "total_non_current_assets": 3625000000
+            },
+            "total_assets": 17315000000
+          },
+          "liabilities": {
+            "current_liabilities": {
+              "accounts_payable": 687000000,
+              "accrued_expenses": 775000000,
+              "short_term_debt": 91000000,
+              "deferred_revenue": 141000000,
+              "tax_payable": 61000000,
+              "pensions": null,
+              "other_current_liabilities": 29000000,
+              "total_current_liabilities": 1784000000
+            },
+            "non_current_liabilities": {
+              "long_term_provisions": null,
+              "long_term_debt": 2552000000,
+              "provision_for_risks_and_charges": 638000000,
+              "deferred_liabilities": 29000000,
+              "derivative_product_liabilities": null,
+              "other_non_current_liabilities": 26000000,
+              "total_non_current_liabilities": 3327000000
+            },
+            "total_liabilities": 5111000000
+          },
+          "shareholders_equity": {
+            "common_stock": 1000000,
+            "retained_earnings": 14971000000,
+            "other_shareholders_equity": 1000000,
+            "total_shareholders_equity": 12204000000,
+            "additional_paid_in_capital": 7045000000,
+            "treasury_stock": 9814000000,
+            "minority_interest": null
+          }
+        }
+      ],
+      "cashFlow": [
+        {
+          "date": "2025-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2025-01-31",
+          "year": 2025,
+          "operating_activities": {
+            "net_income": 72880000000,
+            "depreciation": 1864000000,
+            "deferred_taxes": -4477000000,
+            "stock_based_compensation": 4737000000,
+            "other_non_cash_items": -502000000,
+            "accounts_receivable": -13063000000,
+            "accounts_payable": 3357000000,
+            "other_assets_liabilities": -3560000000,
+            "operating_cash_flow": 61236000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -3236000000,
+            "net_intangibles": null,
+            "net_acquisitions": -1007000000,
+            "purchase_of_investments": -28061000000,
+            "sale_of_investments": 11861000000,
+            "other_investing_activity": 22000000,
+            "investing_cash_flow": -20421000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": null,
+            "long_term_debt_payments": -1250000000,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": -33706000000,
+            "common_dividends": -834000000,
+            "other_financing_charges": -7059000000,
+            "financing_cash_flow": -42849000000
+          },
+          "end_cash_position": 8589000000,
+          "income_tax_paid": 15118000000,
+          "interest_paid": 246000000,
+          "free_cash_flow": 60853000000
+        },
+        {
+          "date": "2024-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2024-01-31",
+          "year": 2024,
+          "operating_activities": {
+            "net_income": 29760000000,
+            "depreciation": 1508000000,
+            "deferred_taxes": -2489000000,
+            "stock_based_compensation": 3549000000,
+            "other_non_cash_items": -278000000,
+            "accounts_receivable": -6172000000,
+            "accounts_payable": 1531000000,
+            "other_assets_liabilities": 416000000,
+            "operating_cash_flow": 27825000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -1069000000,
+            "net_intangibles": null,
+            "net_acquisitions": -83000000,
+            "purchase_of_investments": -19196000000,
+            "sale_of_investments": 9782000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": -10566000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 0,
+            "long_term_debt_payments": -1250000000,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": -9533000000,
+            "common_dividends": -395000000,
+            "other_financing_charges": -2858000000,
+            "financing_cash_flow": -14036000000
+          },
+          "end_cash_position": 7280000000,
+          "income_tax_paid": 6549000000,
+          "interest_paid": 252000000,
+          "free_cash_flow": 27021000000
+        },
+        {
+          "date": "2023-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2023-01-31",
+          "year": 2023,
+          "operating_activities": {
+            "net_income": 4368000000,
+            "depreciation": 1544000000,
+            "deferred_taxes": -2164000000,
+            "stock_based_compensation": 2709000000,
+            "other_non_cash_items": 1346000000,
+            "accounts_receivable": 822000000,
+            "accounts_payable": -551000000,
+            "other_assets_liabilities": -2302000000,
+            "operating_cash_flow": 5772000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -1833000000,
+            "net_intangibles": null,
+            "net_acquisitions": -49000000,
+            "purchase_of_investments": -11974000000,
+            "sale_of_investments": 21231000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": 7375000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 0,
+            "long_term_debt_payments": 0,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": -10039000000,
+            "common_dividends": -398000000,
+            "other_financing_charges": -1535000000,
+            "financing_cash_flow": -11972000000
+          },
+          "end_cash_position": 3389000000,
+          "income_tax_paid": 1404000000,
+          "interest_paid": 254000000,
+          "free_cash_flow": 3808000000
+        },
+        {
+          "date": "2022-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2022-01-31",
+          "year": 2022,
+          "operating_activities": {
+            "net_income": 9752000000,
+            "depreciation": 1174000000,
+            "deferred_taxes": -406000000,
+            "stock_based_compensation": 2004000000,
+            "other_non_cash_items": 47000000,
+            "accounts_receivable": -2215000000,
+            "accounts_payable": 568000000,
+            "other_assets_liabilities": -582000000,
+            "operating_cash_flow": 10342000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -976000000,
+            "net_intangibles": null,
+            "net_acquisitions": -263000000,
+            "purchase_of_investments": -24811000000,
+            "sale_of_investments": 16220000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": -9830000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 4977000000,
+            "long_term_debt_payments": -1000000000,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": 0,
+            "common_dividends": -399000000,
+            "other_financing_charges": -1994000000,
+            "financing_cash_flow": 1584000000
+          },
+          "end_cash_position": 1990000000,
+          "income_tax_paid": 396000000,
+          "interest_paid": 246000000,
+          "free_cash_flow": 8132000000
+        },
+        {
+          "date": "2021-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2021-01-31",
+          "year": 2021,
+          "operating_activities": {
+            "net_income": 4332000000,
+            "depreciation": 1098000000,
+            "deferred_taxes": -282000000,
+            "stock_based_compensation": 1397000000,
+            "other_non_cash_items": -20000000,
+            "accounts_receivable": -550000000,
+            "accounts_payable": 312000000,
+            "other_assets_liabilities": -198000000,
+            "operating_cash_flow": 6089000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -1128000000,
+            "net_intangibles": null,
+            "net_acquisitions": -8524000000,
+            "purchase_of_investments": -19342000000,
+            "sale_of_investments": 9319000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": -19675000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 4968000000,
+            "long_term_debt_payments": 0,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": 0,
+            "common_dividends": -395000000,
+            "other_financing_charges": -963000000,
+            "financing_cash_flow": 3610000000
+          },
+          "end_cash_position": 847000000,
+          "income_tax_paid": 249000000,
+          "interest_paid": 138000000,
+          "free_cash_flow": 4694000000
+        },
+        {
+          "date": "2020-01-31",
+          "period": "annual",
+          "revenue": 0,
+          "grossProfit": 0,
+          "operatingIncome": 0,
+          "netIncome": 0,
+          "eps": 0,
+          "fiscal_date": "2020-01-31",
+          "year": 2020,
+          "operating_activities": {
+            "net_income": 2796000000,
+            "depreciation": 381000000,
+            "deferred_taxes": 18000000,
+            "stock_based_compensation": 844000000,
+            "other_non_cash_items": 4000000,
+            "accounts_receivable": -233000000,
+            "accounts_payable": 194000000,
+            "other_assets_liabilities": 653000000,
+            "operating_cash_flow": 4657000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -489000000,
+            "net_intangibles": null,
+            "net_acquisitions": -4000000,
+            "purchase_of_investments": -1471000000,
+            "sale_of_investments": 8109000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": 6145000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 0,
+            "long_term_debt_payments": 0,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": 0,
+            "common_dividends": -390000000,
+            "other_financing_charges": -551000000,
+            "financing_cash_flow": -941000000
+          },
+          "end_cash_position": 10896000000,
+          "income_tax_paid": 176000000,
+          "interest_paid": 54000000,
+          "free_cash_flow": 4272000000
+        }
+      ],
+      "keyMetrics": {
+        "marketCap": 0,
+        "peRatio": 0,
+        "pegRatio": 42.599514,
+        "priceToBook": 0,
+        "dividendYield": 0,
+        "roe": 1.15463,
+        "currentRatio": 3.388,
+        "debtToEquity": 12.267,
+        "grossMargin": 0.7498869705816992,
+        "operatingMargin": 0.6241752683969747,
+        "netMargin": 0.5584802715771244,
+        "revenueGrowthRate": 1.1420340763599357,
+        "earningsGrowthRate": 1.4489247311827957
+      },
+      "historicalPrices": [
+        {
+          "date": "2025-07-31",
+          "open": 182.9,
+          "high": 183.28,
+          "low": 180.4,
+          "close": 180.75,
+          "volume": 7978299,
+          "adjustedClose": 180.75
+        },
+        {
+          "date": "2025-07-30",
+          "open": 176.50999,
+          "high": 179.89,
+          "low": 176.039993,
+          "close": 179.27,
+          "volume": 172411000,
+          "adjustedClose": 179.27
+        },
+        {
+          "date": "2025-07-29",
+          "open": 177.96001,
+          "high": 179.38,
+          "low": 175.020004,
+          "close": 175.50999,
+          "volume": 154077500,
+          "adjustedClose": 175.50999
+        },
+        {
+          "date": "2025-07-28",
+          "open": 174.020004,
+          "high": 177,
+          "low": 173.97,
+          "close": 176.75,
+          "volume": 140023500,
+          "adjustedClose": 176.75
+        },
+        {
+          "date": "2025-07-25",
+          "open": 173.61,
+          "high": 174.72,
+          "low": 172.96001,
+          "close": 173.5,
+          "volume": 122316800,
+          "adjustedClose": 173.5
+        },
+        {
+          "date": "2025-07-24",
+          "open": 172.44,
+          "high": 173.83,
+          "low": 171.3,
+          "close": 173.74001,
+          "volume": 128984600,
+          "adjustedClose": 173.74001
+        },
+        {
+          "date": "2025-07-23",
+          "open": 169.53,
+          "high": 171.25999,
+          "low": 167.97,
+          "close": 170.78,
+          "volume": 154082200,
+          "adjustedClose": 170.78
+        },
+        {
+          "date": "2025-07-22",
+          "open": 171.34,
+          "high": 171.39,
+          "low": 164.58,
+          "close": 167.029999,
+          "volume": 193114300,
+          "adjustedClose": 167.029999
+        },
+        {
+          "date": "2025-07-21",
+          "open": 172.75,
+          "high": 173.38,
+          "low": 171,
+          "close": 171.38,
+          "volume": 123126100,
+          "adjustedClose": 171.38
+        },
+        {
+          "date": "2025-07-18",
+          "open": 173.64,
+          "high": 174.25,
+          "low": 171.25999,
+          "close": 172.41,
+          "volume": 146456400,
+          "adjustedClose": 172.41
+        },
+        {
+          "date": "2025-07-17",
+          "open": 172.020004,
+          "high": 174.16,
+          "low": 170.83,
+          "close": 173,
+          "volume": 160841100,
+          "adjustedClose": 173
+        },
+        {
+          "date": "2025-07-16",
+          "open": 171.059998,
+          "high": 171.75,
+          "low": 168.89999,
+          "close": 171.37,
+          "volume": 158831500,
+          "adjustedClose": 171.37
+        },
+        {
+          "date": "2025-07-15",
+          "open": 171.19,
+          "high": 172.39999,
+          "low": 169.2,
+          "close": 170.7,
+          "volume": 230627400,
+          "adjustedClose": 170.7
+        },
+        {
+          "date": "2025-07-14",
+          "open": 165.37,
+          "high": 165.49001,
+          "low": 162.020004,
+          "close": 164.070007,
+          "volume": 136975800,
+          "adjustedClose": 164.070007
+        },
+        {
+          "date": "2025-07-11",
+          "open": 163.72,
+          "high": 167.89,
+          "low": 163.47,
+          "close": 164.92,
+          "volume": 193633300,
+          "adjustedClose": 164.92
+        },
+        {
+          "date": "2025-07-10",
+          "open": 164.32001,
+          "high": 164.5,
+          "low": 161.61,
+          "close": 164.10001,
+          "volume": 167704100,
+          "adjustedClose": 164.10001
+        },
+        {
+          "date": "2025-07-09",
+          "open": 161.22,
+          "high": 164.42,
+          "low": 161.16,
+          "close": 162.88,
+          "volume": 183656400,
+          "adjustedClose": 162.88
+        },
+        {
+          "date": "2025-07-08",
+          "open": 159.33,
+          "high": 160.22,
+          "low": 158.39,
+          "close": 160,
+          "volume": 138133000,
+          "adjustedClose": 160
+        },
+        {
+          "date": "2025-07-07",
+          "open": 158.2,
+          "high": 159.31,
+          "low": 157.34,
+          "close": 158.24001,
+          "volume": 140139000,
+          "adjustedClose": 158.24001
+        },
+        {
+          "date": "2025-07-03",
+          "open": 158.37,
+          "high": 160.98,
+          "low": 157.77,
+          "close": 159.34,
+          "volume": 143716100,
+          "adjustedClose": 159.34
+        },
+        {
+          "date": "2025-07-02",
+          "open": 152.98,
+          "high": 157.60001,
+          "low": 152.97,
+          "close": 157.25,
+          "volume": 171224100,
+          "adjustedClose": 157.25
+        },
+        {
+          "date": "2025-07-01",
+          "open": 156.28999,
+          "high": 157.2,
+          "low": 151.49001,
+          "close": 153.3,
+          "volume": 213143600,
+          "adjustedClose": 153.3
+        },
+        {
+          "date": "2025-06-30",
+          "open": 158.39999,
+          "high": 158.66,
+          "low": 155.96001,
+          "close": 157.99001,
+          "volume": 194580300,
+          "adjustedClose": 157.99001
+        },
+        {
+          "date": "2025-06-27",
+          "open": 156.039993,
+          "high": 158.71001,
+          "low": 155.25999,
+          "close": 157.75,
+          "volume": 263234500,
+          "adjustedClose": 157.75
+        },
+        {
+          "date": "2025-06-26",
+          "open": 155.98,
+          "high": 156.72,
+          "low": 154,
+          "close": 155.020004,
+          "volume": 198145700,
+          "adjustedClose": 155.020004
+        },
+        {
+          "date": "2025-06-25",
+          "open": 149.27,
+          "high": 154.45,
+          "low": 149.25999,
+          "close": 154.31,
+          "volume": 269146500,
+          "adjustedClose": 154.31
+        },
+        {
+          "date": "2025-06-24",
+          "open": 145.56,
+          "high": 147.96001,
+          "low": 145.5,
+          "close": 147.89999,
+          "volume": 187566100,
+          "adjustedClose": 147.89999
+        },
+        {
+          "date": "2025-06-23",
+          "open": 142.5,
+          "high": 144.78,
+          "low": 142.029999,
+          "close": 144.17,
+          "volume": 154308900,
+          "adjustedClose": 144.17
+        },
+        {
+          "date": "2025-06-20",
+          "open": 145.45,
+          "high": 146.2,
+          "low": 142.64999,
+          "close": 143.85001,
+          "volume": 242956200,
+          "adjustedClose": 143.85001
+        },
+        {
+          "date": "2025-06-18",
+          "open": 144.0099945,
+          "high": 145.64999,
+          "low": 143.12,
+          "close": 145.48,
+          "volume": 161494100,
+          "adjustedClose": 145.48
+        },
+        {
+          "date": "2025-06-17",
+          "open": 144.49001,
+          "high": 145.22,
+          "low": 143.78,
+          "close": 144.12,
+          "volume": 139108000,
+          "adjustedClose": 144.12
+        },
+        {
+          "date": "2025-06-16",
+          "open": 143.35001,
+          "high": 146.17999,
+          "low": 143.2,
+          "close": 144.69,
+          "volume": 183133700,
+          "adjustedClose": 144.69
+        },
+        {
+          "date": "2025-06-13",
+          "open": 142.48,
+          "high": 143.58,
+          "low": 140.85001,
+          "close": 141.97,
+          "volume": 180820600,
+          "adjustedClose": 141.97
+        },
+        {
+          "date": "2025-06-12",
+          "open": 141.97,
+          "high": 145,
+          "low": 141.85001,
+          "close": 145,
+          "volume": 162365000,
+          "adjustedClose": 145
+        },
+        {
+          "date": "2025-06-11",
+          "open": 144.61,
+          "high": 144.99001,
+          "low": 141.87,
+          "close": 142.83,
+          "volume": 167694000,
+          "adjustedClose": 142.83
+        },
+        {
+          "date": "2025-06-10",
+          "open": 142.69,
+          "high": 144.28999,
+          "low": 141.53,
+          "close": 143.96001,
+          "volume": 155881900,
+          "adjustedClose": 143.96001
+        },
+        {
+          "date": "2025-06-09",
+          "open": 143.19,
+          "high": 145,
+          "low": 141.94,
+          "close": 142.63,
+          "volume": 185114500,
+          "adjustedClose": 142.63
+        },
+        {
+          "date": "2025-06-06",
+          "open": 142.50999,
+          "high": 143.27,
+          "low": 141.50999,
+          "close": 141.72,
+          "volume": 153986200,
+          "adjustedClose": 141.72
+        },
+        {
+          "date": "2025-06-05",
+          "open": 142.17,
+          "high": 144,
+          "low": 138.83,
+          "close": 139.99001,
+          "volume": 231397900,
+          "adjustedClose": 139.99001
+        },
+        {
+          "date": "2025-06-04",
+          "open": 142.19,
+          "high": 142.39,
+          "low": 139.53999,
+          "close": 141.92,
+          "volume": 167120800,
+          "adjustedClose": 141.92
+        },
+        {
+          "date": "2025-06-03",
+          "open": 138.78,
+          "high": 142,
+          "low": 137.95,
+          "close": 141.22,
+          "volume": 225578800,
+          "adjustedClose": 141.22
+        },
+        {
+          "date": "2025-06-02",
+          "open": 135.49001,
+          "high": 138.12,
+          "low": 135.39999,
+          "close": 137.38,
+          "volume": 197663100,
+          "adjustedClose": 137.38
+        },
+        {
+          "date": "2025-05-30",
+          "open": 138.72,
+          "high": 139.62,
+          "low": 132.92,
+          "close": 135.13,
+          "volume": 333170900,
+          "adjustedClose": 135.13
+        },
+        {
+          "date": "2025-05-29",
+          "open": 142.25,
+          "high": 143.49001,
+          "low": 137.91,
+          "close": 139.19,
+          "volume": 369241900,
+          "adjustedClose": 139.19
+        },
+        {
+          "date": "2025-05-28",
+          "open": 136.029999,
+          "high": 137.25,
+          "low": 134.78999,
+          "close": 134.81,
+          "volume": 304021100,
+          "adjustedClose": 134.81
+        },
+        {
+          "date": "2025-05-27",
+          "open": 134.14999,
+          "high": 135.66,
+          "low": 133.31,
+          "close": 135.5,
+          "volume": 192953600,
+          "adjustedClose": 135.5
+        },
+        {
+          "date": "2025-05-23",
+          "open": 130,
+          "high": 132.67999,
+          "low": 129.16,
+          "close": 131.28999,
+          "volume": 198821300,
+          "adjustedClose": 131.28999
+        },
+        {
+          "date": "2025-05-22",
+          "open": 132.23,
+          "high": 134.25,
+          "low": 131.55,
+          "close": 132.83,
+          "volume": 187344000,
+          "adjustedClose": 132.83
+        },
+        {
+          "date": "2025-05-21",
+          "open": 133.059998,
+          "high": 137.39999,
+          "low": 130.59,
+          "close": 131.8,
+          "volume": 270608700,
+          "adjustedClose": 131.8
+        },
+        {
+          "date": "2025-05-20",
+          "open": 134.28999,
+          "high": 134.58,
+          "low": 132.62,
+          "close": 134.38,
+          "volume": 161514200,
+          "adjustedClose": 134.38
+        },
+        {
+          "date": "2025-05-19",
+          "open": 132.39,
+          "high": 135.87,
+          "low": 132.39,
+          "close": 135.57001,
+          "volume": 193154600,
+          "adjustedClose": 135.57001
+        },
+        {
+          "date": "2025-05-16",
+          "open": 136.22,
+          "high": 136.35001,
+          "low": 133.46001,
+          "close": 135.39999,
+          "volume": 226542500,
+          "adjustedClose": 135.39999
+        },
+        {
+          "date": "2025-05-15",
+          "open": 134.28999,
+          "high": 136.3,
+          "low": 132.66,
+          "close": 134.83,
+          "volume": 226632600,
+          "adjustedClose": 134.83
+        },
+        {
+          "date": "2025-05-14",
+          "open": 133.2,
+          "high": 135.44,
+          "low": 131.67999,
+          "close": 135.34,
+          "volume": 281180800,
+          "adjustedClose": 135.34
+        },
+        {
+          "date": "2025-05-13",
+          "open": 124.98,
+          "high": 131.22,
+          "low": 124.47,
+          "close": 129.92999,
+          "volume": 330430100,
+          "adjustedClose": 129.92999
+        },
+        {
+          "date": "2025-05-12",
+          "open": 121.97,
+          "high": 123,
+          "low": 120.28,
+          "close": 123,
+          "volume": 225023300,
+          "adjustedClose": 123
+        },
+        {
+          "date": "2025-05-09",
+          "open": 117.35,
+          "high": 118.23,
+          "low": 115.21,
+          "close": 116.65,
+          "volume": 132972200,
+          "adjustedClose": 116.65
+        },
+        {
+          "date": "2025-05-08",
+          "open": 118.25,
+          "high": 118.68,
+          "low": 115.85,
+          "close": 117.37,
+          "volume": 198428100,
+          "adjustedClose": 117.37
+        },
+        {
+          "date": "2025-05-07",
+          "open": 113.050003,
+          "high": 117.68,
+          "low": 112.28,
+          "close": 117.059998,
+          "volume": 206758800,
+          "adjustedClose": 117.059998
+        },
+        {
+          "date": "2025-05-06",
+          "open": 111.48,
+          "high": 114.74,
+          "low": 110.82,
+          "close": 113.54,
+          "volume": 158525600,
+          "adjustedClose": 113.54
+        },
+        {
+          "date": "2025-05-05",
+          "open": 112.91,
+          "high": 114.67,
+          "low": 112.66,
+          "close": 113.82,
+          "volume": 133163200,
+          "adjustedClose": 113.82
+        },
+        {
+          "date": "2025-05-02",
+          "open": 114.18,
+          "high": 115.4,
+          "low": 113.37,
+          "close": 114.5,
+          "volume": 190194800,
+          "adjustedClose": 114.5
+        },
+        {
+          "date": "2025-05-01",
+          "open": 113.080002,
+          "high": 114.94,
+          "low": 111.3,
+          "close": 111.61,
+          "volume": 236121500,
+          "adjustedClose": 111.61
+        },
+        {
+          "date": "2025-04-30",
+          "open": 104.47,
+          "high": 108.92,
+          "low": 104.080002,
+          "close": 108.92,
+          "volume": 235044600,
+          "adjustedClose": 108.92
+        },
+        {
+          "date": "2025-04-29",
+          "open": 107.67,
+          "high": 110.2,
+          "low": 107.44,
+          "close": 109.019997,
+          "volume": 170444300,
+          "adjustedClose": 109.019997
+        },
+        {
+          "date": "2025-04-28",
+          "open": 109.69,
+          "high": 110.37,
+          "low": 106.019997,
+          "close": 108.73,
+          "volume": 207708500,
+          "adjustedClose": 108.73
+        },
+        {
+          "date": "2025-04-25",
+          "open": 106.85,
+          "high": 111.92,
+          "low": 105.73,
+          "close": 111.010002,
+          "volume": 251064700,
+          "adjustedClose": 111.010002
+        },
+        {
+          "date": "2025-04-24",
+          "open": 103.48,
+          "high": 106.54,
+          "low": 103.11,
+          "close": 106.43,
+          "volume": 220815000,
+          "adjustedClose": 106.43
+        },
+        {
+          "date": "2025-04-23",
+          "open": 104.52,
+          "high": 104.8,
+          "low": 102.019997,
+          "close": 102.71,
+          "volume": 247526000,
+          "adjustedClose": 102.71
+        },
+        {
+          "date": "2025-04-22",
+          "open": 98.78,
+          "high": 99.81,
+          "low": 97.28,
+          "close": 98.89,
+          "volume": 241004800,
+          "adjustedClose": 98.89
+        },
+        {
+          "date": "2025-04-21",
+          "open": 98.77,
+          "high": 99.44,
+          "low": 95.040001,
+          "close": 96.91,
+          "volume": 288501100,
+          "adjustedClose": 96.91
+        },
+        {
+          "date": "2025-04-17",
+          "open": 104.45,
+          "high": 104.47,
+          "low": 100.050003,
+          "close": 101.49,
+          "volume": 290833400,
+          "adjustedClose": 101.49
+        },
+        {
+          "date": "2025-04-16",
+          "open": 104.55,
+          "high": 106.79,
+          "low": 100.45,
+          "close": 104.49,
+          "volume": 397016900,
+          "adjustedClose": 104.49
+        },
+        {
+          "date": "2025-04-15",
+          "open": 110.97,
+          "high": 113.62,
+          "low": 110.5,
+          "close": 112.2,
+          "volume": 228966900,
+          "adjustedClose": 112.2
+        },
+        {
+          "date": "2025-04-14",
+          "open": 114.11,
+          "high": 114.29,
+          "low": 109.07,
+          "close": 110.71,
+          "volume": 264705000,
+          "adjustedClose": 110.71
+        },
+        {
+          "date": "2025-04-11",
+          "open": 108.5,
+          "high": 111.55,
+          "low": 107.48,
+          "close": 110.93,
+          "volume": 313417300,
+          "adjustedClose": 110.93
+        },
+        {
+          "date": "2025-04-10",
+          "open": 109.37,
+          "high": 110.86,
+          "low": 99.15,
+          "close": 107.57,
+          "volume": 437812400,
+          "adjustedClose": 107.57
+        },
+        {
+          "date": "2025-04-09",
+          "open": 98.89,
+          "high": 115.099998,
+          "low": 97.53,
+          "close": 114.33,
+          "volume": 612918300,
+          "adjustedClose": 114.33
+        },
+        {
+          "date": "2025-04-08",
+          "open": 103.81,
+          "high": 105.85,
+          "low": 94.46,
+          "close": 96.3,
+          "volume": 476243400,
+          "adjustedClose": 96.3
+        },
+        {
+          "date": "2025-04-07",
+          "open": 87.46,
+          "high": 101.75,
+          "low": 86.62,
+          "close": 97.64,
+          "volume": 611041300,
+          "adjustedClose": 97.64
+        },
+        {
+          "date": "2025-04-04",
+          "open": 98.91,
+          "high": 100.13,
+          "low": 92.11,
+          "close": 94.31,
+          "volume": 532273800,
+          "adjustedClose": 94.31
+        },
+        {
+          "date": "2025-04-03",
+          "open": 103.51,
+          "high": 105.63,
+          "low": 101.6,
+          "close": 101.8,
+          "volume": 338769400,
+          "adjustedClose": 101.8
+        },
+        {
+          "date": "2025-04-02",
+          "open": 107.29,
+          "high": 111.98,
+          "low": 106.79,
+          "close": 110.42,
+          "volume": 220601200,
+          "adjustedClose": 110.42
+        },
+        {
+          "date": "2025-04-01",
+          "open": 108.52,
+          "high": 110.2,
+          "low": 106.47,
+          "close": 110.15,
+          "volume": 222614000,
+          "adjustedClose": 110.15
+        },
+        {
+          "date": "2025-03-31",
+          "open": 105.13,
+          "high": 110.96,
+          "low": 103.65,
+          "close": 108.38,
+          "volume": 299212700,
+          "adjustedClose": 108.38
+        },
+        {
+          "date": "2025-03-28",
+          "open": 111.49,
+          "high": 112.87,
+          "low": 109.07,
+          "close": 109.67,
+          "volume": 229872500,
+          "adjustedClose": 109.67
+        },
+        {
+          "date": "2025-03-27",
+          "open": 111.35,
+          "high": 114.45,
+          "low": 110.66,
+          "close": 111.43,
+          "volume": 236902100,
+          "adjustedClose": 111.43
+        },
+        {
+          "date": "2025-03-26",
+          "open": 118.73,
+          "high": 118.84,
+          "low": 112.71,
+          "close": 113.76,
+          "volume": 293463300,
+          "adjustedClose": 113.76
+        },
+        {
+          "date": "2025-03-25",
+          "open": 120.55,
+          "high": 121.29,
+          "low": 118.92,
+          "close": 120.69,
+          "volume": 167447200,
+          "adjustedClose": 120.69
+        },
+        {
+          "date": "2025-03-24",
+          "open": 119.88,
+          "high": 122.22,
+          "low": 119.34,
+          "close": 121.41,
+          "volume": 228452500,
+          "adjustedClose": 121.41
+        },
+        {
+          "date": "2025-03-21",
+          "open": 116.94,
+          "high": 117.99,
+          "low": 115.42,
+          "close": 117.7,
+          "volume": 266498500,
+          "adjustedClose": 117.7
+        },
+        {
+          "date": "2025-03-20",
+          "open": 116.55,
+          "high": 120.2,
+          "low": 116.47,
+          "close": 118.53,
+          "volume": 248829700,
+          "adjustedClose": 118.53
+        },
+        {
+          "date": "2025-03-19",
+          "open": 117.27,
+          "high": 120.45,
+          "low": 115.68,
+          "close": 117.52,
+          "volume": 273426200,
+          "adjustedClose": 117.52
+        },
+        {
+          "date": "2025-03-18",
+          "open": 118,
+          "high": 119.019997,
+          "low": 114.54,
+          "close": 115.43,
+          "volume": 299686900,
+          "adjustedClose": 115.43
+        },
+        {
+          "date": "2025-03-17",
+          "open": 122.74,
+          "high": 122.89,
+          "low": 118.029999,
+          "close": 119.53,
+          "volume": 255501500,
+          "adjustedClose": 119.53
+        },
+        {
+          "date": "2025-03-14",
+          "open": 118.61,
+          "high": 121.88,
+          "low": 118.15,
+          "close": 121.67,
+          "volume": 277593500,
+          "adjustedClose": 121.67
+        },
+        {
+          "date": "2025-03-13",
+          "open": 117.029999,
+          "high": 117.76,
+          "low": 113.79,
+          "close": 115.58,
+          "volume": 299033100,
+          "adjustedClose": 115.58
+        },
+        {
+          "date": "2025-03-12",
+          "open": 114.12,
+          "high": 116.76,
+          "low": 112.88,
+          "close": 115.74,
+          "volume": 323857500,
+          "adjustedClose": 115.74
+        },
+        {
+          "date": "2025-03-11",
+          "open": 106.99,
+          "high": 112.24,
+          "low": 104.77,
+          "close": 108.76,
+          "volume": 354865700,
+          "adjustedClose": 108.76
+        },
+        {
+          "date": "2025-03-10",
+          "open": 109.9,
+          "high": 111.85,
+          "low": 105.46,
+          "close": 106.98,
+          "volume": 366487400,
+          "adjustedClose": 106.98
+        },
+        {
+          "date": "2025-03-07",
+          "open": 111.25,
+          "high": 113.48,
+          "low": 107.56,
+          "close": 112.69,
+          "volume": 341755500,
+          "adjustedClose": 112.69
+        },
+        {
+          "date": "2025-03-06",
+          "open": 113.53,
+          "high": 115.35,
+          "low": 110.22,
+          "close": 110.57,
+          "volume": 321181900,
+          "adjustedClose": 110.57
+        },
+        {
+          "date": "2025-03-05",
+          "open": 117.58,
+          "high": 118.28,
+          "low": 114.51,
+          "close": 117.3,
+          "volume": 284337900,
+          "adjustedClose": 117.3
+        },
+        {
+          "date": "2025-03-04",
+          "open": 110.65,
+          "high": 119.31,
+          "low": 110.11,
+          "close": 115.99,
+          "volume": 398163300,
+          "adjustedClose": 115.99
+        },
+        {
+          "date": "2025-03-03",
+          "open": 123.51,
+          "high": 123.7,
+          "low": 112.28,
+          "close": 114.059998,
+          "volume": 411381400,
+          "adjustedClose": 114.059998
+        },
+        {
+          "date": "2025-02-28",
+          "open": 118.019997,
+          "high": 125.089996,
+          "low": 116.4,
+          "close": 124.92,
+          "volume": 389091100,
+          "adjustedClose": 124.92
+        },
+        {
+          "date": "2025-02-27",
+          "open": 135,
+          "high": 135.0099945,
+          "low": 120.010002,
+          "close": 120.15,
+          "volume": 443175800,
+          "adjustedClose": 120.15
+        },
+        {
+          "date": "2025-02-26",
+          "open": 129.99001,
+          "high": 133.73,
+          "low": 128.49001,
+          "close": 131.28,
+          "volume": 322553800,
+          "adjustedClose": 131.28
+        },
+        {
+          "date": "2025-02-25",
+          "open": 129.98,
+          "high": 130.2,
+          "low": 124.44,
+          "close": 126.63,
+          "volume": 271428700,
+          "adjustedClose": 126.63
+        },
+        {
+          "date": "2025-02-24",
+          "open": 136.56,
+          "high": 138.59,
+          "low": 130.080002,
+          "close": 130.28,
+          "volume": 251381100,
+          "adjustedClose": 130.28
+        },
+        {
+          "date": "2025-02-21",
+          "open": 140.039993,
+          "high": 141.46001,
+          "low": 134.029999,
+          "close": 134.42999,
+          "volume": 228217600,
+          "adjustedClose": 134.42999
+        },
+        {
+          "date": "2025-02-20",
+          "open": 140.029999,
+          "high": 140.66,
+          "low": 136.78999,
+          "close": 140.11,
+          "volume": 143903600,
+          "adjustedClose": 140.11
+        },
+        {
+          "date": "2025-02-19",
+          "open": 139.50999,
+          "high": 141.36,
+          "low": 137.22,
+          "close": 139.23,
+          "volume": 167536000,
+          "adjustedClose": 139.23
+        },
+        {
+          "date": "2025-02-18",
+          "open": 141.27,
+          "high": 143.44,
+          "low": 137.92999,
+          "close": 139.39999,
+          "volume": 219176600,
+          "adjustedClose": 139.39999
+        },
+        {
+          "date": "2025-02-14",
+          "open": 136.48,
+          "high": 139.25,
+          "low": 135.5,
+          "close": 138.85001,
+          "volume": 195479600,
+          "adjustedClose": 138.85001
+        },
+        {
+          "date": "2025-02-13",
+          "open": 131.56,
+          "high": 136.5,
+          "low": 131.17,
+          "close": 135.28999,
+          "volume": 197430000,
+          "adjustedClose": 135.28999
+        },
+        {
+          "date": "2025-02-12",
+          "open": 130.020004,
+          "high": 132.24001,
+          "low": 129.080002,
+          "close": 131.14,
+          "volume": 160278600,
+          "adjustedClose": 131.14
+        },
+        {
+          "date": "2025-02-11",
+          "open": 132.58,
+          "high": 134.48,
+          "low": 131.020004,
+          "close": 132.8,
+          "volume": 178902400,
+          "adjustedClose": 132.8
+        },
+        {
+          "date": "2025-02-10",
+          "open": 130.089996,
+          "high": 135,
+          "low": 129.96001,
+          "close": 133.57001,
+          "volume": 216989100,
+          "adjustedClose": 133.57001
+        },
+        {
+          "date": "2025-02-07",
+          "open": 129.22,
+          "high": 130.37,
+          "low": 125,
+          "close": 129.84,
+          "volume": 228186300,
+          "adjustedClose": 129.84
+        },
+        {
+          "date": "2025-02-06",
+          "open": 127.42,
+          "high": 128.77,
+          "low": 125.21,
+          "close": 128.67999,
+          "volume": 251483600,
+          "adjustedClose": 128.67999
+        },
+        {
+          "date": "2025-02-05",
+          "open": 121.76,
+          "high": 125,
+          "low": 120.76,
+          "close": 124.83,
+          "volume": 262230800,
+          "adjustedClose": 124.83
+        },
+        {
+          "date": "2025-02-04",
+          "open": 116.96,
+          "high": 121.2,
+          "low": 116.7,
+          "close": 118.65,
+          "volume": 256550000,
+          "adjustedClose": 118.65
+        },
+        {
+          "date": "2025-02-03",
+          "open": 114.75,
+          "high": 118.57,
+          "low": 113.010002,
+          "close": 116.66,
+          "volume": 371235700,
+          "adjustedClose": 116.66
+        },
+        {
+          "date": "2025-01-31",
+          "open": 123.78,
+          "high": 127.85,
+          "low": 119.19,
+          "close": 120.07,
+          "volume": 390372900,
+          "adjustedClose": 120.07
+        },
+        {
+          "date": "2025-01-30",
+          "open": 123.099998,
+          "high": 125,
+          "low": 118.099998,
+          "close": 124.65,
+          "volume": 392925500,
+          "adjustedClose": 124.65
+        },
+        {
+          "date": "2025-01-29",
+          "open": 126.5,
+          "high": 126.89,
+          "low": 120.050003,
+          "close": 123.7,
+          "volume": 467120600,
+          "adjustedClose": 123.7
+        },
+        {
+          "date": "2025-01-28",
+          "open": 121.81,
+          "high": 129,
+          "low": 116.25,
+          "close": 128.99001,
+          "volume": 579666400,
+          "adjustedClose": 128.99001
+        },
+        {
+          "date": "2025-01-27",
+          "open": 124.8,
+          "high": 128.39999,
+          "low": 116.7,
+          "close": 118.42,
+          "volume": 818830900,
+          "adjustedClose": 118.42
+        },
+        {
+          "date": "2025-01-24",
+          "open": 148.37,
+          "high": 148.97,
+          "low": 141.88,
+          "close": 142.62,
+          "volume": 234657600,
+          "adjustedClose": 142.62
+        },
+        {
+          "date": "2025-01-23",
+          "open": 145.050003,
+          "high": 147.23,
+          "low": 143.72,
+          "close": 147.22,
+          "volume": 155915500,
+          "adjustedClose": 147.22
+        },
+        {
+          "date": "2025-01-22",
+          "open": 144.66,
+          "high": 147.78999,
+          "low": 143.67,
+          "close": 147.070007,
+          "volume": 237651400,
+          "adjustedClose": 147.070007
+        },
+        {
+          "date": "2025-01-21",
+          "open": 139.16,
+          "high": 141.83,
+          "low": 137.089996,
+          "close": 140.83,
+          "volume": 197749000,
+          "adjustedClose": 140.83
+        },
+        {
+          "date": "2025-01-17",
+          "open": 136.69,
+          "high": 138.5,
+          "low": 135.46001,
+          "close": 137.71001,
+          "volume": 201188800,
+          "adjustedClose": 137.71001
+        },
+        {
+          "date": "2025-01-16",
+          "open": 138.64,
+          "high": 138.75,
+          "low": 133.49001,
+          "close": 133.57001,
+          "volume": 209235600,
+          "adjustedClose": 133.57001
+        },
+        {
+          "date": "2025-01-15",
+          "open": 133.64999,
+          "high": 136.45,
+          "low": 131.28999,
+          "close": 136.24001,
+          "volume": 185217300,
+          "adjustedClose": 136.24001
+        },
+        {
+          "date": "2025-01-14",
+          "open": 136.050003,
+          "high": 136.38,
+          "low": 130.050003,
+          "close": 131.75999,
+          "volume": 195590500,
+          "adjustedClose": 131.75999
+        },
+        {
+          "date": "2025-01-13",
+          "open": 129.99001,
+          "high": 133.49001,
+          "low": 129.50999,
+          "close": 133.23,
+          "volume": 204808900,
+          "adjustedClose": 133.23
+        },
+        {
+          "date": "2025-01-10",
+          "open": 137.45,
+          "high": 139.92,
+          "low": 134.22,
+          "close": 135.91,
+          "volume": 207602500,
+          "adjustedClose": 135.91
+        },
+        {
+          "date": "2025-01-08",
+          "open": 142.58,
+          "high": 143.95,
+          "low": 137.56,
+          "close": 140.11,
+          "volume": 227349900,
+          "adjustedClose": 140.11
+        },
+        {
+          "date": "2025-01-07",
+          "open": 153.029999,
+          "high": 153.13,
+          "low": 140.0099945,
+          "close": 140.14,
+          "volume": 351782200,
+          "adjustedClose": 140.14
+        },
+        {
+          "date": "2025-01-06",
+          "open": 148.59,
+          "high": 152.16,
+          "low": 147.82001,
+          "close": 149.42999,
+          "volume": 265377400,
+          "adjustedClose": 149.42999
+        },
+        {
+          "date": "2025-01-03",
+          "open": 140.0099945,
+          "high": 144.89999,
+          "low": 139.73,
+          "close": 144.47,
+          "volume": 229322500,
+          "adjustedClose": 144.47
+        },
+        {
+          "date": "2025-01-02",
+          "open": 136,
+          "high": 138.88,
+          "low": 134.63,
+          "close": 138.31,
+          "volume": 198247200,
+          "adjustedClose": 138.31
+        },
+        {
+          "date": "2024-12-31",
+          "open": 138.029999,
+          "high": 138.070007,
+          "low": 133.83,
+          "close": 134.28999,
+          "volume": 155659200,
+          "adjustedClose": 134.28999
+        },
+        {
+          "date": "2024-12-30",
+          "open": 134.83,
+          "high": 140.27,
+          "low": 134.020004,
+          "close": 137.49001,
+          "volume": 167734700,
+          "adjustedClose": 137.49001
+        },
+        {
+          "date": "2024-12-27",
+          "open": 138.55,
+          "high": 139.020004,
+          "low": 134.71001,
+          "close": 137.0099945,
+          "volume": 170582600,
+          "adjustedClose": 137.0099945
+        },
+        {
+          "date": "2024-12-26",
+          "open": 139.7,
+          "high": 140.85001,
+          "low": 137.73,
+          "close": 139.92999,
+          "volume": 116205600,
+          "adjustedClose": 139.92999
+        },
+        {
+          "date": "2024-12-24",
+          "open": 140,
+          "high": 141.89999,
+          "low": 138.64999,
+          "close": 140.22,
+          "volume": 105157000,
+          "adjustedClose": 140.22
+        },
+        {
+          "date": "2024-12-23",
+          "open": 136.28,
+          "high": 139.78999,
+          "low": 135.12,
+          "close": 139.67,
+          "volume": 176053500,
+          "adjustedClose": 139.67
+        },
+        {
+          "date": "2024-12-20",
+          "open": 129.81,
+          "high": 135.28,
+          "low": 128.22,
+          "close": 134.7,
+          "volume": 306528600,
+          "adjustedClose": 134.7
+        },
+        {
+          "date": "2024-12-19",
+          "open": 131.75999,
+          "high": 134.029999,
+          "low": 129.55,
+          "close": 130.67999,
+          "volume": 209719200,
+          "adjustedClose": 130.67999
+        },
+        {
+          "date": "2024-12-18",
+          "open": 133.86,
+          "high": 136.7,
+          "low": 128.28,
+          "close": 128.91,
+          "volume": 277444500,
+          "adjustedClose": 128.91
+        },
+        {
+          "date": "2024-12-17",
+          "open": 129.089996,
+          "high": 131.59,
+          "low": 126.86,
+          "close": 130.39,
+          "volume": 259410300,
+          "adjustedClose": 130.39
+        },
+        {
+          "date": "2024-12-16",
+          "open": 134.17999,
+          "high": 134.39999,
+          "low": 130.42,
+          "close": 132,
+          "volume": 237951100,
+          "adjustedClose": 132
+        },
+        {
+          "date": "2024-12-13",
+          "open": 138.94,
+          "high": 139.60001,
+          "low": 132.53999,
+          "close": 134.25,
+          "volume": 231514900,
+          "adjustedClose": 134.25
+        },
+        {
+          "date": "2024-12-12",
+          "open": 137.080002,
+          "high": 138.44,
+          "low": 135.8,
+          "close": 137.34,
+          "volume": 159211400,
+          "adjustedClose": 137.34
+        },
+        {
+          "date": "2024-12-11",
+          "open": 137.36,
+          "high": 140.17,
+          "low": 135.21001,
+          "close": 139.31,
+          "volume": 184905200,
+          "adjustedClose": 139.31
+        },
+        {
+          "date": "2024-12-10",
+          "open": 139.0099945,
+          "high": 141.82001,
+          "low": 133.78999,
+          "close": 135.070007,
+          "volume": 210020900,
+          "adjustedClose": 135.070007
+        },
+        {
+          "date": "2024-12-09",
+          "open": 138.97,
+          "high": 139.95,
+          "low": 137.13,
+          "close": 138.81,
+          "volume": 189308600,
+          "adjustedClose": 138.81
+        },
+        {
+          "date": "2024-12-06",
+          "open": 144.60001,
+          "high": 145.7,
+          "low": 141.31,
+          "close": 142.44,
+          "volume": 188505600,
+          "adjustedClose": 142.44
+        },
+        {
+          "date": "2024-12-05",
+          "open": 145.11,
+          "high": 146.53999,
+          "low": 143.95,
+          "close": 145.059998,
+          "volume": 172621200,
+          "adjustedClose": 145.059998
+        },
+        {
+          "date": "2024-12-04",
+          "open": 142,
+          "high": 145.78999,
+          "low": 140.28999,
+          "close": 145.14,
+          "volume": 231224300,
+          "adjustedClose": 145.14
+        },
+        {
+          "date": "2024-12-03",
+          "open": 138.25999,
+          "high": 140.53999,
+          "low": 137.95,
+          "close": 140.25999,
+          "volume": 164414000,
+          "adjustedClose": 140.25999
+        },
+        {
+          "date": "2024-12-02",
+          "open": 138.83,
+          "high": 140.45,
+          "low": 137.82001,
+          "close": 138.63,
+          "volume": 171682800,
+          "adjustedClose": 138.63
+        },
+        {
+          "date": "2024-11-29",
+          "open": 136.78,
+          "high": 139.35001,
+          "low": 136.050003,
+          "close": 138.25,
+          "volume": 141863200,
+          "adjustedClose": 138.25
+        },
+        {
+          "date": "2024-11-27",
+          "open": 135.0099945,
+          "high": 137.22,
+          "low": 131.8,
+          "close": 135.34,
+          "volume": 226370900,
+          "adjustedClose": 135.34
+        },
+        {
+          "date": "2024-11-26",
+          "open": 137.7,
+          "high": 139.3,
+          "low": 135.67,
+          "close": 136.92,
+          "volume": 190287700,
+          "adjustedClose": 136.92
+        },
+        {
+          "date": "2024-11-25",
+          "open": 141.99001,
+          "high": 142.050003,
+          "low": 135.82001,
+          "close": 136.020004,
+          "volume": 344941900,
+          "adjustedClose": 136.020004
+        },
+        {
+          "date": "2024-11-22",
+          "open": 145.92999,
+          "high": 147.16,
+          "low": 141.10001,
+          "close": 141.95,
+          "volume": 236406200,
+          "adjustedClose": 141.95
+        },
+        {
+          "date": "2024-11-21",
+          "open": 149.35001,
+          "high": 152.89,
+          "low": 140.7,
+          "close": 146.67,
+          "volume": 400946600,
+          "adjustedClose": 146.67
+        },
+        {
+          "date": "2024-11-20",
+          "open": 147.41,
+          "high": 147.56,
+          "low": 142.73,
+          "close": 145.89,
+          "volume": 309871700,
+          "adjustedClose": 145.89
+        },
+        {
+          "date": "2024-11-19",
+          "open": 141.32001,
+          "high": 147.13,
+          "low": 140.99001,
+          "close": 147.0099945,
+          "volume": 227834900,
+          "adjustedClose": 147.0099945
+        },
+        {
+          "date": "2024-11-18",
+          "open": 139.5,
+          "high": 141.55,
+          "low": 137.14999,
+          "close": 140.14999,
+          "volume": 221866000,
+          "adjustedClose": 140.14999
+        },
+        {
+          "date": "2024-11-15",
+          "open": 144.87,
+          "high": 145.24001,
+          "low": 140.080002,
+          "close": 141.98,
+          "volume": 250132900,
+          "adjustedClose": 141.98
+        },
+        {
+          "date": "2024-11-14",
+          "open": 147.64,
+          "high": 149,
+          "low": 145.55,
+          "close": 146.75999,
+          "volume": 194463300,
+          "adjustedClose": 146.75999
+        },
+        {
+          "date": "2024-11-13",
+          "open": 149.070007,
+          "high": 149.33,
+          "low": 145.89999,
+          "close": 146.27,
+          "volume": 191903300,
+          "adjustedClose": 146.27
+        },
+        {
+          "date": "2024-11-12",
+          "open": 146.78,
+          "high": 149.64999,
+          "low": 146.0099945,
+          "close": 148.28999,
+          "volume": 198634700,
+          "adjustedClose": 148.28999
+        },
+        {
+          "date": "2024-11-11",
+          "open": 148.67999,
+          "high": 148.85001,
+          "low": 143.57001,
+          "close": 145.25999,
+          "volume": 182325600,
+          "adjustedClose": 145.25999
+        },
+        {
+          "date": "2024-11-08",
+          "open": 148.77,
+          "high": 149.77,
+          "low": 146.25999,
+          "close": 147.63,
+          "volume": 175665800,
+          "adjustedClose": 147.63
+        },
+        {
+          "date": "2024-11-07",
+          "open": 146.39,
+          "high": 148.92999,
+          "low": 146.17,
+          "close": 148.88,
+          "volume": 207323300,
+          "adjustedClose": 148.88
+        },
+        {
+          "date": "2024-11-06",
+          "open": 142.96001,
+          "high": 146.49001,
+          "low": 141.96001,
+          "close": 145.61,
+          "volume": 242043900,
+          "adjustedClose": 145.61
+        },
+        {
+          "date": "2024-11-05",
+          "open": 137.45,
+          "high": 140.37,
+          "low": 137.33,
+          "close": 139.91,
+          "volume": 160537400,
+          "adjustedClose": 139.91
+        },
+        {
+          "date": "2024-11-04",
+          "open": 137.21001,
+          "high": 138.96001,
+          "low": 135.57001,
+          "close": 136.050003,
+          "volume": 187528200,
+          "adjustedClose": 136.050003
+        },
+        {
+          "date": "2024-11-01",
+          "open": 134.7,
+          "high": 137.31,
+          "low": 134.57001,
+          "close": 135.39999,
+          "volume": 207127800,
+          "adjustedClose": 135.39999
+        },
+        {
+          "date": "2024-10-31",
+          "open": 137.60001,
+          "high": 137.61,
+          "low": 132.11,
+          "close": 132.75999,
+          "volume": 270039600,
+          "adjustedClose": 132.75999
+        },
+        {
+          "date": "2024-10-30",
+          "open": 139.53999,
+          "high": 140.33,
+          "low": 136.81,
+          "close": 139.34,
+          "volume": 179418100,
+          "adjustedClose": 139.34
+        },
+        {
+          "date": "2024-10-29",
+          "open": 140.28999,
+          "high": 142.25999,
+          "low": 138.89999,
+          "close": 141.25,
+          "volume": 157593600,
+          "adjustedClose": 141.25
+        },
+        {
+          "date": "2024-10-28",
+          "open": 143,
+          "high": 143.14,
+          "low": 140.050003,
+          "close": 140.52,
+          "volume": 173586700,
+          "adjustedClose": 140.52
+        },
+        {
+          "date": "2024-10-25",
+          "open": 140.92999,
+          "high": 144.13,
+          "low": 140.8,
+          "close": 141.53999,
+          "volume": 205122100,
+          "adjustedClose": 141.53999
+        },
+        {
+          "date": "2024-10-24",
+          "open": 140.82001,
+          "high": 141.35001,
+          "low": 138.46001,
+          "close": 140.41,
+          "volume": 172354900,
+          "adjustedClose": 140.41
+        },
+        {
+          "date": "2024-10-23",
+          "open": 142.029999,
+          "high": 142.42999,
+          "low": 137.46001,
+          "close": 139.56,
+          "volume": 285930000,
+          "adjustedClose": 139.56
+        },
+        {
+          "date": "2024-10-22",
+          "open": 142.91,
+          "high": 144.42,
+          "low": 141.78,
+          "close": 143.59,
+          "volume": 226311600,
+          "adjustedClose": 143.59
+        },
+        {
+          "date": "2024-10-21",
+          "open": 138.13,
+          "high": 143.71001,
+          "low": 138,
+          "close": 143.71001,
+          "volume": 264554500,
+          "adjustedClose": 143.71001
+        },
+        {
+          "date": "2024-10-18",
+          "open": 138.67,
+          "high": 138.89999,
+          "low": 137.28,
+          "close": 138,
+          "volume": 176090200,
+          "adjustedClose": 138
+        },
+        {
+          "date": "2024-10-17",
+          "open": 139.34,
+          "high": 140.89,
+          "low": 136.87,
+          "close": 136.92999,
+          "volume": 306435900,
+          "adjustedClose": 136.92999
+        },
+        {
+          "date": "2024-10-16",
+          "open": 133.98,
+          "high": 136.62,
+          "low": 131.58,
+          "close": 135.72,
+          "volume": 264879700,
+          "adjustedClose": 135.72
+        },
+        {
+          "date": "2024-10-15",
+          "open": 137.87,
+          "high": 138.57001,
+          "low": 128.74001,
+          "close": 131.60001,
+          "volume": 377831000,
+          "adjustedClose": 131.60001
+        },
+        {
+          "date": "2024-10-14",
+          "open": 136.47,
+          "high": 139.60001,
+          "low": 136.3,
+          "close": 138.070007,
+          "volume": 232347700,
+          "adjustedClose": 138.070007
+        },
+        {
+          "date": "2024-10-11",
+          "open": 134.0099945,
+          "high": 135.78,
+          "low": 133.66,
+          "close": 134.8,
+          "volume": 170209500,
+          "adjustedClose": 134.8
+        },
+        {
+          "date": "2024-10-10",
+          "open": 131.91,
+          "high": 135,
+          "low": 131,
+          "close": 134.81,
+          "volume": 242311300,
+          "adjustedClose": 134.81
+        },
+        {
+          "date": "2024-10-09",
+          "open": 134.11,
+          "high": 134.52,
+          "low": 131.38,
+          "close": 132.64999,
+          "volume": 246191600,
+          "adjustedClose": 132.64999
+        },
+        {
+          "date": "2024-10-08",
+          "open": 130.25999,
+          "high": 133.48,
+          "low": 129.42,
+          "close": 132.89,
+          "volume": 285722500,
+          "adjustedClose": 132.89
+        },
+        {
+          "date": "2024-10-07",
+          "open": 124.99,
+          "high": 130.64,
+          "low": 124.95,
+          "close": 127.72,
+          "volume": 346250200,
+          "adjustedClose": 127.72
+        },
+        {
+          "date": "2024-10-04",
+          "open": 124.94,
+          "high": 125.040001,
+          "low": 121.83,
+          "close": 124.92,
+          "volume": 243678100,
+          "adjustedClose": 124.92
+        },
+        {
+          "date": "2024-10-03",
+          "open": 120.92,
+          "high": 124.36,
+          "low": 120.34,
+          "close": 122.85,
+          "volume": 277118000,
+          "adjustedClose": 122.85
+        },
+        {
+          "date": "2024-10-02",
+          "open": 116.44,
+          "high": 119.38,
+          "low": 115.14,
+          "close": 118.85,
+          "volume": 221845900,
+          "adjustedClose": 118.85
+        },
+        {
+          "date": "2024-10-01",
+          "open": 121.77,
+          "high": 122.44,
+          "low": 115.79,
+          "close": 117,
+          "volume": 302094500,
+          "adjustedClose": 117
+        },
+        {
+          "date": "2024-09-30",
+          "open": 118.31,
+          "high": 121.5,
+          "low": 118.15,
+          "close": 121.44,
+          "volume": 226553700,
+          "adjustedClose": 121.44
+        },
+        {
+          "date": "2024-09-27",
+          "open": 123.97,
+          "high": 124.029999,
+          "low": 119.26,
+          "close": 121.4,
+          "volume": 271009200,
+          "adjustedClose": 121.4
+        },
+        {
+          "date": "2024-09-26",
+          "open": 126.8,
+          "high": 127.67,
+          "low": 121.8,
+          "close": 124.040001,
+          "volume": 302582900,
+          "adjustedClose": 124.040001
+        },
+        {
+          "date": "2024-09-25",
+          "open": 122.019997,
+          "high": 124.94,
+          "low": 121.61,
+          "close": 123.51,
+          "volume": 284692900,
+          "adjustedClose": 123.51
+        },
+        {
+          "date": "2024-09-24",
+          "open": 116.52,
+          "high": 121.8,
+          "low": 115.38,
+          "close": 120.87,
+          "volume": 354966800,
+          "adjustedClose": 120.87
+        },
+        {
+          "date": "2024-09-23",
+          "open": 116.55,
+          "high": 116.99,
+          "low": 114.86,
+          "close": 116.26,
+          "volume": 206228500,
+          "adjustedClose": 116.26
+        },
+        {
+          "date": "2024-09-20",
+          "open": 117.059998,
+          "high": 118.62,
+          "low": 115.39,
+          "close": 116,
+          "volume": 382462400,
+          "adjustedClose": 116
+        },
+        {
+          "date": "2024-09-19",
+          "open": 117.35,
+          "high": 119.66,
+          "low": 117.25,
+          "close": 117.87,
+          "volume": 293506400,
+          "adjustedClose": 117.87
+        },
+        {
+          "date": "2024-09-18",
+          "open": 115.89,
+          "high": 117.7,
+          "low": 113.22,
+          "close": 113.37,
+          "volume": 310318900,
+          "adjustedClose": 113.37
+        },
+        {
+          "date": "2024-09-17",
+          "open": 118.17,
+          "high": 118.8,
+          "low": 114.83,
+          "close": 115.59,
+          "volume": 231925900,
+          "adjustedClose": 115.59
+        },
+        {
+          "date": "2024-09-16",
+          "open": 116.79,
+          "high": 118.18,
+          "low": 114.36,
+          "close": 116.78,
+          "volume": 248772300,
+          "adjustedClose": 116.78
+        },
+        {
+          "date": "2024-09-13",
+          "open": 119.080002,
+          "high": 119.96,
+          "low": 117.6,
+          "close": 119.099998,
+          "volume": 238358300,
+          "adjustedClose": 119.099998
+        },
+        {
+          "date": "2024-09-12",
+          "open": 116.84,
+          "high": 120.79,
+          "low": 115.38,
+          "close": 119.14,
+          "volume": 367100500,
+          "adjustedClose": 119.14
+        },
+        {
+          "date": "2024-09-11",
+          "open": 109.39,
+          "high": 117.19,
+          "low": 107.42,
+          "close": 116.91,
+          "volume": 441422400,
+          "adjustedClose": 116.91
+        },
+        {
+          "date": "2024-09-10",
+          "open": 107.81,
+          "high": 109.4,
+          "low": 104.95,
+          "close": 108.099998,
+          "volume": 268283700,
+          "adjustedClose": 108.099998
+        },
+        {
+          "date": "2024-09-09",
+          "open": 104.88,
+          "high": 106.55,
+          "low": 103.69,
+          "close": 106.47,
+          "volume": 273912000,
+          "adjustedClose": 106.47
+        },
+        {
+          "date": "2024-09-06",
+          "open": 108.040001,
+          "high": 108.15,
+          "low": 100.95,
+          "close": 102.83,
+          "volume": 413638100,
+          "adjustedClose": 102.83
+        },
+        {
+          "date": "2024-09-05",
+          "open": 104.99,
+          "high": 109.65,
+          "low": 104.76,
+          "close": 107.21,
+          "volume": 306850700,
+          "adjustedClose": 107.21
+        },
+        {
+          "date": "2024-09-04",
+          "open": 105.41,
+          "high": 113.27,
+          "low": 104.12,
+          "close": 106.21,
+          "volume": 372470300,
+          "adjustedClose": 106.21
+        },
+        {
+          "date": "2024-09-03",
+          "open": 116.010002,
+          "high": 116.21,
+          "low": 107.29,
+          "close": 108,
+          "volume": 477155100,
+          "adjustedClose": 108
+        },
+        {
+          "date": "2024-08-30",
+          "open": 119.53,
+          "high": 121.75,
+          "low": 117.22,
+          "close": 119.37,
+          "volume": 333751600,
+          "adjustedClose": 119.37
+        },
+        {
+          "date": "2024-08-29",
+          "open": 121.36,
+          "high": 124.43,
+          "low": 116.71,
+          "close": 117.59,
+          "volume": 453023300,
+          "adjustedClose": 117.59
+        },
+        {
+          "date": "2024-08-28",
+          "open": 128.12,
+          "high": 128.33,
+          "low": 122.64,
+          "close": 125.61,
+          "volume": 448101100,
+          "adjustedClose": 125.61
+        },
+        {
+          "date": "2024-08-27",
+          "open": 125.050003,
+          "high": 129.2,
+          "low": 123.88,
+          "close": 128.3,
+          "volume": 303134600,
+          "adjustedClose": 128.3
+        },
+        {
+          "date": "2024-08-26",
+          "open": 129.57001,
+          "high": 131.25999,
+          "low": 124.37,
+          "close": 126.46,
+          "volume": 331964700,
+          "adjustedClose": 126.46
+        },
+        {
+          "date": "2024-08-23",
+          "open": 125.86,
+          "high": 129.60001,
+          "low": 125.22,
+          "close": 129.37,
+          "volume": 323230300,
+          "adjustedClose": 129.37
+        },
+        {
+          "date": "2024-08-22",
+          "open": 130.020004,
+          "high": 130.75,
+          "low": 123.099998,
+          "close": 123.74,
+          "volume": 376189100,
+          "adjustedClose": 123.74
+        },
+        {
+          "date": "2024-08-21",
+          "open": 127.32,
+          "high": 129.35001,
+          "low": 126.66,
+          "close": 128.5,
+          "volume": 257883600,
+          "adjustedClose": 128.5
+        },
+        {
+          "date": "2024-08-20",
+          "open": 128.39999,
+          "high": 129.88,
+          "low": 125.89,
+          "close": 127.25,
+          "volume": 300087400,
+          "adjustedClose": 127.25
+        },
+        {
+          "date": "2024-08-19",
+          "open": 124.28,
+          "high": 130,
+          "low": 123.42,
+          "close": 130,
+          "volume": 318333600,
+          "adjustedClose": 130
+        },
+        {
+          "date": "2024-08-16",
+          "open": 121.94,
+          "high": 125,
+          "low": 121.18,
+          "close": 124.58,
+          "volume": 302589900,
+          "adjustedClose": 124.58
+        },
+        {
+          "date": "2024-08-15",
+          "open": 118.76,
+          "high": 123.24,
+          "low": 117.47,
+          "close": 122.86,
+          "volume": 318086700,
+          "adjustedClose": 122.86
+        },
+        {
+          "date": "2024-08-14",
+          "open": 118.53,
+          "high": 118.6,
+          "low": 114.07,
+          "close": 118.080002,
+          "volume": 339246400,
+          "adjustedClose": 118.080002
+        },
+        {
+          "date": "2024-08-13",
+          "open": 112.44,
+          "high": 116.23,
+          "low": 111.58,
+          "close": 116.14,
+          "volume": 312646700,
+          "adjustedClose": 116.14
+        },
+        {
+          "date": "2024-08-12",
+          "open": 106.32,
+          "high": 111.07,
+          "low": 106.26,
+          "close": 109.019997,
+          "volume": 325559900,
+          "adjustedClose": 109.019997
+        },
+        {
+          "date": "2024-08-09",
+          "open": 105.64,
+          "high": 106.6,
+          "low": 103.43,
+          "close": 104.75,
+          "volume": 290844200,
+          "adjustedClose": 104.75
+        },
+        {
+          "date": "2024-08-08",
+          "open": 102,
+          "high": 105.5,
+          "low": 97.52,
+          "close": 104.97,
+          "volume": 391910000,
+          "adjustedClose": 104.97
+        },
+        {
+          "date": "2024-08-07",
+          "open": 107.81,
+          "high": 108.8,
+          "low": 98.69,
+          "close": 98.91,
+          "volume": 411440400,
+          "adjustedClose": 98.91
+        },
+        {
+          "date": "2024-08-06",
+          "open": 103.84,
+          "high": 107.71,
+          "low": 100.55,
+          "close": 104.25,
+          "volume": 409012100,
+          "adjustedClose": 104.25
+        },
+        {
+          "date": "2024-08-05",
+          "open": 92.059998,
+          "high": 103.41,
+          "low": 90.69,
+          "close": 100.45,
+          "volume": 552842400,
+          "adjustedClose": 100.45
+        },
+        {
+          "date": "2024-08-02",
+          "open": 103.76,
+          "high": 108.72,
+          "low": 101.37,
+          "close": 107.27,
+          "volume": 482027500,
+          "adjustedClose": 107.27
+        },
+        {
+          "date": "2024-08-01",
+          "open": 117.53,
+          "high": 120.16,
+          "low": 106.81,
+          "close": 109.21,
+          "volume": 523462300,
+          "adjustedClose": 109.21
+        },
+        {
+          "date": "2024-07-31",
+          "open": 112.9,
+          "high": 118.34,
+          "low": 110.88,
+          "close": 117.019997,
+          "volume": 473174200,
+          "adjustedClose": 117.019997
+        },
+        {
+          "date": "2024-07-30",
+          "open": 111.52,
+          "high": 111.99,
+          "low": 102.54,
+          "close": 103.73,
+          "volume": 486833300,
+          "adjustedClose": 103.73
+        }
+      ],
+      "aiSummary": "NVIDIA Corporation reported revenue of $130.5B with net income of $72.9B, representing a 55.8% net margin. The company trades at a P/E ratio of 0.0 with a market capitalization of $0.0B.",
+      "aiInsights": [
+        "NVIDIA Corporation reported revenue of $130"
+      ]
+    },
+    "news": [],
+    "transcripts": [],
+    "technicals": {
+      "sma20": 169.487,
+      "sma50": 153.7824,
+      "sma200": 134.5846,
+      "rsi": 75.62348,
+      "macd": {
+        "macd": 7.32131,
+        "signal": 7.21635,
+        "histogram": 0.1049625
+      },
+      "volume": {
+        "current": 7978299,
+        "average10Day": 134257070,
+        "average30Day": 134257070,
+        "trend": "decreasing"
+      },
+      "patterns": [],
+      "aiAnalysis": ""
+    },
+    "analysts": {
+      "consensus": {
+        "rating": "hold",
+        "score": 3,
+        "count": 0
+      },
+      "priceTargets": [],
+      "recommendations": [],
+      "revisions": []
+    },
+    "earnings": {
+      "historical": [],
+      "upcoming": [],
+      "nextEarningsDate": null,
+      "averageSurprise": 0
+    },
+    "metadata": {
+      "lastUpdated": "2025-07-31T14:36:53.375Z",
+      "sources": {
+        "TwelveData Quote": {
+          "status": "success",
+          "timestamp": "2025-07-31T14:36:53.732Z",
+          "recordCount": 1
+        },
+        "TwelveData Historical": {
+          "status": "success",
+          "timestamp": "2025-07-31T14:36:53.748Z",
+          "recordCount": 252
+        },
+        "TwelveData Fundamentals": {
+          "status": "success",
+          "timestamp": "2025-07-31T14:36:54.090Z",
+          "recordCount": 1
+        },
+        "TwelveData Earnings": {
+          "status": "success",
+          "timestamp": "2025-07-31T14:36:54.270Z",
+          "recordCount": 1
+        },
+        "TwelveData Analysts": {
+          "status": "failed",
+          "timestamp": "2025-07-31T14:36:54.276Z",
+          "error": "TwelveData fetch failed for NVDA: Failed after 1 attempts: HTTP 404: Not Found. Details: 404 page not found"
+        },
+        "TwelveData Technicals": {
+          "status": "success",
+          "timestamp": "2025-07-31T14:36:54.434Z",
+          "recordCount": 1
+        },
+        "SEC Company Info": {
+          "status": "failed",
+          "timestamp": "2025-07-31T14:36:54.902Z",
+          "error": "EDGAR getCompanyDescription failed for NVDA: Firecrawl fetch failed: Failed after 1 attempts: HTTP 400: Bad Request. Details: {\"success\":false,\"error\":\"Bad Request\",\"details\":[{\"code\":\"unrecognized_keys\",\"keys\":[\"url\",\"options\"],\"path\":[],\"message\":\"Unrecognized key in body -- please review the v1 API documentation for request body changes\"}]}"
+        },
+        "News Articles": {
+          "status": "success",
+          "timestamp": "2025-07-31T14:36:55.033Z",
+          "recordCount": 0
+        },
+        "Earnings Transcripts": {
+          "status": "failed",
+          "timestamp": "2025-07-31T14:36:55.034Z",
+          "error": "EDGAR getEarningsTranscripts failed for NVDA: Firecrawl fetch failed: Failed after 1 attempts: HTTP 400: Bad Request. Details: {\"success\":false,\"error\":\"Bad Request\",\"details\":[{\"code\":\"unrecognized_keys\",\"keys\":[\"removeImages\"],\"path\":[],\"message\":\"Unrecognized key in body -- please review the v1 API documentation for request body changes\"}]}"
+        }
+      },
+      "errors": [
+        {
+          "stage": "fetching",
+          "source": "TwelveData Analysts",
+          "message": "TwelveData fetch failed for NVDA: Failed after 1 attempts: HTTP 404: Not Found. Details: 404 page not found",
+          "timestamp": 1753972614276,
+          "severity": "error",
+          "retryable": false
+        },
+        {
+          "stage": "fetching",
+          "source": "SEC Company Info",
+          "message": "EDGAR getCompanyDescription failed for NVDA: Firecrawl fetch failed: Failed after 1 attempts: HTTP 400: Bad Request. Details: {\"success\":false,\"error\":\"Bad Request\",\"details\":[{\"code\":\"unrecognized_keys\",\"keys\":[\"url\",\"options\"],\"path\":[],\"message\":\"Unrecognized key in body -- please review the v1 API documentation for request body changes\"}]}",
+          "timestamp": 1753972614902,
+          "severity": "error",
+          "retryable": true
+        },
+        {
+          "stage": "fetching",
+          "source": "Earnings Transcripts",
+          "message": "EDGAR getEarningsTranscripts failed for NVDA: Firecrawl fetch failed: Failed after 1 attempts: HTTP 400: Bad Request. Details: {\"success\":false,\"error\":\"Bad Request\",\"details\":[{\"code\":\"unrecognized_keys\",\"keys\":[\"removeImages\"],\"path\":[],\"message\":\"Unrecognized key in body -- please review the v1 API documentation for request body changes\"}]}",
+          "timestamp": 1753972615034,
+          "severity": "error",
+          "retryable": true
+        }
+      ],
+      "warnings": [],
+      "businessModel": "diversified",
+      "competitivePosition": "strong-competitor",
+      "enriched": true,
+      "enrichmentDate": "2025-07-31T14:36:55.092Z",
+      "enrichmentStats": {
+        "fieldsAdded": 0,
+        "fieldsUpdated": 2,
+        "discrepanciesResolved": 0,
+        "metricsCalculated": 5,
+        "qualityImprovement": 0
+      },
+      "dataQuality": {
+        "overallScore": 0.79,
+        "completeness": 0.8,
+        "accuracy": 1,
+        "consistency": 1,
+        "timeliness": 0.3,
+        "relevance": 0.8,
+        "details": {
+          "missingFields": [
+            "Company description",
+            "News data",
+            "Current price",
+            "Sufficient historical price data"
+          ],
+          "staleData": [
+            "Income statement data is more than 4 months old"
+          ],
+          "inconsistencies": [],
+          "warnings": [],
+          "recommendations": [
+            "Refresh financial data to ensure analysis is based on latest information",
+            "Gather more news articles for comprehensive sentiment analysis",
+            "Add earnings call transcripts for deeper insights"
+          ]
+        }
+      },
+      "completeness": 63,
+      "quality": {
+        "overall": 0.5,
+        "financials": 1,
+        "news": 0,
+        "technicals": 1,
+        "analysts": 0,
+        "grade": "C"
+      },
+      "aiContent": {
+        "executiveSummary": "NVIDIA Corporation (NVDA) receives a SELL recommendation with 80% confidence based on our comprehensive analysis. The company scores 2300/100 across growth, value, quality, and momentum factors. Key strengths include strong growth metrics, high quality fundamentals, positive momentum, while areas of concern include expensive valuation, elevated risk levels.",
+        "investmentThesis": "",
+        "keyInsights": [
+          "Limited data available for comprehensive insights",
+          "Consider gathering additional financial information",
+          "AI analysis requires complete dataset for best results"
+        ],
+        "riskAnalysis": "",
+        "futureOutlook": "",
+        "actionItems": [
+          "Review investment thesis based on current market conditions",
+          "Monitor key financial metrics quarterly",
+          "Set appropriate stop-loss levels based on risk tolerance"
+        ],
+        "recommendationRationale": "Based on comprehensive analysis, we recommend a SELL rating with 80% confidence.",
+        "generatedAt": "2025-07-31T14:36:55.533Z",
+        "aiProvider": "anthropic_claude",
+        "confidence": 0.8
+      }
+    }
+  },
+  "slides": [
+    {
+      "slideNumber": 1,
+      "title": "Title Slide",
+      "layout": "title",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "NVDA Technical Analysis"
+          }
+        },
+        {
+          "type": "text",
+          "data": {
+            "text": ""
+          }
+        },
+        {
+          "type": "text",
+          "data": {
+            "text": ""
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 2,
+      "title": "Price Overview",
+      "layout": "chart",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "Price Action Overview"
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "candlestick",
+            "source": "candlestick-chart",
+            "title": "Price History"
+          }
+        },
+        {
+          "type": "metrics",
+          "data": {}
+        }
+      ]
+    },
+    {
+      "slideNumber": 3,
+      "title": "Trend Analysis",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "Trend Analysis"
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "line",
+            "source": "price-with-ma",
+            "title": "Chart"
+          }
+        },
+        {
+          "type": "table",
+          "data": {
+            "headers": [],
+            "rows": []
+          }
+        },
+        {
+          "type": "text",
+          "data": {
+            "text": ""
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 4,
+      "title": "Momentum Indicators",
+      "layout": "chart",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "Momentum Analysis"
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "line",
+            "source": "rsi-chart",
+            "title": "Chart"
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "line",
+            "source": "macd-chart",
+            "title": "Chart"
+          }
+        },
+        {
+          "type": "bullets",
+          "data": {
+            "items": []
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 5,
+      "title": "Pattern Detection",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "Chart Patterns"
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "line",
+            "source": "patterns-overlay",
+            "title": "Chart"
+          }
+        },
+        {
+          "type": "table",
+          "data": {
+            "headers": [],
+            "rows": []
+          }
+        },
+        {
+          "type": "text",
+          "data": {
+            "text": ""
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 6,
+      "title": "Support & Resistance",
+      "layout": "chart",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "Key Levels"
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "line",
+            "source": "sr-levels-chart",
+            "title": "Chart"
+          }
+        },
+        {
+          "type": "table",
+          "data": {
+            "headers": [],
+            "rows": []
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 7,
+      "title": "Trading Signals",
+      "layout": "content",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "Trading Signals Summary"
+          }
+        },
+        {
+          "type": "metrics",
+          "data": {}
+        },
+        {
+          "type": "table",
+          "data": {
+            "headers": [],
+            "rows": []
+          }
+        },
+        {
+          "type": "text",
+          "data": {
+            "text": ""
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2025-07-31T14:36:56.011Z",
+    "generationTime": 2646,
+    "dataFreshness": {
+      "financial": "2025-01-31",
+      "market": "2025-07-31"
+    },
+    "aiModel": "gpt-4",
+    "version": "2.0"
+  },
+  "outputPath": "generated-reports\\NVDA_report_2025-07-31T14-36-55-544Z.pdf"
+}

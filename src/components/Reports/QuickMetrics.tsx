@@ -2,9 +2,11 @@
 // Real-time metrics dashboard for report generation
 // Context: Shows live statistics about report performance
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { TrendingUp, Users, Clock, Award } from 'lucide-react';
+import { getStorageService } from '../../services/reportStorageService';
+import { logDebug } from '../../utils/logger';
 
 const MetricsGrid = styled.div`
   display: grid;
@@ -71,40 +73,145 @@ export const QuickMetrics: React.FC<QuickMetricsProps> = ({
   currentReport,
   onReportChange
 }) => {
-  const metrics = [
+  const [metrics, setMetrics] = useState([
     {
       label: 'Reports Generated',
-      value: '147',
-      change: '+12%',
+      value: '0',
+      change: '+0%',
       positive: true,
       icon: TrendingUp,
       color: '#3b82f6'
     },
     {
-      label: 'Active Users',
-      value: '38',
-      change: '+5%',
+      label: 'Active Sessions',
+      value: '0',
+      change: '+0%',
       positive: true,
       icon: Users,
       color: '#10b981'
     },
     {
       label: 'Avg. Time',
-      value: '4.2m',
-      change: '-18%',
+      value: '0m',
+      change: '0%',
       positive: true,
       icon: Clock,
       color: '#f59e0b'
     },
     {
-      label: 'Quality Score',
-      value: '94%',
-      change: '+3%',
+      label: 'Data Quality',
+      value: '0%',
+      change: '+0%',
       positive: true,
       icon: Award,
       color: '#8b5cf6'
     }
-  ];
+  ]);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const storageService = getStorageService();
+        const reports = await storageService.listReports();
+        
+        // Calculate real metrics
+        const totalReports = reports.length;
+        const lastWeekReports = reports.filter(r => {
+          const createdAt = new Date(r.createdAt);
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return createdAt > weekAgo;
+        }).length;
+        
+        // Calculate average generation time
+        const completedReports = reports.filter(r => r.status === 'completed' && r.performance?.totalDuration);
+        const avgTime = completedReports.length > 0
+          ? completedReports.reduce((sum, r) => sum + (r.performance?.totalDuration || 0), 0) / completedReports.length / 60000
+          : 0;
+        
+        // Calculate data quality score
+        const qualityScores = reports
+          .filter(r => r.metadata?.quality?.overall)
+          .map(r => r.metadata.quality.overall);
+        const avgQuality = qualityScores.length > 0
+          ? qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length * 100
+          : 0;
+        
+        // Calculate changes (simplified - comparing to previous period)
+        const prevWeekReports = reports.filter(r => {
+          const createdAt = new Date(r.createdAt);
+          const weekAgo = new Date();
+          const twoWeeksAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+          return createdAt > twoWeeksAgo && createdAt <= weekAgo;
+        }).length;
+        
+        const reportChange = prevWeekReports > 0 
+          ? ((lastWeekReports - prevWeekReports) / prevWeekReports * 100).toFixed(0)
+          : '0';
+        
+        // Count active sessions (reports created in last hour)
+        const activeSessions = reports.filter(r => {
+          const createdAt = new Date(r.createdAt);
+          const hourAgo = new Date();
+          hourAgo.setHours(hourAgo.getHours() - 1);
+          return createdAt > hourAgo;
+        }).length;
+        
+        setMetrics([
+          {
+            label: 'Reports Generated',
+            value: totalReports.toString(),
+            change: `${reportChange > 0 ? '+' : ''}${reportChange}%`,
+            positive: Number(reportChange) >= 0,
+            icon: TrendingUp,
+            color: '#3b82f6'
+          },
+          {
+            label: 'Active Sessions',
+            value: activeSessions.toString(),
+            change: lastWeekReports > 0 ? '+' + lastWeekReports : '0',
+            positive: true,
+            icon: Users,
+            color: '#10b981'
+          },
+          {
+            label: 'Avg. Time',
+            value: `${avgTime.toFixed(1)}m`,
+            change: avgTime < 5 ? '-' + ((5 - avgTime) / 5 * 100).toFixed(0) + '%' : '+0%',
+            positive: avgTime < 5,
+            icon: Clock,
+            color: '#f59e0b'
+          },
+          {
+            label: 'Data Quality',
+            value: `${avgQuality.toFixed(0)}%`,
+            change: avgQuality > 80 ? '+' + (avgQuality - 80).toFixed(0) + '%' : '0%',
+            positive: avgQuality > 80,
+            icon: Award,
+            color: '#8b5cf6'
+          }
+        ]);
+        
+        logDebug('QuickMetrics', 'Metrics updated', { totalReports, activeSessions, avgTime, avgQuality });
+      } catch (error) {
+        logDebug('QuickMetrics', 'Error fetching metrics:', error);
+      }
+    };
+    
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 30000); // Update every 30 seconds
+    
+    // Listen for new reports
+    const handleReportGenerated = () => fetchMetrics();
+    window.addEventListener('reportGenerated', handleReportGenerated);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('reportGenerated', handleReportGenerated);
+    };
+  }, [currentReport]);
   
   return (
     <MetricsGrid>

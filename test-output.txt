@@ -1,0 +1,4 @@
+
+> trisight@0.2.0 test
+> react-scripts test --watchAll=false --testTimeout=5000 --bail --json 2
+

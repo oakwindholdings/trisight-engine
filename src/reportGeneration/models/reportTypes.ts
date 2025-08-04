@@ -158,6 +158,7 @@ export interface CompanyData {
   transcripts: TranscriptData[];
   technicals: TechnicalIndicators;
   analysts: AnalystData;
+  earnings: EarningsData;
   metadata: DataSourceMetadata;
 }
 
@@ -347,6 +348,29 @@ export interface PriceData {
   close: number;
   volume: number;
   adjustedClose?: number;
+}
+
+export interface EarningsData {
+  historical: Array<{
+    date: string;
+    fiscalQuarter: string;
+    fiscalYear: number;
+    epsEstimate: number;
+    epsActual: number;
+    epsSurprise: number;
+    revenueEstimate: number;
+    revenueActual: number;
+    revenueSurprise: number;
+  }>;
+  upcoming: Array<{
+    date: string;
+    fiscalQuarter: string;
+    fiscalYear: number;
+    epsEstimate: number;
+    revenueEstimate: number;
+  }>;
+  nextEarningsDate: string | null;
+  averageSurprise: number;
 }
 
 export interface DataSourceMetadata {

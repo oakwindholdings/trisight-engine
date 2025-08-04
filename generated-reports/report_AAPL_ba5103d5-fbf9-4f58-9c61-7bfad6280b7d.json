@@ -1,0 +1,32 @@
+{
+  "reportId": "ba5103d5-fbf9-4f58-9c61-7bfad6280b7d",
+  "config": {
+    "ticker": "AAPL",
+    "template": "technical-analysis",
+    "title": "AAPL PowerPoint Test",
+    "author": "TriSight",
+    "reportType": "technical-analysis",
+    "outputFormat": "pptx",
+    "sections": [
+      "executive_summary",
+      "financial_analysis",
+      "technical_analysis",
+      "risk_assessment",
+      "ai_insights"
+    ],
+    "chartTypes": [
+      "price",
+      "volume",
+      "pattern",
+      "performance"
+    ],
+    "dataSources": [
+      "market",
+      "financial"
+    ]
+  },
+  "generatedAt": "2025-07-31T01:05:33.448Z",
+  "message": "Report generation service is operational. Full implementation coming soon.",
+  "ticker": "AAPL",
+  "companyName": "AAPL"
+}

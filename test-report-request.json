@@ -1,0 +1,18 @@
+{
+  "ticker": "NVDA",
+  "template": "technical-analysis",
+  "title": "NVDA Technical Analysis Report",
+  "author": "Test User",
+  "outputFormat": "pptx",
+  "reportType": "technical-analysis",
+  "dataSources": ["market-data", "financials"],
+  "sections": ["executive-summary", "technical-analysis"],
+  "timeframe": "1Y",
+  "format": "pdf",
+  "visualizations": {
+    "priceChart": true,
+    "volumeAnalysis": true,
+    "patternDetection": true,
+    "performanceMetrics": true
+  }
+}

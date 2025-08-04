@@ -42,6 +42,7 @@ export interface QualityMetrics {
   earningsQuality: number; // 0-100
   balanceSheetStrength: number; // 0-100
   moat: 'none' | 'narrow' | 'wide';
+  roe: number; // Return on Equity
 }
 
 // Calculation configuration
@@ -333,7 +334,7 @@ export interface MomentumMetrics {
   momentumScore: number; // 0-100
 }
 
-export interface QualityMetrics {
+export interface QualityMetricsV2 {
   earningsQuality: number;
   profitability: number;
   financialHealth: number;

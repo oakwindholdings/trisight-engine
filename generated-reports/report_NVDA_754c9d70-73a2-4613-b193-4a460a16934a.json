@@ -1,0 +1,12 @@
+{
+  "reportId": "754c9d70-73a2-4613-b193-4a460a16934a",
+  "config": {
+    "ticker": "NVDA",
+    "reportType": "equity-research",
+    "format": "pdf"
+  },
+  "generatedAt": "2025-07-31T19:29:41.562Z",
+  "message": "Report generation service is operational. Full implementation coming soon.",
+  "ticker": "NVDA",
+  "companyName": "NVDA"
+}

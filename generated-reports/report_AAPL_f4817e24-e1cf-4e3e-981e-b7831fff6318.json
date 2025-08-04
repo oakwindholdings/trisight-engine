@@ -1,0 +1,485 @@
+{
+  "reportId": "f4817e24-e1cf-4e3e-981e-b7831fff6318",
+  "config": {
+    "ticker": "AAPL",
+    "companyName": "Apple",
+    "reportType": "equity-research",
+    "reportDate": "2025-07-31",
+    "timeframe": "1Y",
+    "author": "TriSight Analytics",
+    "sections": [
+      {
+        "id": "executive-summary",
+        "title": "Executive Summary",
+        "type": "text",
+        "order": 1,
+        "required": true,
+        "dataRequirements": [
+          {
+            "source": "analysis",
+            "fields": [
+              "composite",
+              "recommendation"
+            ]
+          },
+          {
+            "source": "company",
+            "fields": [
+              "overview"
+            ]
+          },
+          {
+            "source": "market",
+            "fields": [
+              "currentPrice",
+              "marketCap"
+            ]
+          }
+        ],
+        "contentTemplate": {
+          "keyFindings": [
+            "Overall investment score: {{composite.overall}}/100",
+            "Recommendation: {{composite.recommendation}}",
+            "Primary strength: {{analysis.primaryStrength}}",
+            "Key risk: {{analysis.primaryRisk}}"
+          ],
+          "narrative": "Based on comprehensive analysis of {{companyName}}, including financial performance, valuation metrics, and technical indicators..."
+        }
+      },
+      {
+        "id": "financial-analysis",
+        "title": "Financial Analysis",
+        "type": "mixed",
+        "order": 2,
+        "required": true,
+        "dataRequirements": [
+          {
+            "source": "financials",
+            "fields": [
+              "incomeStatement",
+              "balanceSheet",
+              "cashFlow"
+            ]
+          },
+          {
+            "source": "analysis",
+            "fields": [
+              "growth",
+              "quality"
+            ]
+          }
+        ],
+        "subsections": [
+          "revenue-analysis",
+          "profitability",
+          "cash-flow",
+          "balance-sheet"
+        ],
+        "charts": [
+          "revenue-trend",
+          "margin-analysis",
+          "fcf-growth"
+        ],
+        "tables": [
+          "financial-summary",
+          "year-over-year-comparison"
+        ]
+      },
+      {
+        "id": "valuation",
+        "title": "Valuation Analysis",
+        "type": "chart",
+        "order": 3,
+        "required": true,
+        "dataRequirements": [
+          {
+            "source": "analysis",
+            "fields": [
+              "valuation"
+            ]
+          },
+          {
+            "source": "market",
+            "fields": [
+              "peRatio",
+              "priceToBook"
+            ]
+          },
+          {
+            "source": "peers",
+            "fields": [
+              "comparison"
+            ]
+          }
+        ],
+        "charts": [
+          "valuation-multiples",
+          "dcf-sensitivity",
+          "peer-comparison"
+        ],
+        "metrics": [
+          "intrinsicValue",
+          "fairValue",
+          "marginOfSafety"
+        ]
+      }
+    ],
+    "dataSourcePriorities": [
+      {
+        "dataType": "marketdata",
+        "sources": [
+          "twelvedata",
+          "cache"
+        ]
+      },
+      {
+        "dataType": "financials",
+        "sources": [
+          "twelvedata",
+          "edgar",
+          "cache"
+        ]
+      }
+    ],
+    "chartConfigs": [
+      {
+        "type": "candlestick",
+        "title": "Price History",
+        "dataSource": "historicalPrices",
+        "indicators": [
+          "sma20",
+          "sma50",
+          "volume"
+        ],
+        "timeframe": "dynamic"
+      },
+      {
+        "type": "candlestick",
+        "title": "Price History",
+        "dataSource": "historicalPrices",
+        "indicators": [
+          "volume"
+        ],
+        "timeframe": "dynamic"
+      },
+      {
+        "type": "candlestick",
+        "title": "Detected Patterns",
+        "dataSource": "historicalPrices",
+        "overlays": [
+          "patterns",
+          "signals"
+        ],
+        "annotations": true
+      },
+      {
+        "type": "bar",
+        "title": "Revenue Growth",
+        "dataSource": "incomeStatement",
+        "series": [
+          "revenue",
+          "netIncome"
+        ],
+        "yAxis": "currency",
+        "showGrowthRate": true
+      }
+    ],
+    "outputFormat": "pdf",
+    "includeCharts": true,
+    "template": {
+      "id": "equity-research",
+      "name": "Comprehensive Equity Research",
+      "description": "Full investment analysis with financial metrics, valuation, and recommendations",
+      "requiredSections": [
+        "executive-summary",
+        "financial-analysis",
+        "valuation",
+        "recommendation"
+      ],
+      "optionalSections": [
+        "technical-analysis",
+        "risk-assessment",
+        "competitive-analysis",
+        "esg-factors"
+      ],
+      "defaultCharts": [
+        "price-history",
+        "revenue-growth",
+        "earnings-trend",
+        "valuation-multiples"
+      ],
+      "defaultTimeframe": "3Y",
+      "dataRequirements": [
+        "market-data",
+        "financials",
+        "analyst-ratings",
+        "news"
+      ],
+      "estimatedPages": 15,
+      "targetAudience": "Institutional investors, portfolio managers",
+      "slideTemplates": [
+        {
+          "id": "title",
+          "title": "Title Slide",
+          "order": 1,
+          "layout": "title",
+          "requiredData": [
+            "company-info"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "{{companyName}} ({{ticker}})"
+            },
+            {
+              "type": "text",
+              "template": "Investment Analysis Report"
+            },
+            {
+              "type": "text",
+              "template": "{{reportDate}}"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "recommendation"
+            }
+          ]
+        },
+        {
+          "id": "executive-summary",
+          "title": "Executive Summary",
+          "order": 2,
+          "layout": "content",
+          "requiredData": [
+            "analysis-results"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Executive Summary"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "composite-scores"
+            },
+            {
+              "type": "bullets",
+              "dataSource": "key-findings"
+            },
+            {
+              "type": "text",
+              "dataSource": "investment-thesis"
+            }
+          ]
+        },
+        {
+          "id": "company-overview",
+          "title": "Company Overview",
+          "order": 3,
+          "layout": "mixed",
+          "requiredData": [
+            "company-info",
+            "market-data"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Company Overview"
+            },
+            {
+              "type": "text",
+              "dataSource": "company-description"
+            },
+            {
+              "type": "table",
+              "dataSource": "key-statistics"
+            },
+            {
+              "type": "chart",
+              "dataSource": "market-cap-history"
+            }
+          ]
+        },
+        {
+          "id": "financial-performance",
+          "title": "Financial Performance",
+          "order": 4,
+          "layout": "chart",
+          "requiredData": [
+            "financials"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Financial Performance"
+            },
+            {
+              "type": "chart",
+              "dataSource": "revenue-earnings-chart"
+            },
+            {
+              "type": "table",
+              "dataSource": "financial-highlights"
+            }
+          ]
+        },
+        {
+          "id": "growth-analysis",
+          "title": "Growth Analysis",
+          "order": 5,
+          "layout": "comparison",
+          "requiredData": [
+            "growth-metrics"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Growth Metrics"
+            },
+            {
+              "type": "chart",
+              "dataSource": "growth-trends"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "growth-scores"
+            },
+            {
+              "type": "text",
+              "dataSource": "growth-assessment"
+            }
+          ]
+        },
+        {
+          "id": "valuation-analysis",
+          "title": "Valuation Analysis",
+          "order": 6,
+          "layout": "mixed",
+          "requiredData": [
+            "valuation-metrics"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Valuation Analysis"
+            },
+            {
+              "type": "chart",
+              "dataSource": "valuation-multiples-chart"
+            },
+            {
+              "type": "table",
+              "dataSource": "peer-comparison"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "fair-value-estimate"
+            }
+          ]
+        },
+        {
+          "id": "technical-analysis",
+          "title": "Technical Analysis",
+          "order": 7,
+          "layout": "chart",
+          "requiredData": [
+            "technical-indicators"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Technical Analysis"
+            },
+            {
+              "type": "chart",
+              "dataSource": "price-chart-with-indicators"
+            },
+            {
+              "type": "table",
+              "dataSource": "technical-signals"
+            },
+            {
+              "type": "text",
+              "dataSource": "technical-outlook"
+            }
+          ]
+        },
+        {
+          "id": "risk-assessment",
+          "title": "Risk Assessment",
+          "order": 8,
+          "layout": "content",
+          "requiredData": [
+            "risk-metrics"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Risk Assessment"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "risk-scores"
+            },
+            {
+              "type": "chart",
+              "dataSource": "risk-profile-radar"
+            },
+            {
+              "type": "bullets",
+              "dataSource": "key-risks"
+            }
+          ]
+        },
+        {
+          "id": "investment-recommendation",
+          "title": "Investment Recommendation",
+          "order": 9,
+          "layout": "content",
+          "requiredData": [
+            "recommendation"
+          ],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Investment Recommendation"
+            },
+            {
+              "type": "metrics",
+              "dataSource": "recommendation-summary"
+            },
+            {
+              "type": "bullets",
+              "dataSource": "investment-rationale"
+            },
+            {
+              "type": "table",
+              "dataSource": "price-targets"
+            }
+          ]
+        },
+        {
+          "id": "disclaimers",
+          "title": "Important Disclaimers",
+          "order": 10,
+          "layout": "content",
+          "requiredData": [],
+          "contentBlocks": [
+            {
+              "type": "title",
+              "template": "Important Disclaimers"
+            },
+            {
+              "type": "text",
+              "template": "regulatory-disclaimers"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "generatedAt": "2025-07-31T00:32:17.737Z",
+  "message": "Report generation service is operational. Full implementation coming soon.",
+  "ticker": "AAPL",
+  "companyName": "Apple"
+}

@@ -3,7 +3,7 @@
 // Context: Ensures consistent behavior across all external data sources
 
 import { withRetry, RetryConfig, DEFAULT_RETRY_CONFIG, wrapDataFetchError } from '../utils/errorHandler';
-import { MemoryCache, withCache } from '../utils/cache';
+import { DataCache as MemoryCache, memoizeAsync as withCache } from '../utils/cache';
 
 /**
  * Configuration for HTTP requests
@@ -44,7 +44,7 @@ export abstract class BaseAdapter {
       debugMode?: boolean;
     } = {}
   ) {
-    this.cache = options.cache || new MemoryCache();
+    this.cache = options.cache || new MemoryCache({});
     this.debugMode = options.debugMode || false;
     
     // Set up default request configuration

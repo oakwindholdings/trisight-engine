@@ -1,0 +1,21 @@
+{
+  "mcp": {
+    "servers": {
+      "firecrawl": {
+        "command": "npx",
+        "args": ["-y", "firecrawl-mcp"],
+        "env": {
+          "FIRECRAWL_API_KEY": "fc-79d2302cc006490fbde0e0373a4227fe"
+        }
+      },
+      "trisight": {
+        "command": "node",
+        "args": ["mcp-server.js"],
+        "env": {
+          "TRISIGHT_API_URL": "http://localhost:3000/api",
+          "TRISIGHT_API_KEY": ""
+        }
+      }
+    }
+  }
+}
