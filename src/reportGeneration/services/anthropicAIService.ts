@@ -174,7 +174,7 @@ export class AnthropicAIService {
     
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 1000,
+      max_tokens: 4096,
       messages: [{
         role: 'user',
         content: prompt
@@ -200,7 +200,7 @@ export class AnthropicAIService {
     
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 800,
+      max_tokens: 4096,
       system: 'You are an expert financial analyst creating reports for institutional investors. Be specific, data-driven, and insightful.',
       messages: [
         {
@@ -220,7 +220,7 @@ export class AnthropicAIService {
   ): Promise<string> {
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 1000,
+      max_tokens: 4096,
       system: 'You are a portfolio manager at a hedge fund known for identifying exceptional investment opportunities.',
       messages: [
         {
@@ -240,7 +240,7 @@ export class AnthropicAIService {
   ): Promise<string[]> {
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 800,
+      max_tokens: 4096,
       messages: [
         {
           role: 'user',
@@ -282,7 +282,7 @@ ${context}`
   ): Promise<string> {
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 1000,
+      max_tokens: 4096,
       system: 'You are a chief risk officer conducting thorough risk assessments. Be comprehensive but balanced.',
       messages: [
         {
@@ -312,7 +312,7 @@ ${context}`
   ): Promise<string> {
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 1000,
+      max_tokens: 4096,
       messages: [
         {
           role: 'user',
@@ -335,7 +335,7 @@ ${context}`
     
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 600,
+      max_tokens: 4096,
       messages: [
         {
           role: 'user',
@@ -366,7 +366,7 @@ ${context}`
     
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 800,
+      max_tokens: 4096,
       system: 'You are a CMT (Chartered Market Technician) providing expert technical analysis.',
       messages: [
         {
@@ -395,7 +395,7 @@ Context: ${context}`
   ): Promise<string> {
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 1000,
+      max_tokens: 4096,
       messages: [
         {
           role: 'user',
@@ -415,7 +415,7 @@ Context: ${context}`
   ): Promise<string[]> {
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 600,
+      max_tokens: 4096,
       messages: [
         {
           role: 'user',
@@ -595,7 +595,7 @@ Format the response clearly with sections.`;
   ): Promise<string> {
     const response = await this.client.messages.create({
       model: this.model,
-      max_tokens: 4000,
+      max_tokens: 4096,
       system: 'You are writing a comprehensive investment report for sophisticated institutional investors. Be thorough, insightful, and data-driven.',
       messages: [
         {

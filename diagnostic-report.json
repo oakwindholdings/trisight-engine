@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-08-05T19:48:15.809Z",
+  "stages": {
+    "validation": "passed",
+    "dataFetch": "failed",
+    "analysis": "failed",
+    "chartGeneration": "failed",
+    "pdfGeneration": "failed"
+  },
+  "errors": [
+    "Data validation: Invalid analysis results: Invalid intrinsic value calculation, Invalid fair value calculation",
+    "Analysis: Invalid analysis results: Invalid intrinsic value calculation, Invalid fair value calculation",
+    "Charts: Invalid analysis results: Invalid intrinsic value calculation, Invalid fair value calculation",
+    "PDF: Invalid analysis results: Invalid intrinsic value calculation, Invalid fair value calculation"
+  ],
+  "warnings": [],
+  "recommendations": [
+    "Check TwelveData API integration and data validation logic",
+    "Debug financial analysis calculations (intrinsic value, fair value)",
+    "Test StandardChartGenerator and Canvas dependencies",
+    "Check jsPDF integration and file system permissions"
+  ]
+}

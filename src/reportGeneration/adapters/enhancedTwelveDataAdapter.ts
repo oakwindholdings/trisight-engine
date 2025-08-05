@@ -454,8 +454,19 @@ export class EnhancedTwelveDataAdapter extends TwelveDataAdapter {
           errors.push(`Invalid P/E ratio: ${metrics.peRatio}`);
         }
         
-        if (metrics.roe !== undefined && (metrics.roe < -10 || metrics.roe > 10)) {
-          errors.push(`Invalid ROE: ${metrics.roe} (${(metrics.roe * 100).toFixed(1)}%)`);
+        // ROE validation - handle both decimal (0.15) and percentage (15) formats
+        if (metrics.roe !== undefined && metrics.roe !== null) {
+          let roePercent = metrics.roe;
+
+          // If ROE is in decimal form (0.15 = 15%), convert to percentage
+          if (Math.abs(metrics.roe) <= 5) {
+            roePercent = metrics.roe * 100;
+          }
+
+          // Validate reasonable ROE range: -200% to 500% (allows for high-growth tech stocks)
+          if (roePercent < -200 || roePercent > 500) {
+            errors.push(`Invalid ROE: ${roePercent.toFixed(1)}%`);
+          }
         }
         
         if (metrics.debtToEquity !== undefined && metrics.debtToEquity < 0) {

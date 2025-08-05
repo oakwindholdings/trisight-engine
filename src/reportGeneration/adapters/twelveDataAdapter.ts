@@ -765,8 +765,18 @@ export class TwelveDataAdapter extends BaseAdapter {
     // Dividend yield is in the dividends_and_splits section
     const dividendYield = stats?.dividends_and_splits?.trailing_annual_dividend_yield || 0;
     
-    // ROE is in financials section (in decimal form, e.g., 1.38015 = 138.015%)
-    const roe = (financials.return_on_equity_ttm || 0) * 100;
+    // ROE calculation with proper validation
+    // TwelveData may return ROE in different formats - handle both decimal and percentage
+    let roe = financials.return_on_equity_ttm || 0;
+
+    // If ROE is in decimal form (0.15 = 15%), convert to percentage
+    // If already in percentage form (15 = 15%), use as-is
+    // Rule: MVP - Fix unrealistic ROE calculation causing 11546.3% values
+    if (Math.abs(roe) <= 5) {
+      // Likely decimal form (e.g., 0.15 = 15%)
+      roe = roe * 100;
+    }
+    // If roe > 5, assume it's already in percentage form
     
     // Current ratio and debt to equity from balance_sheet section
     const currentRatio = balanceSheet.current_ratio_mrq || 0;
@@ -814,10 +824,12 @@ export class TwelveDataAdapter extends BaseAdapter {
       metrics.peRatio = 0;
     }
     
-    // ROE: typically -50% to 200%, extreme values are suspicious
-    if (metrics.roe < -200 || metrics.roe > 500) {
+    // ROE: typically -50% to 100%, extreme values indicate calculation errors
+    // Rule: MVP - Implement strict ROE validation for professional standards
+    if (metrics.roe < -100 || metrics.roe > 200) {
       logDebug('TwelveDataAdapter', `Invalid ROE: ${metrics.roe}%, capping at reasonable range`);
-      metrics.roe = metrics.roe > 500 ? 200 : -50;
+      // Cap at more conservative ranges for professional reports
+      metrics.roe = metrics.roe > 200 ? 50 : -20; // Conservative caps
     }
     
     // Debt/Equity: typically 0-5, but can be much higher for certain companies

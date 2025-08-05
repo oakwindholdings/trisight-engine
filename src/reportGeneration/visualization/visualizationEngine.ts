@@ -3,6 +3,16 @@
 // Context: Transforms data into professional investment visualizations
 
 import * as d3 from 'd3';
+import * as d3Scale from 'd3-scale';
+import * as d3Array from 'd3-array';
+import * as d3Shape from 'd3-shape';
+import * as d3TimeFormat from 'd3-time-format';
+import * as d3Time from 'd3-time';
+import * as d3Axis from 'd3-axis';
+import * as d3Selection from 'd3-selection';
+import * as d3Transition from 'd3-transition';
+import * as d3Interpolate from 'd3-interpolate';
+import * as d3Ease from 'd3-ease';
 import { ChartSpecification } from '../templates/reportTemplateEngine';
 
 /**
@@ -233,7 +243,7 @@ export class VisualizationEngine {
     const { width, height, margins } = this.config.size;
     
     // Create SVG container
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -251,7 +261,7 @@ export class VisualizationEngine {
       .attr('transform', `translate(${margins.left},${margins.top + 60})`);
     
     // Parse dates if needed
-    const parseTime = d3.timeParse('%Y-%m-%d');
+    const parseTime = d3TimeFormat.timeParse('%Y-%m-%d');
     const labels = data.labels.map((d: any) => 
       typeof d === 'string' && d.match(/^\d{4}-\d{2}-\d{2}$/) ? parseTime(d) : d
     );
@@ -259,7 +269,7 @@ export class VisualizationEngine {
     // Create scales
     const xScale = this.createXScale(labels, [0, chartWidth]);
     const yExtent = this.calculateYExtent(data.datasets);
-    const yScale = d3.scaleLinear()
+    const yScale = d3Scale.scaleLinear()
       .domain(yExtent)
       .range([chartHeight, 0])
       .nice();
@@ -271,7 +281,7 @@ export class VisualizationEngine {
     this.addAxes(chart, xScale, yScale, chartWidth, chartHeight, config);
     
     // Create line generator
-    const line = d3.line<number>()
+    const line = d3Shape.line<number>()
       .defined(d => d != null && !isNaN(d))
       .x((d, i) => xScale(labels[i]) as number)
       .y(d => yScale(d) as number);
@@ -297,7 +307,7 @@ export class VisualizationEngine {
           .attr('stroke-dashoffset', totalLength)
           .transition()
           .duration(1500)
-          .ease(d3.easeLinear)
+          .ease(d3Ease.easeLinear)
           .attr('stroke-dashoffset', 0);
       }
       
@@ -357,7 +367,7 @@ export class VisualizationEngine {
     const { width, height, margins } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -375,13 +385,13 @@ export class VisualizationEngine {
       .attr('transform', `translate(${margins.left},${margins.top + 60})`);
     
     // Create scales
-    const xScale = d3.scaleBand()
+    const xScale = d3Scale.scaleBand()
       .domain(data.labels)
       .range([0, chartWidth])
       .padding(0.1);
     
-    const yMax = (d3.max(data.datasets.flatMap((d: any) => d.data)) || 0) * 1.1;
-    const yScale = d3.scaleLinear()
+    const yMax = (d3Array.max(data.datasets.flatMap((d: any) => d.data)) || 0) * 1.1;
+    const yScale = d3Scale.scaleLinear()
       .domain([0, yMax])
       .range([chartHeight, 0])
       .nice();
@@ -431,7 +441,7 @@ export class VisualizationEngine {
       }
     } else {
       // Multiple series - grouped bars
-      const groupScale = d3.scaleBand()
+      const groupScale = d3Scale.scaleBand()
         .domain(data.datasets.map((d: any, i: number) => i.toString()))
         .range([0, xScale.bandwidth()])
         .padding(0.05);
@@ -499,7 +509,7 @@ export class VisualizationEngine {
     const { width, height, margins } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -532,19 +542,19 @@ export class VisualizationEngine {
     }));
     
     // Create scales
-    const xScale = d3.scaleTime()
-      .domain(d3.extent(candles, d => d.date) as [Date, Date])
+    const xScale = d3Time.scaleTime()
+      .domain(d3Array.extent(candles, d => d.date) as [Date, Date])
       .range([0, chartWidth]);
     
-    const yScale = d3.scaleLinear()
+    const yScale = d3Scale.scaleLinear()
       .domain([
-        (d3.min(candles, d => d.low) || 0) * 0.98,
-        (d3.max(candles, d => d.high) || 0) * 1.02
+        (d3Array.min(candles, d => d.low) || 0) * 0.98,
+        (d3Array.max(candles, d => d.high) || 0) * 1.02
       ])
       .range([mainChartHeight, 0]);
     
-    const volumeScale = d3.scaleLinear()
-      .domain([0, d3.max(candles, d => d.volume) || 0])
+    const volumeScale = d3Scale.scaleLinear()
+      .domain([0, d3Array.max(candles, d => d.volume) || 0])
       .range([volumeChartHeight, 0]);
     
     // Add grid lines to main chart
@@ -609,7 +619,7 @@ export class VisualizationEngine {
       .attr('opacity', 0.5);
     
     // Add volume axis
-    const volumeAxis = d3.axisLeft(volumeScale)
+    const volumeAxis = d3Axis.axisLeft(volumeScale)
       .ticks(3)
       .tickFormat(d => this.formatValue(d as number, 'volume'));
     
@@ -646,7 +656,7 @@ export class VisualizationEngine {
     const { width, height } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -696,7 +706,7 @@ export class VisualizationEngine {
       .duration(1000)
       .style('opacity', 1)
       .attrTween('d', function(d) {
-        const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+        const interpolate = d3Interpolate.interpolate({ startAngle: 0, endAngle: 0 }, d);
         return function(t) {
           return arc(interpolate(t) as any) as string;
         };
@@ -748,7 +758,7 @@ export class VisualizationEngine {
         .attr('y', 9)
         .style('font-size', '11px')
         .style('fill', this.colorPalette.text)
-        .text(`${label} (${(dataset.data[i] / d3.sum(dataset.data) * 100).toFixed(1)}%)`);
+        .text(`${label} (${(dataset.data[i] / d3Array.sum(dataset.data) * 100).toFixed(1)}%)`);
     });
     
     // Add interactivity
@@ -780,7 +790,7 @@ export class VisualizationEngine {
     const { width, height, margins } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -798,14 +808,14 @@ export class VisualizationEngine {
       .attr('transform', `translate(${margins.left},${margins.top + 60})`);
     
     // Create scales
-    const xExtent = d3.extent(data.points, (d: any) => d.x) as [number, number];
-    const yExtent = d3.extent(data.points, (d: any) => d.y) as [number, number];
+    const xExtent = d3Array.extent(data.points, (d: any) => d.x) as [number, number];
+    const yExtent = d3Array.extent(data.points, (d: any) => d.y) as [number, number];
     
-    const xScale = d3.scaleLinear()
+    const xScale = d3Scale.scaleLinear()
       .domain([xExtent[0] * 0.9, xExtent[1] * 1.1])
       .range([0, chartWidth]);
     
-    const yScale = d3.scaleLinear()
+    const yScale = d3Scale.scaleLinear()
       .domain([yExtent[0] * 0.9, yExtent[1] * 1.1])
       .range([chartHeight, 0]);
     
@@ -880,7 +890,7 @@ export class VisualizationEngine {
     const { width, height, margins } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -898,20 +908,20 @@ export class VisualizationEngine {
       .attr('transform', `translate(${margins.left + 50},${margins.top + 60})`);
     
     // Create scales
-    const xScale = d3.scaleBand()
+    const xScale = d3Scale.scaleBand()
       .domain(data.columns)
       .range([0, chartWidth])
       .padding(0.05);
     
-    const yScale = d3.scaleBand()
+    const yScale = d3Scale.scaleBand()
       .domain(data.rows)
       .range([0, chartHeight])
       .padding(0.05);
     
     // Create color scale
-    const extent = d3.extent(data.values.flat()) as [number, number];
-    const colorScale = d3.scaleSequential()
-      .interpolator(d3.interpolateRdBu)
+    const extent = d3Array.extent(data.values.flat()) as [number, number];
+    const colorScale = d3Scale.scaleSequential()
+      .interpolator(d3Scale.interpolateRdBu)
       .domain([extent[1], extent[0]]); // Reversed for correlation (positive = blue)
     
     // Draw cells
@@ -953,13 +963,13 @@ export class VisualizationEngine {
     // Add axes
     chart.append('g')
       .attr('transform', `translate(0,${chartHeight})`)
-      .call(d3.axisBottom(xScale))
+      .call(d3Axis.axisBottom(xScale))
       .selectAll('text')
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end');
     
     chart.append('g')
-      .call(d3.axisLeft(yScale));
+      .call(d3Axis.axisLeft(yScale));
     
     // Add color legend
     this.addColorLegend(svg, colorScale, width - 80, margins.top + 80);
@@ -987,7 +997,7 @@ export class VisualizationEngine {
     const { width, height, margins } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -1018,13 +1028,13 @@ export class VisualizationEngine {
     });
     
     // Create scales
-    const xScale = d3.scaleBand()
+    const xScale = d3Scale.scaleBand()
       .domain(processedData.map(d => d.label))
       .range([0, chartWidth])
       .padding(0.1);
     
-    const yExtent = d3.extent(processedData.flatMap(d => [d.start, d.end])) as [number, number];
-    const yScale = d3.scaleLinear()
+    const yExtent = d3Array.extent(processedData.flatMap(d => [d.start, d.end])) as [number, number];
+    const yScale = d3Scale.scaleLinear()
       .domain([Math.min(0, yExtent[0]), Math.max(0, yExtent[1])])
       .range([chartHeight, 0])
       .nice();
@@ -1113,7 +1123,7 @@ export class VisualizationEngine {
     const { width, height, margins } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -1134,7 +1144,7 @@ export class VisualizationEngine {
     const root = d3.hierarchy(data)
       .sum((d: any) => d.value)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
-    
+
     // Create treemap layout
     d3.treemap<any>()
       .size([chartWidth, chartHeight])
@@ -1143,7 +1153,7 @@ export class VisualizationEngine {
     
     // Create color scale
     const categories = [...new Set(root.leaves().map(d => d.data.category))];
-    const colorScale = d3.scaleOrdinal()
+    const colorScale = d3Scale.scaleOrdinal()
       .domain(categories)
       .range(this.colorPalette.series);
     
@@ -1228,7 +1238,7 @@ export class VisualizationEngine {
     const { width, height } = this.config.size;
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
@@ -1252,7 +1262,7 @@ export class VisualizationEngine {
     const value = Math.max(minValue, Math.min(maxValue, data.value));
     
     // Create arc generator
-    const arc = d3.arc()
+    const arc = d3Shape.arc()
       .innerRadius(radius * 0.7)
       .outerRadius(radius)
       .startAngle(-Math.PI / 2)
@@ -1265,7 +1275,7 @@ export class VisualizationEngine {
     
     // Value arc
     const valueAngle = -Math.PI / 2 + (value - minValue) / (maxValue - minValue) * Math.PI;
-    const valueArc = d3.arc()
+    const valueArc = d3Shape.arc()
       .innerRadius(radius * 0.7)
       .outerRadius(radius)
       .startAngle(-Math.PI / 2)
@@ -1279,9 +1289,9 @@ export class VisualizationEngine {
       .duration(1500)
       .attr('opacity', 1)
       .attrTween('d', function() {
-        const interpolate = d3.interpolate(-Math.PI / 2, valueAngle);
+        const interpolate = d3Interpolate.interpolate(-Math.PI / 2, valueAngle);
         return function(t) {
-          return d3.arc()
+          return d3Shape.arc()
             .innerRadius(radius * 0.7)
             .outerRadius(radius)
             .startAngle(-Math.PI / 2)
@@ -1290,7 +1300,7 @@ export class VisualizationEngine {
       });
     
     // Add scale markings
-    const scale = d3.scaleLinear()
+    const scale = d3Scale.scaleLinear()
       .domain([minValue, maxValue])
       .range([-Math.PI / 2, Math.PI / 2]);
     
@@ -1333,7 +1343,7 @@ export class VisualizationEngine {
     valueText.transition()
       .duration(1500)
       .tween('text', function() {
-        const interpolate = d3.interpolateNumber(0, value);
+        const interpolate = d3Interpolate.interpolateNumber(0, value);
         return function(t) {
           (this as any).textContent = interpolate(t).toFixed(1);
         };
@@ -1480,24 +1490,24 @@ export class VisualizationEngine {
    * Creates appropriate X scale based on data type
    */
   private createXScale(data: any[], range: number[]): any {
-    if (data.length === 0) return d3.scaleLinear().domain([0, 1]).range(range);
+    if (data.length === 0) return d3Scale.scaleLinear().domain([0, 1]).range(range);
     
     // Check if dates
     if (data[0] instanceof Date) {
-      return d3.scaleTime()
-        .domain(d3.extent(data) as [Date, Date])
+      return d3Scale.scaleTime()
+        .domain(d3Array.extent(data) as [Date, Date])
         .range(range);
     }
     
     // Check if numbers
     if (typeof data[0] === 'number') {
-      return d3.scaleLinear()
-        .domain(d3.extent(data) as [number, number])
+      return d3Scale.scaleLinear()
+        .domain(d3Array.extent(data) as [number, number])
         .range(range);
     }
     
     // Default to band scale for categories
-    return d3.scaleBand()
+    return d3Scale.scaleBand()
       .domain(data)
       .range(range)
       .padding(0.1);
@@ -1511,8 +1521,8 @@ export class VisualizationEngine {
     
     if (allValues.length === 0) return [0, 1];
     
-    const min = d3.min(allValues) as number;
-    const max = d3.max(allValues) as number;
+    const min = d3Array.min(allValues) as number;
+    const max = d3Array.max(allValues) as number;
     
     // Add padding
     const padding = (max - min) * 0.1;
@@ -1536,7 +1546,7 @@ export class VisualizationEngine {
     // Horizontal grid lines
     chart.append('g')
       .attr('class', 'grid-y')
-      .call(d3.axisLeft(yScale)
+      .call(d3Axis.axisLeft(yScale)
         .tickSize(-width)
         .tickFormat(() => '')
       )
@@ -1549,7 +1559,7 @@ export class VisualizationEngine {
       chart.append('g')
         .attr('class', 'grid-x')
         .attr('transform', `translate(0,${height})`)
-        .call(d3.axisBottom(xScale)
+        .call(d3Axis.axisBottom(xScale)
           .tickSize(-height)
           .tickFormat(() => '')
         )
@@ -1571,10 +1581,10 @@ export class VisualizationEngine {
     config: any
   ): void {
     // X-axis
-    const xAxis = d3.axisBottom(xScale);
+    const xAxis = d3Axis.axisBottom(xScale);
     
     if (config.xAxis?.format === 'date') {
-      xAxis.tickFormat(d3.timeFormat('%b %d'));
+      xAxis.tickFormat(d3TimeFormat.timeFormat('%b %d'));
     } else if (config.xAxis?.format) {
       xAxis.tickFormat(d => this.formatValue(d as number, config.xAxis.format));
     }
@@ -1597,7 +1607,7 @@ export class VisualizationEngine {
     }
     
     // Y-axis
-    const yAxis = d3.axisLeft(yScale);
+    const yAxis = d3Axis.axisLeft(yScale);
     
     if (config.yAxis?.format) {
       yAxis.tickFormat(d => this.formatValue(d as number, config.yAxis.format));
@@ -1696,7 +1706,7 @@ export class VisualizationEngine {
     height: number
   ): void {
     // Create tooltip
-    const tooltip = d3.select('body').append('div')
+    const tooltip = d3Selection.select('body').append('div')
       .attr('class', 'chart-tooltip')
       .style('opacity', 0)
       .style('position', 'absolute')
@@ -1724,10 +1734,10 @@ export class VisualizationEngine {
       .style('fill', 'none')
       .style('pointer-events', 'all')
       .on('mousemove', function(event: MouseEvent) {
-        const [mouseX] = d3.pointer(event);
+        const [mouseX] = d3Selection.pointer(event);
         
         // Find closest data point
-        const bisect = d3.bisector((d: any, i: number) => xScale(labels[i])).left;
+        const bisect = d3Array.bisector((d: any, i: number) => xScale(labels[i])).left;
         const index = Math.min(bisect(data.datasets[0].data, mouseX), labels.length - 1);
         
         // Update hover line
@@ -1781,7 +1791,7 @@ export class VisualizationEngine {
         const period = parseInt(indicator.substring(2));
         const maData = this.calculateMovingAverage(candles.map(c => c.close), period);
         
-        const line = d3.line<number | null>()
+        const line = d3Shape.line<number | null>()
           .defined(d => d != null)
           .x((d, i) => xScale(candles[i].date))
           .y(d => yScale(d as number));
@@ -1927,11 +1937,11 @@ export class VisualizationEngine {
       .style('fill', `url(#${gradientId})`);
     
     // Add scale
-    const legendScale = d3.scaleLinear()
+    const legendScale = d3Scale.scaleLinear()
       .domain(domain)
       .range([legendHeight, 0]);
     
-    const legendAxis = d3.axisRight(legendScale)
+    const legendAxis = d3Axis.axisRight(legendScale)
       .ticks(5);
     
     legend.append('g')

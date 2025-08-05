@@ -4,12 +4,14 @@
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { 
-  FileText, Settings, Database, BarChart3, 
+import {
+  FileText, Settings, Database, BarChart3,
   ChevronRight, ChevronLeft, Sparkles, AlertCircle,
-  TrendingUp, Shield, Clock, Target, Eye
+  TrendingUp, Shield, Clock, Target, Eye, Zap, Star
 } from 'lucide-react';
 import { useAutomatedReportGeneration } from '../../hooks/useAutomatedReportGeneration';
+import { useEnhancedReportGeneration } from '../../hooks/useEnhancedReportGeneration';
+import { EnhancedReportWizard } from './EnhancedReportWizard';
 import { getStorageService } from '../../services/reportStorageService';
 import { reportApiService } from '../../services/reportApiService';
 import { logDebug, logError } from '../../utils/logger';
@@ -23,6 +25,42 @@ const WizardContainer = styled.div`
   display: flex;
   flex-direction: column;
   background: #ffffff;
+`;
+
+const EnhancedToggle = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const EnhancedBadge = styled.div`
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #1a1a1a;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 `;
 
 const ProgressBar = styled.div`
@@ -513,11 +551,12 @@ interface ReportWizardProps {
   onViewReport?: (report: any) => void;
 }
 
-export const ReportWizard: React.FC<ReportWizardProps> = ({ 
+export const ReportWizard: React.FC<ReportWizardProps> = ({
   currentReport,
   onReportChange,
   onViewReport
 }) => {
+  const [useEnhanced, setUseEnhanced] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [reportConfig, setReportConfig] = useState({
     template: '',
@@ -542,6 +581,12 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({
   });
 
   const { generateReport, status } = useAutomatedReportGeneration();
+  const { isEnhanced, checkEnhancedAvailability } = useEnhancedReportGeneration();
+
+  // Check enhanced availability on mount
+  useEffect(() => {
+    checkEnhancedAvailability();
+  }, [checkEnhancedAvailability]);
 
   const progress = ((currentStep + 1) / steps.length) * 100;
   
@@ -1036,8 +1081,40 @@ export const ReportWizard: React.FC<ReportWizardProps> = ({
     }
   };
 
+  // If enhanced mode is selected, render the enhanced wizard
+  if (useEnhanced) {
+    return (
+      <WizardContainer>
+        <EnhancedToggle onClick={() => setUseEnhanced(false)}>
+          <Zap size={16} />
+          Enhanced Mode
+          <EnhancedBadge>
+            <Star size={10} />
+            ON
+          </EnhancedBadge>
+        </EnhancedToggle>
+        <EnhancedReportWizard
+          currentReport={currentReport}
+          onReportChange={onReportChange}
+          onViewReport={onViewReport}
+        />
+      </WizardContainer>
+    );
+  }
+
   return (
     <WizardContainer>
+      {isEnhanced && (
+        <EnhancedToggle onClick={() => setUseEnhanced(true)}>
+          <Zap size={16} />
+          Try Enhanced Mode
+          <EnhancedBadge>
+            <Star size={10} />
+            NEW
+          </EnhancedBadge>
+        </EnhancedToggle>
+      )}
+
       <ProgressBar>
         <ProgressFill $progress={progress} />
       </ProgressBar>

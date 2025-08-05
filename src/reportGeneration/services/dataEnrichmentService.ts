@@ -458,8 +458,8 @@ export class DataEnrichmentService {
         log.push({
           field: 'description',
           action: 'updated',
-          oldValue: enriched.description.substring(0, 50) + '...',
-          newValue: enhancedDesc.substring(0, 50) + '...',
+          oldValue: enriched.description,
+          newValue: enhancedDesc,
           reason: 'Enhanced with structured business context'
         });
         enriched.description = enhancedDesc;

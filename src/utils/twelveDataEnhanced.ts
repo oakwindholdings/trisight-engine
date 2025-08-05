@@ -1,293 +1,341 @@
 // src/utils/twelveDataEnhanced.ts
-// Enhanced TwelveData integration using official package + Ultra plan
-// Context: Combines official package with existing custom rate limiting and caching
+// Enhanced TwelveData integration with Ultra plan capabilities
+// Context: Leverages full TwelveData Ultra features for superior market data
 
-import twelvedata from 'twelvedata';
-import { logDebug, logError } from './debug';
+import axios from 'axios';
+import { logDebug, logError } from './logger';
 
 interface TwelveDataConfig {
-  apiKey: string;
   enableCaching?: boolean;
   debugMode?: boolean;
   rateLimitCreditsPerMinute?: number;
 }
 
-interface UltraFeatures {
-  extendedHistory: boolean;
-  technicalIndicators: boolean;
-  batchRequests: boolean;
-  realTimeData: boolean;
-  highRateLimits: boolean;
-  websocketStreaming: boolean;
+interface TechnicalIndicatorParams {
+  time_period?: number;
+  fast_period?: number;
+  slow_period?: number;
+  signal_period?: number;
+  sd?: number;
 }
 
 /**
- * Enhanced TwelveData client that combines official package with Ultra plan features
- * Provides enterprise-grade rate limiting, caching, and error handling
+ * Enhanced TwelveData client with Ultra plan capabilities
+ * Provides comprehensive market data with advanced features
  */
-export class TwelveDataEnhanced {
-  private client: any;
+class TwelveDataEnhanced {
+  private apiKey: string;
+  private baseUrl: string;
   private config: TwelveDataConfig;
-  private cache: Map<string, { data: any; expires: number }>;
-  private rateLimitTokens: number;
-  private lastTokenRefill: number;
-  private ultraFeatures: UltraFeatures;
+  private requestCount: number = 0;
+  private lastResetTime: number = Date.now();
 
-  constructor(config: TwelveDataConfig) {
+  constructor(config: TwelveDataConfig = {}) {
+    this.apiKey = process.env.REACT_APP_TWELVE_DATA_API_KEY || process.env.TWELVE_DATA_API_KEY || '';
+    this.baseUrl = 'https://api.twelvedata.com';
     this.config = {
       enableCaching: true,
       debugMode: false,
-      rateLimitCreditsPerMinute: 10946, // Ultra plan default
+      rateLimitCreditsPerMinute: 10946, // Ultra plan limit
       ...config
     };
 
-    // Initialize official TwelveData client
-    this.client = twelvedata({ key: this.config.apiKey });
-    
-    // Initialize caching
-    this.cache = new Map();
-    
-    // Initialize rate limiting (Ultra plan: 10,946 credits/minute)
-    this.rateLimitTokens = this.config.rateLimitCreditsPerMinute!;
-    this.lastTokenRefill = Date.now();
-    
-    // Ultra plan features
-    this.ultraFeatures = {
-      extendedHistory: true,
-      technicalIndicators: true,
-      batchRequests: true,
-      realTimeData: true,
-      highRateLimits: true,
-      websocketStreaming: true
-    };
-
-    if (this.config.debugMode) {
-      logDebug('TwelveDataEnhanced', 'Initialized with Ultra plan features', this.ultraFeatures);
+    if (!this.apiKey) {
+      throw new Error('TwelveData API key is required. Set TWELVE_DATA_API_KEY or REACT_APP_TWELVE_DATA_API_KEY');
     }
+
+    logDebug('TwelveDataEnhanced', 'Initialized with Ultra plan capabilities');
   }
 
   /**
-   * Get API usage statistics (Ultra plan specific)
-   */
-  async getApiUsage(): Promise<any> {
-    return this.executeWithRateLimit('apiUsage', 1, () => this.client.apiUsage());
-  }
-
-  /**
-   * Get real-time quote with Ultra plan features
+   * Get real-time quote with enhanced data
    */
   async getQuote(symbol: string): Promise<any> {
-    const cacheKey = `quote_${symbol}`;
-    return this.executeWithCache(cacheKey, 60000, () => 
-      this.executeWithRateLimit('quote', 1, () => this.client.quote({ symbol }))
-    );
+    return this.makeRequest('/quote', { symbol });
   }
 
   /**
-   * Get time series with extended history (Ultra plan: 30+ years)
+   * Get time series data with extended history
    */
-  async getTimeSeries(
-    symbol: string, 
-    interval: string = '1day', 
-    outputsize: number = 5000
-  ): Promise<any> {
-    const cacheKey = `timeseries_${symbol}_${interval}_${outputsize}`;
-    return this.executeWithCache(cacheKey, 300000, () => 
-      this.executeWithRateLimit('timeSeries', 10, () => 
-        this.client.timeSeries({ symbol, interval, outputsize })
-      )
-    );
-  }
-
-  /**
-   * Get technical indicators (Ultra plan feature)
-   */
-  async getTechnicalIndicator(
-    symbol: string,
-    indicator: string,
-    interval: string = '1day',
-    params: Record<string, any> = {}
-  ): Promise<any> {
-    const cacheKey = `indicator_${symbol}_${indicator}_${interval}_${JSON.stringify(params)}`;
-    return this.executeWithCache(cacheKey, 600000, () => 
-      this.executeWithRateLimit('technicalIndicator', 5, () => 
-        this.client.technicalIndicators({ symbol, interval, indicator, ...params })
-      )
-    );
+  async getTimeSeries(symbol: string, interval: string, outputsize: number = 5000): Promise<any> {
+    return this.makeRequest('/time_series', {
+      symbol,
+      interval,
+      outputsize: Math.min(outputsize, 5000) // Ultra plan limit
+    });
   }
 
   /**
    * Get earnings data
    */
   async getEarnings(symbol: string): Promise<any> {
-    const cacheKey = `earnings_${symbol}`;
-    return this.executeWithCache(cacheKey, 3600000, () => 
-      this.executeWithRateLimit('earnings', 50, () => this.client.earnings({ symbol }))
-    );
+    return this.makeRequest('/earnings', { symbol });
   }
 
   /**
-   * Batch request multiple data points (Ultra plan feature)
+   * Get technical indicator with custom parameters
    */
-  async getComplexData(params: {
-    symbols: string[];
-    intervals: string[];
-    methods: (string | { name: string; [key: string]: any })[];
-    outputsize?: number;
-  }): Promise<any> {
-    const cacheKey = `complex_${JSON.stringify(params)}`;
-    const creditCost = params.symbols.length * params.intervals.length * params.methods.length * 10;
-    
-    return this.executeWithCache(cacheKey, 300000, () => 
-      this.executeWithRateLimit('complexData', creditCost, () => 
-        this.client.complexData(params)
-      )
-    );
+  async getTechnicalIndicator(
+    symbol: string, 
+    indicator: string, 
+    interval: string, 
+    params: TechnicalIndicatorParams = {}
+  ): Promise<any> {
+    const requestParams = {
+      symbol,
+      interval,
+      ...params
+    };
+
+    return this.makeRequest(`/${indicator}`, requestParams);
   }
 
   /**
-   * Search for symbols
+   * Get company profile and fundamentals
    */
-  async searchSymbols(query: string): Promise<any> {
-    const cacheKey = `search_${query}`;
-    return this.executeWithCache(cacheKey, 3600000, () => 
-      this.executeWithRateLimit('symbolSearch', 1, () => 
-        this.client.symbolSearch({ symbol: query })
-      )
-    );
+  async getProfile(symbol: string): Promise<any> {
+    return this.makeRequest('/profile', { symbol });
   }
 
   /**
-   * Get cryptocurrency data (Ultra plan feature)
+   * Get financial statements
    */
-  async getCryptocurrencies(): Promise<any> {
-    const cacheKey = 'cryptocurrencies';
-    return this.executeWithCache(cacheKey, 3600000, () => 
-      this.executeWithRateLimit('cryptocurrencies', 1, () => this.client.cryptocurrencies())
-    );
+  async getFinancials(symbol: string, period: 'annual' | 'quarterly' = 'annual'): Promise<any> {
+    return this.makeRequest('/income_statement', { symbol, period });
   }
 
   /**
-   * Execute request with rate limiting
+   * Get balance sheet
    */
-  private async executeWithRateLimit<T>(
-    operation: string, 
-    creditCost: number, 
-    fn: () => Promise<T>
-  ): Promise<T> {
-    await this.waitForTokens(creditCost);
-    
+  async getBalanceSheet(symbol: string, period: 'annual' | 'quarterly' = 'annual'): Promise<any> {
+    return this.makeRequest('/balance_sheet', { symbol, period });
+  }
+
+  /**
+   * Get cash flow statement
+   */
+  async getCashFlow(symbol: string, period: 'annual' | 'quarterly' = 'annual'): Promise<any> {
+    return this.makeRequest('/cash_flow', { symbol, period });
+  }
+
+  /**
+   * Get analyst recommendations
+   */
+  async getRecommendations(symbol: string): Promise<any> {
+    return this.makeRequest('/recommendations', { symbol });
+  }
+
+  /**
+   * Get insider transactions
+   */
+  async getInsiderTransactions(symbol: string): Promise<any> {
+    return this.makeRequest('/insider_transactions', { symbol });
+  }
+
+  /**
+   * Get institutional holdings
+   */
+  async getInstitutionalHoldings(symbol: string): Promise<any> {
+    return this.makeRequest('/institutional_holders', { symbol });
+  }
+
+  /**
+   * Get options data (Ultra plan feature)
+   */
+  async getOptionsData(symbol: string, expiration_date?: string): Promise<any> {
+    const params: any = { symbol };
+    if (expiration_date) {
+      params.expiration_date = expiration_date;
+    }
+    return this.makeRequest('/options', params);
+  }
+
+  /**
+   * Get market movers
+   */
+  async getMarketMovers(direction: 'gainers' | 'losers' = 'gainers'): Promise<any> {
+    return this.makeRequest('/market_movers', { direction });
+  }
+
+  /**
+   * Get sector performance
+   */
+  async getSectorPerformance(): Promise<any> {
+    return this.makeRequest('/sector_performance');
+  }
+
+  /**
+   * Get economic indicators
+   */
+  async getEconomicIndicators(indicator: string, country: string = 'US'): Promise<any> {
+    return this.makeRequest('/economic_indicators', { indicator, country });
+  }
+
+  /**
+   * Get forex rates
+   */
+  async getForexRates(symbol: string): Promise<any> {
+    return this.makeRequest('/exchange_rate', { symbol });
+  }
+
+  /**
+   * Get cryptocurrency data
+   */
+  async getCryptoData(symbol: string): Promise<any> {
+    return this.makeRequest('/price', { symbol });
+  }
+
+  /**
+   * Get Ultra plan specific features
+   */
+  getUltraFeatures(): any {
+    return {
+      realTimeData: true,
+      extendedHistory: true,
+      advancedTechnicals: true,
+      fundamentalData: true,
+      optionsData: true,
+      economicIndicators: true,
+      institutionalData: true,
+      rateLimitCredits: this.config.rateLimitCreditsPerMinute,
+      supportLevel: 'premium'
+    };
+  }
+
+  /**
+   * Get API usage statistics
+   */
+  getUsageStats(): any {
+    return {
+      requestCount: this.requestCount,
+      creditsUsed: this.requestCount,
+      creditsRemaining: (this.config.rateLimitCreditsPerMinute || 0) - this.requestCount,
+      resetTime: new Date(this.lastResetTime + 60000).toISOString()
+    };
+  }
+
+  /**
+   * Make API request with rate limiting and error handling
+   */
+  private async makeRequest(endpoint: string, params: any = {}): Promise<any> {
     try {
-      const result = await fn();
-      
+      // Check rate limits
+      this.checkRateLimit();
+
+      const url = `${this.baseUrl}${endpoint}`;
+      const requestParams = {
+        ...params,
+        apikey: this.apiKey
+      };
+
       if (this.config.debugMode) {
-        logDebug('TwelveDataEnhanced', `${operation} completed`, { creditCost, tokensRemaining: this.rateLimitTokens });
+        logDebug('TwelveDataEnhanced', `Making request to ${endpoint}`, requestParams);
       }
-      
-      return result;
+
+      const response = await axios.get(url, {
+        params: requestParams,
+        timeout: 30000 // 30 second timeout
+      });
+
+      this.requestCount++;
+
+      if (response.data.status === 'error') {
+        throw new Error(response.data.message || 'TwelveData API error');
+      }
+
+      if (this.config.debugMode) {
+        logDebug('TwelveDataEnhanced', `Request successful for ${endpoint}`);
+      }
+
+      return response.data;
+
     } catch (error) {
-      logError('TwelveDataEnhanced', `${operation} failed`, error);
+      logError('TwelveDataEnhanced', `Request failed for ${endpoint}`, error);
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait before making more requests.');
+        }
+        if (error.response?.status === 401) {
+          throw new Error('Invalid API key. Please check your TwelveData API key.');
+        }
+        if (error.response?.status === 403) {
+          throw new Error('Access forbidden. This feature may require a higher plan.');
+        }
+      }
+
       throw error;
     }
   }
 
   /**
-   * Execute request with caching
+   * Check and enforce rate limits
    */
-  private async executeWithCache<T>(
-    cacheKey: string, 
-    ttlMs: number, 
-    fn: () => Promise<T>
-  ): Promise<T> {
-    if (this.config.enableCaching) {
-      const cached = this.cache.get(cacheKey);
-      if (cached && cached.expires > Date.now()) {
-        if (this.config.debugMode) {
-          logDebug('TwelveDataEnhanced', `Cache hit for ${cacheKey}`);
-        }
-        return cached.data;
-      }
-    }
-
-    const result = await fn();
-    
-    if (this.config.enableCaching) {
-      this.cache.set(cacheKey, {
-        data: result,
-        expires: Date.now() + ttlMs
-      });
-    }
-
-    return result;
-  }
-
-  /**
-   * Token bucket rate limiting for Ultra plan
-   */
-  private async waitForTokens(creditCost: number): Promise<void> {
-    // Refill tokens based on time elapsed
+  private checkRateLimit(): void {
     const now = Date.now();
-    const timeDelta = now - this.lastTokenRefill;
-    const tokensToAdd = (timeDelta / 60000) * this.config.rateLimitCreditsPerMinute!;
-    
-    this.rateLimitTokens = Math.min(
-      this.config.rateLimitCreditsPerMinute!,
-      this.rateLimitTokens + tokensToAdd
-    );
-    this.lastTokenRefill = now;
+    const timeSinceReset = now - this.lastResetTime;
 
-    // Wait if we don't have enough tokens
-    if (this.rateLimitTokens < creditCost) {
-      const waitTime = ((creditCost - this.rateLimitTokens) / this.config.rateLimitCreditsPerMinute!) * 60000;
-      
-      if (this.config.debugMode) {
-        logDebug('TwelveDataEnhanced', `Rate limit hit, waiting ${waitTime}ms`);
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-      this.rateLimitTokens = creditCost;
+    // Reset counter every minute
+    if (timeSinceReset >= 60000) {
+      this.requestCount = 0;
+      this.lastResetTime = now;
     }
 
-    this.rateLimitTokens -= creditCost;
+    // Check if we're approaching the limit
+    const creditsPerMinute = this.config.rateLimitCreditsPerMinute || 0;
+    if (this.requestCount >= creditsPerMinute) {
+      const waitTime = 60000 - timeSinceReset;
+      throw new Error(`Rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds.`);
+    }
   }
 
   /**
-   * Get Ultra plan features status
+   * Batch request multiple symbols
    */
-  getUltraFeatures(): UltraFeatures {
-    return { ...this.ultraFeatures };
+  async batchRequest(symbols: string[], endpoint: string, params: any = {}): Promise<any> {
+    const symbolString = symbols.join(',');
+    return this.makeRequest(endpoint, { ...params, symbol: symbolString });
   }
 
   /**
-   * Clear cache
+   * Get comprehensive market data for a symbol
    */
-  clearCache(): void {
-    this.cache.clear();
-    if (this.config.debugMode) {
-      logDebug('TwelveDataEnhanced', 'Cache cleared');
+  async getComprehensiveData(symbol: string): Promise<any> {
+    try {
+      const [quote, timeSeries, profile, earnings, recommendations] = await Promise.all([
+        this.getQuote(symbol),
+        this.getTimeSeries(symbol, '1day', 252),
+        this.getProfile(symbol),
+        this.getEarnings(symbol),
+        this.getRecommendations(symbol)
+      ]);
+
+      return {
+        quote,
+        timeSeries,
+        profile,
+        earnings,
+        recommendations,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      logError('TwelveDataEnhanced', 'Comprehensive data request failed', error);
+      throw error;
     }
   }
 }
 
-// Export singleton instance
-let enhancedClient: TwelveDataEnhanced | null = null;
+// Singleton instance
+let instance: TwelveDataEnhanced | null = null;
 
-export const getTwelveDataEnhanced = (config?: Partial<TwelveDataConfig>): TwelveDataEnhanced => {
-  if (!enhancedClient) {
-    const apiKey = config?.apiKey || process.env.REACT_APP_TWELVE_DATA_API_KEY;
-    if (!apiKey) {
-      throw new Error('TwelveData API key is required');
-    }
-    
-    enhancedClient = new TwelveDataEnhanced({
-      apiKey,
-      enableCaching: true,
-      debugMode: process.env.NODE_ENV === 'development',
-      ...config
-    });
+/**
+ * Get enhanced TwelveData instance
+ */
+export function getTwelveDataEnhanced(config?: TwelveDataConfig): TwelveDataEnhanced {
+  if (!instance) {
+    instance = new TwelveDataEnhanced(config);
   }
-  
-  return enhancedClient;
-};
+  return instance;
+}
 
 export default TwelveDataEnhanced;

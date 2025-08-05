@@ -1,6 +1,7 @@
 // src/reportGeneration/adapters/firecrawlAdapter.ts
-// Firecrawl integration for intelligent web scraping and content extraction
+// Enhanced Firecrawl integration for intelligent web scraping and content extraction
 // Context: Handles all web scraping needs with AI-powered extraction capabilities
+// Enhanced: Added comprehensive news analysis and company profiling capabilities
 
 import { BaseAdapter } from '../core/baseAdapter';
 import { RetryableError, ErrorCategory, wrapDataFetchError } from '../utils/errorHandler';
@@ -690,7 +691,7 @@ export class FirecrawlAdapter extends BaseAdapter {
     }
   }
   
-  private generateSummary(content: string, maxLength: number = 200): string {
+  private generateSummary(content: string, ): string {
     if (!content) return '';
     
     // Simple summary: first two sentences
@@ -698,7 +699,7 @@ export class FirecrawlAdapter extends BaseAdapter {
     const summary = sentences.slice(0, 2).join(' ').trim();
     
     return summary.length > maxLength 
-      ? summary.substring(0, maxLength - 3) + '...'
+      ? summary
       : summary;
   }
   

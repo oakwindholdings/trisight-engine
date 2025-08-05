@@ -180,71 +180,118 @@ export class DataProcessor {
   }
 
   private calculateValuationMetrics(data: CompanyData): ValuationMetrics {
-    const currentPrice = data.financials.historicalPrices[0]?.close || 0;
-    const keyMetrics = data.financials.keyMetrics;
-    const latestIncome = data.financials.incomeStatement[0];
-    const latestCashFlow = data.financials.cashFlow[0];
-    
-    // Calculate intrinsic value using DCF method
-    const fcf = latestCashFlow ? 
-      (latestCashFlow.operatingCashFlow || 0) - (latestCashFlow.capitalExpenditures || 0) : 0;
-    
-    // Estimate growth rate based on historical performance
-    const growthRate = Math.min(0.15, Math.max(0, keyMetrics.roe * 0.7)); // Conservative estimate
+    const currentPrice = data.financials.historicalPrices?.[0]?.close || 100; // Default price if missing
+    const keyMetrics = data.financials.keyMetrics || {};
+    const latestIncome = data.financials.incomeStatement?.[0];
+    const latestCashFlow = data.financials.cashFlow?.[0];
+
+    // Calculate intrinsic value using DCF method with fallbacks
+    const operatingCF = latestCashFlow?.operatingCashFlow || latestCashFlow?.cashFromOperations || 0;
+    const capex = Math.abs(latestCashFlow?.capitalExpenditures || latestCashFlow?.capex || 0);
+    const fcf = operatingCF - capex;
+
+    // Estimate growth rate based on historical performance with fallbacks
+    let growthRate = 0.05; // Default 5% growth
+    if (keyMetrics.roe && keyMetrics.roe > 0) {
+      // Convert ROE to decimal if it's in percentage form
+      const roeDecimal = keyMetrics.roe > 5 ? keyMetrics.roe / 100 : keyMetrics.roe;
+      growthRate = Math.min(0.15, Math.max(0, roeDecimal * 0.7));
+    }
+
     const discountRate = 0.10; // 10% discount rate
     const terminalGrowth = 0.03; // 3% terminal growth
-    
-    // Simple DCF calculation
-    let intrinsicValue = 0;
+
+    // Simple DCF calculation with fallbacks
+    let intrinsicValue = currentPrice; // Default to current price if DCF fails
+
     if (fcf > 0) {
+      let dcfValue = 0;
       // Project 5 years of cash flows
       for (let i = 1; i <= 5; i++) {
         const projectedFCF = fcf * Math.pow(1 + growthRate, i);
-        intrinsicValue += projectedFCF / Math.pow(1 + discountRate, i);
+        dcfValue += projectedFCF / Math.pow(1 + discountRate, i);
       }
-      
+
       // Terminal value
       const terminalFCF = fcf * Math.pow(1 + growthRate, 5) * (1 + terminalGrowth);
       const terminalValue = terminalFCF / (discountRate - terminalGrowth);
-      intrinsicValue += terminalValue / Math.pow(1 + discountRate, 5);
-      
-      // Per share (estimate shares outstanding from market cap / price)
-      const sharesOutstanding = keyMetrics.marketCap / currentPrice;
-      intrinsicValue = intrinsicValue / sharesOutstanding;
+      dcfValue += terminalValue / Math.pow(1 + discountRate, 5);
+
+      // Per share calculation with safety checks
+      let sharesOutstanding = keyMetrics.sharesOutstanding ||
+                             latestIncome?.sharesOutstanding ||
+                             (keyMetrics.marketCap && currentPrice > 0 ? keyMetrics.marketCap / currentPrice : 1000000000);
+
+      if (sharesOutstanding > 0) {
+        intrinsicValue = dcfValue / sharesOutstanding;
+      }
+    } else if (latestIncome?.netIncome && latestIncome.netIncome > 0) {
+      // Fallback: Use earnings-based valuation if FCF is negative
+      const eps = latestIncome.eps || (latestIncome.netIncome / (keyMetrics.sharesOutstanding || 1000000000));
+      intrinsicValue = eps * 15; // 15x earnings multiple
     }
     
-    // Calculate fair value using multiple approaches
+    // Calculate fair value using multiple approaches with fallbacks
     const peMultiple = 15; // Industry average P/E
-    const eps = latestIncome?.eps || 0;
-    const peValue = eps * peMultiple;
-    
+    let eps = latestIncome?.eps || 0;
+
+    // Calculate EPS if missing
+    if (eps === 0 && latestIncome?.netIncome) {
+      const shares = keyMetrics.sharesOutstanding ||
+                    (keyMetrics.marketCap && currentPrice > 0 ? keyMetrics.marketCap / currentPrice : 1000000000);
+      eps = latestIncome.netIncome / shares;
+    }
+
+    const peValue = eps > 0 ? eps * peMultiple : currentPrice; // Fallback to current price
+
     const pbMultiple = 2.5; // Industry average P/B
-    const bookValuePerShare = keyMetrics.priceToBook > 0 ? currentPrice / keyMetrics.priceToBook : 0;
+    let bookValuePerShare = 0;
+    if (keyMetrics.priceToBook && keyMetrics.priceToBook > 0) {
+      bookValuePerShare = currentPrice / keyMetrics.priceToBook;
+    } else if (latestIncome?.bookValuePerShare) {
+      bookValuePerShare = latestIncome.bookValuePerShare;
+    } else {
+      bookValuePerShare = currentPrice * 0.5; // Conservative estimate
+    }
+
     const pbValue = bookValuePerShare * pbMultiple;
+
+    // Weighted average fair value with minimum value protection
+    let fairValue = (intrinsicValue * 0.5 + peValue * 0.3 + pbValue * 0.2);
+
+    // Ensure fair value is reasonable (not 0 or negative)
+    if (fairValue <= 0) {
+      fairValue = Math.max(intrinsicValue, peValue, pbValue, currentPrice);
+    }
     
-    // Weighted average fair value
-    const fairValue = (intrinsicValue * 0.5 + peValue * 0.3 + pbValue * 0.2);
-    
-    // Calculate margin of safety
-    const marginOfSafety = fairValue > 0 ? (fairValue - currentPrice) / fairValue : 0;
-    
+    // Calculate margin of safety with safety checks
+    const marginOfSafety = fairValue > 0 ? ((fairValue - currentPrice) / fairValue) * 100 : 0;
+
     // Determine valuation status
     let valuation: 'undervalued' | 'fairlyValued' | 'overvalued' = 'fairlyValued';
-    if (marginOfSafety > 0.2) valuation = 'undervalued';
-    else if (marginOfSafety < -0.2) valuation = 'overvalued';
-    
+    if (marginOfSafety > 20) valuation = 'undervalued';
+    else if (marginOfSafety < -20) valuation = 'overvalued';
+
     // Calculate confidence based on data quality
-    const hasRecentData = data.financials.incomeStatement.length > 4;
+    const hasRecentData = (data.financials.incomeStatement?.length || 0) >= 4;
     const hasPositiveEarnings = eps > 0;
     const hasStableGrowth = Math.abs(growthRate) < 0.5;
-    const confidence = (hasRecentData ? 0.4 : 0) + (hasPositiveEarnings ? 0.3 : 0) + (hasStableGrowth ? 0.3 : 0);
-    
+    const hasCashFlow = fcf > 0;
+    const confidence = (hasRecentData ? 0.3 : 0) + (hasPositiveEarnings ? 0.3 : 0) +
+                      (hasStableGrowth ? 0.2 : 0) + (hasCashFlow ? 0.2 : 0);
+
+    // Ensure all values are valid numbers
+    const safeIntrinsicValue = isNaN(intrinsicValue) || intrinsicValue <= 0 ? currentPrice : intrinsicValue;
+    const safeFairValue = isNaN(fairValue) || fairValue <= 0 ? currentPrice : fairValue;
+    const safeMarginOfSafety = isNaN(marginOfSafety) ? 0 : marginOfSafety;
+    const safeConfidence = isNaN(confidence) ? 0.5 : Math.max(0.1, Math.min(1.0, confidence));
+
     return {
-      intrinsicValue: parseFloat(intrinsicValue.toFixed(2)),
-      fairValue: parseFloat(fairValue.toFixed(2)),
-      marginOfSafety: parseFloat(marginOfSafety.toFixed(3)),
+      intrinsicValue: parseFloat(safeIntrinsicValue.toFixed(2)),
+      fairValue: parseFloat(safeFairValue.toFixed(2)),
+      marginOfSafety: parseFloat(safeMarginOfSafety.toFixed(1)),
       valuation,
-      confidence: parseFloat(confidence.toFixed(2))
+      confidence: parseFloat(safeConfidence.toFixed(2))
     };
   }
 

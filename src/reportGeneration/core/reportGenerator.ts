@@ -47,7 +47,28 @@ export class ReportGenerator {
       startTime: Date.now()
     };
     this.abortController = new AbortController();
-    this.dataFetcher = new DataFetcher({ ticker: config.ticker || config.symbol || '' });
+
+    // COMPREHENSIVE DEBUG: Check environment variables
+    const apiKey = process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
+    const firecrawlKey = process.env.REACT_APP_FIRECRAWL_API_KEY || process.env.FIRECRAWL_API_KEY || '';
+
+    console.log('[ReportGenerator] Environment Debug:', {
+      nodeEnv: process.env.NODE_ENV,
+      hasApiKey: !!apiKey,
+      apiKeyPrefix: apiKey ? apiKey.substring(0, 8) + '...' : 'MISSING',
+      hasFirecrawlKey: !!firecrawlKey,
+      ticker: config.ticker || config.symbol || '',
+      allEnvKeys: Object.keys(process.env).filter(k => k.startsWith('REACT_APP_'))
+    });
+
+    this.dataFetcher = new DataFetcher({
+      ticker: config.ticker || config.symbol || '',
+      apiKey,
+      firecrawlApiKey: firecrawlKey,
+      debugMode: true, // Force debug mode for investigation
+      includeNews: true,
+      includeTranscripts: true
+    });
     this.dataProcessor = new DataProcessor();
     this.reportAssembler = new ReportAssembler();
     this.aiSummarizer = new AISummarizer();
@@ -193,33 +214,51 @@ export class ReportGenerator {
     }
 
     const symbol = this.config.ticker || this.config.symbol || '';
-    
+
+    console.log('[ReportGenerator] Starting data fetch for:', symbol);
     logDebug('ReportGenerator', `Fetching data for ${symbol}`);
-    
-    // This will delegate to DataFetcher in the actual implementation
-    const sections = this.config.sections || this.getDefaultSections();
-    const priorities = this.config.dataSourcePriorities || this.getDefaultPriorities();
-    
-    const companyData = await this.dataFetcher.fetchAll(symbol, (stage: string, progress: number) => {
-      // Map data fetcher stages to our sub-steps
-      const subStepMap: { [key: string]: string } = {
-        'Fetching core financial data': 'fetch-fundamentals',
-        'Fetching supplementary data': 'fetch-technicals',
-        'Fetching enrichment data': 'fetch-news',
-        'Validating and cleaning data': 'validate-data'
-      };
-      
-      const subStepId = subStepMap[stage];
-      if (subStepId) {
-        this.progressTracker.startSubStep('fetch-data', subStepId);
-        if (progress >= 100) {
-          this.progressTracker.completeSubStep('fetch-data', subStepId);
+
+    try {
+      // This will delegate to DataFetcher in the actual implementation
+      const sections = this.config.sections || this.getDefaultSections();
+      const priorities = this.config.dataSourcePriorities || this.getDefaultPriorities();
+
+      console.log('[ReportGenerator] Calling dataFetcher.fetchAll...');
+      const companyData = await this.dataFetcher.fetchAll(symbol, (stage: string, progress: number) => {
+        console.log('[ReportGenerator] Progress update:', { stage, progress });
+
+        // Map data fetcher stages to our sub-steps
+        const subStepMap: { [key: string]: string } = {
+          'Fetching core financial data': 'fetch-fundamentals',
+          'Fetching supplementary data': 'fetch-technicals',
+          'Fetching enrichment data': 'fetch-news',
+          'Validating and cleaning data': 'validate-data'
+        };
+
+        const subStepId = subStepMap[stage];
+        if (subStepId) {
+          this.progressTracker.startSubStep('fetch-data', subStepId);
+          if (progress >= 100) {
+            this.progressTracker.completeSubStep('fetch-data', subStepId);
+          }
         }
-      }
-    });
-    
-    // The fetchAll method returns CompanyData directly
-    return companyData;
+      });
+
+      console.log('[ReportGenerator] Data fetch completed:', {
+        ticker: companyData.ticker,
+        hasFinancials: !!companyData.financials,
+        hasPriceData: !!companyData.financials?.historicalPrices,
+        priceDataLength: companyData.financials?.historicalPrices?.length || 0,
+        hasIncomeStatement: !!companyData.financials?.incomeStatement,
+        incomeStatementLength: companyData.financials?.incomeStatement?.length || 0
+      });
+
+      // The fetchAll method returns CompanyData directly
+      return companyData;
+    } catch (error) {
+      console.error('[ReportGenerator] Data fetch failed:', error);
+      throw error;
+    }
   }
 
   /**
@@ -731,8 +770,19 @@ export class ReportGenerator {
         if (metrics.peRatio && (metrics.peRatio < 0 || metrics.peRatio > 1000)) {
           errors.push(`Invalid P/E ratio: ${metrics.peRatio}`);
         }
-        if (metrics.roe && (metrics.roe < -10 || metrics.roe > 10)) {
-          errors.push(`Invalid ROE: ${(metrics.roe * 100).toFixed(1)}%`);
+        // ROE validation - handle both decimal (0.15) and percentage (15) formats
+        if (metrics.roe !== undefined && metrics.roe !== null) {
+          let roePercent = metrics.roe;
+
+          // If ROE is in decimal form (0.15 = 15%), convert to percentage
+          if (Math.abs(metrics.roe) <= 5) {
+            roePercent = metrics.roe * 100;
+          }
+
+          // Validate reasonable ROE range: -200% to 500% (allows for high-growth tech stocks)
+          if (roePercent < -200 || roePercent > 500) {
+            errors.push(`Invalid ROE: ${roePercent.toFixed(1)}%`);
+          }
         }
         if (metrics.debtToEquity && metrics.debtToEquity < 0) {
           errors.push(`Invalid debt-to-equity ratio: ${metrics.debtToEquity}`);
@@ -824,16 +874,16 @@ export class ReportGenerator {
   }
 
   /**
-   * Generates fallback content when AI service fails
+   * Generates diagnostic fallback content when AI service fails
    */
   private generateFallbackContent(data: CompanyData, analysis: AnalysisResults): CompanyData {
     const enrichedData = { ...data };
-    
-    // Generate basic content based on data and analysis
-    const executiveSummary = `${data.companyName} (${data.ticker}) Investment Analysis Report. ` +
-      `Overall Score: ${Math.round((analysis.composite.overall || 0) * 100)}/100. ` +
-      `Recommendation: ${analysis.composite.recommendation || 'HOLD'}. ` +
-      `The company operates in the ${data.sector || 'N/A'} sector.`;
+
+    // Generate diagnostic content instead of fake content
+    const executiveSummary = `[DIAGNOSTIC] AI Content Generation Failed for ${data.companyName} (${data.ticker}). ` +
+      `AnthropicAIService.generateReportContent() encountered an error. ` +
+      `Check API key configuration and service availability. ` +
+      `Raw analysis data available: Overall Score ${Math.round((analysis.composite.overall || 0) * 100)}/100.`;
     
     const keyInsights = [
       `Revenue growth (YoY): ${analysis.growth?.revenueGrowth?.yoy || 0}%`,

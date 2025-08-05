@@ -451,10 +451,25 @@ export class PDFEngine {
    * Adds chart to PDF
    */
   private async addChartContent(data: any, charts: GeneratedChart[], yPosition: number): Promise<number> {
-    // Find matching chart
-    const chart = charts.find(c => c.type === data.type);
-    
-    logDebug('PDFEngine', `addChartContent called with data.type=${data.type}, found chart=${!!chart}, charts.length=${charts.length}`);
+    // Find matching chart - try multiple matching strategies
+    let chart = charts.find(c => c.type === data.type);
+
+    // If no exact match, try partial matching
+    if (!chart && data.type) {
+      chart = charts.find(c => c.type.includes(data.type) || data.type.includes(c.type));
+    }
+
+    // If still no match, try by title
+    if (!chart && data.title) {
+      chart = charts.find(c => c.title?.toLowerCase().includes(data.title.toLowerCase()));
+    }
+
+    logDebug('PDFEngine', `addChartContent called with data.type=${data.type}, data.title=${data.title}, found chart=${!!chart}, charts.length=${charts.length}`);
+
+    // Log available charts for debugging
+    if (!chart && charts.length > 0) {
+      logDebug('PDFEngine', `Available charts: ${charts.map(c => `${c.type}:${c.title}`).join(', ')}`);
+    }
     
     if (chart) {
       try {
@@ -462,37 +477,94 @@ export class PDFEngine {
         const chartWidth = this.pageWidth - this.margins.left - this.margins.right;
         const chartHeight = 100; // Fixed height for consistency
         
-        if (chart.format === 'svg') {
-          // For SVG charts, we need to convert to PNG for better PDF compatibility
-          // In a real implementation, we'd use node-canvas or similar to convert SVG to PNG
-          logDebug('PDFEngine', 'SVG chart detected - conversion to PNG needed for PDF embedding');
-          
-          // For now, we'll skip SVG charts as jsPDF has limited SVG support
-          // A proper implementation would:
-          // 1. Use node-canvas to render SVG to Canvas
-          // 2. Export Canvas to PNG
-          // 3. Embed PNG in PDF
-          
-          // Placeholder for chart
-          this.doc.setDrawColor(this.colors.border);
-          this.doc.setLineWidth(0.5);
+        if (chart.format === 'svg' || chart.format === 'base64' || chart.data.startsWith('data:image/svg+xml') || chart.data.startsWith('data:image/png')) {
+          // Handle SVG charts (including base64 encoded SVG)
+          logDebug('PDFEngine', `SVG chart detected - format: ${chart.format}, attempting to embed directly`);
+
+          try {
+            // Handle PNG images (from StandardChartGenerator)
+            if (chart.data.startsWith('data:image/png;base64,')) {
+              logDebug('PDFEngine', `Embedding base64 PNG chart: ${data.title || data.type}`);
+
+              try {
+                // Add PNG image directly - jsPDF handles this perfectly
+                this.doc.addImage(
+                  chart.data,
+                  'PNG',
+                  this.margins.left,
+                  yPosition,
+                  chartWidth,
+                  chartHeight
+                );
+
+                logDebug('PDFEngine', `Successfully embedded PNG chart: ${data.title || data.type}`);
+                return yPosition + chartHeight + 10;
+              } catch (pngError) {
+                logDebug('PDFEngine', `PNG embedding failed: ${pngError}`);
+                // Fall through to placeholder
+              }
+            }
+
+            // Handle SVG images (from SimpleSvgChartGenerator)
+            else if (chart.data.startsWith('data:image/svg+xml;base64,')) {
+              // Decode base64 SVG
+              const base64Data = chart.data.split(',')[1];
+              const svgString = atob(base64Data);
+
+              logDebug('PDFEngine', `Embedding base64 SVG chart: ${data.title || data.type}`);
+
+              // Use jsPDF's SVG support (if available) or fallback to placeholder
+              try {
+                // Try to add as SVG (newer jsPDF versions support this)
+                (this.doc as any).addSvgAsImage?.(
+                  svgString,
+                  this.margins.left,
+                  yPosition,
+                  chartWidth,
+                  chartHeight
+                );
+
+                logDebug('PDFEngine', `Successfully embedded SVG chart: ${data.title || data.type}`);
+                return yPosition + chartHeight + 10;
+              } catch (svgError) {
+                logDebug('PDFEngine', `SVG embedding failed, using enhanced placeholder: ${svgError}`);
+                // Fall through to enhanced placeholder
+              }
+            }
+          } catch (error) {
+            logDebug('PDFEngine', `Chart processing failed: ${error}`);
+          }
+
+          // Enhanced placeholder with chart info
+          this.doc.setDrawColor(this.colors.primary);
+          this.doc.setLineWidth(1);
           this.doc.rect(
-            this.margins.left, 
-            yPosition, 
-            chartWidth, 
+            this.margins.left,
+            yPosition,
+            chartWidth,
             chartHeight
           );
-          
-          // Add chart title in center
-          this.doc.setTextColor(this.colors.textLight);
-          this.doc.setFontSize(10);
+
+          // Add chart title and type
+          this.doc.setTextColor(this.colors.text);
+          this.doc.setFontSize(12);
           this.doc.text(
-            `[${data.title || 'Chart'} - ${data.type}]`,
+            data.title || `${data.type.toUpperCase()} Chart`,
             this.pageWidth / 2,
-            yPosition + chartHeight / 2,
+            yPosition + chartHeight / 2 - 5,
             { align: 'center' }
           );
-          
+
+          // Add chart metadata
+          this.doc.setTextColor(this.colors.textLight);
+          this.doc.setFontSize(8);
+          this.doc.text(
+            `Chart Generated: ${chart.metadata?.dataPoints || 0} data points`,
+            this.pageWidth / 2,
+            yPosition + chartHeight / 2 + 5,
+            { align: 'center' }
+          );
+
           return yPosition + chartHeight + 10;
         } else if (chart.format === 'png' || chart.format === 'jpeg') {
           // For PNG/JPEG charts, we can directly embed them

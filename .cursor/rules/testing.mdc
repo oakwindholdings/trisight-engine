@@ -9,18 +9,7 @@ Use Vercel CI to auto-run tests on commits/previews.
 Target 85%+ code coverage; prioritize critical paths (auth, data flows, UI interactions).
 Claude monitors codebase changes (additions, updates, deletions) in src and api to generate or update test scripts and POMs.
 
-Change Detection and Updates
-
-Trigger: Claude uses MCP to detect changes in src/** (React/TS components, hooks) and api/** (Python/Supabase endpoints) via Cursor’s codebase analysis.
-Actions:
-Additions: Generate new test scripts and POMs for new components, hooks, or endpoints.
-Updates: Revise existing tests/POMs to match modified code (e.g., updated selectors, API calls).
-Deletions: Remove or archive obsolete tests/POMs for deleted code.
-Prompt Claude: "Scan codebase for changes since [last commit/timestamp], update or generate Jest/Pytest/Playwright tests and POMs, ensure 85% coverage."
-
-
-Automation: Run change detection on save or commit in Cursor; integrate with Vercel CI for PR validation.
-
+Chc
 Unit/Component Tests (Jest + React Testing Library)
 
 Scope: React hooks, components, utils (TS/JS), Supabase client logic (e.g., auth, queries).

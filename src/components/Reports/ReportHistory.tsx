@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { Search, Filter, Calendar, Download, Eye, Trash2, Clock, FileText } from 'lucide-react';
 import { getStorageService } from '../../services/reportStorageService';
 import { logDebug, logError } from '../../utils/logger';
+import { BrowserReportViewer } from './BrowserReportViewer';
 
 const HistoryContainer = styled.div`
   padding: 1.5rem;
@@ -200,6 +201,8 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [reports, setReports] = useState<any[]>([]);
+  const [showBrowserViewer, setShowBrowserViewer] = useState(false);
+  const [selectedReportForViewer, setSelectedReportForViewer] = useState<any>(null);
   
   // Load reports from StorageService
   useEffect(() => {
@@ -328,7 +331,7 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
               <ReportHeader>
                 <ReportTitle>{report.title}</ReportTitle>
                 <ReportActions>
-                  <ActionButton 
+                  <ActionButton
                     title="View report"
                     onClick={() => {
                       console.log('[ReportHistory] Viewing report:', report);
@@ -345,7 +348,7 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
                         }
                       };
                       onReportChange(reportForViewing);
-                      
+
                       // Emit event to switch to preview widget
                       window.dispatchEvent(new CustomEvent('viewReport', {
                         detail: { report: reportForViewing }
@@ -353,6 +356,28 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
                     }}
                   >
                     <Eye />
+                  </ActionButton>
+                  <ActionButton
+                    title="Debug in Browser"
+                    onClick={() => {
+                      console.log('[ReportHistory] Opening browser debug view for:', report);
+                      const reportForDebugging = {
+                        ...report,
+                        status: report.status || 'completed',
+                        slides: report.slides || [],
+                        companyData: report.companyData || {},
+                        metadata: report.metadata || {},
+                        reportData: {
+                          ...report.reportData,
+                          slides: report.slides || report.reportData?.slides || []
+                        }
+                      };
+                      setSelectedReportForViewer(reportForDebugging);
+                      setShowBrowserViewer(true);
+                    }}
+                    style={{ background: '#f59e0b', borderColor: '#f59e0b', color: 'white' }}
+                  >
+                    🔧
                   </ActionButton>
                   <ActionButton 
                     title="Download"
@@ -435,6 +460,16 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
           </EmptyState>
         )}
       </ReportsList>
+
+      {showBrowserViewer && selectedReportForViewer && (
+        <BrowserReportViewer
+          reportData={selectedReportForViewer}
+          onClose={() => {
+            setShowBrowserViewer(false);
+            setSelectedReportForViewer(null);
+          }}
+        />
+      )}
     </HistoryContainer>
   );
 };

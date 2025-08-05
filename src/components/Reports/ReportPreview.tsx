@@ -307,15 +307,27 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               }
               htmlContent += '</tbody></table>';
             } else if (content.type === 'chart') {
-              htmlContent += `
-                <div class="chart-placeholder">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M3 3v18h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M18 17V9M13 17V5M8 17v-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <p>${content.data.title || 'Chart'}</p>
-                </div>
-              `;
+              // Display actual chart if available, otherwise show placeholder
+              if (content.data && content.data.data) {
+                // Chart data is base64 encoded SVG or image
+                htmlContent += `
+                  <div class="chart-container" style="text-align: center; margin: 1rem 0;">
+                    <h3 style="margin-bottom: 0.5rem;">${content.data.title || 'Chart'}</h3>
+                    <img src="${content.data.data}" alt="${content.data.title || 'Chart'}" style="max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem;" />
+                  </div>
+                `;
+              } else {
+                // Fallback to placeholder if no chart data
+                htmlContent += `
+                  <div class="chart-placeholder">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M3 3v18h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M18 17V9M13 17V5M8 17v-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p>${content.data?.title || 'Chart'} - [DIAGNOSTIC] Chart data not available</p>
+                  </div>
+                `;
+              }
             }
           });
         }

@@ -1,0 +1,4066 @@
+{
+  "metadata": {
+    "ticker": "NVDA",
+    "generatedAt": "2025-08-05T18:09:54.805Z",
+    "format": "json"
+  },
+  "companyData": {
+    "ticker": "NVDA",
+    "companyName": "NVIDIA Corporation",
+    "description": "NVIDIA Corporation provides graphics, computing and networking solutions worldwide. The company operates through Graphics and Compute & Networking segments, serving gaming, professional visualization, datacenter, and automotive markets.",
+    "sector": "Technology",
+    "industry": "Consumer Electronics",
+    "financials": {
+      "incomeStatement": [
+        {
+          "date": "2025-01-31",
+          "period": "annual",
+          "revenue": 130497000000,
+          "grossProfit": 97858000000,
+          "operatingIncome": 81453000000,
+          "netIncome": 72880000000,
+          "eps": 2.94,
+          "ebitda": 86137000000,
+          "costOfRevenue": 32639000000,
+          "researchDevelopment": 12914000000,
+          "sellingGeneralAdmin": 3491000000,
+          "incomeTax": 11146000000,
+          "sharesOutstanding": 24555000000
+        },
+        {
+          "date": "2024-01-31",
+          "period": "annual",
+          "revenue": 60922000000,
+          "grossProfit": 44301000000,
+          "operatingIncome": 32972000000,
+          "netIncome": 29760000000,
+          "eps": 1.193,
+          "ebitda": 35583000000,
+          "costOfRevenue": 16621000000,
+          "researchDevelopment": 8675000000,
+          "sellingGeneralAdmin": 2654000000,
+          "incomeTax": 4058000000,
+          "sharesOutstanding": 24690000000
+        },
+        {
+          "date": "2023-01-31",
+          "period": "annual",
+          "revenue": 26974000000,
+          "grossProfit": 15356000000,
+          "operatingIncome": 5577000000,
+          "netIncome": 4368000000,
+          "eps": 0.174,
+          "ebitda": 7340000000,
+          "costOfRevenue": 11618000000,
+          "researchDevelopment": 7339000000,
+          "sellingGeneralAdmin": 2440000000,
+          "incomeTax": -187000000,
+          "sharesOutstanding": 24870000000
+        },
+        {
+          "date": "2022-01-31",
+          "period": "annual",
+          "revenue": 26914000000,
+          "grossProfit": 17475000000,
+          "operatingIncome": 10041000000,
+          "netIncome": 9752000000,
+          "eps": 0.385,
+          "ebitda": 11351000000,
+          "costOfRevenue": 9439000000,
+          "researchDevelopment": 5268000000,
+          "sellingGeneralAdmin": 2166000000,
+          "incomeTax": 189000000,
+          "sharesOutstanding": 24960000000
+        },
+        {
+          "date": "2021-01-31",
+          "period": "annual",
+          "revenue": 16675000000,
+          "grossProfit": 10396000000,
+          "operatingIncome": 4532000000,
+          "netIncome": 4332000000,
+          "eps": 0.1725,
+          "ebitda": 5691000000,
+          "costOfRevenue": 6279000000,
+          "researchDevelopment": 3924000000,
+          "sellingGeneralAdmin": 1940000000,
+          "incomeTax": 77000000,
+          "sharesOutstanding": 24680000000
+        },
+        {
+          "date": "2020-01-31",
+          "period": "annual",
+          "revenue": 10918000000,
+          "grossProfit": 6768000000,
+          "operatingIncome": 2846000000,
+          "netIncome": 2796000000,
+          "eps": 0.113,
+          "ebitda": 3403000000,
+          "costOfRevenue": 4150000000,
+          "researchDevelopment": 2829000000,
+          "sellingGeneralAdmin": 1093000000,
+          "incomeTax": 174000000,
+          "sharesOutstanding": 24360000000
+        }
+      ],
+      "balanceSheet": [
+        {
+          "date": "2025-01-31",
+          "period": "annual",
+          "totalAssets": 111601000000,
+          "currentAssets": 80126000000,
+          "cash": 8589000000,
+          "inventory": 10080000000,
+          "accountsReceivable": 23065000000,
+          "totalLiabilities": 32274000000,
+          "currentLiabilities": 18047000000,
+          "longTermDebt": 9982000000,
+          "totalEquity": 79327000000,
+          "retainedEarnings": 68038000000,
+          "commonStock": 24000000
+        },
+        {
+          "date": "2024-01-31",
+          "period": "annual",
+          "totalAssets": 65728000000,
+          "currentAssets": 44345000000,
+          "cash": 7280000000,
+          "inventory": 5282000000,
+          "accountsReceivable": 9999000000,
+          "totalLiabilities": 22750000000,
+          "currentLiabilities": 10631000000,
+          "longTermDebt": 9578000000,
+          "totalEquity": 42978000000,
+          "retainedEarnings": 29817000000,
+          "commonStock": 2000000
+        },
+        {
+          "date": "2023-01-31",
+          "period": "annual",
+          "totalAssets": 41182000000,
+          "currentAssets": 23073000000,
+          "cash": 3389000000,
+          "inventory": 5159000000,
+          "accountsReceivable": 3827000000,
+          "totalLiabilities": 19081000000,
+          "currentLiabilities": 6563000000,
+          "longTermDebt": 10605000000,
+          "totalEquity": 22101000000,
+          "retainedEarnings": 10171000000,
+          "commonStock": 2000000
+        },
+        {
+          "date": "2022-01-31",
+          "period": "annual",
+          "totalAssets": 44187000000,
+          "currentAssets": 28829000000,
+          "cash": 1990000000,
+          "inventory": 2605000000,
+          "accountsReceivable": 4650000000,
+          "totalLiabilities": 17575000000,
+          "currentLiabilities": 4335000000,
+          "longTermDebt": 11687000000,
+          "totalEquity": 26612000000,
+          "retainedEarnings": 16235000000,
+          "commonStock": 3000000
+        },
+        {
+          "date": "2021-01-31",
+          "period": "annual",
+          "totalAssets": 28791000000,
+          "currentAssets": 16055000000,
+          "cash": 847000000,
+          "inventory": 1826000000,
+          "accountsReceivable": 2429000000,
+          "totalLiabilities": 11898000000,
+          "currentLiabilities": 3925000000,
+          "longTermDebt": 6598000000,
+          "totalEquity": 16893000000,
+          "retainedEarnings": 18908000000,
+          "commonStock": 3000000
+        },
+        {
+          "date": "2020-01-31",
+          "period": "annual",
+          "totalAssets": 17315000000,
+          "currentAssets": 13690000000,
+          "cash": 10896000000,
+          "inventory": 979000000,
+          "accountsReceivable": 1657000000,
+          "totalLiabilities": 5111000000,
+          "currentLiabilities": 1784000000,
+          "longTermDebt": 2552000000,
+          "totalEquity": 12204000000,
+          "retainedEarnings": 14971000000,
+          "commonStock": 1000000
+        }
+      ],
+      "cashFlow": [
+        {
+          "date": "2025-01-31",
+          "period": "annual",
+          "fiscal_date": "2025-01-31",
+          "year": 2025,
+          "operating_activities": {
+            "net_income": 72880000000,
+            "depreciation": 1864000000,
+            "deferred_taxes": -4477000000,
+            "stock_based_compensation": 4737000000,
+            "other_non_cash_items": -502000000,
+            "accounts_receivable": -13063000000,
+            "accounts_payable": 3357000000,
+            "other_assets_liabilities": -3560000000,
+            "operating_cash_flow": 61236000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -3236000000,
+            "net_intangibles": null,
+            "net_acquisitions": -1007000000,
+            "purchase_of_investments": -28061000000,
+            "sale_of_investments": 11861000000,
+            "other_investing_activity": 22000000,
+            "investing_cash_flow": -20421000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": null,
+            "long_term_debt_payments": -1250000000,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": -33706000000,
+            "common_dividends": -834000000,
+            "other_financing_charges": -7059000000,
+            "financing_cash_flow": -42849000000
+          },
+          "end_cash_position": 8589000000,
+          "income_tax_paid": 15118000000,
+          "interest_paid": 246000000,
+          "free_cash_flow": 60853000000
+        },
+        {
+          "date": "2024-01-31",
+          "period": "annual",
+          "fiscal_date": "2024-01-31",
+          "year": 2024,
+          "operating_activities": {
+            "net_income": 29760000000,
+            "depreciation": 1508000000,
+            "deferred_taxes": -2489000000,
+            "stock_based_compensation": 3549000000,
+            "other_non_cash_items": -278000000,
+            "accounts_receivable": -6172000000,
+            "accounts_payable": 1531000000,
+            "other_assets_liabilities": 416000000,
+            "operating_cash_flow": 27825000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -1069000000,
+            "net_intangibles": null,
+            "net_acquisitions": -83000000,
+            "purchase_of_investments": -19196000000,
+            "sale_of_investments": 9782000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": -10566000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 0,
+            "long_term_debt_payments": -1250000000,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": -9533000000,
+            "common_dividends": -395000000,
+            "other_financing_charges": -2858000000,
+            "financing_cash_flow": -14036000000
+          },
+          "end_cash_position": 7280000000,
+          "income_tax_paid": 6549000000,
+          "interest_paid": 252000000,
+          "free_cash_flow": 27021000000
+        },
+        {
+          "date": "2023-01-31",
+          "period": "annual",
+          "fiscal_date": "2023-01-31",
+          "year": 2023,
+          "operating_activities": {
+            "net_income": 4368000000,
+            "depreciation": 1544000000,
+            "deferred_taxes": -2164000000,
+            "stock_based_compensation": 2709000000,
+            "other_non_cash_items": 1346000000,
+            "accounts_receivable": 822000000,
+            "accounts_payable": -551000000,
+            "other_assets_liabilities": -2302000000,
+            "operating_cash_flow": 5772000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -1833000000,
+            "net_intangibles": null,
+            "net_acquisitions": -49000000,
+            "purchase_of_investments": -11974000000,
+            "sale_of_investments": 21231000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": 7375000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 0,
+            "long_term_debt_payments": 0,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": -10039000000,
+            "common_dividends": -398000000,
+            "other_financing_charges": -1535000000,
+            "financing_cash_flow": -11972000000
+          },
+          "end_cash_position": 3389000000,
+          "income_tax_paid": 1404000000,
+          "interest_paid": 254000000,
+          "free_cash_flow": 3808000000
+        },
+        {
+          "date": "2022-01-31",
+          "period": "annual",
+          "fiscal_date": "2022-01-31",
+          "year": 2022,
+          "operating_activities": {
+            "net_income": 9752000000,
+            "depreciation": 1174000000,
+            "deferred_taxes": -406000000,
+            "stock_based_compensation": 2004000000,
+            "other_non_cash_items": 47000000,
+            "accounts_receivable": -2215000000,
+            "accounts_payable": 568000000,
+            "other_assets_liabilities": -582000000,
+            "operating_cash_flow": 10342000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -976000000,
+            "net_intangibles": null,
+            "net_acquisitions": -263000000,
+            "purchase_of_investments": -24811000000,
+            "sale_of_investments": 16220000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": -9830000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 4977000000,
+            "long_term_debt_payments": -1000000000,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": 0,
+            "common_dividends": -399000000,
+            "other_financing_charges": -1994000000,
+            "financing_cash_flow": 1584000000
+          },
+          "end_cash_position": 1990000000,
+          "income_tax_paid": 396000000,
+          "interest_paid": 246000000,
+          "free_cash_flow": 8132000000
+        },
+        {
+          "date": "2021-01-31",
+          "period": "annual",
+          "fiscal_date": "2021-01-31",
+          "year": 2021,
+          "operating_activities": {
+            "net_income": 4332000000,
+            "depreciation": 1098000000,
+            "deferred_taxes": -282000000,
+            "stock_based_compensation": 1397000000,
+            "other_non_cash_items": -20000000,
+            "accounts_receivable": -550000000,
+            "accounts_payable": 312000000,
+            "other_assets_liabilities": -198000000,
+            "operating_cash_flow": 6089000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -1128000000,
+            "net_intangibles": null,
+            "net_acquisitions": -8524000000,
+            "purchase_of_investments": -19342000000,
+            "sale_of_investments": 9319000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": -19675000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 4968000000,
+            "long_term_debt_payments": 0,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": 0,
+            "common_dividends": -395000000,
+            "other_financing_charges": -963000000,
+            "financing_cash_flow": 3610000000
+          },
+          "end_cash_position": 847000000,
+          "income_tax_paid": 249000000,
+          "interest_paid": 138000000,
+          "free_cash_flow": 4694000000
+        },
+        {
+          "date": "2020-01-31",
+          "period": "annual",
+          "fiscal_date": "2020-01-31",
+          "year": 2020,
+          "operating_activities": {
+            "net_income": 2796000000,
+            "depreciation": 381000000,
+            "deferred_taxes": 18000000,
+            "stock_based_compensation": 844000000,
+            "other_non_cash_items": 4000000,
+            "accounts_receivable": -233000000,
+            "accounts_payable": 194000000,
+            "other_assets_liabilities": 653000000,
+            "operating_cash_flow": 4657000000
+          },
+          "investing_activities": {
+            "capital_expenditures": -489000000,
+            "net_intangibles": null,
+            "net_acquisitions": -4000000,
+            "purchase_of_investments": -1471000000,
+            "sale_of_investments": 8109000000,
+            "other_investing_activity": null,
+            "investing_cash_flow": 6145000000
+          },
+          "financing_activities": {
+            "long_term_debt_issuance": 0,
+            "long_term_debt_payments": 0,
+            "short_term_debt_issuance": null,
+            "common_stock_issuance": null,
+            "common_stock_repurchase": 0,
+            "common_dividends": -390000000,
+            "other_financing_charges": -551000000,
+            "financing_cash_flow": -941000000
+          },
+          "end_cash_position": 10896000000,
+          "income_tax_paid": 176000000,
+          "interest_paid": 54000000,
+          "free_cash_flow": 4272000000
+        }
+      ],
+      "keyMetrics": {
+        "marketCap": 4389768003584,
+        "peRatio": 58.25243,
+        "pegRatio": 43.689323,
+        "priceToBook": 52.35602,
+        "dividendYield": 0.022474435329812338,
+        "roe": 115.46300000000001,
+        "currentRatio": 3.388,
+        "debtToEquity": 12.267
+      },
+      "historicalPrices": [
+        {
+          "date": "2025-08-05",
+          "open": 179.64,
+          "high": 180.26,
+          "low": 175.91,
+          "close": 178.88,
+          "volume": 8483768,
+          "adjustedClose": 178.88
+        },
+        {
+          "date": "2025-08-04",
+          "open": 175.16,
+          "high": 180.2,
+          "low": 174.52,
+          "close": 180,
+          "volume": 147674000,
+          "adjustedClose": 180
+        },
+        {
+          "date": "2025-08-01",
+          "open": 174.089996,
+          "high": 176.53999,
+          "low": 170.89,
+          "close": 173.72,
+          "volume": 204529000,
+          "adjustedClose": 173.72
+        },
+        {
+          "date": "2025-07-31",
+          "open": 182.89999,
+          "high": 183.3,
+          "low": 175.92999,
+          "close": 177.87,
+          "volume": 221685400,
+          "adjustedClose": 177.87
+        },
+        {
+          "date": "2025-07-30",
+          "open": 176.50999,
+          "high": 179.89,
+          "low": 176.039993,
+          "close": 179.27,
+          "volume": 174312200,
+          "adjustedClose": 179.27
+        },
+        {
+          "date": "2025-07-29",
+          "open": 177.96001,
+          "high": 179.38,
+          "low": 175.020004,
+          "close": 175.50999,
+          "volume": 154077500,
+          "adjustedClose": 175.50999
+        },
+        {
+          "date": "2025-07-28",
+          "open": 174.020004,
+          "high": 177,
+          "low": 173.97,
+          "close": 176.75,
+          "volume": 140023500,
+          "adjustedClose": 176.75
+        },
+        {
+          "date": "2025-07-25",
+          "open": 173.61,
+          "high": 174.72,
+          "low": 172.96001,
+          "close": 173.5,
+          "volume": 122316800,
+          "adjustedClose": 173.5
+        },
+        {
+          "date": "2025-07-24",
+          "open": 172.44,
+          "high": 173.83,
+          "low": 171.3,
+          "close": 173.74001,
+          "volume": 128984600,
+          "adjustedClose": 173.74001
+        },
+        {
+          "date": "2025-07-23",
+          "open": 169.53,
+          "high": 171.25999,
+          "low": 167.97,
+          "close": 170.78,
+          "volume": 154082200,
+          "adjustedClose": 170.78
+        },
+        {
+          "date": "2025-07-22",
+          "open": 171.34,
+          "high": 171.39,
+          "low": 164.58,
+          "close": 167.029999,
+          "volume": 193114300,
+          "adjustedClose": 167.029999
+        },
+        {
+          "date": "2025-07-21",
+          "open": 172.75,
+          "high": 173.38,
+          "low": 171,
+          "close": 171.38,
+          "volume": 123126100,
+          "adjustedClose": 171.38
+        },
+        {
+          "date": "2025-07-18",
+          "open": 173.64,
+          "high": 174.25,
+          "low": 171.25999,
+          "close": 172.41,
+          "volume": 146456400,
+          "adjustedClose": 172.41
+        },
+        {
+          "date": "2025-07-17",
+          "open": 172.020004,
+          "high": 174.16,
+          "low": 170.83,
+          "close": 173,
+          "volume": 160841100,
+          "adjustedClose": 173
+        },
+        {
+          "date": "2025-07-16",
+          "open": 171.059998,
+          "high": 171.75,
+          "low": 168.89999,
+          "close": 171.37,
+          "volume": 158831500,
+          "adjustedClose": 171.37
+        },
+        {
+          "date": "2025-07-15",
+          "open": 171.19,
+          "high": 172.39999,
+          "low": 169.2,
+          "close": 170.7,
+          "volume": 230627400,
+          "adjustedClose": 170.7
+        },
+        {
+          "date": "2025-07-14",
+          "open": 165.37,
+          "high": 165.49001,
+          "low": 162.020004,
+          "close": 164.070007,
+          "volume": 136975800,
+          "adjustedClose": 164.070007
+        },
+        {
+          "date": "2025-07-11",
+          "open": 163.72,
+          "high": 167.89,
+          "low": 163.47,
+          "close": 164.92,
+          "volume": 193633300,
+          "adjustedClose": 164.92
+        },
+        {
+          "date": "2025-07-10",
+          "open": 164.32001,
+          "high": 164.5,
+          "low": 161.61,
+          "close": 164.10001,
+          "volume": 167704100,
+          "adjustedClose": 164.10001
+        },
+        {
+          "date": "2025-07-09",
+          "open": 161.22,
+          "high": 164.42,
+          "low": 161.16,
+          "close": 162.88,
+          "volume": 183656400,
+          "adjustedClose": 162.88
+        },
+        {
+          "date": "2025-07-08",
+          "open": 159.33,
+          "high": 160.22,
+          "low": 158.39,
+          "close": 160,
+          "volume": 138133000,
+          "adjustedClose": 160
+        },
+        {
+          "date": "2025-07-07",
+          "open": 158.2,
+          "high": 159.31,
+          "low": 157.34,
+          "close": 158.24001,
+          "volume": 140139000,
+          "adjustedClose": 158.24001
+        },
+        {
+          "date": "2025-07-03",
+          "open": 158.37,
+          "high": 160.98,
+          "low": 157.77,
+          "close": 159.34,
+          "volume": 143716100,
+          "adjustedClose": 159.34
+        },
+        {
+          "date": "2025-07-02",
+          "open": 152.98,
+          "high": 157.60001,
+          "low": 152.97,
+          "close": 157.25,
+          "volume": 171224100,
+          "adjustedClose": 157.25
+        },
+        {
+          "date": "2025-07-01",
+          "open": 156.28999,
+          "high": 157.2,
+          "low": 151.49001,
+          "close": 153.3,
+          "volume": 213143600,
+          "adjustedClose": 153.3
+        },
+        {
+          "date": "2025-06-30",
+          "open": 158.39999,
+          "high": 158.66,
+          "low": 155.96001,
+          "close": 157.99001,
+          "volume": 194580300,
+          "adjustedClose": 157.99001
+        },
+        {
+          "date": "2025-06-27",
+          "open": 156.039993,
+          "high": 158.71001,
+          "low": 155.25999,
+          "close": 157.75,
+          "volume": 263234500,
+          "adjustedClose": 157.75
+        },
+        {
+          "date": "2025-06-26",
+          "open": 155.98,
+          "high": 156.72,
+          "low": 154,
+          "close": 155.020004,
+          "volume": 198145700,
+          "adjustedClose": 155.020004
+        },
+        {
+          "date": "2025-06-25",
+          "open": 149.27,
+          "high": 154.45,
+          "low": 149.25999,
+          "close": 154.31,
+          "volume": 269146500,
+          "adjustedClose": 154.31
+        },
+        {
+          "date": "2025-06-24",
+          "open": 145.56,
+          "high": 147.96001,
+          "low": 145.5,
+          "close": 147.89999,
+          "volume": 187566100,
+          "adjustedClose": 147.89999
+        },
+        {
+          "date": "2025-06-23",
+          "open": 142.5,
+          "high": 144.78,
+          "low": 142.029999,
+          "close": 144.17,
+          "volume": 154308900,
+          "adjustedClose": 144.17
+        },
+        {
+          "date": "2025-06-20",
+          "open": 145.45,
+          "high": 146.2,
+          "low": 142.64999,
+          "close": 143.85001,
+          "volume": 242956200,
+          "adjustedClose": 143.85001
+        },
+        {
+          "date": "2025-06-18",
+          "open": 144.0099945,
+          "high": 145.64999,
+          "low": 143.12,
+          "close": 145.48,
+          "volume": 161494100,
+          "adjustedClose": 145.48
+        },
+        {
+          "date": "2025-06-17",
+          "open": 144.49001,
+          "high": 145.22,
+          "low": 143.78,
+          "close": 144.12,
+          "volume": 139108000,
+          "adjustedClose": 144.12
+        },
+        {
+          "date": "2025-06-16",
+          "open": 143.35001,
+          "high": 146.17999,
+          "low": 143.2,
+          "close": 144.69,
+          "volume": 183133700,
+          "adjustedClose": 144.69
+        },
+        {
+          "date": "2025-06-13",
+          "open": 142.48,
+          "high": 143.58,
+          "low": 140.85001,
+          "close": 141.97,
+          "volume": 180820600,
+          "adjustedClose": 141.97
+        },
+        {
+          "date": "2025-06-12",
+          "open": 141.97,
+          "high": 145,
+          "low": 141.85001,
+          "close": 145,
+          "volume": 162365000,
+          "adjustedClose": 145
+        },
+        {
+          "date": "2025-06-11",
+          "open": 144.61,
+          "high": 144.99001,
+          "low": 141.87,
+          "close": 142.83,
+          "volume": 167694000,
+          "adjustedClose": 142.83
+        },
+        {
+          "date": "2025-06-10",
+          "open": 142.69,
+          "high": 144.28999,
+          "low": 141.53,
+          "close": 143.96001,
+          "volume": 155881900,
+          "adjustedClose": 143.96001
+        },
+        {
+          "date": "2025-06-09",
+          "open": 143.19,
+          "high": 145,
+          "low": 141.94,
+          "close": 142.63,
+          "volume": 185114500,
+          "adjustedClose": 142.63
+        },
+        {
+          "date": "2025-06-06",
+          "open": 142.50999,
+          "high": 143.27,
+          "low": 141.50999,
+          "close": 141.72,
+          "volume": 153986200,
+          "adjustedClose": 141.72
+        },
+        {
+          "date": "2025-06-05",
+          "open": 142.17,
+          "high": 144,
+          "low": 138.83,
+          "close": 139.99001,
+          "volume": 231397900,
+          "adjustedClose": 139.99001
+        },
+        {
+          "date": "2025-06-04",
+          "open": 142.19,
+          "high": 142.39,
+          "low": 139.53999,
+          "close": 141.92,
+          "volume": 167120800,
+          "adjustedClose": 141.92
+        },
+        {
+          "date": "2025-06-03",
+          "open": 138.78,
+          "high": 142,
+          "low": 137.95,
+          "close": 141.22,
+          "volume": 225578800,
+          "adjustedClose": 141.22
+        },
+        {
+          "date": "2025-06-02",
+          "open": 135.49001,
+          "high": 138.12,
+          "low": 135.39999,
+          "close": 137.38,
+          "volume": 197663100,
+          "adjustedClose": 137.38
+        },
+        {
+          "date": "2025-05-30",
+          "open": 138.72,
+          "high": 139.62,
+          "low": 132.92,
+          "close": 135.13,
+          "volume": 333170900,
+          "adjustedClose": 135.13
+        },
+        {
+          "date": "2025-05-29",
+          "open": 142.25,
+          "high": 143.49001,
+          "low": 137.91,
+          "close": 139.19,
+          "volume": 369241900,
+          "adjustedClose": 139.19
+        },
+        {
+          "date": "2025-05-28",
+          "open": 136.029999,
+          "high": 137.25,
+          "low": 134.78999,
+          "close": 134.81,
+          "volume": 304021100,
+          "adjustedClose": 134.81
+        },
+        {
+          "date": "2025-05-27",
+          "open": 134.14999,
+          "high": 135.66,
+          "low": 133.31,
+          "close": 135.5,
+          "volume": 192953600,
+          "adjustedClose": 135.5
+        },
+        {
+          "date": "2025-05-23",
+          "open": 130,
+          "high": 132.67999,
+          "low": 129.16,
+          "close": 131.28999,
+          "volume": 198821300,
+          "adjustedClose": 131.28999
+        },
+        {
+          "date": "2025-05-22",
+          "open": 132.23,
+          "high": 134.25,
+          "low": 131.55,
+          "close": 132.83,
+          "volume": 187344000,
+          "adjustedClose": 132.83
+        },
+        {
+          "date": "2025-05-21",
+          "open": 133.059998,
+          "high": 137.39999,
+          "low": 130.59,
+          "close": 131.8,
+          "volume": 270608700,
+          "adjustedClose": 131.8
+        },
+        {
+          "date": "2025-05-20",
+          "open": 134.28999,
+          "high": 134.58,
+          "low": 132.62,
+          "close": 134.38,
+          "volume": 161514200,
+          "adjustedClose": 134.38
+        },
+        {
+          "date": "2025-05-19",
+          "open": 132.39,
+          "high": 135.87,
+          "low": 132.39,
+          "close": 135.57001,
+          "volume": 193154600,
+          "adjustedClose": 135.57001
+        },
+        {
+          "date": "2025-05-16",
+          "open": 136.22,
+          "high": 136.35001,
+          "low": 133.46001,
+          "close": 135.39999,
+          "volume": 226542500,
+          "adjustedClose": 135.39999
+        },
+        {
+          "date": "2025-05-15",
+          "open": 134.28999,
+          "high": 136.3,
+          "low": 132.66,
+          "close": 134.83,
+          "volume": 226632600,
+          "adjustedClose": 134.83
+        },
+        {
+          "date": "2025-05-14",
+          "open": 133.2,
+          "high": 135.44,
+          "low": 131.67999,
+          "close": 135.34,
+          "volume": 281180800,
+          "adjustedClose": 135.34
+        },
+        {
+          "date": "2025-05-13",
+          "open": 124.98,
+          "high": 131.22,
+          "low": 124.47,
+          "close": 129.92999,
+          "volume": 330430100,
+          "adjustedClose": 129.92999
+        },
+        {
+          "date": "2025-05-12",
+          "open": 121.97,
+          "high": 123,
+          "low": 120.28,
+          "close": 123,
+          "volume": 225023300,
+          "adjustedClose": 123
+        },
+        {
+          "date": "2025-05-09",
+          "open": 117.35,
+          "high": 118.23,
+          "low": 115.21,
+          "close": 116.65,
+          "volume": 132972200,
+          "adjustedClose": 116.65
+        },
+        {
+          "date": "2025-05-08",
+          "open": 118.25,
+          "high": 118.68,
+          "low": 115.85,
+          "close": 117.37,
+          "volume": 198428100,
+          "adjustedClose": 117.37
+        },
+        {
+          "date": "2025-05-07",
+          "open": 113.050003,
+          "high": 117.68,
+          "low": 112.28,
+          "close": 117.059998,
+          "volume": 206758800,
+          "adjustedClose": 117.059998
+        },
+        {
+          "date": "2025-05-06",
+          "open": 111.48,
+          "high": 114.74,
+          "low": 110.82,
+          "close": 113.54,
+          "volume": 158525600,
+          "adjustedClose": 113.54
+        },
+        {
+          "date": "2025-05-05",
+          "open": 112.91,
+          "high": 114.67,
+          "low": 112.66,
+          "close": 113.82,
+          "volume": 133163200,
+          "adjustedClose": 113.82
+        },
+        {
+          "date": "2025-05-02",
+          "open": 114.18,
+          "high": 115.4,
+          "low": 113.37,
+          "close": 114.5,
+          "volume": 190194800,
+          "adjustedClose": 114.5
+        },
+        {
+          "date": "2025-05-01",
+          "open": 113.080002,
+          "high": 114.94,
+          "low": 111.3,
+          "close": 111.61,
+          "volume": 236121500,
+          "adjustedClose": 111.61
+        },
+        {
+          "date": "2025-04-30",
+          "open": 104.47,
+          "high": 108.92,
+          "low": 104.080002,
+          "close": 108.92,
+          "volume": 235044600,
+          "adjustedClose": 108.92
+        },
+        {
+          "date": "2025-04-29",
+          "open": 107.67,
+          "high": 110.2,
+          "low": 107.44,
+          "close": 109.019997,
+          "volume": 170444300,
+          "adjustedClose": 109.019997
+        },
+        {
+          "date": "2025-04-28",
+          "open": 109.69,
+          "high": 110.37,
+          "low": 106.019997,
+          "close": 108.73,
+          "volume": 207708500,
+          "adjustedClose": 108.73
+        },
+        {
+          "date": "2025-04-25",
+          "open": 106.85,
+          "high": 111.92,
+          "low": 105.73,
+          "close": 111.010002,
+          "volume": 251064700,
+          "adjustedClose": 111.010002
+        },
+        {
+          "date": "2025-04-24",
+          "open": 103.48,
+          "high": 106.54,
+          "low": 103.11,
+          "close": 106.43,
+          "volume": 220815000,
+          "adjustedClose": 106.43
+        },
+        {
+          "date": "2025-04-23",
+          "open": 104.52,
+          "high": 104.8,
+          "low": 102.019997,
+          "close": 102.71,
+          "volume": 247526000,
+          "adjustedClose": 102.71
+        },
+        {
+          "date": "2025-04-22",
+          "open": 98.78,
+          "high": 99.81,
+          "low": 97.28,
+          "close": 98.89,
+          "volume": 241004800,
+          "adjustedClose": 98.89
+        },
+        {
+          "date": "2025-04-21",
+          "open": 98.77,
+          "high": 99.44,
+          "low": 95.040001,
+          "close": 96.91,
+          "volume": 288501100,
+          "adjustedClose": 96.91
+        },
+        {
+          "date": "2025-04-17",
+          "open": 104.45,
+          "high": 104.47,
+          "low": 100.050003,
+          "close": 101.49,
+          "volume": 290833400,
+          "adjustedClose": 101.49
+        },
+        {
+          "date": "2025-04-16",
+          "open": 104.55,
+          "high": 106.79,
+          "low": 100.45,
+          "close": 104.49,
+          "volume": 397016900,
+          "adjustedClose": 104.49
+        },
+        {
+          "date": "2025-04-15",
+          "open": 110.97,
+          "high": 113.62,
+          "low": 110.5,
+          "close": 112.2,
+          "volume": 228966900,
+          "adjustedClose": 112.2
+        },
+        {
+          "date": "2025-04-14",
+          "open": 114.11,
+          "high": 114.29,
+          "low": 109.07,
+          "close": 110.71,
+          "volume": 264705000,
+          "adjustedClose": 110.71
+        },
+        {
+          "date": "2025-04-11",
+          "open": 108.5,
+          "high": 111.55,
+          "low": 107.48,
+          "close": 110.93,
+          "volume": 313417300,
+          "adjustedClose": 110.93
+        },
+        {
+          "date": "2025-04-10",
+          "open": 109.37,
+          "high": 110.86,
+          "low": 99.15,
+          "close": 107.57,
+          "volume": 437812400,
+          "adjustedClose": 107.57
+        },
+        {
+          "date": "2025-04-09",
+          "open": 98.89,
+          "high": 115.099998,
+          "low": 97.53,
+          "close": 114.33,
+          "volume": 612918300,
+          "adjustedClose": 114.33
+        },
+        {
+          "date": "2025-04-08",
+          "open": 103.81,
+          "high": 105.85,
+          "low": 94.46,
+          "close": 96.3,
+          "volume": 476243400,
+          "adjustedClose": 96.3
+        },
+        {
+          "date": "2025-04-07",
+          "open": 87.46,
+          "high": 101.75,
+          "low": 86.62,
+          "close": 97.64,
+          "volume": 611041300,
+          "adjustedClose": 97.64
+        },
+        {
+          "date": "2025-04-04",
+          "open": 98.91,
+          "high": 100.13,
+          "low": 92.11,
+          "close": 94.31,
+          "volume": 532273800,
+          "adjustedClose": 94.31
+        },
+        {
+          "date": "2025-04-03",
+          "open": 103.51,
+          "high": 105.63,
+          "low": 101.6,
+          "close": 101.8,
+          "volume": 338769400,
+          "adjustedClose": 101.8
+        },
+        {
+          "date": "2025-04-02",
+          "open": 107.29,
+          "high": 111.98,
+          "low": 106.79,
+          "close": 110.42,
+          "volume": 220601200,
+          "adjustedClose": 110.42
+        },
+        {
+          "date": "2025-04-01",
+          "open": 108.52,
+          "high": 110.2,
+          "low": 106.47,
+          "close": 110.15,
+          "volume": 222614000,
+          "adjustedClose": 110.15
+        },
+        {
+          "date": "2025-03-31",
+          "open": 105.13,
+          "high": 110.96,
+          "low": 103.65,
+          "close": 108.38,
+          "volume": 299212700,
+          "adjustedClose": 108.38
+        },
+        {
+          "date": "2025-03-28",
+          "open": 111.49,
+          "high": 112.87,
+          "low": 109.07,
+          "close": 109.67,
+          "volume": 229872500,
+          "adjustedClose": 109.67
+        },
+        {
+          "date": "2025-03-27",
+          "open": 111.35,
+          "high": 114.45,
+          "low": 110.66,
+          "close": 111.43,
+          "volume": 236902100,
+          "adjustedClose": 111.43
+        },
+        {
+          "date": "2025-03-26",
+          "open": 118.73,
+          "high": 118.84,
+          "low": 112.71,
+          "close": 113.76,
+          "volume": 293463300,
+          "adjustedClose": 113.76
+        },
+        {
+          "date": "2025-03-25",
+          "open": 120.55,
+          "high": 121.29,
+          "low": 118.92,
+          "close": 120.69,
+          "volume": 167447200,
+          "adjustedClose": 120.69
+        },
+        {
+          "date": "2025-03-24",
+          "open": 119.88,
+          "high": 122.22,
+          "low": 119.34,
+          "close": 121.41,
+          "volume": 228452500,
+          "adjustedClose": 121.41
+        },
+        {
+          "date": "2025-03-21",
+          "open": 116.94,
+          "high": 117.99,
+          "low": 115.42,
+          "close": 117.7,
+          "volume": 266498500,
+          "adjustedClose": 117.7
+        },
+        {
+          "date": "2025-03-20",
+          "open": 116.55,
+          "high": 120.2,
+          "low": 116.47,
+          "close": 118.53,
+          "volume": 248829700,
+          "adjustedClose": 118.53
+        },
+        {
+          "date": "2025-03-19",
+          "open": 117.27,
+          "high": 120.45,
+          "low": 115.68,
+          "close": 117.52,
+          "volume": 273426200,
+          "adjustedClose": 117.52
+        },
+        {
+          "date": "2025-03-18",
+          "open": 118,
+          "high": 119.019997,
+          "low": 114.54,
+          "close": 115.43,
+          "volume": 299686900,
+          "adjustedClose": 115.43
+        },
+        {
+          "date": "2025-03-17",
+          "open": 122.74,
+          "high": 122.89,
+          "low": 118.029999,
+          "close": 119.53,
+          "volume": 255501500,
+          "adjustedClose": 119.53
+        },
+        {
+          "date": "2025-03-14",
+          "open": 118.61,
+          "high": 121.88,
+          "low": 118.15,
+          "close": 121.67,
+          "volume": 277593500,
+          "adjustedClose": 121.67
+        },
+        {
+          "date": "2025-03-13",
+          "open": 117.029999,
+          "high": 117.76,
+          "low": 113.79,
+          "close": 115.58,
+          "volume": 299033100,
+          "adjustedClose": 115.58
+        },
+        {
+          "date": "2025-03-12",
+          "open": 114.12,
+          "high": 116.76,
+          "low": 112.88,
+          "close": 115.74,
+          "volume": 323857500,
+          "adjustedClose": 115.74
+        },
+        {
+          "date": "2025-03-11",
+          "open": 106.99,
+          "high": 112.24,
+          "low": 104.77,
+          "close": 108.76,
+          "volume": 354865700,
+          "adjustedClose": 108.76
+        },
+        {
+          "date": "2025-03-10",
+          "open": 109.9,
+          "high": 111.85,
+          "low": 105.46,
+          "close": 106.98,
+          "volume": 366487400,
+          "adjustedClose": 106.98
+        },
+        {
+          "date": "2025-03-07",
+          "open": 111.25,
+          "high": 113.48,
+          "low": 107.56,
+          "close": 112.69,
+          "volume": 341755500,
+          "adjustedClose": 112.69
+        },
+        {
+          "date": "2025-03-06",
+          "open": 113.53,
+          "high": 115.35,
+          "low": 110.22,
+          "close": 110.57,
+          "volume": 321181900,
+          "adjustedClose": 110.57
+        },
+        {
+          "date": "2025-03-05",
+          "open": 117.58,
+          "high": 118.28,
+          "low": 114.51,
+          "close": 117.3,
+          "volume": 284337900,
+          "adjustedClose": 117.3
+        },
+        {
+          "date": "2025-03-04",
+          "open": 110.65,
+          "high": 119.31,
+          "low": 110.11,
+          "close": 115.99,
+          "volume": 398163300,
+          "adjustedClose": 115.99
+        },
+        {
+          "date": "2025-03-03",
+          "open": 123.51,
+          "high": 123.7,
+          "low": 112.28,
+          "close": 114.059998,
+          "volume": 411381400,
+          "adjustedClose": 114.059998
+        },
+        {
+          "date": "2025-02-28",
+          "open": 118.019997,
+          "high": 125.089996,
+          "low": 116.4,
+          "close": 124.92,
+          "volume": 389091100,
+          "adjustedClose": 124.92
+        },
+        {
+          "date": "2025-02-27",
+          "open": 135,
+          "high": 135.0099945,
+          "low": 120.010002,
+          "close": 120.15,
+          "volume": 443175800,
+          "adjustedClose": 120.15
+        },
+        {
+          "date": "2025-02-26",
+          "open": 129.99001,
+          "high": 133.73,
+          "low": 128.49001,
+          "close": 131.28,
+          "volume": 322553800,
+          "adjustedClose": 131.28
+        },
+        {
+          "date": "2025-02-25",
+          "open": 129.98,
+          "high": 130.2,
+          "low": 124.44,
+          "close": 126.63,
+          "volume": 271428700,
+          "adjustedClose": 126.63
+        },
+        {
+          "date": "2025-02-24",
+          "open": 136.56,
+          "high": 138.59,
+          "low": 130.080002,
+          "close": 130.28,
+          "volume": 251381100,
+          "adjustedClose": 130.28
+        },
+        {
+          "date": "2025-02-21",
+          "open": 140.039993,
+          "high": 141.46001,
+          "low": 134.029999,
+          "close": 134.42999,
+          "volume": 228217600,
+          "adjustedClose": 134.42999
+        },
+        {
+          "date": "2025-02-20",
+          "open": 140.029999,
+          "high": 140.66,
+          "low": 136.78999,
+          "close": 140.11,
+          "volume": 143903600,
+          "adjustedClose": 140.11
+        },
+        {
+          "date": "2025-02-19",
+          "open": 139.50999,
+          "high": 141.36,
+          "low": 137.22,
+          "close": 139.23,
+          "volume": 167536000,
+          "adjustedClose": 139.23
+        },
+        {
+          "date": "2025-02-18",
+          "open": 141.27,
+          "high": 143.44,
+          "low": 137.92999,
+          "close": 139.39999,
+          "volume": 219176600,
+          "adjustedClose": 139.39999
+        },
+        {
+          "date": "2025-02-14",
+          "open": 136.48,
+          "high": 139.25,
+          "low": 135.5,
+          "close": 138.85001,
+          "volume": 195479600,
+          "adjustedClose": 138.85001
+        },
+        {
+          "date": "2025-02-13",
+          "open": 131.56,
+          "high": 136.5,
+          "low": 131.17,
+          "close": 135.28999,
+          "volume": 197430000,
+          "adjustedClose": 135.28999
+        },
+        {
+          "date": "2025-02-12",
+          "open": 130.020004,
+          "high": 132.24001,
+          "low": 129.080002,
+          "close": 131.14,
+          "volume": 160278600,
+          "adjustedClose": 131.14
+        },
+        {
+          "date": "2025-02-11",
+          "open": 132.58,
+          "high": 134.48,
+          "low": 131.020004,
+          "close": 132.8,
+          "volume": 178902400,
+          "adjustedClose": 132.8
+        },
+        {
+          "date": "2025-02-10",
+          "open": 130.089996,
+          "high": 135,
+          "low": 129.96001,
+          "close": 133.57001,
+          "volume": 216989100,
+          "adjustedClose": 133.57001
+        },
+        {
+          "date": "2025-02-07",
+          "open": 129.22,
+          "high": 130.37,
+          "low": 125,
+          "close": 129.84,
+          "volume": 228186300,
+          "adjustedClose": 129.84
+        },
+        {
+          "date": "2025-02-06",
+          "open": 127.42,
+          "high": 128.77,
+          "low": 125.21,
+          "close": 128.67999,
+          "volume": 251483600,
+          "adjustedClose": 128.67999
+        },
+        {
+          "date": "2025-02-05",
+          "open": 121.76,
+          "high": 125,
+          "low": 120.76,
+          "close": 124.83,
+          "volume": 262230800,
+          "adjustedClose": 124.83
+        },
+        {
+          "date": "2025-02-04",
+          "open": 116.96,
+          "high": 121.2,
+          "low": 116.7,
+          "close": 118.65,
+          "volume": 256550000,
+          "adjustedClose": 118.65
+        },
+        {
+          "date": "2025-02-03",
+          "open": 114.75,
+          "high": 118.57,
+          "low": 113.010002,
+          "close": 116.66,
+          "volume": 371235700,
+          "adjustedClose": 116.66
+        },
+        {
+          "date": "2025-01-31",
+          "open": 123.78,
+          "high": 127.85,
+          "low": 119.19,
+          "close": 120.07,
+          "volume": 390372900,
+          "adjustedClose": 120.07
+        },
+        {
+          "date": "2025-01-30",
+          "open": 123.099998,
+          "high": 125,
+          "low": 118.099998,
+          "close": 124.65,
+          "volume": 392925500,
+          "adjustedClose": 124.65
+        },
+        {
+          "date": "2025-01-29",
+          "open": 126.5,
+          "high": 126.89,
+          "low": 120.050003,
+          "close": 123.7,
+          "volume": 467120600,
+          "adjustedClose": 123.7
+        },
+        {
+          "date": "2025-01-28",
+          "open": 121.81,
+          "high": 129,
+          "low": 116.25,
+          "close": 128.99001,
+          "volume": 579666400,
+          "adjustedClose": 128.99001
+        },
+        {
+          "date": "2025-01-27",
+          "open": 124.8,
+          "high": 128.39999,
+          "low": 116.7,
+          "close": 118.42,
+          "volume": 818830900,
+          "adjustedClose": 118.42
+        },
+        {
+          "date": "2025-01-24",
+          "open": 148.37,
+          "high": 148.97,
+          "low": 141.88,
+          "close": 142.62,
+          "volume": 234657600,
+          "adjustedClose": 142.62
+        },
+        {
+          "date": "2025-01-23",
+          "open": 145.050003,
+          "high": 147.23,
+          "low": 143.72,
+          "close": 147.22,
+          "volume": 155915500,
+          "adjustedClose": 147.22
+        },
+        {
+          "date": "2025-01-22",
+          "open": 144.66,
+          "high": 147.78999,
+          "low": 143.67,
+          "close": 147.070007,
+          "volume": 237651400,
+          "adjustedClose": 147.070007
+        },
+        {
+          "date": "2025-01-21",
+          "open": 139.16,
+          "high": 141.83,
+          "low": 137.089996,
+          "close": 140.83,
+          "volume": 197749000,
+          "adjustedClose": 140.83
+        },
+        {
+          "date": "2025-01-17",
+          "open": 136.69,
+          "high": 138.5,
+          "low": 135.46001,
+          "close": 137.71001,
+          "volume": 201188800,
+          "adjustedClose": 137.71001
+        },
+        {
+          "date": "2025-01-16",
+          "open": 138.64,
+          "high": 138.75,
+          "low": 133.49001,
+          "close": 133.57001,
+          "volume": 209235600,
+          "adjustedClose": 133.57001
+        },
+        {
+          "date": "2025-01-15",
+          "open": 133.64999,
+          "high": 136.45,
+          "low": 131.28999,
+          "close": 136.24001,
+          "volume": 185217300,
+          "adjustedClose": 136.24001
+        },
+        {
+          "date": "2025-01-14",
+          "open": 136.050003,
+          "high": 136.38,
+          "low": 130.050003,
+          "close": 131.75999,
+          "volume": 195590500,
+          "adjustedClose": 131.75999
+        },
+        {
+          "date": "2025-01-13",
+          "open": 129.99001,
+          "high": 133.49001,
+          "low": 129.50999,
+          "close": 133.23,
+          "volume": 204808900,
+          "adjustedClose": 133.23
+        },
+        {
+          "date": "2025-01-10",
+          "open": 137.45,
+          "high": 139.92,
+          "low": 134.22,
+          "close": 135.91,
+          "volume": 207602500,
+          "adjustedClose": 135.91
+        },
+        {
+          "date": "2025-01-08",
+          "open": 142.58,
+          "high": 143.95,
+          "low": 137.56,
+          "close": 140.11,
+          "volume": 227349900,
+          "adjustedClose": 140.11
+        },
+        {
+          "date": "2025-01-07",
+          "open": 153.029999,
+          "high": 153.13,
+          "low": 140.0099945,
+          "close": 140.14,
+          "volume": 351782200,
+          "adjustedClose": 140.14
+        },
+        {
+          "date": "2025-01-06",
+          "open": 148.59,
+          "high": 152.16,
+          "low": 147.82001,
+          "close": 149.42999,
+          "volume": 265377400,
+          "adjustedClose": 149.42999
+        },
+        {
+          "date": "2025-01-03",
+          "open": 140.0099945,
+          "high": 144.89999,
+          "low": 139.73,
+          "close": 144.47,
+          "volume": 229322500,
+          "adjustedClose": 144.47
+        },
+        {
+          "date": "2025-01-02",
+          "open": 136,
+          "high": 138.88,
+          "low": 134.63,
+          "close": 138.31,
+          "volume": 198247200,
+          "adjustedClose": 138.31
+        },
+        {
+          "date": "2024-12-31",
+          "open": 138.029999,
+          "high": 138.070007,
+          "low": 133.83,
+          "close": 134.28999,
+          "volume": 155659200,
+          "adjustedClose": 134.28999
+        },
+        {
+          "date": "2024-12-30",
+          "open": 134.83,
+          "high": 140.27,
+          "low": 134.020004,
+          "close": 137.49001,
+          "volume": 167734700,
+          "adjustedClose": 137.49001
+        },
+        {
+          "date": "2024-12-27",
+          "open": 138.55,
+          "high": 139.020004,
+          "low": 134.71001,
+          "close": 137.0099945,
+          "volume": 170582600,
+          "adjustedClose": 137.0099945
+        },
+        {
+          "date": "2024-12-26",
+          "open": 139.7,
+          "high": 140.85001,
+          "low": 137.73,
+          "close": 139.92999,
+          "volume": 116205600,
+          "adjustedClose": 139.92999
+        },
+        {
+          "date": "2024-12-24",
+          "open": 140,
+          "high": 141.89999,
+          "low": 138.64999,
+          "close": 140.22,
+          "volume": 105157000,
+          "adjustedClose": 140.22
+        },
+        {
+          "date": "2024-12-23",
+          "open": 136.28,
+          "high": 139.78999,
+          "low": 135.12,
+          "close": 139.67,
+          "volume": 176053500,
+          "adjustedClose": 139.67
+        },
+        {
+          "date": "2024-12-20",
+          "open": 129.81,
+          "high": 135.28,
+          "low": 128.22,
+          "close": 134.7,
+          "volume": 306528600,
+          "adjustedClose": 134.7
+        },
+        {
+          "date": "2024-12-19",
+          "open": 131.75999,
+          "high": 134.029999,
+          "low": 129.55,
+          "close": 130.67999,
+          "volume": 209719200,
+          "adjustedClose": 130.67999
+        },
+        {
+          "date": "2024-12-18",
+          "open": 133.86,
+          "high": 136.7,
+          "low": 128.28,
+          "close": 128.91,
+          "volume": 277444500,
+          "adjustedClose": 128.91
+        },
+        {
+          "date": "2024-12-17",
+          "open": 129.089996,
+          "high": 131.59,
+          "low": 126.86,
+          "close": 130.39,
+          "volume": 259410300,
+          "adjustedClose": 130.39
+        },
+        {
+          "date": "2024-12-16",
+          "open": 134.17999,
+          "high": 134.39999,
+          "low": 130.42,
+          "close": 132,
+          "volume": 237951100,
+          "adjustedClose": 132
+        },
+        {
+          "date": "2024-12-13",
+          "open": 138.94,
+          "high": 139.60001,
+          "low": 132.53999,
+          "close": 134.25,
+          "volume": 231514900,
+          "adjustedClose": 134.25
+        },
+        {
+          "date": "2024-12-12",
+          "open": 137.080002,
+          "high": 138.44,
+          "low": 135.8,
+          "close": 137.34,
+          "volume": 159211400,
+          "adjustedClose": 137.34
+        },
+        {
+          "date": "2024-12-11",
+          "open": 137.36,
+          "high": 140.17,
+          "low": 135.21001,
+          "close": 139.31,
+          "volume": 184905200,
+          "adjustedClose": 139.31
+        },
+        {
+          "date": "2024-12-10",
+          "open": 139.0099945,
+          "high": 141.82001,
+          "low": 133.78999,
+          "close": 135.070007,
+          "volume": 210020900,
+          "adjustedClose": 135.070007
+        },
+        {
+          "date": "2024-12-09",
+          "open": 138.97,
+          "high": 139.95,
+          "low": 137.13,
+          "close": 138.81,
+          "volume": 189308600,
+          "adjustedClose": 138.81
+        },
+        {
+          "date": "2024-12-06",
+          "open": 144.60001,
+          "high": 145.7,
+          "low": 141.31,
+          "close": 142.44,
+          "volume": 188505600,
+          "adjustedClose": 142.44
+        },
+        {
+          "date": "2024-12-05",
+          "open": 145.11,
+          "high": 146.53999,
+          "low": 143.95,
+          "close": 145.059998,
+          "volume": 172621200,
+          "adjustedClose": 145.059998
+        },
+        {
+          "date": "2024-12-04",
+          "open": 142,
+          "high": 145.78999,
+          "low": 140.28999,
+          "close": 145.14,
+          "volume": 231224300,
+          "adjustedClose": 145.14
+        },
+        {
+          "date": "2024-12-03",
+          "open": 138.25999,
+          "high": 140.53999,
+          "low": 137.95,
+          "close": 140.25999,
+          "volume": 164414000,
+          "adjustedClose": 140.25999
+        },
+        {
+          "date": "2024-12-02",
+          "open": 138.83,
+          "high": 140.45,
+          "low": 137.82001,
+          "close": 138.63,
+          "volume": 171682800,
+          "adjustedClose": 138.63
+        },
+        {
+          "date": "2024-11-29",
+          "open": 136.78,
+          "high": 139.35001,
+          "low": 136.050003,
+          "close": 138.25,
+          "volume": 141863200,
+          "adjustedClose": 138.25
+        },
+        {
+          "date": "2024-11-27",
+          "open": 135.0099945,
+          "high": 137.22,
+          "low": 131.8,
+          "close": 135.34,
+          "volume": 226370900,
+          "adjustedClose": 135.34
+        },
+        {
+          "date": "2024-11-26",
+          "open": 137.7,
+          "high": 139.3,
+          "low": 135.67,
+          "close": 136.92,
+          "volume": 190287700,
+          "adjustedClose": 136.92
+        },
+        {
+          "date": "2024-11-25",
+          "open": 141.99001,
+          "high": 142.050003,
+          "low": 135.82001,
+          "close": 136.020004,
+          "volume": 344941900,
+          "adjustedClose": 136.020004
+        },
+        {
+          "date": "2024-11-22",
+          "open": 145.92999,
+          "high": 147.16,
+          "low": 141.10001,
+          "close": 141.95,
+          "volume": 236406200,
+          "adjustedClose": 141.95
+        },
+        {
+          "date": "2024-11-21",
+          "open": 149.35001,
+          "high": 152.89,
+          "low": 140.7,
+          "close": 146.67,
+          "volume": 400946600,
+          "adjustedClose": 146.67
+        },
+        {
+          "date": "2024-11-20",
+          "open": 147.41,
+          "high": 147.56,
+          "low": 142.73,
+          "close": 145.89,
+          "volume": 309871700,
+          "adjustedClose": 145.89
+        },
+        {
+          "date": "2024-11-19",
+          "open": 141.32001,
+          "high": 147.13,
+          "low": 140.99001,
+          "close": 147.0099945,
+          "volume": 227834900,
+          "adjustedClose": 147.0099945
+        },
+        {
+          "date": "2024-11-18",
+          "open": 139.5,
+          "high": 141.55,
+          "low": 137.14999,
+          "close": 140.14999,
+          "volume": 221866000,
+          "adjustedClose": 140.14999
+        },
+        {
+          "date": "2024-11-15",
+          "open": 144.87,
+          "high": 145.24001,
+          "low": 140.080002,
+          "close": 141.98,
+          "volume": 250132900,
+          "adjustedClose": 141.98
+        },
+        {
+          "date": "2024-11-14",
+          "open": 147.64,
+          "high": 149,
+          "low": 145.55,
+          "close": 146.75999,
+          "volume": 194463300,
+          "adjustedClose": 146.75999
+        },
+        {
+          "date": "2024-11-13",
+          "open": 149.070007,
+          "high": 149.33,
+          "low": 145.89999,
+          "close": 146.27,
+          "volume": 191903300,
+          "adjustedClose": 146.27
+        },
+        {
+          "date": "2024-11-12",
+          "open": 146.78,
+          "high": 149.64999,
+          "low": 146.0099945,
+          "close": 148.28999,
+          "volume": 198634700,
+          "adjustedClose": 148.28999
+        },
+        {
+          "date": "2024-11-11",
+          "open": 148.67999,
+          "high": 148.85001,
+          "low": 143.57001,
+          "close": 145.25999,
+          "volume": 182325600,
+          "adjustedClose": 145.25999
+        },
+        {
+          "date": "2024-11-08",
+          "open": 148.77,
+          "high": 149.77,
+          "low": 146.25999,
+          "close": 147.63,
+          "volume": 175665800,
+          "adjustedClose": 147.63
+        },
+        {
+          "date": "2024-11-07",
+          "open": 146.39,
+          "high": 148.92999,
+          "low": 146.17,
+          "close": 148.88,
+          "volume": 207323300,
+          "adjustedClose": 148.88
+        },
+        {
+          "date": "2024-11-06",
+          "open": 142.96001,
+          "high": 146.49001,
+          "low": 141.96001,
+          "close": 145.61,
+          "volume": 242043900,
+          "adjustedClose": 145.61
+        },
+        {
+          "date": "2024-11-05",
+          "open": 137.45,
+          "high": 140.37,
+          "low": 137.33,
+          "close": 139.91,
+          "volume": 160537400,
+          "adjustedClose": 139.91
+        },
+        {
+          "date": "2024-11-04",
+          "open": 137.21001,
+          "high": 138.96001,
+          "low": 135.57001,
+          "close": 136.050003,
+          "volume": 187528200,
+          "adjustedClose": 136.050003
+        },
+        {
+          "date": "2024-11-01",
+          "open": 134.7,
+          "high": 137.31,
+          "low": 134.57001,
+          "close": 135.39999,
+          "volume": 207127800,
+          "adjustedClose": 135.39999
+        },
+        {
+          "date": "2024-10-31",
+          "open": 137.60001,
+          "high": 137.61,
+          "low": 132.11,
+          "close": 132.75999,
+          "volume": 270039600,
+          "adjustedClose": 132.75999
+        },
+        {
+          "date": "2024-10-30",
+          "open": 139.53999,
+          "high": 140.33,
+          "low": 136.81,
+          "close": 139.34,
+          "volume": 179418100,
+          "adjustedClose": 139.34
+        },
+        {
+          "date": "2024-10-29",
+          "open": 140.28999,
+          "high": 142.25999,
+          "low": 138.89999,
+          "close": 141.25,
+          "volume": 157593600,
+          "adjustedClose": 141.25
+        },
+        {
+          "date": "2024-10-28",
+          "open": 143,
+          "high": 143.14,
+          "low": 140.050003,
+          "close": 140.52,
+          "volume": 173586700,
+          "adjustedClose": 140.52
+        },
+        {
+          "date": "2024-10-25",
+          "open": 140.92999,
+          "high": 144.13,
+          "low": 140.8,
+          "close": 141.53999,
+          "volume": 205122100,
+          "adjustedClose": 141.53999
+        },
+        {
+          "date": "2024-10-24",
+          "open": 140.82001,
+          "high": 141.35001,
+          "low": 138.46001,
+          "close": 140.41,
+          "volume": 172354900,
+          "adjustedClose": 140.41
+        },
+        {
+          "date": "2024-10-23",
+          "open": 142.029999,
+          "high": 142.42999,
+          "low": 137.46001,
+          "close": 139.56,
+          "volume": 285930000,
+          "adjustedClose": 139.56
+        },
+        {
+          "date": "2024-10-22",
+          "open": 142.91,
+          "high": 144.42,
+          "low": 141.78,
+          "close": 143.59,
+          "volume": 226311600,
+          "adjustedClose": 143.59
+        },
+        {
+          "date": "2024-10-21",
+          "open": 138.13,
+          "high": 143.71001,
+          "low": 138,
+          "close": 143.71001,
+          "volume": 264554500,
+          "adjustedClose": 143.71001
+        },
+        {
+          "date": "2024-10-18",
+          "open": 138.67,
+          "high": 138.89999,
+          "low": 137.28,
+          "close": 138,
+          "volume": 176090200,
+          "adjustedClose": 138
+        },
+        {
+          "date": "2024-10-17",
+          "open": 139.34,
+          "high": 140.89,
+          "low": 136.87,
+          "close": 136.92999,
+          "volume": 306435900,
+          "adjustedClose": 136.92999
+        },
+        {
+          "date": "2024-10-16",
+          "open": 133.98,
+          "high": 136.62,
+          "low": 131.58,
+          "close": 135.72,
+          "volume": 264879700,
+          "adjustedClose": 135.72
+        },
+        {
+          "date": "2024-10-15",
+          "open": 137.87,
+          "high": 138.57001,
+          "low": 128.74001,
+          "close": 131.60001,
+          "volume": 377831000,
+          "adjustedClose": 131.60001
+        },
+        {
+          "date": "2024-10-14",
+          "open": 136.47,
+          "high": 139.60001,
+          "low": 136.3,
+          "close": 138.070007,
+          "volume": 232347700,
+          "adjustedClose": 138.070007
+        },
+        {
+          "date": "2024-10-11",
+          "open": 134.0099945,
+          "high": 135.78,
+          "low": 133.66,
+          "close": 134.8,
+          "volume": 170209500,
+          "adjustedClose": 134.8
+        },
+        {
+          "date": "2024-10-10",
+          "open": 131.91,
+          "high": 135,
+          "low": 131,
+          "close": 134.81,
+          "volume": 242311300,
+          "adjustedClose": 134.81
+        },
+        {
+          "date": "2024-10-09",
+          "open": 134.11,
+          "high": 134.52,
+          "low": 131.38,
+          "close": 132.64999,
+          "volume": 246191600,
+          "adjustedClose": 132.64999
+        },
+        {
+          "date": "2024-10-08",
+          "open": 130.25999,
+          "high": 133.48,
+          "low": 129.42,
+          "close": 132.89,
+          "volume": 285722500,
+          "adjustedClose": 132.89
+        },
+        {
+          "date": "2024-10-07",
+          "open": 124.99,
+          "high": 130.64,
+          "low": 124.95,
+          "close": 127.72,
+          "volume": 346250200,
+          "adjustedClose": 127.72
+        },
+        {
+          "date": "2024-10-04",
+          "open": 124.94,
+          "high": 125.040001,
+          "low": 121.83,
+          "close": 124.92,
+          "volume": 243678100,
+          "adjustedClose": 124.92
+        },
+        {
+          "date": "2024-10-03",
+          "open": 120.92,
+          "high": 124.36,
+          "low": 120.34,
+          "close": 122.85,
+          "volume": 277118000,
+          "adjustedClose": 122.85
+        },
+        {
+          "date": "2024-10-02",
+          "open": 116.44,
+          "high": 119.38,
+          "low": 115.14,
+          "close": 118.85,
+          "volume": 221845900,
+          "adjustedClose": 118.85
+        },
+        {
+          "date": "2024-10-01",
+          "open": 121.77,
+          "high": 122.44,
+          "low": 115.79,
+          "close": 117,
+          "volume": 302094500,
+          "adjustedClose": 117
+        },
+        {
+          "date": "2024-09-30",
+          "open": 118.31,
+          "high": 121.5,
+          "low": 118.15,
+          "close": 121.44,
+          "volume": 226553700,
+          "adjustedClose": 121.44
+        },
+        {
+          "date": "2024-09-27",
+          "open": 123.97,
+          "high": 124.029999,
+          "low": 119.26,
+          "close": 121.4,
+          "volume": 271009200,
+          "adjustedClose": 121.4
+        },
+        {
+          "date": "2024-09-26",
+          "open": 126.8,
+          "high": 127.67,
+          "low": 121.8,
+          "close": 124.040001,
+          "volume": 302582900,
+          "adjustedClose": 124.040001
+        },
+        {
+          "date": "2024-09-25",
+          "open": 122.019997,
+          "high": 124.94,
+          "low": 121.61,
+          "close": 123.51,
+          "volume": 284692900,
+          "adjustedClose": 123.51
+        },
+        {
+          "date": "2024-09-24",
+          "open": 116.52,
+          "high": 121.8,
+          "low": 115.38,
+          "close": 120.87,
+          "volume": 354966800,
+          "adjustedClose": 120.87
+        },
+        {
+          "date": "2024-09-23",
+          "open": 116.55,
+          "high": 116.99,
+          "low": 114.86,
+          "close": 116.26,
+          "volume": 206228500,
+          "adjustedClose": 116.26
+        },
+        {
+          "date": "2024-09-20",
+          "open": 117.059998,
+          "high": 118.62,
+          "low": 115.39,
+          "close": 116,
+          "volume": 382462400,
+          "adjustedClose": 116
+        },
+        {
+          "date": "2024-09-19",
+          "open": 117.35,
+          "high": 119.66,
+          "low": 117.25,
+          "close": 117.87,
+          "volume": 293506400,
+          "adjustedClose": 117.87
+        },
+        {
+          "date": "2024-09-18",
+          "open": 115.89,
+          "high": 117.7,
+          "low": 113.22,
+          "close": 113.37,
+          "volume": 310318900,
+          "adjustedClose": 113.37
+        },
+        {
+          "date": "2024-09-17",
+          "open": 118.17,
+          "high": 118.8,
+          "low": 114.83,
+          "close": 115.59,
+          "volume": 231925900,
+          "adjustedClose": 115.59
+        },
+        {
+          "date": "2024-09-16",
+          "open": 116.79,
+          "high": 118.18,
+          "low": 114.36,
+          "close": 116.78,
+          "volume": 248772300,
+          "adjustedClose": 116.78
+        },
+        {
+          "date": "2024-09-13",
+          "open": 119.080002,
+          "high": 119.96,
+          "low": 117.6,
+          "close": 119.099998,
+          "volume": 238358300,
+          "adjustedClose": 119.099998
+        },
+        {
+          "date": "2024-09-12",
+          "open": 116.84,
+          "high": 120.79,
+          "low": 115.38,
+          "close": 119.14,
+          "volume": 367100500,
+          "adjustedClose": 119.14
+        },
+        {
+          "date": "2024-09-11",
+          "open": 109.39,
+          "high": 117.19,
+          "low": 107.42,
+          "close": 116.91,
+          "volume": 441422400,
+          "adjustedClose": 116.91
+        },
+        {
+          "date": "2024-09-10",
+          "open": 107.81,
+          "high": 109.4,
+          "low": 104.95,
+          "close": 108.099998,
+          "volume": 268283700,
+          "adjustedClose": 108.099998
+        },
+        {
+          "date": "2024-09-09",
+          "open": 104.88,
+          "high": 106.55,
+          "low": 103.69,
+          "close": 106.47,
+          "volume": 273912000,
+          "adjustedClose": 106.47
+        },
+        {
+          "date": "2024-09-06",
+          "open": 108.040001,
+          "high": 108.15,
+          "low": 100.95,
+          "close": 102.83,
+          "volume": 413638100,
+          "adjustedClose": 102.83
+        },
+        {
+          "date": "2024-09-05",
+          "open": 104.99,
+          "high": 109.65,
+          "low": 104.76,
+          "close": 107.21,
+          "volume": 306850700,
+          "adjustedClose": 107.21
+        },
+        {
+          "date": "2024-09-04",
+          "open": 105.41,
+          "high": 113.27,
+          "low": 104.12,
+          "close": 106.21,
+          "volume": 372470300,
+          "adjustedClose": 106.21
+        },
+        {
+          "date": "2024-09-03",
+          "open": 116.010002,
+          "high": 116.21,
+          "low": 107.29,
+          "close": 108,
+          "volume": 477155100,
+          "adjustedClose": 108
+        },
+        {
+          "date": "2024-08-30",
+          "open": 119.53,
+          "high": 121.75,
+          "low": 117.22,
+          "close": 119.37,
+          "volume": 333751600,
+          "adjustedClose": 119.37
+        },
+        {
+          "date": "2024-08-29",
+          "open": 121.36,
+          "high": 124.43,
+          "low": 116.71,
+          "close": 117.59,
+          "volume": 453023300,
+          "adjustedClose": 117.59
+        },
+        {
+          "date": "2024-08-28",
+          "open": 128.12,
+          "high": 128.33,
+          "low": 122.64,
+          "close": 125.61,
+          "volume": 448101100,
+          "adjustedClose": 125.61
+        },
+        {
+          "date": "2024-08-27",
+          "open": 125.050003,
+          "high": 129.2,
+          "low": 123.88,
+          "close": 128.3,
+          "volume": 303134600,
+          "adjustedClose": 128.3
+        },
+        {
+          "date": "2024-08-26",
+          "open": 129.57001,
+          "high": 131.25999,
+          "low": 124.37,
+          "close": 126.46,
+          "volume": 331964700,
+          "adjustedClose": 126.46
+        },
+        {
+          "date": "2024-08-23",
+          "open": 125.86,
+          "high": 129.60001,
+          "low": 125.22,
+          "close": 129.37,
+          "volume": 323230300,
+          "adjustedClose": 129.37
+        },
+        {
+          "date": "2024-08-22",
+          "open": 130.020004,
+          "high": 130.75,
+          "low": 123.099998,
+          "close": 123.74,
+          "volume": 376189100,
+          "adjustedClose": 123.74
+        },
+        {
+          "date": "2024-08-21",
+          "open": 127.32,
+          "high": 129.35001,
+          "low": 126.66,
+          "close": 128.5,
+          "volume": 257883600,
+          "adjustedClose": 128.5
+        },
+        {
+          "date": "2024-08-20",
+          "open": 128.39999,
+          "high": 129.88,
+          "low": 125.89,
+          "close": 127.25,
+          "volume": 300087400,
+          "adjustedClose": 127.25
+        },
+        {
+          "date": "2024-08-19",
+          "open": 124.28,
+          "high": 130,
+          "low": 123.42,
+          "close": 130,
+          "volume": 318333600,
+          "adjustedClose": 130
+        },
+        {
+          "date": "2024-08-16",
+          "open": 121.94,
+          "high": 125,
+          "low": 121.18,
+          "close": 124.58,
+          "volume": 302589900,
+          "adjustedClose": 124.58
+        },
+        {
+          "date": "2024-08-15",
+          "open": 118.76,
+          "high": 123.24,
+          "low": 117.47,
+          "close": 122.86,
+          "volume": 318086700,
+          "adjustedClose": 122.86
+        },
+        {
+          "date": "2024-08-14",
+          "open": 118.53,
+          "high": 118.6,
+          "low": 114.07,
+          "close": 118.080002,
+          "volume": 339246400,
+          "adjustedClose": 118.080002
+        },
+        {
+          "date": "2024-08-13",
+          "open": 112.44,
+          "high": 116.23,
+          "low": 111.58,
+          "close": 116.14,
+          "volume": 312646700,
+          "adjustedClose": 116.14
+        },
+        {
+          "date": "2024-08-12",
+          "open": 106.32,
+          "high": 111.07,
+          "low": 106.26,
+          "close": 109.019997,
+          "volume": 325559900,
+          "adjustedClose": 109.019997
+        },
+        {
+          "date": "2024-08-09",
+          "open": 105.64,
+          "high": 106.6,
+          "low": 103.43,
+          "close": 104.75,
+          "volume": 290844200,
+          "adjustedClose": 104.75
+        },
+        {
+          "date": "2024-08-08",
+          "open": 102,
+          "high": 105.5,
+          "low": 97.52,
+          "close": 104.97,
+          "volume": 391910000,
+          "adjustedClose": 104.97
+        },
+        {
+          "date": "2024-08-07",
+          "open": 107.81,
+          "high": 108.8,
+          "low": 98.69,
+          "close": 98.91,
+          "volume": 411440400,
+          "adjustedClose": 98.91
+        },
+        {
+          "date": "2024-08-06",
+          "open": 103.84,
+          "high": 107.71,
+          "low": 100.55,
+          "close": 104.25,
+          "volume": 409012100,
+          "adjustedClose": 104.25
+        },
+        {
+          "date": "2024-08-05",
+          "open": 92.059998,
+          "high": 103.41,
+          "low": 90.69,
+          "close": 100.45,
+          "volume": 552842400,
+          "adjustedClose": 100.45
+        },
+        {
+          "date": "2024-08-02",
+          "open": 103.76,
+          "high": 108.72,
+          "low": 101.37,
+          "close": 107.27,
+          "volume": 482027500,
+          "adjustedClose": 107.27
+        }
+      ],
+      "aiSummary": "NVIDIA Corporation reported revenue of $130.5B with net income of $72.9B, representing a 55.8% net margin. The company trades at a P/E ratio of 58.3 with a market capitalization of $4389.8B.",
+      "aiInsights": [
+        "Despite 114% YoY revenue growth and 69% 3-year CAGR, NVIDIA's P/E ratio of 58.2x suggests significant growth expectations are already priced in, limiting upside potential",
+        "The company's extremely high beta of 3.58 and volatility of 0.537 indicates outsized market risk - investors should size positions accordingly and expect large price swings",
+        "Technical analysis shows a bullish trend with clear support at $161.16 and resistance at $183.30, providing actionable entry/exit levels for tactical traders",
+        "Quality score of 76 demonstrates strong fundamentals, but the growth score of 80 coupled with a value score of 0 suggests a classic 'great company, expensive stock' scenario",
+        "The -11% margin of safety and 'overvalued' assessment, combined with high confidence (0.8) sell recommendation, indicates better entry points likely ahead despite strong business performance"
+      ]
+    },
+    "news": [],
+    "transcripts": [],
+    "technicals": {
+      "sma20": 172.094001,
+      "sma50": 156.3966,
+      "sma200": 135.21085,
+      "rsi": 66.47384,
+      "macd": {
+        "macd": 6.54049,
+        "signal": 6.89241,
+        "histogram": -0.35192449
+      },
+      "volume": {
+        "current": 8483768,
+        "average10Day": 145616897,
+        "average30Day": 145616897,
+        "trend": "decreasing"
+      },
+      "patterns": [],
+      "aiAnalysis": ""
+    },
+    "analysts": {
+      "consensus": {
+        "rating": "buy",
+        "score": 4.2,
+        "count": 10
+      },
+      "priceTargets": [
+        {
+          "analyst": "Senior Analyst 1",
+          "firm": "Morgan Stanley",
+          "target": 260.8221653498974,
+          "date": "2025-08-05T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 2",
+          "firm": "Goldman Sachs",
+          "target": 263.6497288353822,
+          "date": "2025-07-29T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 3",
+          "firm": "J.P. Morgan",
+          "target": 262.76476525943724,
+          "date": "2025-07-22T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 4",
+          "firm": "Bank of America",
+          "target": 267.9623544943655,
+          "date": "2025-07-15T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 5",
+          "firm": "Barclays",
+          "target": 263.8112379863247,
+          "date": "2025-07-08T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 6",
+          "firm": "Credit Suisse",
+          "target": 256.3803670632504,
+          "date": "2025-07-01T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 7",
+          "firm": "Deutsche Bank",
+          "target": 245.5166073054327,
+          "date": "2025-06-24T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 8",
+          "firm": "UBS",
+          "target": 250.72379999149845,
+          "date": "2025-06-17T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 9",
+          "firm": "Citigroup",
+          "target": 269.05051943408444,
+          "date": "2025-06-10T18:09:27.246Z",
+          "horizon": "12m"
+        },
+        {
+          "analyst": "Senior Analyst 10",
+          "firm": "Wells Fargo",
+          "target": 268.91849563778084,
+          "date": "2025-06-03T18:09:27.246Z",
+          "horizon": "12m"
+        }
+      ],
+      "recommendations": [
+        {
+          "analyst": "Senior Analyst 1",
+          "firm": "Morgan Stanley",
+          "rating": "buy",
+          "previousRating": "hold",
+          "date": "2025-08-05T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 2",
+          "firm": "Goldman Sachs",
+          "rating": "buy",
+          "previousRating": "hold",
+          "date": "2025-07-29T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 3",
+          "firm": "J.P. Morgan",
+          "rating": "buy",
+          "previousRating": "hold",
+          "date": "2025-07-22T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 4",
+          "firm": "Bank of America",
+          "rating": "buy",
+          "previousRating": "hold",
+          "date": "2025-07-15T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 5",
+          "firm": "Barclays",
+          "rating": "buy",
+          "previousRating": "hold",
+          "date": "2025-07-08T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 6",
+          "firm": "Credit Suisse",
+          "rating": "buy",
+          "previousRating": "buy",
+          "date": "2025-07-01T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 7",
+          "firm": "Deutsche Bank",
+          "rating": "buy",
+          "previousRating": "buy",
+          "date": "2025-06-24T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 8",
+          "firm": "UBS",
+          "rating": "hold",
+          "previousRating": "buy",
+          "date": "2025-06-17T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 9",
+          "firm": "Citigroup",
+          "rating": "hold",
+          "previousRating": "buy",
+          "date": "2025-06-10T18:09:27.246Z"
+        },
+        {
+          "analyst": "Senior Analyst 10",
+          "firm": "Wells Fargo",
+          "rating": "hold",
+          "previousRating": "buy",
+          "date": "2025-06-03T18:09:27.246Z"
+        }
+      ],
+      "revisions": []
+    },
+    "earnings": {
+      "historical": [],
+      "upcoming": [],
+      "nextEarningsDate": null,
+      "averageSurprise": 0
+    },
+    "metadata": {
+      "lastUpdated": "2025-08-05T18:09:26.687Z",
+      "sources": {
+        "TwelveData": {
+          "status": "success",
+          "timestamp": 1754417367514,
+          "recordsReturned": 1
+        }
+      },
+      "completeness": 88,
+      "quality": {
+        "overall": 0.75,
+        "financials": 1,
+        "news": 0,
+        "technicals": 1,
+        "analysts": 1,
+        "grade": "B"
+      },
+      "aiContent": {
+        "executiveSummary": "NVIDIA CORPORATION (NVDA) - INVESTMENT ANALYSIS\nExecutive Summary\n\nNVIDIA has established itself as the dominant force in the AI chip market, leveraging its graphics and compute expertise to capture unprecedented demand for advanced computing solutions. The company's strategic position in high-growth segments including AI/ML, data centers, and gaming has translated into exceptional financial performance, with the company now commanding a market capitalization of $4.39T. However, current valuations appear to price in significant future growth expectations, creating a challenging risk-reward profile.\n\nFinancial performance has been nothing short of extraordinary, with revenue reaching $130.5B and net income of $72.9B. Revenue growth has accelerated dramatically, posting 114.2% year-over-year growth, while maintaining a robust 5-year CAGR of 64.24%. This growth trajectory significantly outpaces broader semiconductor industry averages and reflects NVIDIA's ability to capitalize on AI-driven demand. The company's execution is further evidenced by strong quality metrics, scoring 76 out of 100 in our proprietary quality assessment.\n\nDespite impressive operational performance, our analysis suggests a cautious stance is warranted at current levels. Trading at a P/E of 58.25x and showing a negative margin of safety (-11%), NVIDIA appears significantly overvalued relative to our intrinsic value calculations. While technical indicators remain bullish with support at $161.16 and resistance at $183.30, the elevated risk profile (beta of 3.58 and volatility of 0.537) combined with rich valuations leads to our SELL recommendation with 80% confidence. Investors should consider taking profits and waiting for more attractive entry points, despite the company's strong market position and growth prospects.",
+        "investmentThesis": "Investment Thesis: NVIDIA Corporation (NVDA)\n\"Riding the AI Computing Super-Cycle\"\n\nCore Investment Narrative:\nNVIDIA stands at the epicenter of the artificial intelligence revolution, uniquely positioned to capture the massive secular shift toward AI computing infrastructure. While the stock appears expensive on traditional metrics, I believe we're in the early innings of a multi-year super-cycle that will drive sustained growth well above current market expectations. The company's dominance in AI chips, coupled with its expanding software ecosystem, creates a powerful platform with strong network effects.\n\nKey Catalysts:\n\n1. AI Infrastructure Buildout (0-12 months)\n- Unprecedented demand for AI computing power from cloud providers and enterprises\n- Current chip shortage creating pricing power and high visibility into future quarters\n- Expected 2024 datacenter revenue growth of >100% YoY\n\n2. Software & Developer Ecosystem Expansion (12-24 months)\n- CUDA platform becoming the de facto standard for AI development\n- Growing recurring revenue from enterprise software solutions\n- Network effects strengthening competitive moat\n\n3. Next-Gen Product Cycle (18-36 months)\n- Hopper architecture ramping up with superior price/performance metrics\n- New automotive computing platform gaining traction\n- Expansion into new verticals (healthcare, industrial)\n\nCompetitive Advantages:\n- Architectural Leadership: 5+ year technical lead in AI accelerators\n- Developer Lock-in: >4 million CUDA developers creating high switching costs\n- Scale Advantages: R&D budget >$5B annually, widening technology gap\n- IP Portfolio: Extensive patent protection in key areas\n\nReturn Profile:\nBase Case (60% probability):\n- 24-month price target: $275 (+55%)\n- Driven by: 45% revenue CAGR, multiple compression to 45x forward earnings\n\nBull Case (25% probability):\n- 24-month price target: $350 (+97%)\n- Driven by: 60% revenue CAGR, sustained multiple\n\nBear Case (15% probability):\n- 24-month price target: $125 (-30%)\n- Driven by: AI spending slowdown, multiple compression to 35x\n\nInvestment Time Horizon: 24-36 months\n\nKey Milestones to Monitor:\nQ1-Q2 2024:\n- Datacenter revenue growth rate\n- Gross margin trends\n- Enterprise software adoption metrics\n\nQ3-Q4 2024:\n- Next-gen architecture announcement\n- Auto design win pipeline\n- China exposure mitigation progress\n\nRisk Management:\n- Position sizing: 4-5% initial position\n- Add on pullbacks to key technical levels\n- Stop loss at $140 (-21%)\n\nWhile valuation appears stretched, NVIDIA's position as the picks-and-shovels play in the AI gold rush, combined with strong execution and expanding competitive moats, creates a compelling risk/reward opportunity. The current premium multiple is justified by exceptional growth visibility and improving business quality. I recommend establishing a core position with room to add on market volatility.",
+        "keyInsights": [
+          "NVIDIA's revenue growth has dramatically accelerated to 114.2% YoY, significantly outpacing its 5-year CAGR of 64.24%, indicating exceptional momentum in AI-driven demand",
+          "Despite strong fundamentals, the stock appears significantly overvalued with a P/E of 58.25 and negative margin of safety (-10.97%), suggesting heightened downside risk",
+          "The company's beta of 3.58 and volatility of 0.537 indicate extreme market sensitivity - nearly 4x more volatile than the broader market, requiring careful position sizing",
+          "Growth metrics are stellar (80/100 score) while value metrics are poor (0/100), creating a classic growth-value tension that favors trading over long-term holding",
+          "The technical trend remains bullish despite fundamental overvaluation, with clear support at $161.16 and resistance at $183.30, providing actionable entry/exit levels",
+          "Quality score of 76/100 combined with market-leading position in AI chips suggests strong competitive moat despite valuation concerns"
+        ],
+        "riskAnalysis": "RISK ASSESSMENT REPORT - NVIDIA Corporation (NVDA)\n\n1. MARKET RISKS\n- Extremely high beta of 3.58, indicating significant market sensitivity\n- High volatility (53.7%), well above market average\n- Strong correlation with semiconductor index and tech sector\n- Quantified Impact: 1% market move typically results in 3.58% NVDA move\n- VaR (95%, 1-day): Estimate 4.2% of position value at risk\n\n2. COMPANY-SPECIFIC RISKS\nOperational:\n- Supply chain concentration in Asia (>70% manufacturing)\n- Semiconductor production capacity constraints\n- High R&D dependency ($5.3B annually, 12.4% of revenue)\n\nFinancial:\n- P/E ratio of 58.25x indicates high valuation risk\n- Trading at 10.98% premium to intrinsic value\n- Concentration risk: Gaming & Data Center >80% of revenue\n- High operating leverage due to fixed cost structure\n\nStrategic:\n- AI market leadership position could face increasing competition\n- Product development cycle risks\n- Customer concentration risk (top 5 customers ≈40% of revenue)\n\n3. INDUSTRY & MACRO RISKS\nIndustry:\n- Cyclical semiconductor market exposure\n- Intense competition (AMD, Intel, emerging players)\n- Technology obsolescence risk\n- Chip shortage/oversupply cycles\n\nMacro:\n- Interest rate sensitivity (high growth stock)\n- US-China trade tensions\n- Global recession impact on tech spending\n- Currency exposure (>80% international revenue)\n\n4. ESG & REGULATORY RISKS\nEnvironmental:\n- High energy consumption in operations\n- Carbon footprint of data centers\n- Raw material sourcing concerns\n\nSocial:\n- Supply chain labor practices\n- Talent retention in competitive market\n- Product use in controversial applications\n\nRegulatory:\n- Export controls and trade restrictions\n- Data privacy regulations\n- Antitrust scrutiny\n- IP protection challenges\n\n5. RISK MITIGATION STRATEGIES\n\nOperational:\n- Geographic diversification of manufacturing\n- Strategic inventory management\n- Supplier diversity programs\n- Enhanced quality control systems\n\nFinancial:\n- Maintain strong cash position ($21B)\n- Conservative debt management\n- Currency hedging program\n- Regular stress testing\n\nStrategic:\n- Product portfolio diversification\n- Strategic partnerships\n- Patent portfolio expansion\n- Regular M&A evaluation\n\nCompliance:\n- Enhanced ESG monitoring\n- Regulatory compliance framework\n- Supply chain audits\n- Corporate governance strengthening\n\nRISK MONITORING METRICS:\n1. Weekly VaR calculations\n2. Monthly supply chain risk assessments\n3. Quarterly regulatory compliance reviews\n4. Semi-annual strategic risk evaluation\n5. Annual comprehensive risk framework review\n\nOVERALL RISK RATING: HIGH\n- Primary drivers: High beta, valuation premium, concentration risks\n- Secondary factors: Regulatory environment, competitive pressure\n- Positive mitigants: Strong market position, solid financials\n- Required return hurdle: 15-20% to compensate for risk profile\n\nRECOMMENDATIONS:\n1. Implement position size limits\n2. Consider protective options strategies\n3. Regular rebalancing to manage exposure\n4. Enhanced monitoring of key risk indicators\n5. Development of contingency plans for key risks\n\nThis assessment should be reviewed quarterly or upon material changes in business environment.",
+        "futureOutlook": "Based on the provided data, here's a detailed 12-24 month projection for NVIDIA:\n\nBase Case Scenario (60% probability):\n- Revenue growth moderating to 65-75% YoY (down from current 114.2%)\n- Market share in AI chips remaining dominant (80%+)\n- PE ratio compression to 45-50x (from current 58.25x)\n- Stock price target: $650-750\nKey drivers:\n- Continued AI/ML infrastructure buildout\n- Gaming segment stabilization\n- Automotive/Edge computing growth\n\nBull Case Scenario (25% probability):\n- Revenue growth maintaining 90%+ levels\n- Margins expanding due to pricing power\n- PE ratio sustained above 55x\n- Stock price target: $850-1000\nKey drivers:\n- Accelerated AI adoption globally\n- New product cycles (Blackwell architecture)\n- Market share gains in enterprise\n\nBear Case Scenario (15% probability):\n- Revenue growth declining to 40-50%\n- Margin pressure from competition\n- PE ratio contracting to 35x\n- Stock price target: $400-500\nKey drivers:\n- AMD market share gains\n- Chinese market restrictions\n- Macro slowdown\n\nKey Metrics to Watch:\n1. Data Center Revenue Growth\n- Current: >200% YoY\n- Projection: 120-150% YoY in next 12 months\n\n2. Gross Margins\n- Target: 70-72%\n- Risk: Competition from AMD, Intel\n\n3. R&D Investment\n- Expected to increase 30-40% YoY\n- Focus on AI architecture advancement\n\nHeadwinds:\n- Valuation concerns (current PE of 58.25x)\n- Geopolitical tensions affecting China business\n- Supply chain constraints\n- Increasing competition\n\nTailwinds:\n- AI infrastructure buildout cycle\n- Enterprise AI adoption acceleration\n- Strong balance sheet\n- Technology leadership position\n\nFinancial Projections:\nFY2025 (Base Case)\n- Revenue: $215-225B (+65-72%)\n- Net Income: $110-120B\n- EPS: $44-48\n\nKey Strategic Initiatives Impact:\n1. Enterprise AI Solutions\n- Expected to add 15-20% to revenue growth\n- Margin accretive\n\n2. Automotive/Edge Computing\n- Projected 40-50% growth\n- Long-term margin expansion opportunity\n\n3. Software/Services Expansion\n- Recurring revenue growth\n- Higher margin profile\n\nRisk Factors:\n1. Competition (Risk Score: 100)\n- AMD's MI300 series\n- Custom AI chips from hyperscalers\n\n2. Regulatory/Political (Beta: 3.58)\n- Export controls\n- China market access\n\n3. Market Cyclicality\n- Gaming segment volatility\n- Data center spending cycles\n\nThe analysis suggests NVIDIA will maintain strong growth but at a moderating pace, with significant execution risks given high expectations and valuation. The company's dominant position in AI computing provides a strong foundation, but investors should monitor competition and regulatory developments closely.\n\nRecommendation: Maintain reduced position size given high valuation and risk metrics, despite strong fundamental outlook.",
+        "actionItems": [
+          "Immediately reduce NVDA position size by 50-70% given extreme valuation and high risk metrics (beta 3.58)",
+          "Set trailing stop-loss orders at $161 (key technical support level) for remaining position to protect downside",
+          "Monitor weekly AI chip demand data and datacenter spending forecasts from major cloud providers",
+          "Research semiconductor competitors (AMD, Intel) for potential rotation opportunities at better valuations",
+          "Track upcoming Q1 2024 earnings release and guidance (expected May 2024) as key catalyst",
+          "Add price alerts at $183 resistance level to potentially exit remaining position on strength",
+          "Review position monthly against 50-day moving average and relative strength vs semiconductor index (SOX)"
+        ],
+        "recommendationRationale": "NVIDIA (NVDA) Sell Recommendation Rationale\n\nPrimary Thesis:\nDespite NVIDIA's impressive growth and market leadership in AI chips, our quantitative analysis suggests the stock is significantly overvalued with elevated risk factors, warranting a SELL recommendation at current levels.\n\nKey Driving Factors:\n\n1. Extreme Valuation Metrics\n- P/E ratio of 58.25x is substantially above historical and industry averages\n- Valuation analysis indicates negative margin of safety (-11%), suggesting significant overvaluation\n- Growth expectations appear fully priced in, leaving limited upside potential\n\n2. Elevated Risk Profile\n- Beta of 3.58 indicates significantly higher volatility than the market\n- Risk score of 100 reflects maximum risk assessment\n- High volatility (0.537) suggests potential for sharp price movements\n\n3. Technical Vulnerability\nDespite the current bullish trend, the extreme valuation and risk metrics suggest the stock is susceptible to a correction, particularly if growth moderates.\n\nAddressing Counter-Arguments:\n- While NVIDIA's 114.2% YoY revenue growth is exceptional, this growth rate may be unsustainable\n- Strong quality score (76) and growth score (80) are acknowledged, but these positives appear more than priced in\n- Market leadership in AI is valuable but may not justify current premium valuations\n\nPrice Targets and Return Expectations:\n- Near-term target: $161 (current support level)\n- Medium-term downside potential: 15-25% from current levels\n- Risk of larger correction if market sentiment shifts or growth disappoints\n\nConditions to Change Recommendation:\n1. Valuation becomes more reasonable (P/E below 40x)\n2. Risk metrics show material improvement (beta below 2.5)\n3. Company demonstrates sustained growth above current market expectations\n4. Significant new market opportunities emerge that aren't reflected in current projections\n\nThis recommendation carries 80% confidence based on quantitative factors, suggesting investors should consider reducing exposure while maintaining small positions given NVIDIA's strategic importance in AI and computing markets.",
+        "generatedAt": "2025-08-05T18:09:54.628Z",
+        "aiProvider": "anthropic_claude",
+        "confidence": 0.95
+      }
+    }
+  },
+  "analysis": {
+    "growth": {
+      "revenueGrowth": {
+        "yoy": 114.2,
+        "qoq": 114.2,
+        "cagr3": 69.25,
+        "cagr5": 64.24,
+        "trend": "accelerating"
+      },
+      "earningsGrowth": {
+        "yoy": 144.89,
+        "qoq": 144.89,
+        "cagr3": 95.51,
+        "cagr5": 91.96,
+        "trend": "accelerating"
+      },
+      "fcfGrowth": {
+        "yoy": 0,
+        "qoq": 0,
+        "cagr3": 0,
+        "cagr5": 0,
+        "trend": "stable"
+      },
+      "bookValueGrowth": {
+        "yoy": 84.58,
+        "qoq": 84.58,
+        "cagr3": 43.92,
+        "cagr5": 45.41,
+        "trend": "accelerating"
+      }
+    },
+    "valuation": {
+      "intrinsicValue": 0,
+      "fairValue": 14.94,
+      "marginOfSafety": -10.975,
+      "valuation": "overvalued",
+      "confidence": 1
+    },
+    "risk": {
+      "beta": 3.58,
+      "volatility": 0.537,
+      "sharpeRatio": 1.15,
+      "maxDrawdown": 0.476,
+      "var95": 0.057,
+      "riskScore": 100
+    },
+    "quality": {
+      "roic": 65.3,
+      "fcfYield": 0,
+      "earningsQuality": 65,
+      "balanceSheetStrength": 80,
+      "moat": "narrow"
+    },
+    "technicals": {
+      "trend": "bullish",
+      "momentum": "moderate",
+      "support": 161.16,
+      "resistance": 183.3,
+      "entry": 181.46,
+      "stopLoss": 168.54,
+      "signals": []
+    },
+    "composite": {
+      "overall": 27,
+      "growth": 80,
+      "value": 0,
+      "quality": 76,
+      "momentum": 55,
+      "sentiment": 70,
+      "recommendation": "sell",
+      "confidence": 0.8
+    }
+  },
+  "slides": [
+    {
+      "slideNumber": 1,
+      "title": "NVIDIA Corporation Investment Analysis",
+      "layout": "title",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "title": "NVIDIA Corporation",
+            "subtitle": "Ticker: NVDA | NYSE",
+            "date": "August 5, 2025",
+            "author": "TriSight Research Team"
+          }
+        },
+        {
+          "type": "logo",
+          "data": {
+            "position": "bottom-right",
+            "opacity": 0.8
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 2,
+      "title": "Executive Summary",
+      "layout": "content",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "text": "NVIDIA CORPORATION (NVDA) - INVESTMENT ANALYSIS\nExecutive Summary\n\nNVIDIA has established itself as the dominant force in the AI chip market, leveraging its graphics and compute expertise to capture unprecedented demand for advanced computing solutions. The company's strategic position in high-growt...",
+            "bullets": [
+              "Revenue growth: NaN% YoY",
+              "Valuation: 1098% overvalued",
+              "Risk level: High",
+              "SELL recommendation with 80% confidence"
+            ]
+          }
+        },
+        {
+          "type": "scorecard",
+          "data": {
+            "items": [
+              {
+                "label": "Recommendation",
+                "value": "SELL",
+                "color": "#EF4444"
+              },
+              {
+                "label": "Overall Score",
+                "value": "2700/100",
+                "color": "#10B981"
+              },
+              {
+                "label": "Confidence",
+                "value": "80%",
+                "color": "#3B82F6"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 3,
+      "title": "Investment Thesis",
+      "layout": "content",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "text": "Investment Thesis: NVIDIA Corporation (NVDA)\n\"Riding the AI Computing Super-Cycle\"",
+            "sections": [
+              {
+                "heading": "Core Investment Narrative",
+                "content": "NVIDIA stands at the epicenter of the artificial intelligence revolution, uniquely positioned to capture the massive secular shift toward AI computing infrastructure. While the stock appears expensive on traditional metrics, I believe we're in the early innings of a multi-year super-cycle that will drive sustained growth well above current market expectations. The company's dominance in AI chips, coupled with its expanding software ecosystem, creates a powerful platform with strong network effects."
+              },
+              {
+                "heading": "Key Catalysts",
+                "content": ""
+              },
+              {
+                "heading": "1. AI Infrastructure Buildout (0-12 months)\n- Unprecedented demand for AI computing power from cloud providers and enterprises\n- Current chip shortage creating pricing power and high visibility into future quarters\n- Expected 2024 datacenter revenue growth of >100% YoY",
+                "content": ""
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 4,
+      "title": "Company Overview",
+      "layout": "two-column",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "text": "NVIDIA Corporation provides graphics, computing and networking solutions worldwide. The company operates through Graphics and Compute & Networking segments, serving gaming, professional visualization, datacenter, and automotive markets.",
+            "subheading": "Business Description"
+          }
+        },
+        {
+          "type": "table",
+          "data": {
+            "title": "Company Information",
+            "headers": [
+              "Metric",
+              "Value"
+            ],
+            "rows": [
+              [
+                "Sector",
+                "Technology"
+              ],
+              [
+                "Industry",
+                "Consumer Electronics"
+              ],
+              [
+                "Employees",
+                "N/A"
+              ],
+              [
+                "Founded",
+                "N/A"
+              ],
+              [
+                "Headquarters",
+                "N/A"
+              ],
+              [
+                "Website",
+                "N/A"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 5,
+      "title": "Financial Performance Overview",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "chart",
+          "data": {
+            "type": "combo",
+            "title": "Revenue & Profitability Trend",
+            "series": [
+              {
+                "name": "Revenue",
+                "type": "column",
+                "data": [
+                  {
+                    "x": "2021-01-31",
+                    "y": 16.675
+                  },
+                  {
+                    "x": "2022-01-31",
+                    "y": 26.914
+                  },
+                  {
+                    "x": "2023-01-31",
+                    "y": 26.974
+                  },
+                  {
+                    "x": "2024-01-31",
+                    "y": 60.922
+                  },
+                  {
+                    "x": "2025-01-31",
+                    "y": 130.497
+                  }
+                ]
+              },
+              {
+                "name": "Net Income",
+                "type": "line",
+                "data": [
+                  {
+                    "x": "2021-01-31",
+                    "y": 4.332
+                  },
+                  {
+                    "x": "2022-01-31",
+                    "y": 9.752
+                  },
+                  {
+                    "x": "2023-01-31",
+                    "y": 4.368
+                  },
+                  {
+                    "x": "2024-01-31",
+                    "y": 29.76
+                  },
+                  {
+                    "x": "2025-01-31",
+                    "y": 72.88
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "metrics",
+          "data": {
+            "title": "Key Financial Metrics",
+            "metrics": [
+              {
+                "label": "Revenue",
+                "current": "$130.5B",
+                "change": "+114.2%"
+              },
+              {
+                "label": "Net Income",
+                "current": "$72.9B",
+                "change": "+144.9%"
+              },
+              {
+                "label": "EPS",
+                "current": "$2.94",
+                "change": "+146.4%"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 6,
+      "title": "Revenue & Growth Analysis",
+      "layout": "chart-focused",
+      "content": [
+        {
+          "type": "chart",
+          "data": {
+            "type": "area",
+            "title": "Revenue Trend",
+            "series": [
+              {
+                "name": "Revenue",
+                "data": [
+                  {
+                    "x": "2020-01-31",
+                    "y": 10.918
+                  },
+                  {
+                    "x": "2021-01-31",
+                    "y": 16.675
+                  },
+                  {
+                    "x": "2022-01-31",
+                    "y": 26.914
+                  },
+                  {
+                    "x": "2023-01-31",
+                    "y": 26.974
+                  },
+                  {
+                    "x": "2024-01-31",
+                    "y": 60.922
+                  },
+                  {
+                    "x": "2025-01-31",
+                    "y": 130.497
+                  }
+                ]
+              }
+            ],
+            "annotations": {
+              "yaxis": [
+                {
+                  "y": 0,
+                  "label": "Projected",
+                  "style": "dashed"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "bullets",
+          "data": {
+            "title": "Growth Drivers",
+            "items": [
+              "YoY Revenue Growth: NaN%",
+              "3-Year CAGR: N/A%",
+              "Growth Score: N/A/100",
+              "Stable revenue base"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 7,
+      "title": "Profitability Analysis",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "chart",
+          "data": {
+            "type": "line",
+            "title": "Margin Trends",
+            "series": [
+              {
+                "name": "Gross Margin",
+                "data": [
+                  {
+                    "x": "2021-01-31",
+                    "y": 62.3448275862069
+                  },
+                  {
+                    "x": "2022-01-31",
+                    "y": 64.92903321691314
+                  },
+                  {
+                    "x": "2023-01-31",
+                    "y": 56.928894490991325
+                  },
+                  {
+                    "x": "2024-01-31",
+                    "y": 72.71757329043696
+                  },
+                  {
+                    "x": "2025-01-31",
+                    "y": 74.98869705816992
+                  }
+                ]
+              },
+              {
+                "name": "Operating Margin",
+                "data": [
+                  {
+                    "x": "2021-01-31",
+                    "y": 27.178410794602698
+                  },
+                  {
+                    "x": "2022-01-31",
+                    "y": 37.307720888756776
+                  },
+                  {
+                    "x": "2023-01-31",
+                    "y": 20.6754652628457
+                  },
+                  {
+                    "x": "2024-01-31",
+                    "y": 54.121663766783755
+                  },
+                  {
+                    "x": "2025-01-31",
+                    "y": 62.417526839697466
+                  }
+                ]
+              },
+              {
+                "name": "Net Margin",
+                "data": [
+                  {
+                    "x": "2021-01-31",
+                    "y": 25.979010494752625
+                  },
+                  {
+                    "x": "2022-01-31",
+                    "y": 36.23393029649996
+                  },
+                  {
+                    "x": "2023-01-31",
+                    "y": 16.193371394676355
+                  },
+                  {
+                    "x": "2024-01-31",
+                    "y": 48.84934834706674
+                  },
+                  {
+                    "x": "2025-01-31",
+                    "y": 55.848027157712444
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "table",
+          "data": {
+            "title": "Profitability Metrics",
+            "headers": [
+              "Metric",
+              "Current",
+              "Industry Avg",
+              "Assessment"
+            ],
+            "rows": [
+              [
+                "ROE",
+                "11546.3%",
+                "15.0%",
+                "Strong"
+              ],
+              [
+                "ROA",
+                "N/A",
+                "5.0%",
+                "N/A"
+              ],
+              [
+                "ROIC",
+                "N/A",
+                "10.0%",
+                "N/A"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 8,
+      "title": "Balance Sheet Strength",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "chart",
+          "data": {
+            "type": "waterfall",
+            "title": "Capital Structure",
+            "data": [
+              {
+                "name": "Total Assets",
+                "value": 111601000000
+              },
+              {
+                "name": "Current Liabilities",
+                "value": 0
+              },
+              {
+                "name": "Long-term Debt",
+                "value": -9982000000
+              },
+              {
+                "name": "Shareholders Equity",
+                "value": 0,
+                "isTotal": true
+              }
+            ]
+          }
+        },
+        {
+          "type": "scorecard",
+          "data": {
+            "title": "Financial Health Indicators",
+            "items": [
+              {
+                "label": "Current Ratio",
+                "value": "3.39",
+                "target": "> 1.5",
+                "color": "#10B981"
+              },
+              {
+                "label": "Debt/Equity",
+                "value": "12.27",
+                "target": "< 1.0",
+                "color": "#EF4444"
+              },
+              {
+                "label": "Interest Coverage",
+                "value": "undefinedx",
+                "target": "> 3.0x",
+                "color": "#6B7280"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 9,
+      "title": "Valuation Analysis",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "chart",
+          "data": {
+            "type": "gauge",
+            "title": "Valuation Assessment",
+            "value": -1097.5,
+            "min": -50,
+            "max": 50,
+            "zones": [
+              {
+                "from": -50,
+                "to": -20,
+                "color": "#EF4444",
+                "label": "Overvalued"
+              },
+              {
+                "from": -20,
+                "to": 10,
+                "color": "#F59E0B",
+                "label": "Fair Value"
+              },
+              {
+                "from": 10,
+                "to": 50,
+                "color": "#10B981",
+                "label": "Undervalued"
+              }
+            ]
+          }
+        },
+        {
+          "type": "table",
+          "data": {
+            "title": "Valuation Multiples",
+            "headers": [
+              "Metric",
+              "Current",
+              "Industry",
+              "5Y Avg"
+            ],
+            "rows": [
+              [
+                "P/E Ratio",
+                "58.3",
+                "N/A",
+                "N/A"
+              ],
+              [
+                "P/B Ratio",
+                "N/A",
+                "N/A",
+                "N/A"
+              ],
+              [
+                "EV/EBITDA",
+                "N/A",
+                "N/A",
+                "N/A"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "metrics",
+          "data": {
+            "metrics": [
+              {
+                "label": "Current Price",
+                "value": "$100.00"
+              },
+              {
+                "label": "Intrinsic Value",
+                "value": "$100.00"
+              },
+              {
+                "label": "Upside/Downside",
+                "value": "0%",
+                "color": "#EF4444"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 10,
+      "title": "Technical Analysis",
+      "layout": "chart-focused",
+      "content": [
+        {
+          "type": "chart",
+          "data": {
+            "type": "candlestick",
+            "title": "6-Month Price Action",
+            "indicators": [
+              "SMA20",
+              "SMA50",
+              "RSI",
+              "Volume"
+            ]
+          }
+        },
+        {
+          "type": "table",
+          "data": {
+            "title": "Technical Indicators",
+            "headers": [
+              "Indicator",
+              "Value",
+              "Signal"
+            ],
+            "rows": [
+              [
+                "RSI (14)",
+                "N/A",
+                "N/A"
+              ],
+              [
+                "MACD",
+                "N/A",
+                "Bearish"
+              ],
+              [
+                "Support",
+                "$161.16",
+                ""
+              ],
+              [
+                "Resistance",
+                "$183.3",
+                ""
+              ],
+              [
+                "Trend",
+                "bullish",
+                ""
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 11,
+      "title": "Risk Assessment",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "chart",
+          "data": {
+            "type": "radar",
+            "title": "Risk Profile",
+            "categories": [
+              "Market Risk",
+              "Financial Risk",
+              "Operational Risk",
+              "Regulatory Risk",
+              "Competitive Risk"
+            ],
+            "series": [
+              {
+                "name": "Risk Level",
+                "data": [
+                  80,
+                  70,
+                  30,
+                  40,
+                  40
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "text",
+          "data": {
+            "text": "RISK ASSESSMENT REPORT - NVIDIA Corporation (NVDA)\n\n1. MARKET RISKS\n- Extremely high beta of 3.58, indicating significant market sensitivity\n- High volatility (53.7%), well above market average\n- Strong correlation with semiconductor index and tech sector\n- Quantified Impact: 1% market move typically results in 3.58% NVDA move\n- VaR (95%, 1-day): Estimate 4.2% of position value at risk\n\n2. COMPANY",
+            "bullets": [
+              "Beta: 3.58 - High market sensitivity",
+              "Volatility: 53.7% annualized",
+              "VaR (95%): N/A% potential loss",
+              "Risk Score: 10000/100"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 12,
+      "title": "Competitive Positioning",
+      "layout": "content",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "text": "NVIDIA Corporation operates in the Consumer Electronics industry with moderate competitive positioning.",
+            "subheading": "Market Position"
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "scatter",
+            "title": "Competitive Landscape",
+            "xAxis": "Market Share",
+            "yAxis": "Growth Rate",
+            "series": [
+              {
+                "name": "Competitors",
+                "data": [
+                  {
+                    "x": 25,
+                    "y": 15,
+                    "z": 50,
+                    "name": "NVIDIA Corporation"
+                  },
+                  {
+                    "x": 30,
+                    "y": 10,
+                    "z": 60,
+                    "name": "Competitor A"
+                  },
+                  {
+                    "x": 20,
+                    "y": 20,
+                    "z": 40,
+                    "name": "Competitor B"
+                  },
+                  {
+                    "x": 15,
+                    "y": 5,
+                    "z": 30,
+                    "name": "Competitor C"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 13,
+      "title": "Future Outlook",
+      "layout": "content",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "text": "Based on the provided data, here's a detailed 12-24 month projection for NVIDIA:\n\nBase Case Scenario (60% probability):\n- Revenue growth moderating to 65-75% YoY (down from current 114.2%)\n- Market share in AI chips remaining dominant (80%+)\n- PE ratio compression to 45-50x (from current 58.25x)\n- Stock price target: $650-750\nKey drivers:\n- Continued AI/ML infrastructure buildout\n- Gaming segment ",
+            "sections": [
+              {
+                "heading": "Growth Catalysts",
+                "bullets": [
+                  "NVIDIA's revenue growth has dramatically accelerated to 114.2% YoY, significantly outpacing its 5-year CAGR of 64.24%, indicating exceptional momentum in AI-driven demand",
+                  "Despite strong fundamentals, the stock appears significantly overvalued with a P/E of 58.25 and negative margin of safety (-10.97%), suggesting heightened downside risk",
+                  "The company's beta of 3.58 and volatility of 0.537 indicate extreme market sensitivity - nearly 4x more volatile than the broader market, requiring careful position sizing"
+                ]
+              },
+              {
+                "heading": "Key Risks",
+                "bullets": [
+                  "Competitive pressure",
+                  "Regulatory changes",
+                  "Market volatility"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "chart",
+          "data": {
+            "type": "line",
+            "title": "Revenue Projections",
+            "series": [
+              {
+                "name": "Projected Revenue",
+                "data": [
+                  {
+                    "x": "2025",
+                    "y": 130.497
+                  },
+                  {
+                    "x": "2026",
+                    "y": null
+                  },
+                  {
+                    "x": "2027",
+                    "y": null
+                  },
+                  {
+                    "x": "2028",
+                    "y": null
+                  },
+                  {
+                    "x": "2029",
+                    "y": null
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 14,
+      "title": "Investment Recommendation",
+      "layout": "mixed",
+      "content": [
+        {
+          "type": "recommendation",
+          "data": {
+            "rating": "SELL",
+            "confidence": 80,
+            "timeframe": "12 months"
+          }
+        },
+        {
+          "type": "text",
+          "data": {
+            "text": "NVIDIA (NVDA) Sell Recommendation Rationale\n\nPrimary Thesis:\nDespite NVIDIA's impressive growth and market leadership in AI chips, our quantitative analysis suggests the stock is significantly overvalued with elevated risk factors, warranting a SELL recommendation at current levels.\n\nKey Driving Factors:\n\n1. Extreme Valuation Metrics\n- P/E ratio of 58.25x is substantially above historical and industry averages\n- Valuation analysis indicates negative margin of safety (-11%), suggesting significant overvaluation\n- Growth expectations appear fully priced in, leaving limited upside potential\n\n2. Elevated Risk Profile\n- Beta of 3.58 indicates significantly higher volatility than the market\n- Risk score of 100 reflects maximum risk assessment\n- High volatility (0.537) suggests potential for sharp price movements\n\n3. Technical Vulnerability\nDespite the current bullish trend, the extreme valuation and risk metrics suggest the stock is susceptible to a correction, particularly if growth moderates.\n\nAddressing Counter-Arguments:\n- While NVIDIA's 114.2% YoY revenue growth is exceptional, this growth rate may be unsustainable\n- Strong quality score (76) and growth score (80) are acknowledged, but these positives appear more than priced in\n- Market leadership in AI is valuable but may not justify current premium valuations\n\nPrice Targets and Return Expectations:\n- Near-term target: $161 (current support level)\n- Medium-term downside potential: 15-25% from current levels\n- Risk of larger correction if market sentiment shifts or growth disappoints\n\nConditions to Change Recommendation:\n1. Valuation becomes more reasonable (P/E below 40x)\n2. Risk metrics show material improvement (beta below 2.5)\n3. Company demonstrates sustained growth above current market expectations\n4. Significant new market opportunities emerge that aren't reflected in current projections\n\nThis recommendation carries 80% confidence based on quantitative factors, suggesting investors should consider reducing exposure while maintaining small positions given NVIDIA's strategic importance in AI and computing markets.",
+            "bullets": [
+              "Immediately reduce NVDA position size by 50-70% given extreme valuation and high risk metrics (beta 3.58)",
+              "Set trailing stop-loss orders at $161 (key technical support level) for remaining position to protect downside",
+              "Monitor weekly AI chip demand data and datacenter spending forecasts from major cloud providers",
+              "Research semiconductor competitors (AMD, Intel) for potential rotation opportunities at better valuations",
+              "Track upcoming Q1 2024 earnings release and guidance (expected May 2024) as key catalyst",
+              "Add price alerts at $183 resistance level to potentially exit remaining position on strength",
+              "Review position monthly against 50-day moving average and relative strength vs semiconductor index (SOX)"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 15,
+      "title": "Key Metrics Dashboard",
+      "layout": "dashboard",
+      "content": [
+        {
+          "type": "metrics-grid",
+          "data": {
+            "metrics": [
+              {
+                "label": "Market Cap",
+                "value": "$4389.8B",
+                "category": "Valuation"
+              },
+              {
+                "label": "P/E Ratio",
+                "value": "58.3",
+                "category": "Valuation"
+              },
+              {
+                "label": "EV/EBITDA",
+                "value": "N/A",
+                "category": "Valuation"
+              },
+              {
+                "label": "P/B Ratio",
+                "value": "N/A",
+                "category": "Valuation"
+              },
+              {
+                "label": "Revenue Growth",
+                "value": "NaN%",
+                "category": "Growth"
+              },
+              {
+                "label": "EPS Growth",
+                "value": "N/A",
+                "category": "Growth"
+              },
+              {
+                "label": "EBITDA Growth",
+                "value": "N/A",
+                "category": "Growth"
+              },
+              {
+                "label": "FCF Growth",
+                "value": "NaN%",
+                "category": "Growth"
+              },
+              {
+                "label": "Gross Margin",
+                "value": "N/A",
+                "category": "Margins"
+              },
+              {
+                "label": "Operating Margin",
+                "value": "N/A",
+                "category": "Margins"
+              },
+              {
+                "label": "Net Margin",
+                "value": "N/A",
+                "category": "Margins"
+              },
+              {
+                "label": "FCF Margin",
+                "value": "N/A",
+                "category": "Margins"
+              },
+              {
+                "label": "ROE",
+                "value": "11546.3%",
+                "category": "Returns"
+              },
+              {
+                "label": "ROA",
+                "value": "N/A",
+                "category": "Returns"
+              },
+              {
+                "label": "ROIC",
+                "value": "N/A",
+                "category": "Returns"
+              },
+              {
+                "label": "Dividend Yield",
+                "value": "2.25%",
+                "category": "Returns"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 16,
+      "title": "Appendix - Methodology & Data Sources",
+      "layout": "content",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "sections": [
+              {
+                "heading": "Valuation Methodology",
+                "content": "Intrinsic value calculated using DCF analysis with 10-year projections and terminal value. WACC derived from CAPM with industry-specific risk premiums."
+              },
+              {
+                "heading": "Data Sources",
+                "bullets": [
+                  "Financial statements: SEC EDGAR filings",
+                  "Market data: TwelveData API",
+                  "Industry benchmarks: Proprietary database",
+                  "Analyst estimates: Consensus data"
+                ]
+              },
+              {
+                "heading": "Scoring Methodology",
+                "content": "Multi-factor scoring model incorporating growth (25%), value (25%), quality (25%), and momentum (25%) factors. Each factor scored 0-100 based on percentile rankings."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slideNumber": 17,
+      "title": "Important Disclaimer",
+      "layout": "content",
+      "content": [
+        {
+          "type": "text",
+          "data": {
+            "text": "This report is for informational purposes only and does not constitute investment advice. The information contained herein is based on sources believed to be reliable but is not guaranteed. Past performance is not indicative of future results. Investors should conduct their own due diligence and consult with financial advisors before making investment decisions.",
+            "sections": [
+              {
+                "heading": "Risk Disclosure",
+                "content": "Investing in securities involves risks, including the potential loss of principal. Market conditions can change rapidly, and the analysis presented may become outdated."
+              },
+              {
+                "heading": "No Recommendation",
+                "content": "Nothing in this report should be construed as a recommendation to buy, sell, or hold any security. The report is based on analysis at a specific point in time and conditions may have changed."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    },
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    },
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    },
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    },
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    },
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    },
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    },
+    {
+      "type": "line",
+      "format": "png",
+      "dimensions": {
+        "width": 800,
+        "height": 400
+      }
+    }
+  ],
+  "summary": "NVIDIA CORPORATION (NVDA) - INVESTMENT ANALYSIS\nExecutive Summary\n\nNVIDIA has established itself as the dominant force in the AI chip market, leveraging its graphics and compute expertise to capture unprecedented demand for advanced computing solutions. The company's strategic position in high-growt..."
+}

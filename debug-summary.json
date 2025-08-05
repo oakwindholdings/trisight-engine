@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-08-05T18:31:01.665Z",
+  "findings": {
+    "serverAPI": "Tested",
+    "pdfGeneration": "Tested",
+    "browserViewer": "Tested",
+    "chartElements": "Analyzed"
+  },
+  "consoleLogs": [
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [InfiniteZoomChart] Interaction canvas ready, double-click handler attached",
+    "log: [InfiniteZoomChart] Setting up zoom-to-pattern listener",
+    "log: [InfiniteZoomChart] Zoom listener added",
+    "log: [InfiniteZoomChart] Interaction canvas ready, double-click handler attached",
+    "log: [InfiniteZoomChart] Setting up zoom-to-pattern listener",
+    "log: [InfiniteZoomChart] Zoom listener added",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [InfiniteZoomChart] Setting up zoom-to-pattern listener",
+    "log: [InfiniteZoomChart] Zoom listener added",
+    "log: [InfiniteZoomChart] Setting up zoom-to-pattern listener",
+    "log: [InfiniteZoomChart] Zoom listener added",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [InfiniteZoomChart] Setting up zoom-to-pattern listener",
+    "log: [InfiniteZoomChart] Zoom listener added",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [InfiniteZoomChart] Setting up zoom-to-pattern listener",
+    "log: [InfiniteZoomChart] Zoom listener added",
+    "log: [ChartProvider] Rendering with symbol: ",
+    "log: [ChartProvider] Rendering with symbol: "
+  ],
+  "recommendations": [
+    "Check server logs for chart generation errors",
+    "Verify chart data pipeline from API to PDF",
+    "Test individual chart generators",
+    "Check PDF embedding logic"
+  ]
+}
