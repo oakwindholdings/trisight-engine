@@ -8,9 +8,13 @@ const path = require('path');
 const fs = require('fs').promises;
 const reportRoutes = require('./routes/reports');
 const enhancedReportRoutes = require('./routes/enhanced-reports');
+const promptRoutes = require('./routes/prompts');
 
 // Load environment variables from .env.local
 require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
+
+// Also load from .env if it exists
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -43,6 +47,7 @@ async function ensureDirectories() {
 // Routes
 app.use('/api/reports', reportRoutes);
 app.use('/api/enhanced-reports', enhancedReportRoutes);
+app.use('/api/prompts', promptRoutes);
 
 // Static file serving for generated reports
 app.use('/generated-reports', express.static(path.join(__dirname, '../generated-reports')));

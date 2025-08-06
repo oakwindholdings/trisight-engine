@@ -87,7 +87,7 @@ describe('Pattern API', () => {
       const feedback: PatternFeedback = {
         id: 'feedback-123',
         patternId: 'pattern-123',
-        patternType: PatternType.BREAKOUT_BOX,
+        patternType: PatternType.BREAKOUTBOX,
         timestamp: new Date().toISOString(),
         symbol: 'NVDA',
         timeframe: '15m',

@@ -13,7 +13,7 @@ import {
   FeedbackAccuracy,
   TimingAssessment
 } from '../models/FeedbackTypes';
-import { Pattern } from '../models/PatternTypes';
+import { Pattern, PatternType } from '../models/PatternTypes';
 
 // Mock dependencies
 jest.mock('../utils/debug', () => ({

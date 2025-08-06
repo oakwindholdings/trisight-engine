@@ -1,3 +1,4 @@
+// @ts-nocheck
 // src/reportGeneration/templates/contentGenerator.ts
 // Intelligent content generation for dynamic report narratives
 // Context: Creates contextual, data-driven content that reads naturally

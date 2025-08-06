@@ -65,7 +65,11 @@
       "Bash(start generated-reportsAAPL_report_2025-08-03T23-09-02-321Z.pdf)",
       "Bash(npx vercel:*)",
       "Bash(copy apireportsgenerate-comprehensive-fixed.js apireportsgenerate-comprehensive.js /Y)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npx jest:*)",
+      "Bash(cmd /C \"taskkill /F /PID 43460\")",
+      "Bash(Powershell:*)",
+      "Bash(start \"generated-reports\\NVDA_comprehensive_2025-08-06T12-25-38-300Z.pdf\")"
     ],
     "deny": []
   }

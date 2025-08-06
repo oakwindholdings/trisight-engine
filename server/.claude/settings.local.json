@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(npx dotenv -e .env -- npm start:*)",
+      "Bash(npm install:*)",
+      "Bash(npx dotenv -e .env:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)"
+    ],
+    "deny": []
+  }
+}

@@ -231,6 +231,18 @@ export interface FinancialStatement {
   operatingCashFlow?: number;
   capitalExpenditures?: number;
   freeCashFlow?: number;
+  // Additional commonly accessed fields
+  ebitda?: number;
+  operatingExpenses?: number;
+  researchAndDevelopment?: number;
+  sellingGeneralAndAdministrative?: number;
+  interestExpense?: number;
+  taxExpense?: number;
+  depreciation?: number;
+  amortization?: number;
+  cash?: number;
+  debt?: number;
+  shares?: number;
   operatingCashFlowMargin?: number;
   freeCashFlowMargin?: number;
   // Add more fields as needed

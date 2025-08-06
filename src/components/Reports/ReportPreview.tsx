@@ -276,60 +276,189 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
       slides.forEach((slide: any) => {
         htmlContent += `<h2>${slide.title}</h2>`;
         
-        if (slide.content && slide.content.length > 0) {
-          slide.content.forEach((content: any) => {
-            if (content.type === 'text') {
-              if (content.data.text) {
-                htmlContent += `<p>${content.data.text}</p>`;
-              }
-              if (content.data.bullets) {
-                htmlContent += '<ul>';
-                content.data.bullets.forEach((bullet: string) => {
-                  htmlContent += `<li>${bullet}</li>`;
-                });
-                htmlContent += '</ul>';
-              }
-            } else if (content.type === 'table' && content.data.headers) {
-              htmlContent += '<table>';
-              htmlContent += '<thead><tr>';
-              content.data.headers.forEach((header: string) => {
-                htmlContent += `<th>${header}</th>`;
-              });
-              htmlContent += '</tr></thead><tbody>';
-              if (content.data.rows) {
-                content.data.rows.forEach((row: string[]) => {
-                  htmlContent += '<tr>';
-                  row.forEach((cell: string) => {
-                    htmlContent += `<td>${cell}</td>`;
+        // Handle both array format (expected) and object format (current API)
+        if (slide.content) {
+          if (Array.isArray(slide.content) && slide.content.length > 0) {
+            // Original array format
+            slide.content.forEach((content: any) => {
+              if (content.type === 'text') {
+                if (content.data.text) {
+                  htmlContent += `<p>${content.data.text}</p>`;
+                }
+                if (content.data.bullets) {
+                  htmlContent += '<ul>';
+                  content.data.bullets.forEach((bullet: string) => {
+                    htmlContent += `<li>${bullet}</li>`;
                   });
-                  htmlContent += '</tr>';
+                  htmlContent += '</ul>';
+                }
+              } else if (content.type === 'table' && content.data.headers) {
+                htmlContent += '<table>';
+                htmlContent += '<thead><tr>';
+                content.data.headers.forEach((header: string) => {
+                  htmlContent += `<th>${header}</th>`;
                 });
+                htmlContent += '</tr></thead><tbody>';
+                if (content.data.rows) {
+                  content.data.rows.forEach((row: string[]) => {
+                    htmlContent += '<tr>';
+                    row.forEach((cell: string) => {
+                      htmlContent += `<td>${cell}</td>`;
+                    });
+                    htmlContent += '</tr>';
+                });
+                }
+                htmlContent += '</tbody></table>';
+              } else if (content.type === 'chart') {
+                // Display actual chart if available, otherwise show placeholder
+                if (content.data && content.data.data) {
+                  // Chart data is base64 encoded SVG or image
+                  htmlContent += `
+                    <div class="chart-container" style="text-align: center; margin: 1rem 0;">
+                      <h3 style="margin-bottom: 0.5rem;">${content.data.title || 'Chart'}</h3>
+                      <img src="${content.data.data}" alt="${content.data.title || 'Chart'}" style="max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem;" />
+                    </div>
+                  `;
+                } else {
+                  // Fallback to placeholder if no chart data
+                  htmlContent += `
+                    <div class="chart-placeholder">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M3 3v18h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18 17V9M13 17V5M8 17v-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <p>${content.data?.title || 'Chart'} - [DIAGNOSTIC] Chart data not available</p>
+                    </div>
+                  `;
+                }
               }
-              htmlContent += '</tbody></table>';
-            } else if (content.type === 'chart') {
-              // Display actual chart if available, otherwise show placeholder
-              if (content.data && content.data.data) {
-                // Chart data is base64 encoded SVG or image
-                htmlContent += `
-                  <div class="chart-container" style="text-align: center; margin: 1rem 0;">
-                    <h3 style="margin-bottom: 0.5rem;">${content.data.title || 'Chart'}</h3>
-                    <img src="${content.data.data}" alt="${content.data.title || 'Chart'}" style="max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem;" />
-                  </div>
-                `;
-              } else {
-                // Fallback to placeholder if no chart data
-                htmlContent += `
-                  <div class="chart-placeholder">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path d="M3 3v18h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M18 17V9M13 17V5M8 17v-3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <p>${content.data?.title || 'Chart'} - [DIAGNOSTIC] Chart data not available</p>
-                  </div>
-                `;
-              }
+            });
+          } else if (typeof slide.content === 'object') {
+            // Current API object format - render content based on slide type
+            htmlContent += '<div style="padding: 1rem; background: #f8f9fa; border-radius: 0.5rem; margin: 1rem 0;">';
+            
+            // Render content based on slide type
+            switch (slide.type) {
+              case 'title':
+                htmlContent += `<p><strong>Ticker:</strong> ${slide.content.ticker || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Company:</strong> ${slide.content.companyName || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Date:</strong> ${slide.content.date || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Author:</strong> ${slide.content.author || 'N/A'}</p>`;
+                break;
+                
+              case 'trisight_summary':
+                htmlContent += `<p>${slide.content.executiveSummary || ''}</p>`;
+                htmlContent += `<p><strong>Current Price:</strong> ${slide.content.currentPrice || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Target Price:</strong> ${slide.content.targetPrice || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Rating:</strong> ${slide.content.rating || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Upside:</strong> ${slide.content.upside || 'N/A'}</p>`;
+                break;
+                
+              case 'company_profile':
+                htmlContent += `<p>${slide.content.description || ''}</p>`;
+                htmlContent += `<p><strong>Sector:</strong> ${slide.content.sector || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Industry:</strong> ${slide.content.industry || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Employees:</strong> ${slide.content.employees?.toLocaleString() || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Headquarters:</strong> ${slide.content.headquarters || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Website:</strong> <a href="${slide.content.website}" target="_blank">${slide.content.website || 'N/A'}</a></p>`;
+                break;
+                
+              case 'performance_profile':
+                htmlContent += `<p><strong>Current Price:</strong> ${slide.content.currentPrice || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Day Change:</strong> ${slide.content.dayChange || 'N/A'}</p>`;
+                htmlContent += `<p><strong>YTD Return:</strong> ${slide.content.ytdReturn || 'N/A'}</p>`;
+                htmlContent += `<p><strong>52W High:</strong> ${slide.content.yearHigh || 'N/A'}</p>`;
+                htmlContent += `<p><strong>52W Low:</strong> ${slide.content.yearLow || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Volume:</strong> ${slide.content.volume || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Market Cap:</strong> ${slide.content.marketCap || 'N/A'}</p>`;
+                break;
+                
+              case 'financial_highlights':
+                htmlContent += `<p><strong>Revenue:</strong> $${(slide.content.revenue / 1e9).toFixed(2)}B</p>`;
+                htmlContent += `<p><strong>Net Income:</strong> $${(slide.content.netIncome / 1e9).toFixed(2)}B</p>`;
+                htmlContent += `<p><strong>EPS:</strong> ${slide.content.eps || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Free Cash Flow:</strong> $${(slide.content.freeCashFlow / 1e9).toFixed(2)}B</p>`;
+                break;
+                
+              case 'technical_analysis':
+                htmlContent += `<p><strong>RSI:</strong> ${slide.content.rsi || 'N/A'}</p>`;
+                htmlContent += `<p><strong>MACD:</strong> ${slide.content.macd || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Trend:</strong> ${slide.content.trend || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Signal:</strong> ${slide.content.signal || 'N/A'}</p>`;
+                htmlContent += `<p>${slide.content.analysis || ''}</p>`;
+                break;
+                
+              case 'analyst_strengths':
+                if (slide.content.insights && Array.isArray(slide.content.insights)) {
+                  htmlContent += '<ul>';
+                  slide.content.insights.forEach((insight: string) => {
+                    htmlContent += `<li>${insight}</li>`;
+                  });
+                  htmlContent += '</ul>';
+                }
+                break;
+                
+              case 'analyst_weaknesses':
+                htmlContent += `<p>${slide.content.riskAssessment || ''}</p>`;
+                break;
+                
+              case 'income_statement':
+              case 'balance_sheet':
+              case 'cash_flows':
+                if (slide.content.data && Array.isArray(slide.content.data)) {
+                  htmlContent += '<table style="width: 100%; margin-top: 1rem;">';
+                  htmlContent += '<thead><tr>';
+                  const firstRow = slide.content.data[0];
+                  if (firstRow) {
+                    Object.keys(firstRow).forEach(key => {
+                      htmlContent += `<th style="text-align: left; padding: 0.5rem; background: #f3f4f6;">${key.replace(/_/g, ' ').toUpperCase()}</th>`;
+                    });
+                    htmlContent += '</tr></thead><tbody>';
+                    slide.content.data.slice(0, 4).forEach((row: any) => {
+                      htmlContent += '<tr>';
+                      Object.values(row).forEach((value: any) => {
+                        const displayValue = typeof value === 'number' && value > 1000000 
+                          ? `$${(value / 1e9).toFixed(2)}B`
+                          : value || '0';
+                        htmlContent += `<td style="padding: 0.5rem; border-bottom: 1px solid #e5e7eb;">${displayValue}</td>`;
+                      });
+                      htmlContent += '</tr>';
+                    });
+                    htmlContent += '</tbody>';
+                  }
+                  htmlContent += '</table>';
+                }
+                break;
+                
+              case 'recommendation':
+                htmlContent += `<p><strong>Rating:</strong> ${slide.content.rating || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Target Price:</strong> ${slide.content.targetPrice || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Time Horizon:</strong> ${slide.content.timeHorizon || 'N/A'}</p>`;
+                htmlContent += `<p><strong>Confidence:</strong> ${slide.content.confidence || 'N/A'}</p>`;
+                htmlContent += `<p>${slide.content.thesis || ''}</p>`;
+                break;
+                
+              default:
+                // Generic rendering for unknown types
+                Object.entries(slide.content).forEach(([key, value]) => {
+                  if (value !== null && value !== undefined) {
+                    if (Array.isArray(value)) {
+                      htmlContent += `<p><strong>${key}:</strong></p><ul>`;
+                      value.forEach(item => {
+                        htmlContent += `<li>${JSON.stringify(item)}</li>`;
+                      });
+                      htmlContent += '</ul>';
+                    } else if (typeof value === 'object') {
+                      htmlContent += `<p><strong>${key}:</strong> ${JSON.stringify(value)}</p>`;
+                    } else {
+                      htmlContent += `<p><strong>${key}:</strong> ${value}</p>`;
+                    }
+                  }
+                });
             }
-          });
+            
+            htmlContent += '</div>';
+          }
         }
       });
       

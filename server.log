@@ -1,5 +1,1 @@
-
-> trisight@0.2.0 start
-> set "SKIP_PREFLIGHT_CHECK=true" && set "TSC_COMPILE_ON_ERROR=true" && react-scripts start
-
-Something is already running on port 3000.
+Access is denied.

@@ -1,0 +1,133 @@
+{
+  "success": true,
+  "reportId": "comp-1754454252869-9m7kmt1vx",
+  "message": "Comprehensive report generated successfully",
+  "generatedAt": "2025-08-06T04:24:12.869Z",
+  "generationTime": 0,
+  "pdfFile": null,
+  "data": {
+    "companyData": {
+      "ticker": "NVDA",
+      "name": "NVDA Corporation",
+      "sector": "Technology",
+      "industry": "Software",
+      "description": "NVDA is a leading technology company focused on innovation and growth.",
+      "marketCap": "$2.5T",
+      "employees": 50000,
+      "headquarters": "USA"
+    },
+    "marketData": {
+      "currentPrice": 145.67,
+      "changePercent": 2.34,
+      "volume": 1234567,
+      "yearHigh": 150,
+      "yearLow": 120,
+      "marketCap": "2.5T"
+    },
+    "financialData": {
+      "revenue": 85000000000,
+      "netIncome": 12000000000,
+      "eps": 5.67,
+      "peRatio": 25.8,
+      "debtToEquity": 0.45,
+      "currentRatio": 2.1
+    },
+    "technicalAnalysis": {
+      "rsi": 65.4,
+      "macd": 1.23,
+      "sma50": 142.5,
+      "ema200": 138.9,
+      "trend": "bullish",
+      "signal": "buy"
+    },
+    "aiAnalysis": {
+      "executiveSummary": "NVDA demonstrates strong fundamentals with positive growth momentum. The company's financial metrics indicate solid performance across key areas including revenue growth, profitability, and market position.",
+      "investmentThesis": "The investment case for NVDA is supported by: 1) Strong revenue growth trajectory, 2) Expanding market opportunities, 3) Solid balance sheet fundamentals, 4) Technical indicators showing bullish momentum.",
+      "riskAssessment": "Key risks include market volatility, competitive pressures, and regulatory changes. However, the company's strong market position and diversified revenue streams provide resilience.",
+      "keyInsights": [
+        "Strong revenue growth of 15% YoY",
+        "Expanding profit margins",
+        "Technical indicators showing bullish trend",
+        "Market leadership position maintained",
+        "Strong balance sheet with low debt levels"
+      ],
+      "recommendation": {
+        "rating": "BUY",
+        "targetPrice": 165,
+        "timeHorizon": "12 months",
+        "confidence": "High"
+      }
+    },
+    "slides": [
+      {
+        "slideNumber": 1,
+        "type": "title",
+        "title": "NVDA Comprehensive Analysis",
+        "content": {
+          "ticker": "NVDA",
+          "companyName": "NVDA Corporation",
+          "date": "8/6/2025"
+        }
+      },
+      {
+        "slideNumber": 2,
+        "type": "executive_summary",
+        "title": "Executive Summary",
+        "content": {
+          "summary": "NVDA demonstrates strong fundamentals with positive growth momentum. The company's financial metrics indicate solid performance across key areas including revenue growth, profitability, and market position.",
+          "keyPoints": [
+            "Strong revenue growth of 15% YoY",
+            "Expanding profit margins",
+            "Technical indicators showing bullish trend",
+            "Market leadership position maintained",
+            "Strong balance sheet with low debt levels"
+          ]
+        }
+      },
+      {
+        "slideNumber": 3,
+        "type": "financial_overview",
+        "title": "Financial Overview",
+        "content": {
+          "revenue": 85000000000,
+          "netIncome": 12000000000,
+          "eps": 5.67,
+          "peRatio": 25.8,
+          "debtToEquity": 0.45,
+          "currentRatio": 2.1
+        }
+      },
+      {
+        "slideNumber": 4,
+        "type": "technical_analysis",
+        "title": "Technical Analysis",
+        "content": {
+          "rsi": 65.4,
+          "macd": 1.23,
+          "sma50": 142.5,
+          "ema200": 138.9,
+          "trend": "bullish",
+          "signal": "buy"
+        }
+      },
+      {
+        "slideNumber": 5,
+        "type": "investment_recommendation",
+        "title": "Investment Recommendation",
+        "content": {
+          "rating": "BUY",
+          "targetPrice": 165,
+          "timeHorizon": "12 months",
+          "confidence": "High"
+        }
+      }
+    ],
+    "metadata": {
+      "ticker": "NVDA",
+      "generatedAt": "2025-08-06T04:24:12.890Z",
+      "dataCompleteness": 95,
+      "confidence": 88,
+      "generationId": "comp-1754454252869-9m7kmt1vx"
+    }
+  }
+}

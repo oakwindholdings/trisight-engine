@@ -3,6 +3,9 @@
 // Context: Creates static charts for embedding in PPTX/PDF reports
 
 import * as d3 from 'd3';
+import * as d3Scale from 'd3-scale';
+import * as d3Array from 'd3-array';
+import * as d3Time from 'd3-time';
 import { ChartData, ChartConfig } from '../models/reportTypes';
 import { logDebug } from '../../utils/logger';
 
@@ -39,12 +42,12 @@ export class ChartGenerator {
     const height = options.height - margin.top - margin.bottom;
 
     // Create scales
-    const xScale = d3.scaleTime()
-      .domain(d3.extent(priceData, d => new Date(d.date)) as [Date, Date])
+    const xScale = d3Scale.scaleTime()
+      .domain(d3Array.extent(priceData, d => new Date(d.date)) as [Date, Date])
       .range([0, width]);
 
-    const yScale = d3.scaleLinear()
-      .domain(d3.extent(priceData, d => Math.max(d.high, d.low)) as [number, number])
+    const yScale = d3Scale.scaleLinear()
+      .domain(d3Array.extent(priceData, d => Math.max(d.high, d.low)) as [number, number])
       .range([height, 0]);
 
     // Create SVG string
@@ -108,14 +111,14 @@ export class ChartGenerator {
     }));
 
     // Create scales
-    const xScale = d3.scaleTime()
-      .domain(d3.extent(parsedData, d => d.date) as [Date, Date])
+    const xScale = d3Scale.scaleTime()
+      .domain(d3Array.extent(parsedData, d => d.date) as [Date, Date])
       .range([0, width]);
 
     // Find min/max across all series
     const allValues = series.flatMap(s => parsedData.map(d => d[s] || 0));
-    const yScale = d3.scaleLinear()
-      .domain([d3.min(allValues) || 0, d3.max(allValues) || 0])
+    const yScale = d3Scale.scaleLinear()
+      .domain([d3Array.min(allValues) || 0, d3Array.max(allValues) || 0])
       .nice()
       .range([height, 0]);
 
@@ -190,22 +193,22 @@ export class ChartGenerator {
     const colors = this.getColorPalette(theme);
 
     // Create scales
-    const x0Scale = d3.scaleBand()
+    const x0Scale = d3Scale.scaleBand()
       .domain(data.map(d => d[categoryKey]))
       .range([0, width])
       .padding(0.1);
 
-    const x1Scale = d3.scaleBand()
+    const x1Scale = d3Scale.scaleBand()
       .domain(valueKeys)
       .range([0, x0Scale.bandwidth()])
       .padding(0.05);
 
     // Find max value across all series
-    const maxValue = d3.max(data, d => 
-      d3.max(valueKeys, key => d[key] || 0)
+    const maxValue = d3Array.max(data, d =>
+      d3Array.max(valueKeys, key => d[key] || 0)
     ) || 0;
 
-    const yScale = d3.scaleLinear()
+    const yScale = d3Scale.scaleLinear()
       .domain([0, maxValue * 1.1]) // Add 10% padding
       .nice()
       .range([height, 0]);
@@ -419,13 +422,13 @@ export class ChartGenerator {
     const primaryColor = theme === 'dark' ? '#4CAF50' : '#2196F3';
 
     // Create scales
-    const xScale = d3.scaleLinear()
-      .domain(d3.extent(data, d => d.x) as [number, number])
+    const xScale = d3Scale.scaleLinear()
+      .domain(d3Array.extent(data, d => d.x) as [number, number])
       .nice()
       .range([0, width]);
 
-    const yScale = d3.scaleLinear()
-      .domain(d3.extent(data, d => d.y) as [number, number])
+    const yScale = d3Scale.scaleLinear()
+      .domain(d3Array.extent(data, d => d.y) as [number, number])
       .nice()
       .range([height, 0]);
 

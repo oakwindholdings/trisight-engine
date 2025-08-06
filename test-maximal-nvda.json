@@ -1,0 +1,384 @@
+{
+  "success": true,
+  "reportId": "maximal-1754487339069-hmi7z7kce",
+  "ticker": "NVDA",
+  "pdfPath": "C:\\Users\\bobstewart\\dev\\projects\\emerald\\trisight\\generated-reports\\NVDA_maximal_2025-08-06T13-35-40-091Z.pdf",
+  "generationTime": 1137,
+  "metadata": {
+    "apiCalls": 29,
+    "dataPoints": 0,
+    "sources": []
+  },
+  "report": {
+    "reportId": "maximal-1754487339069-hmi7z7kce",
+    "ticker": "NVDA",
+    "generatedAt": "2025-08-06T13:35:39.069Z",
+    "sections": {
+      "executiveSummary": {
+        "content": "Executive Summary for NVDA: Analysis pending due to API limitations. Please retry.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.602Z",
+        "generationTime": "0.00s",
+        "prompt": "Generate a comprehensive executive summary for {ticker} focusing on:\n      1. AI and datacenter market dominance\n      2. Recent earnings and growth trajectory\n      3. Competitive position vs AMD and Intel\n      4. Key risks and opportunities in AI boom\n      Provide specific numbers and percentages."
+      },
+      "companyOverview": {
+        "content": "NVDA operates in its respective industry. Detailed analysis unavailable.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.602Z",
+        "generationTime": "0.00s",
+        "prompt": "Provide a comprehensive company overview for {ticker}:\n        1. Business model and revenue streams\n        2. Competitive advantages and market position\n        3. Management team and corporate governance\n        4. Recent strategic initiatives and partnerships\n        5. Industry context and market share\n        Include specific data points and percentages."
+      },
+      "financialAnalysis": {
+        "content": "Financial metrics for NVDA require API access for detailed analysis.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.602Z",
+        "generationTime": "0.00s",
+        "prompt": "Perform deep financial analysis for {ticker}:\n        1. Revenue growth trends and drivers (5-year analysis)\n        2. Profitability metrics and margin analysis\n        3. Balance sheet strength and liquidity ratios\n        4. Cash flow analysis and capital allocation\n        5. Peer comparison on key metrics\n        6. Valuation multiples (P/E, EV/EBITDA, P/S, PEG)\n        Provide specific numbers, YoY changes, and industry benchmarks."
+      },
+      "technicalAnalysis": {
+        "content": "Technical indicators for NVDA show standard patterns. Live data needed.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.603Z",
+        "generationTime": "0.00s",
+        "prompt": "Perform technical analysis for {ticker} with focus on:\n      1. Price action post-earnings\n      2. Support/resistance levels\n      3. Moving averages and trend strength\n      4. Volume patterns during AI hype\n      5. Options flow analysis\n      Include specific price levels and dates."
+      },
+      "marketSentiment": {
+        "content": "Market sentiment for NVDA requires real-time data access.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.603Z",
+        "generationTime": "0.00s",
+        "prompt": "Analyze market sentiment and positioning for {ticker}:\n        1. Institutional ownership changes and major holders\n        2. Insider trading activity and patterns\n        3. Options flow and unusual activity\n        4. Short interest and days to cover\n        5. Analyst ratings distribution and recent changes\n        6. Social media sentiment and retail interest\n        7. News sentiment analysis\n        Include specific data points and trend changes."
+      },
+      "competitiveAnalysis": {
+        "content": "Competitive position of NVDA within industry standards.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.604Z",
+        "generationTime": "0.00s",
+        "prompt": "Conduct competitive analysis for {ticker}:\n        1. Direct competitors and market share dynamics\n        2. Competitive advantages and moats\n        3. Product/service comparison matrix\n        4. Pricing power and market positioning\n        5. Innovation pipeline comparison\n        6. Financial metrics benchmarking\n        7. Strategic threats and opportunities\n        Provide specific comparisons with named competitors."
+      },
+      "riskAssessment": {
+        "content": "Risk factors for NVDA align with industry norms.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.604Z",
+        "generationTime": "0.00s",
+        "prompt": "Comprehensive risk assessment for {ticker}:\n        1. Market risks and beta analysis\n        2. Operational risks and dependencies\n        3. Regulatory and compliance risks\n        4. Technology and disruption risks\n        5. Financial risks (debt, liquidity, forex)\n        6. ESG risks and controversies\n        7. Geopolitical and macro risks\n        8. Risk mitigation strategies\n        Quantify risks where possible with probability and impact."
+      },
+      "futureOutlook": {
+        "content": "Future outlook for NVDA depends on market conditions.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.604Z",
+        "generationTime": "0.00s",
+        "prompt": "Project future outlook for {ticker}:\n        1. Revenue and earnings projections (3-5 years)\n        2. Growth catalysts and timeline\n        3. Product pipeline and R&D initiatives\n        4. Market expansion opportunities\n        5. M&A possibilities and strategic options\n        6. Industry trends impact assessment\n        7. Bull, base, and bear case scenarios with price targets\n        Provide specific timelines and probability-weighted outcomes."
+      },
+      "investmentRecommendation": {
+        "content": "Investment recommendation for NVDA requires complete analysis.",
+        "provider": "fallback",
+        "generatedAt": "2025-08-06T13:35:39.605Z",
+        "generationTime": "0.00s",
+        "prompt": "Final investment recommendation for {ticker}:\n        1. Clear BUY/HOLD/SELL rating with conviction level\n        2. 12-month price target with methodology\n        3. Risk/reward analysis with specific ratios\n        4. Position sizing recommendations\n        5. Entry and exit strategies\n        6. Key metrics to monitor\n        7. Catalysts and milestones timeline\n        Be specific, actionable, and data-driven."
+      },
+      "webIntelligence": "Web intelligence synthesis unavailable."
+    },
+    "rawData": {
+      "twelveData": {
+        "quote": {
+          "code": 401,
+          "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+          "status": "error"
+        },
+        "profile": {
+          "code": 403,
+          "message": "/profile is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "statistics": {
+          "code": 403,
+          "message": "/statistics is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "dailyPrices": {
+          "code": 401,
+          "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+          "status": "error"
+        },
+        "weeklyPrices": {
+          "code": 401,
+          "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+          "status": "error"
+        },
+        "monthlyPrices": {
+          "code": 401,
+          "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+          "status": "error"
+        },
+        "earnings": {
+          "code": 403,
+          "message": "/earnings is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "earningsCalendar": {
+          "code": 403,
+          "message": "/earnings_calendar is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "incomeStatement": {
+          "code": 403,
+          "message": "/income_statement is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "balanceSheet": {
+          "code": 403,
+          "message": "/balance_sheet is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "cashFlow": {
+          "code": 403,
+          "message": "/cash_flow is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "dividends": {
+          "code": 403,
+          "message": "/dividends is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "splits": {
+          "code": 403,
+          "message": "/splits is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "insiderTransactions": {
+          "code": 403,
+          "message": "/insider_transactions is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "institutionalHolders": {
+          "code": 403,
+          "message": "/institutional_holders is available exclusively with ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "fundHolders": {
+          "code": 403,
+          "message": "/fund_holders is available exclusively with ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "optionsChain": {
+          "code": 403,
+          "message": "/options/chain is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "technicals": {
+          "rsi": {},
+          "macd": {},
+          "bbands": {},
+          "sma50": {},
+          "ema200": {},
+          "adx": {},
+          "cci": {},
+          "aroon": {},
+          "stoch": {}
+        }
+      },
+      "marketData": {},
+      "fundamentals": {},
+      "technicals": {},
+      "news": [],
+      "social": {}
+    },
+    "metadata": {
+      "apiCalls": 29,
+      "dataPoints": 0,
+      "sources": []
+    },
+    "visualizations": {
+      "priceChart": {
+        "type": "candlestick",
+        "data": {
+          "code": 401,
+          "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+          "status": "error"
+        },
+        "indicators": [
+          "sma50",
+          "ema200",
+          "volume"
+        ]
+      },
+      "performanceChart": {
+        "type": "line",
+        "data": {
+          "code": 401,
+          "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+          "status": "error"
+        },
+        "comparison": [
+          "SPY",
+          "QQQ"
+        ]
+      },
+      "fundamentalsChart": {
+        "type": "bar",
+        "data": {
+          "code": 403,
+          "message": "/earnings is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        },
+        "metrics": [
+          "revenue",
+          "earnings",
+          "margins"
+        ]
+      },
+      "technicalDashboard": {
+        "type": "dashboard",
+        "indicators": {
+          "rsi": {},
+          "macd": {},
+          "bbands": {},
+          "sma50": {},
+          "ema200": {},
+          "adx": {},
+          "cci": {},
+          "aroon": {},
+          "stoch": {}
+        }
+      },
+      "ownershipChart": {
+        "type": "pie",
+        "data": {
+          "code": 403,
+          "message": "/institutional_holders is available exclusively with ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+          "status": "error"
+        }
+      }
+    },
+    "tableOfContents": [
+      "executiveSummary",
+      "companyOverview",
+      "financialAnalysis",
+      "technicalAnalysis",
+      "marketSentiment",
+      "competitiveAnalysis",
+      "riskAssessment",
+      "futureOutlook",
+      "investmentRecommendation",
+      "webIntelligence"
+    ],
+    "executiveSummary": {
+      "content": "Executive Summary for NVDA: Analysis pending due to API limitations. Please retry.",
+      "provider": "fallback",
+      "generatedAt": "2025-08-06T13:35:39.602Z",
+      "generationTime": "0.00s",
+      "prompt": "Generate a comprehensive executive summary for {ticker} focusing on:\n      1. AI and datacenter market dominance\n      2. Recent earnings and growth trajectory\n      3. Competitive position vs AMD and Intel\n      4. Key risks and opportunities in AI boom\n      Provide specific numbers and percentages."
+    },
+    "appendix": {
+      "rawData": {
+        "twelveData": {
+          "quote": {
+            "code": 401,
+            "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+            "status": "error"
+          },
+          "profile": {
+            "code": 403,
+            "message": "/profile is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "statistics": {
+            "code": 403,
+            "message": "/statistics is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "dailyPrices": {
+            "code": 401,
+            "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+            "status": "error"
+          },
+          "weeklyPrices": {
+            "code": 401,
+            "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+            "status": "error"
+          },
+          "monthlyPrices": {
+            "code": 401,
+            "message": "**apikey** parameter is incorrect or not specified. You can get your free API key instantly following this link: https://twelvedata.com/pricing. If you believe that everything is correct, you can contact us at https://twelvedata.com/contact/customer",
+            "status": "error"
+          },
+          "earnings": {
+            "code": 403,
+            "message": "/earnings is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "earningsCalendar": {
+            "code": 403,
+            "message": "/earnings_calendar is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "incomeStatement": {
+            "code": 403,
+            "message": "/income_statement is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "balanceSheet": {
+            "code": 403,
+            "message": "/balance_sheet is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "cashFlow": {
+            "code": 403,
+            "message": "/cash_flow is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "dividends": {
+            "code": 403,
+            "message": "/dividends is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "splits": {
+            "code": 403,
+            "message": "/splits is available exclusively with grow or pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "insiderTransactions": {
+            "code": 403,
+            "message": "/insider_transactions is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "institutionalHolders": {
+            "code": 403,
+            "message": "/institutional_holders is available exclusively with ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "fundHolders": {
+            "code": 403,
+            "message": "/fund_holders is available exclusively with ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "optionsChain": {
+            "code": 403,
+            "message": "/options/chain is available exclusively with pro or ultra or enterprise plans. Consider upgrading your API Key now at https://twelvedata.com/pricing",
+            "status": "error"
+          },
+          "technicals": {
+            "rsi": {},
+            "macd": {},
+            "bbands": {},
+            "sma50": {},
+            "ema200": {},
+            "adx": {},
+            "cci": {},
+            "aroon": {},
+            "stoch": {}
+          }
+        },
+        "marketData": {},
+        "fundamentals": {},
+        "technicals": {},
+        "news": [],
+        "social": {}
+      },
+      "methodology": "AI-powered analysis using GPT-4, Claude 3.5, and comprehensive market data",
+      "disclaimer": "This report is for informational purposes only and does not constitute investment advice.",
+      "generatedAt": "2025-08-06T13:35:40.087Z"
+    }
+  }
+}

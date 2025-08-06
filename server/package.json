@@ -9,12 +9,13 @@
     "build:reportgen": "cd .. && npm run build:reportgen"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "uuid": "^9.0.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "dotenv-cli": "^10.0.0",
     "nodemon": "^3.0.1"
   },
   "engines": {

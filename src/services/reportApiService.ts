@@ -103,8 +103,8 @@ class ReportApiService {
    */
   async generateReport(request: ReportGenerationRequest): Promise<ReportGenerationResponse> {
     try {
-      // Use the comprehensive endpoint that generates detailed reports like the PDFs
-      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-comprehensive', request);
+      // Use the INTELLIGENT REAL DATA endpoint with AI analysis
+      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-intelligent-real-data', request);
       
       // Emit custom event for UI updates
       if (response.data.success) {

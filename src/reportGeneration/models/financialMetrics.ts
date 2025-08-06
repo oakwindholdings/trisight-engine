@@ -62,6 +62,21 @@ export interface AnalysisResults {
   quality: QualityMetrics;
   technicals: TechnicalSignals;
   composite: CompositeScore;
+  // Additional commonly accessed fields
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  profitability?: {
+    grossMargin: number;
+    operatingMargin: number;
+    netMargin: number;
+    roe: number;
+    roa: number;
+  };
+  patternAnalysis?: {
+    trend: string;
+    patterns: string[];
+    signals: string[];
+    confidence: number;
+  };
 }
 
 export interface TechnicalSignals {

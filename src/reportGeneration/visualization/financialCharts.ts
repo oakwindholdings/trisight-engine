@@ -3,6 +3,13 @@
 // Context: Advanced visualizations specific to financial data
 
 import * as d3 from 'd3';
+import * as d3Scale from 'd3-scale';
+import * as d3Array from 'd3-array';
+import * as d3Shape from 'd3-shape';
+import * as d3TimeFormat from 'd3-time-format';
+import * as d3Time from 'd3-time';
+import * as d3Axis from 'd3-axis';
+import * as d3Selection from 'd3-selection';
 import { VisualizationEngine, ChartTheme } from './visualizationEngine';
 
 /**
@@ -96,9 +103,9 @@ export class FinancialCharts extends VisualizationEngine {
     config: any = {}
   ): Promise<any> {
     const categories = [...new Set(assets.map(a => a.category || 'Other'))];
-    const colorScale = d3.scaleOrdinal()
+    const colorScale = d3Scale.scaleOrdinal()
       .domain(categories)
-      .range(d3.schemeCategory10);
+      .range(['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']);
     
     const points = assets.map(asset => ({
       x: asset.risk,
@@ -148,7 +155,7 @@ export class FinancialCharts extends VisualizationEngine {
     const margins = { top: 60, right: 20, bottom: 60, left: 70 };
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
@@ -170,21 +177,21 @@ export class FinancialCharts extends VisualizationEngine {
       .attr('transform', `translate(${margins.left},${margins.top})`);
     
     // Create scales
-    const xScale = d3.scaleLinear()
-      .domain([0, (d3.max(portfolios, p => p.risk) || 0) * 1.1])
+    const xScale = d3Scale.scaleLinear()
+      .domain([0, (d3Array.max(portfolios, p => p.risk) || 0) * 1.1])
       .range([0, chartWidth]);
-    
-    const yScale = d3.scaleLinear()
-      .domain([0, (d3.max(portfolios, p => p.return) || 0) * 1.1])
+
+    const yScale = d3Scale.scaleLinear()
+      .domain([0, (d3Array.max(portfolios, p => p.return) || 0) * 1.1])
       .range([chartHeight, 0]);
     
     // Add axes
     chart.append('g')
       .attr('transform', `translate(0,${chartHeight})`)
-      .call(d3.axisBottom(xScale).tickFormat(d => `${((d as number) * 100).toFixed(0)}%`));
-    
+      .call(d3Axis.axisBottom(xScale).tickFormat(d => `${((d as number) * 100).toFixed(0)}%`));
+
     chart.append('g')
-      .call(d3.axisLeft(yScale).tickFormat(d => `${((d as number) * 100).toFixed(0)}%`));
+      .call(d3Axis.axisLeft(yScale).tickFormat(d => `${((d as number) * 100).toFixed(0)}%`));
     
     // Add axis labels
     chart.append('text')
@@ -201,10 +208,10 @@ export class FinancialCharts extends VisualizationEngine {
       .text('Expected Return');
     
     // Draw efficient frontier curve
-    const line = d3.line<any>()
+    const line = d3Shape.line<any>()
       .x(d => xScale(d.risk))
       .y(d => yScale(d.return))
-      .curve(d3.curveCardinal);
+      .curve(d3Shape.curveCardinal);
     
     chart.append('path')
       .datum(portfolios)
@@ -242,11 +249,11 @@ export class FinancialCharts extends VisualizationEngine {
     }
     
     // Add feasible region shading
-    const area = d3.area<any>()
+    const area = d3Shape.area<any>()
       .x(d => xScale(d.risk))
       .y0(chartHeight)
       .y1(d => yScale(d.return))
-      .curve(d3.curveCardinal);
+      .curve(d3Shape.curveCardinal);
     
     chart.append('path')
       .datum(portfolios)
@@ -281,7 +288,7 @@ export class FinancialCharts extends VisualizationEngine {
     const margins = { top: 60, right: 80, bottom: 40, left: 60 };
     
     // Create SVG
-    const svg = d3.create('svg')
+    const svg = d3Selection.create('svg')
       .attr('width', width)
       .attr('height', height);
     
@@ -292,7 +299,7 @@ export class FinancialCharts extends VisualizationEngine {
       .attr('transform', `translate(${margins.left},${margins.top})`);
     
     // Parse dates
-    const parseDate = d3.timeParse('%Y-%m-%d');
+    const parseDate = d3TimeFormat.timeParse('%Y-%m-%d');
     const parsedDividends = dividends.map(d => ({
       ...d,
       parsedDate: parseDate(d.date) as Date
@@ -301,27 +308,27 @@ export class FinancialCharts extends VisualizationEngine {
       ...d,
       parsedDate: parseDate(d.date) as Date
     }));
-    
+
     // Create scales
-    const xScale = d3.scaleTime()
-      .domain(d3.extent(parsedPrices, d => d.parsedDate) as [Date, Date])
+    const xScale = d3Scale.scaleTime()
+      .domain(d3Array.extent(parsedPrices, d => d.parsedDate) as [Date, Date])
       .range([0, chartWidth]);
-    
-    const yScalePrice = d3.scaleLinear()
-      .domain([0, (d3.max(parsedPrices, d => d.price) || 0) * 1.1])
+
+    const yScalePrice = d3Scale.scaleLinear()
+      .domain([0, (d3Array.max(parsedPrices, d => d.price) || 0) * 1.1])
       .range([chartHeight, 0]);
-    
-    const yScaleDividend = d3.scaleLinear()
-      .domain([0, (d3.max(parsedDividends, d => d.amount) || 0) * 1.2])
+
+    const yScaleDividend = d3Scale.scaleLinear()
+      .domain([0, (d3Array.max(parsedDividends, d => d.amount) || 0) * 1.2])
       .range([chartHeight, 0]);
     
     // Add axes
     chart.append('g')
       .attr('transform', `translate(0,${chartHeight})`)
-      .call(d3.axisBottom(xScale));
-    
+      .call(d3Axis.axisBottom(xScale));
+
     chart.append('g')
-      .call(d3.axisLeft(yScalePrice))
+      .call(d3Axis.axisLeft(yScalePrice))
       .append('text')
       .attr('transform', 'rotate(-90)')
       .attr('y', -40)
@@ -329,10 +336,10 @@ export class FinancialCharts extends VisualizationEngine {
       .attr('text-anchor', 'middle')
       .style('fill', '#000')
       .text('Stock Price ($)');
-    
+
     chart.append('g')
       .attr('transform', `translate(${chartWidth},0)`)
-      .call(d3.axisRight(yScaleDividend))
+      .call(d3Axis.axisRight(yScaleDividend))
       .append('text')
       .attr('transform', 'rotate(90)')
       .attr('y', -40)
@@ -342,7 +349,7 @@ export class FinancialCharts extends VisualizationEngine {
       .text('Dividend per Share ($)');
     
     // Draw stock price line
-    const priceLine = d3.line<any>()
+    const priceLine = d3Shape.line<any>()
       .x(d => xScale(d.parsedDate))
       .y(d => yScalePrice(d.price));
     

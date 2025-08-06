@@ -1,0 +1,191 @@
+{
+  "exampleExists": true,
+  "fileSize": 474626,
+  "lastModified": "2025-08-03T16:05:17.078Z",
+  "failedReportSize": 23451,
+  "expectedSections": [
+    "Executive Summary",
+    "Investment Thesis",
+    "Financial Analysis",
+    "Valuation Analysis",
+    "Technical Analysis",
+    "Risk Assessment",
+    "Market Analysis",
+    "Competitive Landscape",
+    "Management Analysis",
+    "ESG Considerations",
+    "Price Target & Recommendation",
+    "Appendix & Disclaimers"
+  ],
+  "expectedCharts": [
+    "Price Performance Chart",
+    "Revenue Growth Chart",
+    "Profitability Metrics",
+    "Valuation Multiples",
+    "Technical Indicators",
+    "Peer Comparison",
+    "Risk-Return Analysis"
+  ],
+  "expectedTables": [
+    "Key Financial Metrics",
+    "Income Statement Summary",
+    "Balance Sheet Highlights",
+    "Cash Flow Analysis",
+    "Valuation Summary",
+    "Peer Comparison Table",
+    "Risk Factors Matrix"
+  ],
+  "institutionalRequirements": {
+    "format": {
+      "pageSize": "A4",
+      "margins": {
+        "top": 72,
+        "bottom": 72,
+        "left": 72,
+        "right": 72
+      },
+      "fonts": {
+        "heading": "Arial Bold",
+        "body": "Arial",
+        "caption": "Arial Italic"
+      },
+      "colors": {
+        "primary": "#1a365d",
+        "secondary": "#2d3748",
+        "accent": "#0066cc",
+        "success": "#00a651",
+        "warning": "#ff8c00",
+        "danger": "#e53e3e"
+      }
+    },
+    "content": {
+      "coverPage": {
+        "companyLogo": true,
+        "reportTitle": true,
+        "ticker": true,
+        "date": true,
+        "analyst": true,
+        "recommendation": true,
+        "priceTarget": true,
+        "disclaimer": true
+      },
+      "executiveSummary": {
+        "investmentThesis": true,
+        "keyFinancials": true,
+        "recommendation": true,
+        "priceTarget": true,
+        "keyRisks": true,
+        "catalysts": true
+      },
+      "financialAnalysis": {
+        "revenueAnalysis": true,
+        "profitabilityAnalysis": true,
+        "balanceSheetAnalysis": true,
+        "cashFlowAnalysis": true,
+        "marginAnalysis": true,
+        "growthMetrics": true
+      },
+      "valuation": {
+        "dcfModel": true,
+        "comparableAnalysis": true,
+        "precedentTransactions": true,
+        "sensitivityAnalysis": true,
+        "priceTarget": true
+      },
+      "riskAssessment": {
+        "businessRisks": true,
+        "financialRisks": true,
+        "marketRisks": true,
+        "regulatoryRisks": true,
+        "esgRisks": true
+      }
+    },
+    "dataRequirements": {
+      "financialStatements": {
+        "incomeStatement": "5 years",
+        "balanceSheet": "5 years",
+        "cashFlowStatement": "5 years",
+        "quarterly": "8 quarters"
+      },
+      "marketData": {
+        "stockPrice": "2 years daily",
+        "volume": "2 years daily",
+        "marketCap": "current",
+        "beta": "current",
+        "volatility": "1 year"
+      },
+      "fundamentals": {
+        "peRatio": "current & historical",
+        "evEbitda": "current & historical",
+        "priceToBook": "current & historical",
+        "roe": "5 years",
+        "roic": "5 years",
+        "debtToEquity": "5 years"
+      },
+      "estimates": {
+        "analystEstimates": "current",
+        "consensusRating": "current",
+        "priceTargets": "current",
+        "revisions": "3 months"
+      }
+    }
+  },
+  "implementationSpec": {
+    "apiEndpoint": "/api/reports/generate-institutional",
+    "dataOrchestration": {
+      "twelveData": {
+        "endpoints": [
+          "quote",
+          "time_series",
+          "income_statement",
+          "balance_sheet",
+          "cash_flow",
+          "statistics",
+          "analyst_ratings"
+        ],
+        "priority": "high"
+      },
+      "anthropic": {
+        "models": [
+          "claude-3-sonnet-20240229"
+        ],
+        "tasks": [
+          "executive_summary_generation",
+          "investment_thesis_analysis",
+          "risk_assessment",
+          "market_analysis"
+        ],
+        "priority": "high"
+      },
+      "firecrawl": {
+        "sources": [
+          "company_website",
+          "recent_news",
+          "sec_filings",
+          "analyst_reports"
+        ],
+        "priority": "medium"
+      }
+    },
+    "pdfGeneration": {
+      "library": "pdfkit",
+      "features": [
+        "multi_page_layout",
+        "professional_formatting",
+        "charts_integration",
+        "tables_generation",
+        "header_footer",
+        "page_numbers",
+        "table_of_contents"
+      ]
+    },
+    "qualityMetrics": {
+      "minimumPages": 15,
+      "maximumPages": 25,
+      "chartCount": 7,
+      "tableCount": 5,
+      "sectionCount": 12,
+      "generationTime": "< 60 seconds"
+    }
+  }
+}

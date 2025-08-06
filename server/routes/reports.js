@@ -1,172 +1,163 @@
 // server/routes/reports.js
-// API routes for report generation
-// Context: Handles report generation requests from the React frontend
+// CONSOLIDATED API routes for comprehensive report generation
+// ONE interface, MAXIMAL data from ALL sources
 
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const ReportService = require('../services/reportService');
+const ComprehensiveReportService = require('../services/comprehensiveReportService');
 
-// Create report service instance
-const reportService = new ReportService();
+// Create service instances
+const reportService = new ComprehensiveReportService();
+const IntelligentReportOrchestrator = require('../services/intelligentReportOrchestrator');
+const intelligentOrchestrator = new IntelligentReportOrchestrator();
+const MaximalReportOrchestrator = require('../services/maximalReportOrchestrator');
+const maximalOrchestrator = new MaximalReportOrchestrator();
 
-// Store active report generation processes
-const activeGenerations = new Map();
+/**
+ * POST /api/reports/generate-maximal
+ * MAXIMUM data extraction using intelligent orchestration
+ * Leverages ALL APIs and MCPs with unlimited licenses
+ */
+router.post('/generate-maximal', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { ticker } = req.body;
+    
+    if (!ticker) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: ticker'
+      });
+    }
+    
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`[MAXIMAL REPORT] Generating with UNLIMITED data extraction`);
+    console.log(`  Ticker: ${ticker}`);
+    console.log(`  Custom Prompts: ${req.body.prompts ? 'Yes' : 'No'}`);
+    console.log(`${'='.repeat(80)}\n`);
+    
+    // Use maximal orchestrator for section-by-section generation
+    const result = await maximalOrchestrator.generateMaximalReport(ticker, {
+      prompts: req.body.prompts,
+      options: req.body.options
+    });
+    
+    return res.status(200).json(result);
+    
+  } catch (error) {
+    console.error('[MAXIMAL] Generation failed:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/reports/generate-comprehensive
+ * THE ONLY endpoint for comprehensive report generation
+ * Uses ALL data sources: TwelveData, Firecrawl, Anthropic Claude
+ */
+router.post('/generate-comprehensive', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    // Validate request
+    if (!req.body || !req.body.ticker) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: ticker'
+      });
+    }
+
+    const { ticker, title, template, author, outputFormat = 'json' } = req.body;
+    
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`[API] Comprehensive Report Request`);
+    console.log(`  Ticker: ${ticker}`);
+    console.log(`  Output Format: ${outputFormat}`);
+    console.log(`${'='.repeat(80)}\n`);
+
+    // Generate comprehensive report with ALL data
+    const report = await reportService.generateComprehensiveReport(ticker, {
+      title,
+      template,
+      author,
+      outputFormat
+    });
+
+    // Send successful response
+    return res.status(200).json(report);
+
+  } catch (error) {
+    const generationTime = Date.now() - startTime;
+    console.error('[API] Comprehensive report generation failed:', error);
+    
+    return res.status(500).json({
+      success: false,
+      error: 'Comprehensive report generation failed',
+      message: error.message,
+      generationTime
+    });
+  }
+});
 
 /**
  * POST /api/reports/generate
- * Generates a new report based on the provided configuration
+ * Redirect to comprehensive endpoint
  */
 router.post('/generate', async (req, res) => {
-  const generationId = uuidv4();
-  
-  try {
-    console.log('[Report API] Received generation request:', {
-      ticker: req.body.ticker,
-      reportType: req.body.reportType,
-      outputFormat: req.body.outputFormat
-    });
-
-    const config = req.body;
-    
-    // Store the generation ID for tracking
-    activeGenerations.set(generationId, {
-      config,
-      startTime: Date.now(),
-      status: 'processing'
-    });
-    
-    try {
-      // Generate the report using the service
-      const report = await reportService.generateReport(config);
-      
-      activeGenerations.delete(generationId);
-      
-      // Add server-side metadata
-      report.metadata = {
-        ...report.metadata,
-        generationId,
-        serverTimestamp: new Date().toISOString(),
-        apiVersion: '1.0'
-      };
-      
-      console.log('[Report API] Report generated successfully:', {
-        ticker: config.ticker,
-        generationTime: report.metadata.generationTime,
-        outputPath: report.outputPath
-      });
-      
-      res.json(report);
-      
-    } catch (error) {
-      activeGenerations.delete(generationId);
-      throw error;
-    }
-    
-  } catch (error) {
-    console.error('[Report API] Generation failed:', error);
-    
-    res.status(500).json({
-      error: {
-        message: 'Report generation failed',
-        details: error.message,
-        generationId,
-        timestamp: new Date().toISOString()
-      }
-    });
-  }
+  // Redirect ALL report requests to comprehensive endpoint
+  req.url = '/generate-comprehensive';
+  router.handle(req, res);
 });
 
 /**
- * POST /api/reports/cancel
- * Cancels an active report generation
+ * GET /api/reports/health
+ * Health check for report service
  */
-router.post('/cancel', (req, res) => {
-  const { generationId } = req.body;
-  
-  if (!generationId) {
-    return res.status(400).json({
-      error: {
-        message: 'Generation ID is required',
-        code: 'MISSING_GENERATION_ID'
-      }
-    });
-  }
-  
-  const generation = activeGenerations.get(generationId);
-  
-  if (!generation) {
-    return res.status(404).json({
-      error: {
-        message: 'No active generation found',
-        code: 'GENERATION_NOT_FOUND'
-      }
-    });
-  }
-  
-  try {
-    reportService.cancel(generationId);
-    activeGenerations.delete(generationId);
-    
-    res.json({
-      success: true,
-      message: 'Report generation cancelled',
-      generationId
-    });
-    
-  } catch (error) {
-    console.error('[Report API] Cancel failed:', error);
-    res.status(500).json({
-      error: {
-        message: 'Failed to cancel generation',
-        details: error.message
-      }
-    });
-  }
-});
-
-/**
- * GET /api/reports/status/:generationId
- * Gets the status of an active report generation
- */
-router.get('/status/:generationId', (req, res) => {
-  const { generationId } = req.params;
-  const generation = activeGenerations.get(generationId);
-  
-  if (!generation) {
-    return res.status(404).json({
-      error: {
-        message: 'Generation not found',
-        code: 'GENERATION_NOT_FOUND'
-      }
-    });
-  }
-  
-  const status = reportService.getStatus(generationId);
-  res.json(status);
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'ComprehensiveReportService',
+    timestamp: new Date().toISOString(),
+    capabilities: [
+      'TwelveData Integration',
+      'Firecrawl Web Intelligence',
+      'Anthropic Claude AI Analysis',
+      'PDF Generation',
+      'Real-time Market Data',
+      'Financial Statements',
+      'Technical Indicators',
+      'News & Sentiment',
+      'Comprehensive Slides'
+    ]
+  });
 });
 
 /**
  * GET /api/reports/list
- * Lists recently generated reports
+ * List generated reports
  */
 router.get('/list', async (req, res) => {
   try {
     const fs = require('fs').promises;
+    const path = require('path');
     const reportsDir = path.join(__dirname, '../../generated-reports');
     
     const files = await fs.readdir(reportsDir);
     const reports = [];
     
     for (const file of files) {
-      if (file.endsWith('.pdf') || file.endsWith('.pptx')) {
+      if (file.endsWith('.pdf') || file.endsWith('.json')) {
         const stats = await fs.stat(path.join(reportsDir, file));
         reports.push({
           filename: file,
           size: stats.size,
           created: stats.birthtime,
-          downloadUrl: `/generated-reports/${file}`
+          downloadUrl: `/generated-reports/${file}`,
+          type: file.includes('comprehensive') ? 'comprehensive' : 'standard'
         });
       }
     }
@@ -174,15 +165,16 @@ router.get('/list', async (req, res) => {
     // Sort by creation date, newest first
     reports.sort((a, b) => b.created - a.created);
     
-    res.json({ reports });
+    res.json({ 
+      reports,
+      total: reports.length
+    });
     
   } catch (error) {
-    console.error('[Report API] List failed:', error);
+    console.error('[API] List reports failed:', error);
     res.status(500).json({
-      error: {
-        message: 'Failed to list reports',
-        details: error.message
-      }
+      error: 'Failed to list reports',
+      message: error.message
     });
   }
 });
