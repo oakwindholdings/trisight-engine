@@ -103,8 +103,8 @@ class ReportApiService {
    */
   async generateReport(request: ReportGenerationRequest): Promise<ReportGenerationResponse> {
     try {
-      // Use the full-featured JavaScript endpoint for comprehensive reports
-      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-full', request);
+      // Use the comprehensive endpoint that generates detailed reports like the PDFs
+      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-comprehensive', request);
       
       // Emit custom event for UI updates
       if (response.data.success) {
