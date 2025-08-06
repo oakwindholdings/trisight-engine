@@ -103,8 +103,8 @@ class ReportApiService {
    */
   async generateReport(request: ReportGenerationRequest): Promise<ReportGenerationResponse> {
     try {
-      // Use the working JavaScript endpoint instead of the broken TypeScript one
-      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-js', request);
+      // Use the full-featured JavaScript endpoint for comprehensive reports
+      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-full', request);
       
       // Emit custom event for UI updates
       if (response.data.success) {

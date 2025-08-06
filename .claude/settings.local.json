@@ -62,7 +62,8 @@
       "Bash(npx ps:*)",
       "Bash(start generated-reportsAAPL_report_2025-08-03T21-34-54-706Z.pdf)",
       "Bash(start generated-reportsAAPL_report_2025-08-03T22-07-59-754Z.pdf)",
-      "Bash(start generated-reportsAAPL_report_2025-08-03T23-09-02-321Z.pdf)"
+      "Bash(start generated-reportsAAPL_report_2025-08-03T23-09-02-321Z.pdf)",
+      "Bash(npx vercel:*)"
     ],
     "deny": []
   }
