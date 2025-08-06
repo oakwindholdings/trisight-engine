@@ -31,3 +31,4 @@ yarn-error.log*
 .netlify/
 .vercel/
 nul
+.vercel

@@ -20,14 +20,15 @@ const corsHeaders = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
+  try {
+    // Set CORS headers
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      res.setHeader(key, value);
+    });
 
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
   }
 
   // Only allow GET requests
@@ -87,5 +88,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         timestamp: new Date().toISOString()
       }
     });
+  } catch (error) {
+    console.error('Reports list error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Server error in reports list',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      }
+    });
   }
+}
 }

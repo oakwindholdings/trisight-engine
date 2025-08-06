@@ -30,14 +30,7 @@
       ]
     }
   ],
-  "env": {
-    "REACT_APP_TWELVE_DATA_API_KEY": "@twelve-data-api-key",
-    "REACT_APP_ANTHROPIC_API_KEY": "@anthropic-api-key",
-    "REACT_APP_FIRECRAWL_API_KEY": "@firecrawl-api-key",
-    "REACT_APP_SUPABASE_URL": "@supabase-url",
-    "REACT_APP_SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "FRONTEND_URL": "@frontend-url"
-  },
+
   "build": {
     "env": {
       "REACT_APP_API_URL": "/api",

@@ -13,14 +13,33 @@ const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
 );
 
-// Dynamic import to handle ES modules
+// Dynamic import to handle ES modules with error handling
 let createReportGenerator: any;
 
 // Initialize the report generator module
 async function initReportGenerator() {
   if (!createReportGenerator) {
-    const reportGenModule = await import('../../dist/reportGeneration/index.js');
-    createReportGenerator = reportGenModule.createReportGenerator;
+    try {
+      // Try multiple import paths for different deployment environments
+      let reportGenModule;
+      try {
+        reportGenModule = await import('../../dist/reportGeneration/index.js');
+      } catch (error) {
+        console.log('First import failed, trying alternative path:', error.message);
+        reportGenModule = await import('../../src/reportGeneration/index.ts');
+      }
+
+      createReportGenerator = reportGenModule.createReportGenerator || reportGenModule.default;
+
+      if (!createReportGenerator) {
+        throw new Error('createReportGenerator function not found in module');
+      }
+
+      console.log('Report generator initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize report generator:', error);
+      throw new Error(`Report generator initialization failed: ${error.message}`);
+    }
   }
   return createReportGenerator;
 }
@@ -74,8 +93,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Initialize report generator
-    const createReportGeneratorFn = await initReportGenerator();
+    // Initialize report generator with error handling
+    let createReportGeneratorFn;
+    try {
+      createReportGeneratorFn = await initReportGenerator();
+      console.log('[Vercel API] Report generator initialized successfully');
+    } catch (initError) {
+      console.error('[Vercel API] Failed to initialize report generator:', initError);
+      return res.status(500).json({
+        error: 'Report generator initialization failed',
+        details: initError.message,
+        generationId
+      });
+    }
 
     // Prepare configuration
     const config = {
