@@ -4,9 +4,12 @@
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { pdf } from '@react-pdf/renderer';
 import { Download, FileText, FileSpreadsheet, Presentation, Code, CheckCircle, Loader } from 'lucide-react';
 import { getStorageService } from '../../services/reportStorageService';
-import { logDebug } from '../../utils/logger';
+import { PDFReportGenerator } from './PDFTemplates/PDFReportGenerator';
+import { generateReport } from '../../services/reportApiService';
+import { logDebug } from '../../utils/debug';
 
 const Container = styled.div`
   padding: 1rem;
@@ -293,21 +296,90 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
     });
   };
 
+  const exportToPDF = async (): Promise<void> => {
+    try {
+      // Get the current symbol from the app context
+      const ticker = currentReport?.ticker || 'NVDA'; // fallback to NVDA
+
+      logDebug('ExportPanel', 'Starting complete PDF generation for:', ticker);
+
+      // First get intelligent data with AI analysis
+      const intelligentResponse = await fetch('/api/reports/generate-intelligent-real-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker,
+          template: 'intelligent-institutional',
+          includeAIAnalysis: true,
+          includeProgressiveContext: true
+        })
+      });
+
+      if (!intelligentResponse.ok) {
+        throw new Error(`Failed to fetch intelligent data: ${intelligentResponse.statusText}`);
+      }
+
+      const intelligentData = await intelligentResponse.json();
+
+      if (!intelligentData.success) {
+        throw new Error('Failed to generate intelligent report data');
+      }
+
+      logDebug('ExportPanel', 'Intelligent data generated, creating complete PDF...');
+
+      // Generate complete professional PDF using server-side jsPDF
+      const pdfResponse = await fetch('/api/reports/generate-complete-pdf-endpoint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportData: intelligentData })
+      });
+
+      if (!pdfResponse.ok) {
+        throw new Error(`PDF generation failed: ${pdfResponse.statusText}`);
+      }
+
+      // Get PDF blob and download it
+      const pdfBlob = await pdfResponse.blob();
+      const url = URL.createObjectURL(pdfBlob);
+
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${ticker}-complete-financial-analysis.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
+
+      logDebug('ExportPanel', 'Complete PDF downloaded successfully');
+    } catch (error) {
+      logDebug('ExportPanel', 'Complete PDF generation failed:', error);
+
+      // Show error to user
+      alert(`PDF generation failed: ${error.message}`);
+      throw error;
+    }
+  };
+
   const handleExport = async () => {
     if (!currentReport || selectedFormats.size === 0) {
       return;
     }
-    
+
     setIsExporting(true);
     const storageService = getStorageService();
-    
+
     // Create export queue items
     const newQueueItems: QueueItem[] = [];
-    
+
     for (const format of selectedFormats) {
       const exportId = `export-${Date.now()}-${format}`;
       const fileName = `${currentReport.ticker || 'Report'}_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : format === 'powerpoint' ? 'pptx' : format}`;
-      
+
       const queueItem: QueueItem = {
         id: exportId,
         name: fileName,
@@ -317,13 +389,13 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
         format,
         startedAt: new Date()
       };
-      
+
       newQueueItems.push(queueItem);
-      
+
       // Add to queue immediately
       setExportQueue(prev => [queueItem, ...prev].slice(0, 10)); // Keep max 10 items
     }
-    
+
     // Save to history
     try {
       const history = JSON.parse(localStorage.getItem('trisight_export_history') || '[]');
@@ -331,38 +403,45 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
     } catch (error) {
       logDebug('ExportPanel', 'Error saving export history:', error);
     }
-    
+
     // Process exports sequentially
     for (const queueItem of newQueueItems) {
       try {
         // Update status to processing
         updateQueueItem(queueItem.id, { status: 'processing', progress: 10 });
-        
-        // Simulate export progress (in real implementation, this would be actual export)
-        for (let progress = 20; progress <= 90; progress += 10) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          updateQueueItem(queueItem.id, { progress });
+
+        if (queueItem.format === 'pdf') {
+          // Use client-side PDF generation
+          updateQueueItem(queueItem.id, { progress: 30 });
+          await exportToPDF();
+          updateQueueItem(queueItem.id, { progress: 100 });
+        } else {
+          // Simulate export progress for other formats (not yet implemented)
+          for (let progress = 20; progress <= 90; progress += 10) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            updateQueueItem(queueItem.id, { progress });
+          }
+
+          // For non-PDF formats, use existing storage service
+          if (currentReport.id) {
+            await storageService.downloadReport(currentReport.id);
+          }
         }
-        
-        // For now, we'll use the download functionality from storage service
-        if (currentReport.id && queueItem.format === 'pdf') {
-          await storageService.downloadReport(currentReport.id);
-        }
-        
+
         // Mark as completed
-        updateQueueItem(queueItem.id, { 
-          status: 'completed', 
-          progress: 100, 
-          completedAt: new Date() 
+        updateQueueItem(queueItem.id, {
+          status: 'completed',
+          progress: 100,
+          completedAt: new Date()
         });
-        
+
         logDebug('ExportPanel', `Export completed: ${queueItem.name}`);
       } catch (error) {
         logDebug('ExportPanel', 'Export error:', error);
         updateQueueItem(queueItem.id, { status: 'error', progress: 0 });
       }
     }
-    
+
     setIsExporting(false);
   };
 

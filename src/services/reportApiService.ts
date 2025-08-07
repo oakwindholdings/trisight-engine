@@ -219,5 +219,10 @@ class ReportApiService {
 // Export singleton instance
 export const reportApiService = new ReportApiService();
 
+// Export convenience function for direct use
+export const generateReport = (request: ReportGenerationRequest): Promise<ReportGenerationResponse> => {
+  return reportApiService.generateReport(request);
+};
+
 // Export types
 export type { ReportApiService };

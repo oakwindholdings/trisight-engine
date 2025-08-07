@@ -7,6 +7,9 @@ import styled from 'styled-components';
 import './App.css';
 import './styles/globals.css';
 import { logDebug } from './utils/debug';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { HTMLReportTemplate } from './components/Reports/HTMLReportTemplate';
 
 import { ChartProvider } from './contexts/ChartContext';
 // Removed react-datepicker - using HTML5 date input instead
@@ -819,6 +822,121 @@ function AppContent() {
     }
   }, []);
 
+  // RELIABLE PDF GENERATION with jsPDF + html2canvas
+  const generatePDFReport = useCallback(async () => {
+    try {
+      console.log('🚀 Starting RELIABLE PDF generation with jsPDF...');
+
+      // Get current ticker from the app state
+      const ticker = selectedSymbol || 'NVDA';
+
+      // Generate report data
+      const response = await fetch('/api/reports/generate-intelligent-real-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: ticker,
+          title: `${ticker} - Comprehensive Financial Analysis`,
+          template: 'intelligent-institutional',
+          author: 'TriSight AI Research Team'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const reportData = await response.json();
+      console.log('📊 Report data received:', reportData);
+
+      if (!reportData || !reportData.success) {
+        throw new Error('Report generation failed - no valid data returned');
+      }
+
+      // Add report ID for tracking
+      reportData.reportId = reportData.reportId || `pdf-${Date.now()}`;
+
+      console.log('📄 Creating HTML report template...');
+
+      // Create a temporary container for the HTML report
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '210mm';
+      tempContainer.style.background = 'white';
+      document.body.appendChild(tempContainer);
+
+      // Render the HTML report template
+      const { createRoot } = await import('react-dom/client');
+      const root = createRoot(tempContainer);
+
+      await new Promise<void>((resolve) => {
+        root.render(
+          <HTMLReportTemplate reportData={reportData} />
+        );
+        // Give React time to render
+        setTimeout(resolve, 1000);
+      });
+
+      console.log('📸 Converting HTML to canvas...');
+
+      // Convert HTML to canvas
+      const canvas = await html2canvas(tempContainer.firstChild as HTMLElement, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794, // A4 width in pixels at 96 DPI
+        height: 1123 // A4 height in pixels at 96 DPI
+      });
+
+      console.log('📄 Creating PDF from canvas...');
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      console.log('✅ PDF created successfully!');
+
+      // Clean up
+      document.body.removeChild(tempContainer);
+
+      // Save PDF
+      const fileName = `${ticker}_Financial_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+
+      console.log('🎉 PDF downloaded successfully!');
+
+    } catch (error) {
+      console.error('❌ PDF generation failed:', error);
+      alert(`PDF generation failed: ${error.message}`);
+    }
+  }, [selectedSymbol]);
+
   // Debug: Check what's causing the click blocking
   useEffect(() => {
     logDebug('DEBUG_UI', '=== DEBUG UI BLOCKING ===');
@@ -919,7 +1037,7 @@ function AppContent() {
       {isFeatureEnabled('NEW_LAYOUT') ? (
         // New UI using wrapper components
         <>
-          <TopNav activeTab={activeTab} onTabChange={handleTabChange} />
+          <TopNav activeTab={activeTab} onTabChange={handleTabChange} onGeneratePDF={generatePDFReport} />
           <div className={mainGridStyles.header}>
             <ContextBar
               selectedDate={selectedDate}

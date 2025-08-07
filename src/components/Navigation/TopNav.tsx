@@ -4,14 +4,15 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { 
-  TrendingUp, 
-  LayoutDashboard, 
-  Target, 
+import {
+  TrendingUp,
+  LayoutDashboard,
+  Target,
   FileText,
   Bell,
   Settings,
-  User
+  User,
+  Download
 } from 'lucide-react';
 
 const NavContainer = styled.nav`
@@ -98,12 +99,42 @@ const NotificationBadge = styled.span`
   font-weight: bold;
 `;
 
+const PDFButton = styled.button`
+  background: #10b981;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #059669;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
 interface TopNavProps {
   activeTab: 'chart' | 'dashboard' | 'targets' | 'reports';
   onTabChange: (tab: 'chart' | 'dashboard' | 'targets' | 'reports') => void;
+  onGeneratePDF?: () => void;
 }
 
-export const TopNav: React.FC<TopNavProps> = ({ activeTab, onTabChange }) => {
+export const TopNav: React.FC<TopNavProps> = ({ activeTab, onTabChange, onGeneratePDF }) => {
   const tabs = [
     { id: 'chart', label: 'Chart', icon: TrendingUp },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -130,6 +161,12 @@ export const TopNav: React.FC<TopNavProps> = ({ activeTab, onTabChange }) => {
       </NavTabs>
       
       <NavActions>
+        {onGeneratePDF && (
+          <PDFButton onClick={onGeneratePDF}>
+            <Download />
+            Generate PDF
+          </PDFButton>
+        )}
         <IconButton style={{ position: 'relative' }}>
           <Bell />
           <NotificationBadge>3</NotificationBadge>

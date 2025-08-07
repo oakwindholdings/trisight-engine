@@ -22,7 +22,7 @@ async function testFrontendRealDataCall() {
     const startTime = Date.now();
     
     // Call the intelligent real data endpoint that the frontend should now be using
-    const response = await axios.post('https://trisight-olfhl6z7e-apex-2b9a18e9.vercel.app/api/reports/generate-intelligent-real-data', config, {
+    const response = await axios.post('https://trisight-66hllf0lx-apex-2b9a18e9.vercel.app/api/reports/generate-intelligent-real-data', config, {
       timeout: 120000,
       validateStatus: () => true,
       headers: {
@@ -118,7 +118,7 @@ async function testFrontendRealDataCall() {
       console.log('✅ Institutional quality achieved');
       
       console.log('\n📍 PRODUCTION ENDPOINT:');
-      console.log('🌐 URL: https://trisight-olfhl6z7e-apex-2b9a18e9.vercel.app/api/reports/generate-intelligent-real-data');
+      console.log('🌐 URL: https://trisight-66hllf0lx-apex-2b9a18e9.vercel.app/api/reports/generate-intelligent-real-data');
       console.log('📋 Method: POST');
       console.log('📊 Input: { ticker, title, template, author }');
       console.log('📈 Output: Real financial data report with charts');
