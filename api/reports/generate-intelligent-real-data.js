@@ -731,3 +731,6 @@ Provide a clear, actionable investment recommendation that institutional investo
     }
   }
 }
+
+// Export the class for use by modular endpoints
+module.exports.IntelligentRealDataGenerator = IntelligentRealDataGenerator;

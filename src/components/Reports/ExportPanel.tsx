@@ -296,6 +296,147 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
     });
   };
 
+  const exportModularPDF = async () => {
+    try {
+      console.log('🚀 Starting modular PDF generation...');
+      setIsGenerating(true);
+
+      // Get current ticker
+      const ticker = currentReport?.ticker || 'AAPL';
+
+      // Get custom prompts from localStorage or state
+      const customPrompts = JSON.parse(localStorage.getItem('reportPrompts') || '{}');
+
+      // Parallel fetch all sections - each has its own 10-second timeout
+      const sectionRequests = [
+        {
+          name: 'Market Overview',
+          endpoint: '/api/reports/sections/market-overview',
+          customPrompt: customPrompts.marketOverview
+        },
+        {
+          name: 'Financial Analysis',
+          endpoint: '/api/reports/sections/financial-analysis',
+          customPrompt: customPrompts.financialAnalysis
+        },
+        {
+          name: 'Technical Analysis',
+          endpoint: '/api/reports/sections/technical-analysis',
+          customPrompt: customPrompts.technicalAnalysis
+        }
+      ];
+
+      console.log('📊 Fetching all sections in parallel...');
+
+      const sectionPromises = sectionRequests.map(async (section) => {
+        try {
+          console.log(`  → Fetching ${section.name}...`);
+          const response = await fetch(section.endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ticker: ticker,
+              customPrompt: section.customPrompt
+            })
+          });
+
+          if (!response.ok) throw new Error(`Failed: ${response.status}`);
+
+          const data = await response.json();
+          console.log(`  ✅ ${section.name} complete`);
+          return data;
+
+        } catch (error) {
+          console.error(`  ❌ ${section.name} failed:`, error);
+          return {
+            success: false,
+            section: section.name.toLowerCase().replace(' ', '-'),
+            error: error.message
+          };
+        }
+      });
+
+      // Wait for all sections to complete
+      const sections = await Promise.allSettled(sectionPromises);
+
+      // Combine successful sections into report format
+      const combinedReport = {
+        success: true,
+        reportId: `modular-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ticker: ticker,
+        title: `${ticker} Intelligent Analysis`,
+        slides: [],
+        charts: [],
+        aiAnalysis: {},
+        rawData: {},
+        dataStatus: {},
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          sectionsCompleted: 0,
+          totalSections: sectionRequests.length
+        }
+      };
+
+      // Process each section result
+      sections.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value?.success) {
+          const section = result.value;
+
+          // Merge slides
+          if (section.slides) {
+            combinedReport.slides.push(...section.slides);
+          }
+
+          // Merge raw data
+          if (section.rawData) {
+            combinedReport.rawData = { ...combinedReport.rawData, ...section.rawData };
+          }
+
+          // Merge AI analysis
+          if (section.aiAnalysis) {
+            combinedReport.aiAnalysis = { ...combinedReport.aiAnalysis, ...section.aiAnalysis };
+          }
+
+          // Track status
+          combinedReport.dataStatus[section.section] = { success: true };
+          combinedReport.metadata.sectionsCompleted++;
+
+        } else {
+          const sectionName = sectionRequests[index].name;
+          combinedReport.dataStatus[sectionName] = { success: false };
+          console.warn(`Section ${sectionName} was not included in report`);
+        }
+      });
+
+      console.log(`📄 Generating PDF with ${combinedReport.metadata.sectionsCompleted}/${combinedReport.metadata.totalSections} sections...`);
+
+      // Generate PDF using existing endpoint
+      const pdfResponse = await fetch('/api/reports/generate-complete-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportData: combinedReport })
+      });
+
+      if (!pdfResponse.ok) {
+        throw new Error(`PDF generation failed: ${pdfResponse.status}`);
+      }
+
+      const pdfBlob = await pdfResponse.blob();
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${ticker}-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.click();
+
+      console.log('✅ Modular PDF generated successfully!');
+
+    } catch (error) {
+      console.error('❌ PDF generation failed:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const exportToPDF = async (): Promise<void> => {
     try {
       // Get the current symbol from the app context
