@@ -822,117 +822,76 @@ function AppContent() {
     }
   }, []);
 
-  // RELIABLE PDF GENERATION with jsPDF + html2canvas
+  // COMPLETE PDF GENERATION using server-side jsPDF
   const generatePDFReport = useCallback(async () => {
     try {
-      console.log('🚀 Starting RELIABLE PDF generation with jsPDF...');
+      console.log('🚀 Starting COMPLETE PDF generation...');
 
       // Get current ticker from the app state
       const ticker = selectedSymbol || 'NVDA';
 
-      // Generate report data
+      console.log('📊 Fetching intelligent report data for:', ticker);
+
+      // First get intelligent data with AI analysis
       const response = await fetch('/api/reports/generate-intelligent-real-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ticker: ticker,
-          title: `${ticker} - Comprehensive Financial Analysis`,
           template: 'intelligent-institutional',
-          author: 'TriSight AI Research Team'
+          includeAIAnalysis: true,
+          includeProgressiveContext: true
         })
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        throw new Error(`Failed to fetch intelligent data: ${response.statusText}`);
       }
 
-      const reportData = await response.json();
-      console.log('📊 Report data received:', reportData);
+      const intelligentData = await response.json();
+      console.log('📊 Intelligent data received:', intelligentData);
 
-      if (!reportData || !reportData.success) {
-        throw new Error('Report generation failed - no valid data returned');
+      if (!intelligentData.success) {
+        throw new Error('Failed to generate intelligent report data');
       }
 
-      // Add report ID for tracking
-      reportData.reportId = reportData.reportId || `pdf-${Date.now()}`;
+      console.log('📄 Generating complete PDF with server-side jsPDF...');
 
-      console.log('📄 Creating HTML report template...');
-
-      // Create a temporary container for the HTML report
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '210mm';
-      tempContainer.style.background = 'white';
-      document.body.appendChild(tempContainer);
-
-      // Render the HTML report template
-      const { createRoot } = await import('react-dom/client');
-      const root = createRoot(tempContainer);
-
-      await new Promise<void>((resolve) => {
-        root.render(
-          <HTMLReportTemplate reportData={reportData} />
-        );
-        // Give React time to render
-        setTimeout(resolve, 1000);
+      // Generate complete professional PDF using server-side jsPDF
+      const pdfResponse = await fetch('/api/reports/generate-complete-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportData: intelligentData })
       });
 
-      console.log('📸 Converting HTML to canvas...');
-
-      // Convert HTML to canvas
-      const canvas = await html2canvas(tempContainer.firstChild as HTMLElement, {
-        scale: 2, // Higher quality
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: 794, // A4 width in pixels at 96 DPI
-        height: 1123 // A4 height in pixels at 96 DPI
-      });
-
-      console.log('📄 Creating PDF from canvas...');
-
-      // Create PDF
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
-      let position = 0;
-
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      // Add additional pages if needed
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      if (!pdfResponse.ok) {
+        const errorText = await pdfResponse.text();
+        throw new Error(`PDF generation failed: ${pdfResponse.statusText} - ${errorText}`);
       }
 
-      console.log('✅ PDF created successfully!');
+      console.log('📄 PDF generated successfully, downloading...');
+
+      // Get PDF blob and download it
+      const pdfBlob = await pdfResponse.blob();
+      const url = URL.createObjectURL(pdfBlob);
+
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${ticker}-complete-financial-analysis.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       // Clean up
-      document.body.removeChild(tempContainer);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
 
-      // Save PDF
-      const fileName = `${ticker}_Financial_Analysis_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
-
-      console.log('🎉 PDF downloaded successfully!');
+      console.log('🎉 Complete PDF downloaded successfully!');
 
     } catch (error) {
-      console.error('❌ PDF generation failed:', error);
+      console.error('❌ Complete PDF generation failed:', error);
       alert(`PDF generation failed: ${error.message}`);
     }
   }, [selectedSymbol]);

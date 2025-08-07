@@ -328,7 +328,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
       logDebug('ExportPanel', 'Intelligent data generated, creating complete PDF...');
 
       // Generate complete professional PDF using server-side jsPDF
-      const pdfResponse = await fetch('/api/reports/generate-complete-pdf-endpoint', {
+      const pdfResponse = await fetch('/api/reports/generate-complete-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reportData: intelligentData })
