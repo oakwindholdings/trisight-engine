@@ -1,0 +1,19 @@
+---
+type: "manual"
+---
+
+# File: .cursor/rules/tech-stack.mdc
+---
+description: Tech stack for TriSight
+alwaysApply: true
+---
+
+# Tech Stack
+- React
+- TypeScript
+- D3 (visualizations)
+- Styled-components
+- Supabase
+- TwelveData API
+- Jest (unit tests)
+- Cypress (E2E tests)

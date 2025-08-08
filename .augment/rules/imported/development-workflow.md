@@ -1,0 +1,14 @@
+---
+type: "manual"
+---
+
+# File: .cursor/rules/development-workflow.mdc
+---
+description: Development workflow guidelines
+alwaysApply: true
+---
+
+# Development Workflow
+- Use version control; enforce code reviews via PRs.
+- Test in Chrome, Firefox, mobile envs.
+- Follow semantic versioning; maintain changelog.

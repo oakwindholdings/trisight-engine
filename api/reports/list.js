@@ -1,9 +1,8 @@
-// api/reports/list.ts
+// api/reports/list.js
 // Vercel serverless function for listing reports
 // In serverless architecture, we'll integrate with Supabase for storage
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -19,7 +18,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handler(req, res) {
   try {
     // Set CORS headers
     Object.entries(corsHeaders).forEach(([key, value]) => {
@@ -100,4 +99,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 }
-}
+
+module.exports = handler;

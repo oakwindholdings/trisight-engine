@@ -1,0 +1,15 @@
+---
+type: "manual"
+---
+
+# File: .cursor/rules/documentation.mdc
+---
+description: Documentation standards
+globs: "**/*.md,README.md"
+alwaysApply: false
+---
+
+# Documentation
+- Maintain README with setup, API usage, and data flows.
+- Document Supabase/TwelveData integrations.
+- No comments unless complex logic; document security policies.

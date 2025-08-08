@@ -233,6 +233,7 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
   const [selectedFormats, setSelectedFormats] = useState<Set<string>>(new Set(['pdf']));
   const [exportQueue, setExportQueue] = useState<QueueItem[]>([]);
   const [isExporting, setIsExporting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   useEffect(() => {
     // Load export history from localStorage
@@ -307,17 +308,33 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
       // Get custom prompts from localStorage or state
       const customPrompts = JSON.parse(localStorage.getItem('reportPrompts') || '{}');
 
+      // SAFE TESTING: Check for enhancement flags
+      const testEnhanced = localStorage.getItem('testEnhanced') === 'true';
+      const testEnhancedFinancial = localStorage.getItem('testEnhancedFinancial') === 'true';
+      const useMultiModel = localStorage.getItem('useMultiModel') === 'true';
+
+      if (testEnhanced || testEnhancedFinancial) {
+        console.log(`🧪 TESTING ENHANCED VERSION:`);
+        console.log(`  - Market Overview: ${testEnhanced ? 'ENHANCED' : 'standard'}`);
+        console.log(`  - Financial Analysis: ${testEnhancedFinancial ? 'ENHANCED' : 'standard'}`);
+        console.log(`  - Multi-model AI: ${useMultiModel ? 'ENABLED' : 'disabled'}`);
+      }
+
       // Parallel fetch all sections - each has its own 10-second timeout
       const sectionRequests = [
         {
           name: 'Market Overview',
-          endpoint: '/api/reports/sections/market-overview',
-          customPrompt: customPrompts.marketOverview
+          endpoint: testEnhanced
+            ? '/api/reports/sections/market-overview-enhanced'
+            : '/api/reports/sections/market-overview',
+          customPrompt: customPrompts.marketOverview,
+          useMultiModel: testEnhanced && useMultiModel
         },
         {
           name: 'Financial Analysis',
-          endpoint: '/api/reports/sections/financial-analysis',
-          customPrompt: customPrompts.financialAnalysis
+          endpoint: testEnhancedFinancial ? '/api/reports/sections/financial-analysis-enhanced' : '/api/reports/sections/financial-analysis',
+          customPrompt: customPrompts.financialAnalysis,
+          useMultiModel: testEnhancedFinancial && useMultiModel
         },
         {
           name: 'Technical Analysis',
@@ -336,7 +353,8 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ticker: ticker,
-              customPrompt: section.customPrompt
+              customPrompt: section.customPrompt,
+              useMultiModel: section.useMultiModel
             })
           });
 
@@ -612,8 +630,63 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
           })}
         </FormatList>
       </Section>
-      
-      <ExportButton 
+
+      {/* SAFE TESTING CONTROLS */}
+      <Section style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+        <SectionTitle style={{ fontSize: '14px', color: '#64748b' }}>🧪 Multi-Model Testing</SectionTitle>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={localStorage.getItem('testEnhanced') === 'true'}
+              onChange={(e) => {
+                localStorage.setItem('testEnhanced', e.target.checked.toString());
+                console.log('Enhanced testing:', e.target.checked ? 'ENABLED' : 'DISABLED');
+              }}
+            />
+            Test Enhanced Market Overview
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={localStorage.getItem('testEnhancedFinancial') === 'true'}
+              onChange={(e) => {
+                localStorage.setItem('testEnhancedFinancial', e.target.checked.toString());
+                console.log('Enhanced Financial testing:', e.target.checked ? 'ENABLED' : 'DISABLED');
+              }}
+            />
+            Test Enhanced Financial Analysis
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={localStorage.getItem('useMultiModel') === 'true'}
+              onChange={(e) => {
+                localStorage.setItem('useMultiModel', e.target.checked.toString());
+                console.log('Multi-model:', e.target.checked ? 'ENABLED' : 'DISABLED');
+              }}
+            />
+            Enable Multi-Model AI (GPT-4 + Perplexity)
+          </label>
+          <button
+            onClick={exportModularPDF}
+            disabled={isGenerating}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: isGenerating ? '#9ca3af' : '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '12px',
+              cursor: isGenerating ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isGenerating ? 'Generating...' : 'Generate Test PDF'}
+          </button>
+        </div>
+      </Section>
+
+      <ExportButton
         onClick={handleExport}
         disabled={selectedFormats.size === 0 || isExporting || !currentReport}
       >
