@@ -59,7 +59,8 @@ export class PDFEngine {
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
-      compress: true,
+      // Rule: Fidelity — turn off compression for crisper charts
+      compress: false,
       title: 'Investment Analysis Report',
       author: 'TriSight Analytics',
       subject: 'Equity Research Report',

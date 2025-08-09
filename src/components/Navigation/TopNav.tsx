@@ -162,9 +162,14 @@ export const TopNav: React.FC<TopNavProps> = ({ activeTab, onTabChange, onGenera
       
       <NavActions>
         {onGeneratePDF && (
-          <PDFButton onClick={onGeneratePDF}>
+          <PDFButton
+            data-testid="generate-pdf"
+            onClick={onGeneratePDF}
+            disabled={Boolean((window as any).__trisightGeneratingPdf)}
+            aria-busy={Boolean((window as any).__trisightGeneratingPdf)}
+          >
             <Download />
-            Generate PDF
+            {((window as any).__trisightGeneratingPdf) ? 'Generating…' : 'Generate PDF'}
           </PDFButton>
         )}
         <IconButton style={{ position: 'relative' }}>

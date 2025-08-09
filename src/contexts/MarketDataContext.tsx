@@ -63,7 +63,7 @@ interface MarketDataProviderProps {
 
 export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
   children,
-  initialSymbol = 'AAPL',
+  initialSymbol = '', // Rule: LockTicker — remove default 'AAPL'
   initialTimeframe = '5min'
 }) => {
   // Hydrate TwelveData API key before market data hook triggers requests

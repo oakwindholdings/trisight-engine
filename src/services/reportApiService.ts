@@ -103,15 +103,17 @@ export class ReportApiService {
    */
   async generateReport(request: ReportGenerationRequest): Promise<ReportGenerationResponse> {
     try {
-      // Use the INTELLIGENT REAL DATA endpoint with AI analysis
-      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-intelligent-real-data', request);
+      // Rule: ReportV2Only + LockTicker — use comprehensive endpoint and normalize ticker
+      const ticker = String(request?.ticker ?? '').toUpperCase().trim();
+      if (!ticker) throw new Error('Ticker is required');
+      const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-comprehensive', { ...request, ticker });
 
       // Emit custom event for UI updates
       if (response.data.success) {
         const event = new CustomEvent('reportGenerated', {
           detail: {
             reportId: response.data.generationId || response.data.reportId,
-            ticker: request.ticker,
+            ticker,
             title: request.title,
             timestamp: new Date().toISOString()
           }

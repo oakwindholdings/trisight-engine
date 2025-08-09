@@ -10,6 +10,7 @@ import { getStorageService } from '../../services/reportStorageService';
 import { PDFReportGenerator } from './PDFTemplates/PDFReportGenerator';
 import { generateReport } from '../../services/reportApiService';
 import { logDebug } from '../../utils/debug';
+import { ALWAYS_ON } from '@/config/reportDefaults'; // Rule: AlwaysOn
 
 const Container = styled.div`
   padding: 1rem;
@@ -302,16 +303,17 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
       console.log('🚀 Starting modular PDF generation...');
       setIsGenerating(true);
 
-      // Get current ticker
-      const ticker = currentReport?.ticker || 'AAPL';
+      // Rule: LockTicker — require ticker from currentReport
+      const ticker = (currentReport?.ticker || '').toUpperCase().trim();
+      if (!ticker) throw new Error('Ticker is required');
 
       // Get custom prompts from localStorage or state
       const customPrompts = JSON.parse(localStorage.getItem('reportPrompts') || '{}');
 
-      // SAFE TESTING: Check for enhancement flags
-      const testEnhanced = localStorage.getItem('testEnhanced') === 'true';
-      const testEnhancedFinancial = localStorage.getItem('testEnhancedFinancial') === 'true';
-      const useMultiModel = localStorage.getItem('useMultiModel') === 'true';
+      // Rule: AlwaysOn — permanent flags
+      const testEnhanced = true;
+      const testEnhancedFinancial = true;
+      const useMultiModel = true;
 
       if (testEnhanced || testEnhancedFinancial) {
         console.log(`🧪 TESTING ENHANCED VERSION:`);
@@ -458,13 +460,14 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({ currentReport }) => {
 
   const exportToPDF = async (): Promise<void> => {
     try {
-      // Get the current symbol from the app context
-      const ticker = currentReport?.ticker || 'NVDA'; // fallback to NVDA
+      // Rule: LockTicker — require ticker, no NVDA fallback
+      const ticker = (currentReport?.ticker || '').toUpperCase().trim();
+      if (!ticker) throw new Error('Ticker is required');
 
       logDebug('ExportPanel', 'Starting complete PDF generation for:', ticker);
 
-      // First get intelligent data with AI analysis
-      const intelligentResponse = await fetch('/api/reports/generate-intelligent-real-data', {
+      // Rule: ReportV2Only — call comprehensive endpoint directly
+      const intelligentResponse = await fetch('/api/reports/generate-comprehensive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

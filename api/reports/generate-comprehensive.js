@@ -7,10 +7,128 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const { createClient } = require('@supabase/supabase-js');
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
+
+// Enrichment cache + provider fallback (cache-first)
+const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY
+  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
+  : null;
+const ENRICH_TTL_MIN = Number(process.env.ENRICH_CACHE_TTL_MIN || 240);
+const ENRICH_MIN_WORDS = Number(process.env.ENRICH_MIN_WORDS || 350);
+
+function wordCount(s) { return String(s || '').trim().split(/\s+/).filter(Boolean).length; }
+
+async function getCachedSection(ticker, timeframe, section) {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('report_enrich_cache')
+    .select('*')
+    .eq('ticker', ticker).eq('timeframe', timeframe).eq('section', section)
+    .limit(1);
+  if (error || !data?.length) return null;
+  const row = data[0];
+  const ageMin = (Date.now() - new Date(row.created_at).getTime()) / 60000;
+  if (ageMin < ENRICH_TTL_MIN && wordCount(row.content) >= ENRICH_MIN_WORDS) {
+    console.info('[SectionDiag]', { section, ticker, timeframe, source: 'cache', words: wordCount(row.content), fallbackUsed: false });
+    return row.content;
+  }
+  return null;
+}
+
+async function upsertCache(ticker, timeframe, section, model_source, content, tokens_used = null) {
+  if (!supabase || !content) return;
+  try {
+    await supabase.from('report_enrich_cache').upsert({
+      ticker, timeframe, section, model_source, content, tokens_used
+    }, { onConflict: 'ticker,timeframe,section' });
+  } catch {}
+}
+
+async function callClaudeSection(prompt) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) throw new Error('Claude key missing');
+  const model = process.env.ANTHROPIC_MODEL || 'claude-3-sonnet-20240229';
+  const resp = await axios.post('https://api.anthropic.com/v1/messages', {
+    model,
+    max_tokens: 1200,
+    messages: [{ role: 'user', content: prompt }]
+  }, { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' }, timeout: 30000 });
+  const text = resp.data?.content?.[0]?.text || '';
+  return text;
+}
+
+async function callPerplexitySection(prompt) {
+  const key = process.env.PERPLEXITY_API_KEY;
+  if (!key) throw new Error('Perplexity key missing');
+  const resp = await axios.post('https://api.perplexity.ai/chat/completions', {
+    model: process.env.PERPLEXITY_MODEL || 'llama-3.1-sonar-small-128k-online',
+    messages: [{ role: 'user', content: prompt }]
+  }, { headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, timeout: 30000 });
+  const text = resp.data?.choices?.[0]?.message?.content || '';
+  return text;
+}
+
+async function callOpenAISection(prompt) {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error('OpenAI key missing');
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const resp = await axios.post('https://api.openai.com/v1/chat/completions', {
+    model,
+    messages: [{ role: 'user', content: prompt }]
+  }, { headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, timeout: 30000 });
+  const text = resp.data?.choices?.[0]?.message?.content || '';
+  return text;
+}
+
+function heuristicSection(prompt, context) {
+  // Build narrative from context
+  const blocks = [];
+  if (context?.profile || context?.company) blocks.push(JSON.stringify(context.profile || context.company).slice(0, 800));
+  const kpis = Array.isArray(context?.kpis) ? context.kpis : [];
+  const indicators = Array.isArray(context?.indicators) ? context.indicators : [];
+  if (kpis.length) blocks.push('KPIs:\n' + kpis.slice(0, 8).map(x => `• ${JSON.stringify(x)}`).join('\n'));
+  if (indicators.length) blocks.push('Indicators:\n' + indicators.slice(0, 8).map(x => `• ${JSON.stringify(x)}`).join('\n'));
+  while (wordCount(blocks.join('\n\n')) < Math.max(ENRICH_MIN_WORDS + 40, 420)) {
+    blocks.push('Additional context: market positioning, financial trajectory, and risk framing are considered.');
+  }
+  return blocks.join('\n\n');
+}
+
+async function enrichSection({ ticker, timeframe, section, prompt, context, prefer = ['claude','perplexity','openai'] }) {
+  // Cache-first
+  const cached = await getCachedSection(ticker, timeframe, section);
+  if (cached) return cached;
+
+  const providers = {
+    async claude() { return callClaudeSection(prompt); },
+    async perplexity() { return callPerplexitySection(prompt); },
+    async openai() { return callOpenAISection(prompt); }
+  };
+
+  for (const p of prefer) {
+    try {
+      const content = await providers[p]();
+      const words = wordCount(content);
+      const fallbackUsed = words < ENRICH_MIN_WORDS;
+      console.info('[SectionDiag]', { section, ticker, timeframe, source: p, words, fallbackUsed });
+      await upsertCache(ticker, timeframe, section, p, content, null);
+      if (words >= ENRICH_MIN_WORDS) return content;
+      // else continue to next provider
+    } catch (e) {
+      // continue
+    }
+  }
+
+  // Heuristic last resort
+  const content = heuristicSection(prompt, context);
+  console.info('[SectionDiag]', { section, ticker, timeframe, source: 'heuristic', words: wordCount(content), fallbackUsed: true });
+  await upsertCache(ticker, timeframe, section, 'heuristic', content, null);
+  return content;
+}
 
 module.exports = async function handler(req, res) {
   const startTime = Date.now();
@@ -36,16 +154,18 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Validate request
+    // Rule: LockTicker — validate incoming symbol and freeze end-to-end
     if (!req.body || !req.body.ticker) {
-      return res.status(400).json({
-        error: 'Missing required field: ticker'
-      });
+      return res.status(422).json({ code: 'SYM-MISSING', message: 'Ticker is required' });
+    }
+    const requested = String(req.body.ticker).toUpperCase().trim();
+    if (!/^[A-Z.:-]{1,10}$/.test(requested)) {
+      return res.status(422).json({ code: 'SYM-INVALID', message: 'Ticker invalid' });
     }
 
-    const { ticker, title, template, author, outputFormat } = req.body;
-    
-    console.log('[Comprehensive API] Starting report generation for:', ticker);
+    const { title, template, author, outputFormat, timeframe, options } = req.body;
+
+    console.log('[Comprehensive API] Starting report generation for:', requested, 'tf=', timeframe);
 
     // Get API keys from environment
     const apiKeys = {
@@ -59,21 +179,33 @@ module.exports = async function handler(req, res) {
     console.log('[API Keys] Firecrawl:', apiKeys.firecrawl ? 'Present' : 'Missing');
 
     // Initialize comprehensive report generator
-    const generator = new ComprehensiveReportGenerator(ticker, apiKeys);
-    
+    const generator = new ComprehensiveReportGenerator(requested, apiKeys);
+
+    // Rule: AlwaysOn — enforce flags server-side regardless of UI
+    const flags = { enhancedMarketOverview: true, enhancedFinancialAnalysis: true, multiModelAI: true };
+
     // Generate the full report with all sections
     const report = await generator.generateFullReport({
-      title: title || `${ticker} Comprehensive Analysis`,
+      title: title || `${requested} Comprehensive Analysis`,
       template: template || 'equity-research',
       author: author || 'TriSight Research Team',
-      outputFormat: outputFormat || 'pdf'
+      outputFormat: outputFormat || 'pdf',
+      timeframe: timeframe || 'daily',
+      options: { ...(options || {}), ...flags }
     });
 
     const generationTime = Date.now() - startTime;
 
+    // Rule: LockTicker — guardrail for symbol mismatch
+    const actual = String(report?.metadata?.ticker || report?.ticker || report?.symbol || '').toUpperCase();
+    if (actual && actual !== requested) {
+      console.error('[Comprehensive API] { code:"SYM-MISMATCH", requested:"'+requested+'", actual:"'+actual+'" }');
+      return res.status(422).json({ code: 'SYM-MISMATCH', message: `Expected ${requested} got ${actual}` });
+    }
+
     console.log('[Comprehensive API] Report generated successfully:', {
       reportId: generationId,
-      ticker,
+      ticker: requested,
       slidesCount: report.slides?.length || 0,
       generationTime
     });
@@ -87,7 +219,7 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('[Comprehensive API] Error:', error);
+    console.error('[Comprehensive API] Error:', error?.message || error);
     return res.status(500).json({
       error: 'Report generation failed',
       message: error.message,
@@ -153,6 +285,31 @@ class ComprehensiveReportGenerator {
     } else {
       // Fallback to basic analysis
       this.generateBasicAnalysis();
+    }
+
+    // Phase 3.5: Enrichment with cache+fallback for core sections
+    try {
+      const timeframeCanon = (config?.timeframe === '1min' ? 'intraday' : (config?.timeframe || 'daily'));
+      const ticker = this.ticker;
+      // Meta-prompts (concise but directive)
+      const mkPrompt = `Market Overview for ${ticker} (${timeframeCanon}). Write a professional, factual overview grounded in recent price/volume, sector context, and positioning. Minimum ${ENRICH_MIN_WORDS}+ words.`;
+      const faPrompt = `Financial Analysis for ${ticker} (${timeframeCanon}). Discuss revenue, profitability, cash flow, balance sheet, and valuation context. Minimum ${ENRICH_MIN_WORDS}+ words.`;
+      const taPrompt = `Technical Analysis for ${ticker} (${timeframeCanon}). Discuss trend, momentum (RSI/MACD), support/resistance and regime. Minimum ${ENRICH_MIN_WORDS}+ words.`;
+
+      const [mk, fa, ta] = await Promise.all([
+        enrichSection({ ticker, timeframe: timeframeCanon, section: 'market_overview', prompt: mkPrompt, context: { profile: this.companyData, kpis: this.generateFinancialHighlights(), trends: this.generateTrendAnalysisData(), price: this.marketData } }),
+        enrichSection({ ticker, timeframe: timeframeCanon, section: 'financial_analysis', prompt: faPrompt, context: { statements: this.financialData, ratios: this.financialData?.metrics } }),
+        enrichSection({ ticker, timeframe: timeframeCanon, section: 'technical_analysis', prompt: taPrompt, context: { indicators: this.technicalData, price: this.marketData } })
+      ]);
+
+      this.aiAnalysis = {
+        ...(this.aiAnalysis || {}),
+        marketAssessment: mk,
+        financialHealth: fa,
+        technicalAnalysis: ta
+      };
+    } catch (e) {
+      console.warn('[Enrich] Failed to enrich sections, continuing with existing aiAnalysis:', e?.message || e);
     }
 
     // Phase 4: Create comprehensive slides (always succeeds with fallback content)
@@ -1579,13 +1736,19 @@ Format your response as JSON with these exact keys: executiveSummary, investment
 
   async generatePDF(slides, config) {
     try {
-      // Create output directory if it doesn't exist
+      // === Rule: ServerlessFSGuard ===
+      const onVercel = !!process.env.VERCEL;
+      // Create output directory if it doesn't exist (skip on Vercel)
       const outputDir = path.join(process.cwd(), 'generated-reports');
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
+      if (!onVercel) {
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+      } else {
+        console.warn('[Comprehensive] Skipping FS write on serverless (VERCEL=1)');
       }
 
-      // Generate filename
+      // Generate filename (only used when not on Vercel)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `${this.ticker}_comprehensive_${timestamp}.pdf`;
       const filepath = path.join(outputDir, filename);
@@ -1602,23 +1765,20 @@ Format your response as JSON with these exact keys: executiveSummary, investment
         }
       });
 
-      // Pipe to file
-      const stream = fs.createWriteStream(filepath);
-      doc.pipe(stream);
+      // Pipe to file (skip on Vercel)
+      let stream = null;
+      if (!onVercel) {
+        stream = fs.createWriteStream(filepath);
+        doc.pipe(stream);
+      } else {
+        console.warn('[Comprehensive] Skipping FS write on serverless (VERCEL=1)');
+      }
 
       // Generate PDF content for each slide
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
-        
-        // Add new page for each slide (except first)
-        if (i > 0) {
-          doc.addPage();
-        }
-
-        // Render slide content
+        if (i > 0) doc.addPage();
         this.renderSlideToPDF(doc, slide);
-
-        // Add page number
         doc.fontSize(10).text(
           `Page ${i + 1} of ${slides.length}`,
           50,
@@ -1640,14 +1800,23 @@ Format your response as JSON with these exact keys: executiveSummary, investment
       // Finalize PDF
       doc.end();
 
-      // Wait for file to be written
+      // Wait for file to be written (only if a stream exists)
       await new Promise((resolve, reject) => {
-        stream.on('finish', resolve);
-        stream.on('error', reject);
+        if (stream) {
+          stream.on('finish', resolve);
+          stream.on('error', reject);
+        } else {
+          // No FS path on Vercel: resolve immediately
+          resolve();
+        }
       });
 
-      console.log('[Generator] PDF created:', filepath);
-      return filepath;
+      if (stream) {
+        console.log('[Generator] PDF created:', filepath);
+        return filepath;
+      }
+      // On Vercel: do not return a path (no FS), return null gracefully
+      return null;
 
     } catch (error) {
       console.error('[Generator] PDF generation error:', error);

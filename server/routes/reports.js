@@ -63,29 +63,36 @@ router.post('/generate-comprehensive', async (req, res) => {
   const startTime = Date.now();
   
   try {
-    // Validate request
+    // Rule: LockTicker — strict symbol validation
     if (!req.body || !req.body.ticker) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required field: ticker'
-      });
+      return res.status(422).json({ success: false, code: 'SYM-MISSING', message: 'Ticker is required' });
+    }
+    const requested = String(req.body.ticker).toUpperCase().trim();
+    if (!/^[A-Z.:-]{1,10}$/.test(requested)) {
+      return res.status(422).json({ success: false, code: 'SYM-INVALID', message: 'Ticker format invalid' });
     }
 
-    const { ticker, title, template, author, outputFormat = 'json' } = req.body;
-    
+    const { title, template, author, outputFormat = 'json' } = req.body;
+
     console.log(`\n${'='.repeat(80)}`);
+    console.log(`[SymbolPath] requested=${requested}`); // Rule: LockTicker
     console.log(`[API] Comprehensive Report Request`);
-    console.log(`  Ticker: ${ticker}`);
     console.log(`  Output Format: ${outputFormat}`);
     console.log(`${'='.repeat(80)}\n`);
 
     // Generate comprehensive report with ALL data
-    const report = await reportService.generateComprehensiveReport(ticker, {
+    const report = await reportService.generateComprehensiveReport(requested, {
       title,
       template,
       author,
       outputFormat
     });
+
+    // Guardrail: ensure downstream preserved symbol
+    const actual = (report?.ticker || report?.symbol || '').toUpperCase();
+    if (actual && actual !== requested) {
+      return res.status(422).json({ success: false, code: 'SYM-MISMATCH', message: `Requested ${requested} but got ${actual}` });
+    }
 
     // Send successful response
     return res.status(200).json(report);

@@ -47,6 +47,7 @@ import { FeedSidebar } from './feed/components/FeedSidebar';
 import AppProviders from './components/AppProviders';
 import { useMarketDataContext } from './contexts/MarketDataContext';
 import { usePatternContext } from './contexts/PatternContext';
+import { ALWAYS_ON } from './config/reportDefaults'; // Rule: AlwaysOn
 
 // Import feature flags
 import { isFeatureEnabled } from './utils/featureFlags';
@@ -346,7 +347,7 @@ function AppContent() {
   // Symbol selection state
   const [selectedSymbol, setSelectedSymbol] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_SYMBOL);
-    return saved || 'AAPL';
+    return (saved || '').toUpperCase(); // Rule: LockTicker — no AAPL fallback
   });
   
   // State for symbol rankings - initialize empty
@@ -825,140 +826,108 @@ function AppContent() {
   // MODULAR PDF GENERATION using parallel section fetching
   const generatePDFReport = useCallback(async () => {
     try {
-      console.log('🚀 Starting modular PDF generation...');
+      // Rule: LockTicker — use chart context only; no AAPL fallback
+      const tickerRaw = (selectedSymbol || '').toUpperCase().trim();
+      if (!tickerRaw || !/^[A-Z.:-]{1,10}$/.test(tickerRaw)) throw new Error('Ticker is required');
 
-      // Get current ticker from the app state
-      const ticker = selectedSymbol || 'AAPL';
-
-      // Get custom prompts from localStorage or state
+      // Rule: AlwaysOn — pass permanent flags
+      const opts = ALWAYS_ON;
       const customPrompts = JSON.parse(localStorage.getItem('reportPrompts') || '{}');
 
-      // Parallel fetch all sections - each has its own 10-second timeout
-      const sectionRequests = [
-        {
-          name: 'Market Overview',
-          endpoint: '/api/reports/sections/market-overview',
-          customPrompt: customPrompts.marketOverview
-        },
-        {
-          name: 'Financial Analysis',
-          endpoint: '/api/reports/sections/financial-analysis',
-          customPrompt: customPrompts.financialAnalysis
-        },
-        {
-          name: 'Technical Analysis',
-          endpoint: '/api/reports/sections/technical-analysis',
-          customPrompt: customPrompts.technicalAnalysis
-        }
-      ];
+      console.info(`🚀 Generate PDF: {symbol:"${tickerRaw}", timeframe:"${timeframe}"} → /api/reports/generate-comprehensive (alwaysOn)`);
 
-      console.log('📊 Fetching all sections in parallel...');
+      // Rule: Reliability — prevent double fire
+      if (window.__trisightGeneratingPdf) {
+        console.warn('[GeneratePDF] Request already in flight, ignoring duplicate click.');
+        return;
+      }
+      window.__trisightGeneratingPdf = true;
 
-      const sectionPromises = sectionRequests.map(async (section) => {
-        try {
-          console.log(`  → Fetching ${section.name}...`);
-          const response = await fetch(section.endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ticker: ticker,
-              customPrompt: section.customPrompt
-            })
-          });
-
-          if (!response.ok) throw new Error(`Failed: ${response.status}`);
-
-          const data = await response.json();
-          console.log(`  ✅ ${section.name} complete`);
-          return data;
-
-        } catch (error) {
-          console.error(`  ❌ ${section.name} failed:`, error);
-          return {
-            success: false,
-            section: section.name.toLowerCase().replace(' ', '-'),
-            error: error.message
-          };
-        }
-      });
-
-      // Wait for all sections to complete
-      const sections = await Promise.allSettled(sectionPromises);
-
-      // Combine successful sections into report format
-      const combinedReport = {
-        success: true,
-        reportId: `modular-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        ticker: ticker,
-        title: `${ticker} Intelligent Analysis`,
-        slides: [],
-        charts: [],
-        aiAnalysis: {},
-        rawData: {},
-        dataStatus: {},
-        metadata: {
-          generatedAt: new Date().toISOString(),
-          sectionsCompleted: 0,
-          totalSections: sectionRequests.length
-        }
-      };
-
-      // Process each section result
-      sections.forEach((result, index) => {
-        if (result.status === 'fulfilled' && result.value?.success) {
-          const section = result.value;
-
-          // Merge slides
-          if (section.slides) {
-            combinedReport.slides.push(...section.slides);
-          }
-
-          // Merge raw data
-          if (section.rawData) {
-            combinedReport.rawData = { ...combinedReport.rawData, ...section.rawData };
-          }
-
-          // Merge AI analysis
-          if (section.aiAnalysis) {
-            combinedReport.aiAnalysis = { ...combinedReport.aiAnalysis, ...section.aiAnalysis };
-          }
-
-          // Track status
-          combinedReport.dataStatus[section.section] = { success: true };
-          combinedReport.metadata.sectionsCompleted++;
-
-        } else {
-          const sectionName = sectionRequests[index].name;
-          combinedReport.dataStatus[sectionName] = { success: false };
-          console.warn(`Section ${sectionName} was not included in report`);
-        }
-      });
-
-      const totalSections = combinedReport?.metadata?.totalSections ?? combinedReport?.slides?.length ?? 0;
-      console.info(`📄 Generating PDF with ${totalSections}/${totalSections} sections...`);
-
-      // Generate PDF using existing endpoint
-      const pdfResponse = await fetch('/api/reports/generate-complete-pdf', {
+      // Rule: ReportV2Only — legacy modular fetching disabled in toolbar flow
+      const compRes = await fetch('/api/reports/generate-comprehensive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reportData: combinedReport })
+        body: JSON.stringify({
+          // Rule: LockTicker
+          ticker: tickerRaw,
+          timeframe,
+          // Rule: AlwaysOn — force server-side behavior regardless of UI
+          options: {
+            enhancedMarketOverview: true,
+            enhancedFinancialAnalysis: true,
+            multiModelAI: true
+          }
+        })
+      });
+      if (!compRes.ok) {
+        const err = await compRes.text();
+        throw new Error(`Comprehensive failed: ${compRes.status} ${err}`);
+      }
+      const compData = await compRes.json();
+
+      const totalSectionsV2 = compData?.metadata?.totalSections ?? compData?.slides?.length ?? 0; // Rule: CanonicalSections
+      console.info(`📄 Generating PDF with ${totalSectionsV2}/${totalSectionsV2} sections...`);
+
+      // === Rule: LockTickerPayload (client) ===
+      // 1) Normalize timeframe (e.g., '1min' => 'intraday')
+      const normalizedTimeframe = (timeframe === '1min' ? 'intraday' : (timeframe || 'daily'));
+
+      // 2) Compute safe ticker from compData or UI
+      const safeTicker = String(
+        compData?.metadata?.ticker ||
+        compData?.ticker ||
+        tickerRaw ||
+        ''
+      ).toUpperCase().trim();
+      if (!safeTicker) {
+        throw new Error('Complete-PDF: Missing ticker after comprehensive step');
+      }
+
+      // 3) Build a ticker-safe payload
+      const pdfPayload = {
+        ...compData,
+        ticker: safeTicker,
+        metadata: {
+          ...(compData?.metadata || {}),
+          ticker: safeTicker,
+          timeframe: normalizedTimeframe,
+        },
+      };
+
+      // 4) Loud client-side proof before sending
+      console.info('[CompletePDF/payload]', {
+        topTicker: safeTicker,
+        rdTicker: pdfPayload.ticker,
+        mdTicker: pdfPayload.metadata?.ticker,
+        tf: pdfPayload.metadata?.timeframe,
       });
 
-      if (!pdfResponse.ok) {
-        const errorText = await pdfResponse.text();
-        throw new Error(`PDF generation failed: ${pdfResponse.statusText} - ${errorText}`);
+      // 5) Send both top-level ticker and reportData
+      const pdfRes = await fetch('/api/reports/generate-complete-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker: safeTicker, reportData: pdfPayload })
+      })
+      const ct = pdfRes.headers.get('content-type') || ''
+      if (!pdfRes.ok || ct.includes('application/json')) {
+        let errJson: any = {}
+        try { errJson = await pdfRes.json() } catch {}
+        console.error('❌ Complete PDF generation failed:', errJson || pdfRes.statusText)
+        window.__trisightGeneratingPdf = false
+        alert(`PDF generation failed: ${errJson?.code||pdfRes.status} - ${errJson?.message||'See console'}`)
+        return
       }
 
       console.log('📄 PDF generated successfully, downloading...');
 
       // Get PDF blob and download it
-      const pdfBlob = await pdfResponse.blob();
+      const pdfBlob = await pdfRes.blob();
       const url = URL.createObjectURL(pdfBlob);
 
       // Create download link
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${ticker}-complete-financial-analysis.pdf`;
+      link.download = `${tickerRaw}-complete-financial-analysis.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -968,7 +937,12 @@ function AppContent() {
         URL.revokeObjectURL(url);
       }, 1000);
 
-      console.log('🎉 Complete PDF downloaded successfully!');
+      console.info('🎉 Complete PDF downloaded successfully!');
+      // Rule: Reliability — clear in-flight flag
+      window.__trisightGeneratingPdf = false;
+      // Rule: Backoff + PauseUntilReady — resume poller after success
+      try { (window as any).reportHistoryPoller?.resume?.(); } catch {}
+      try { require('./services/reportHistoryPoller').reportHistoryPoller.resume(); } catch {}
 
     } catch (error) {
       console.error('❌ Complete PDF generation failed:', error);

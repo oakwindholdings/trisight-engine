@@ -18,6 +18,18 @@ import { logDebug } from '../../utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 
+
+// Rule: SectionDiag
+export function ensureMinWords(sectionName: string, text: string, min = Number(process.env.ENRICH_MIN_WORDS || 350)) {
+  const words = (text || '').trim().split(/\s+/).filter(Boolean).length;
+  if (words < min) {
+    console.warn('[SectionDiag/short]', { section: sectionName, words, min });
+  } else {
+    console.info('[SectionDiag/ok]', { section: sectionName, words });
+  }
+  return text;
+}
+
 export interface AssemblyResult {
   success: boolean;
   reportPath?: string;
@@ -74,7 +86,7 @@ export class ReportAssembler {
   ): Promise<GeneratedReport> {
     const startTime = Date.now();
     logDebug('ReportAssembler', `Assembling report for ${data?.ticker || 'unknown'}`);
-    
+
     console.log('[ReportAssembler] Input data structure:', {
       hasData: !!data,
       ticker: data?.ticker,
@@ -84,10 +96,10 @@ export class ReportAssembler {
       analysisKeys: analysis ? Object.keys(analysis) : [],
       hasAIContent: !!aiContent
     });
-    
+
     const slides = await this.createSlides(data, analysis, aiContent, config);
     const outputPath = await this.generateOutput(config, slides);
-    
+
     const report: GeneratedReport = {
       config,
       companyData: data,
@@ -118,7 +130,7 @@ export class ReportAssembler {
     options: ReportGenerationOptions
   ): Promise<AssemblyResult> {
     logDebug('ReportAssembler', 'Legacy assemble method called');
-    
+
     try {
       console.log('[ReportAssembler] ProcessedData structure:', {
         hasCompanyData: !!processedData.companyData,
@@ -128,10 +140,10 @@ export class ReportAssembler {
         calculationsKeys: processedData.calculations ? Object.keys(processedData.calculations) : [],
         processedDataKeys: Object.keys(processedData)
       });
-      
+
       // If we have processed sections (slides), use them directly
       let slides = processedData.processedSections || [];
-      
+
       // If no slides but we have company data, generate them
       if (slides.length === 0 && (processedData.companyData || config.companyData)) {
         slides = await this.createSlides(
@@ -139,10 +151,10 @@ export class ReportAssembler {
           processedData.calculations || config.analysis
         );
       }
-      
+
       // Generate the actual report file
       const outputPath = await this.generateOutput(config, slides);
-      
+
       return {
         success: true,
         reportPath: outputPath,
@@ -158,7 +170,7 @@ export class ReportAssembler {
   }
 
   private async createSlides(
-    data: CompanyData, 
+    data: CompanyData,
     analysis: AnalysisResults,
     aiContent?: AIGeneratedContent,
     config?: ReportConfig
@@ -166,7 +178,7 @@ export class ReportAssembler {
     // Always use comprehensive slide generator for professional reports
     // This generates 15-20 slides with full content
     const slides = await generateComprehensiveSlides(data, analysis, aiContent, config);
-    
+
     logDebug('ReportAssembler', `Created ${slides.length} comprehensive slides (expected: 15-20)`);
     return slides;
   }
@@ -176,20 +188,20 @@ export class ReportAssembler {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `${config.ticker}_report_${timestamp}.${format}`;
     const outputPath = path.join(this.outputDirectory, filename);
-    
+
     logDebug('ReportAssembler', `Generating ${format.toUpperCase()} report: ${outputPath}`);
-    
+
     // Get company data and analysis from the config or first slide
     const companyData = config.companyData || this.extractCompanyData(slides);
     const analysis = config.analysis || this.extractAnalysis(slides);
-    
+
     // Generate charts for all slides that need them
     this.generatedCharts = await this.generateChartsForSlides(slides, companyData);
     logDebug('ReportAssembler', `Generated ${this.generatedCharts.length} charts`);
-    
+
     try {
       let reportData: Uint8Array;
-      
+
       switch (format.toLowerCase()) {
         case 'pdf':
           reportData = await this.pdfEngine.generatePDF(
@@ -200,7 +212,7 @@ export class ReportAssembler {
           );
           await this.pdfEngine.saveToFile(reportData, outputPath);
           break;
-          
+
         case 'pptx':
         case 'powerpoint':
           reportData = await this.pptxEngine.generatePPTX(
@@ -211,7 +223,7 @@ export class ReportAssembler {
           );
           await this.pptxEngine.saveToFile(reportData, outputPath);
           break;
-          
+
         case 'json':
           // Fallback to JSON for API/UI consumption
           const jsonData = {
@@ -231,7 +243,7 @@ export class ReportAssembler {
             })),
             summary: this.generateExecutiveSummary(slides)
           };
-          
+
           if (typeof window === 'undefined') {
             // Node.js environment
             fs.writeFileSync(outputPath, JSON.stringify(jsonData, null, 2));
@@ -240,14 +252,14 @@ export class ReportAssembler {
             (window as any).__generatedReport = jsonData;
           }
           break;
-          
+
         default:
           throw new Error(`Unsupported output format: ${format}`);
       }
-      
+
       logDebug('ReportAssembler', `Report successfully generated: ${outputPath}`);
       return outputPath;
-      
+
     } catch (error) {
       logDebug('ReportAssembler', `Error generating report: ${error}`);
       throw error;
@@ -274,7 +286,7 @@ export class ReportAssembler {
     const titleSlide = slides.find(s => s.layout === 'title');
     const ticker = titleSlide?.content[0]?.data?.subtitle?.match(/Ticker: (\w+)/)?.[1] || 'UNKNOWN';
     const companyName = titleSlide?.content[0]?.data?.title || 'Unknown Company';
-    
+
     return {
       ticker,
       companyName,
@@ -302,7 +314,7 @@ export class ReportAssembler {
   private extractAnalysis(slides: ReportSlide[]): AnalysisResults {
     // Extract from executive summary or use defaults
     const execSlide = slides.find(s => s.title === 'Executive Summary');
-    
+
     // Return empty analysis results - these should be calculated from real data
     // Not extracted from slides or hardcoded
     return {} as AnalysisResults;
@@ -349,7 +361,7 @@ export class ReportAssembler {
           logDebug('ReportAssembler', `Found chart request: type=${content.data.type}`);
           try {
             let chart: GeneratedChart;
-            
+
             switch (content.data.type) {
               case 'candlestick':
                 // Generate standard candlestick chart using Chart.js/Canvas with fallback
@@ -388,7 +400,7 @@ export class ReportAssembler {
 
                 chart = extractOrFallback(candlestickResult, this.generateFallbackChart('candlestick', companyData.ticker));
                 break;
-                
+
               case 'line':
                 // Generate Canvas-based line chart (PNG output for PDF compatibility) with fallback
                 const lineChartResult = await safeMaybe('LineChart', async () => {
@@ -425,7 +437,7 @@ export class ReportAssembler {
                   dataLength: chart.data?.length || 0
                 });
                 break;
-                
+
               case 'bar':
                 // Generate Canvas-based bar chart (PNG output for PDF compatibility)
                 const barData = this.prepareBarChartData(companyData);
@@ -456,7 +468,7 @@ export class ReportAssembler {
                   format: chart.format
                 });
                 break;
-                
+
               case 'pie':
                 // Generate pie chart for revenue breakdown
                 const pieData = this.preparePieChartData(companyData);
@@ -470,7 +482,7 @@ export class ReportAssembler {
                 );
                 chart = pieCanvasChart as GeneratedChart;
                 break;
-                
+
               default:
                 // Default to line chart
                 const defaultData = this.prepareLineChartData(companyData);
@@ -485,7 +497,7 @@ export class ReportAssembler {
                 );
                 chart = defaultCanvasChart as GeneratedChart;
             }
-            
+
             charts.push(chart);
 
             // CRITICAL FIX: Update the slide content with the generated chart data
@@ -513,7 +525,7 @@ export class ReportAssembler {
         }
       }
     }
-    
+
     return charts;
   }
 
@@ -526,7 +538,7 @@ export class ReportAssembler {
     if (!prices || prices.length === 0) {
       return []; // Return empty array if no data
     }
-    
+
     return prices.slice(0, 30).map((p, i) => ({
       date: p.date,
       price: p.close,
@@ -539,11 +551,11 @@ export class ReportAssembler {
    */
   private prepareBarChartData(companyData: CompanyData): any[] {
     const statements = companyData.financials?.incomeStatement || [];
-    
+
     if (statements.length === 0) {
       return []; // Return empty array if no data
     }
-    
+
     return statements.slice(0, 4).map(stmt => ({
       quarter: this.formatQuarter(stmt.date),
       revenue: (stmt.revenue || 0) / 1e6, // Convert to millions
@@ -557,11 +569,11 @@ export class ReportAssembler {
   private preparePieChartData(companyData: CompanyData): any[] {
     const latestIncome = companyData.financials?.incomeStatement?.[0];
     const revenue = latestIncome?.revenue;
-    
+
     if (!revenue) {
       return []; // Return empty array if no revenue data
     }
-    
+
     // Without segment data, we can't create a meaningful pie chart
     // In a real implementation, this would come from segment reporting data
     return [
@@ -746,7 +758,7 @@ export class ReportAssembler {
         return false;
       }
     }
-    
+
     return true;
   }
 }

@@ -21,13 +21,14 @@ class ReportHistoryPoller {
   private lastPayload: ReportsUpdatePayload | null = null;
   private hidden: boolean = typeof document !== 'undefined' ? document.hidden : false;
   private api: ReportApiService = new ReportApiService();
+  private paused: boolean = false; // Rule: Backoff + PauseUntilReady
 
   constructor() {
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         this.hidden = document.hidden;
         if (this.hidden) this.stopTimer();
-        else if (this.subscribers.size > 0) this.scheduleNext(0);
+        else if (this.subscribers.size > 0 && !this.paused) this.scheduleNext(0);
       });
     }
   }
@@ -37,7 +38,7 @@ class ReportHistoryPoller {
     // Immediately deliver last payload if we have one
     if (this.lastPayload) cb(this.lastPayload);
 
-    if (!this.running && !this.hidden) {
+    if (!this.running && !this.hidden && !this.paused) {
       this.running = true;
       this.scheduleNext(0);
     }
@@ -51,6 +52,16 @@ class ReportHistoryPoller {
     };
   }
 
+  pause() {
+    this.paused = true;
+    this.stopTimer();
+  }
+
+  resume() {
+    this.paused = false;
+    if (this.subscribers.size > 0 && !this.hidden) this.scheduleNext(0);
+  }
+
   private stopTimer() {
     if (this.timer) {
       clearTimeout(this.timer);
@@ -60,6 +71,7 @@ class ReportHistoryPoller {
 
   private scheduleNext(delayMs: number) {
     this.stopTimer();
+    if (this.paused) return;
     this.timer = setTimeout(() => this.pollOnce(), delayMs);
   }
 
@@ -73,11 +85,25 @@ class ReportHistoryPoller {
       this.lastPayload = payload;
       this.subscribers.forEach(cb => cb(payload));
 
+      // Pause if Supabase-related error: require resume()
+      if (payload.errorCode && payload.errorCode.startsWith('LSUP-')) {
+        this.pause();
+        return;
+      }
+
       // Healthy: reset error backoff, schedule normal cadence
       this.errorBackoffMs = 2000;
       this.scheduleNext(this.backoffMs);
     } catch (e: any) {
       // Error: do not spam; emit a single inline error with last known error code if available
+
+// Expose for optional UI calls (no-op safe in tests)
+try {
+  if (typeof window !== 'undefined') {
+    (window as any).reportHistoryPoller = reportHistoryPoller;
+  }
+} catch {}
+
       const payload: ReportsUpdatePayload = {
         reports: [],
         errorCode: e?.code || e?.response?.data?.errorCode || 'LGEN-ERR'

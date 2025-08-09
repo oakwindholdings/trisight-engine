@@ -315,10 +315,10 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
       </HistoryHeader>
       
       <ReportsList>
-        {historyErrorCode ? (
+        {historyErrorCode && historyErrorCode.startsWith('LSUP-') ? (
           <EmptyState data-testid="history-error">
             <FileText />
-            <p>⚠ Export history temporarily unavailable ({historyErrorCode})</p>
+            <p>⚠ Export history not initialized yet ({historyErrorCode}). We'll retry after your next successful export.</p>
           </EmptyState>
         ) : filteredReports.length > 0 ? (
           filteredReports.map(report => (

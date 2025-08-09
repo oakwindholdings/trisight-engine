@@ -29,18 +29,19 @@ interface AppProvidersProps {
 function AppProviders({ children }: AppProvidersProps) {
   const ENABLE_PATTERN_FEED = process.env.REACT_APP_ENABLE_PATTERN_FEED !== 'false';
   // Read persisted values from localStorage
+  // Rule: LockTicker — never default to AAPL; prefer last saved symbol or empty
   const getInitialSymbol = (): string => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SYMBOL_INFO);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return parsed.symbol || 'AAPL';
+        return (parsed.symbol || '').toUpperCase();
       }
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : String(e);
       logDebug('DEBUG_CONTEXT_UPDATE', 'Failed to parse saved symbol info: ' + errorMessage);
     }
-    return 'AAPL';
+    return '';
   };
 
   const getInitialTimeframe = (): Timeframe => {

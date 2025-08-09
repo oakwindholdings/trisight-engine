@@ -92,16 +92,19 @@ async function handler(req, res) {
           .select('*')
           .order('created_at', { ascending: false })
           .limit(50);
-
-        if (error) throw error;
+        if (error) {
+          const code = /relation .* does not exist/i.test(error.message) ? 'LSUP-NOTABLE' : 'LSUP-001';
+          console.error('[ListReports]', { code, env:'supabase', err:error.message });
+          return res.status(200).json({ success:true, reports:[], errorCode: code });
+        }
 
         const reports = Array.isArray(data) ? data : [];
         const mapped = reports.map(mapRow);
         console.log(`[ListReports] { code:"OK", env:"supabase", count:${mapped.length} }`); // Rule: StableList
         return res.status(200).json({ success: true, reports: mapped, total: mapped.length, timestamp: new Date().toISOString() });
       } catch (e) {
-        console.error('[ListReports] { code:"LSUP-001", env:"supabase", err:"'+ (e && e.message) +'" }'); // Rule: StableList
-        return res.status(200).json({ success: true, reports: [], total: 0, errorCode: 'LSUP-001', timestamp: new Date().toISOString() });
+        console.error('[ListReports]', { code:'LSUP-UNCAUGHT', env:'supabase', err:String(e?.message||e) });
+        return res.status(200).json({ success:true, reports:[], errorCode:'LSUP-UNCAUGHT' });
       }
     }
 
