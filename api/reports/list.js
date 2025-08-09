@@ -3,6 +3,8 @@
 // In serverless architecture, we'll integrate with Supabase for storage
 
 const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -18,6 +20,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
 };
 
+// Rule: StableList - helpers
+function mapRow(row) {
+  return {
+    id: row.id,
+    symbol: row.ticker || row.symbol,
+    createdAt: row.created_at || row.createdAt,
+    path: row.download_url || row.path,
+    size: row.file_size || row.size,
+    // Back-compat fields
+    filename: row.filename || `${row.ticker || row.symbol}_report_${row.created_at}.${row.format || 'pptx'}`,
+    created: row.created_at,
+    downloadUrl: row.download_url || `/api/reports/download?id=${row.id}`,
+    ticker: row.ticker,
+    title: row.title,
+    template: row.template,
+    author: row.author,
+    status: row.status || 'completed',
+    metadata: row.metadata || {}
+  };
+}
+
+function mapFile(fileEntry) {
+  const { f, s } = fileEntry;
+  return {
+    id: f,
+    symbol: f.split('_')[0],
+    createdAt: new Date(s.mtimeMs).toISOString(),
+    path: `/generated-reports/${f}`,
+    size: s.size,
+    // Back-compat fields
+    filename: f,
+    created: new Date(s.birthtimeMs || s.mtimeMs).toISOString(),
+    downloadUrl: `/generated-reports/${f}`,
+    ticker: f.split('_')[0],
+    title: f,
+    template: f.includes('comprehensive') ? 'comprehensive' : 'standard',
+    status: 'completed',
+    metadata: {}
+  };
+}
+
 async function handler(req, res) {
   try {
     // Set CORS headers
@@ -28,75 +71,58 @@ async function handler(req, res) {
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
-  }
-
-  // Only allow GET requests
-  if (req.method !== 'GET') {
-    return res.status(405).json({ 
-      error: 'Method not allowed',
-      allowedMethods: ['GET']
-    });
-  }
-
-  try {
-    console.log('[Vercel API] Fetching reports list from Supabase');
-
-    // Query reports from Supabase
-    const { data: reports, error } = await supabase
-      .from('reports')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      throw error;
     }
 
-    // Transform reports to match the expected format
-    const transformedReports = (reports || []).map(report => ({
-      id: report.id,
-      filename: report.filename || `${report.ticker}_report_${report.created_at}.${report.format || 'pptx'}`,
-      created: report.created_at,
-      size: report.file_size || 0,
-      downloadUrl: report.download_url || `/api/reports/download?id=${report.id}`,
-      ticker: report.ticker,
-      title: report.title,
-      template: report.template,
-      author: report.author,
-      status: report.status || 'completed',
-      metadata: report.metadata || {}
-    }));
+    // Only allow GET requests
+    if (req.method !== 'GET') {
+      return res.status(405).json({
+        error: 'Method not allowed',
+        allowedMethods: ['GET']
+      });
+    }
 
-    console.log(`[Vercel API] Found ${transformedReports.length} reports`);
+    const hasSupabase = !!(process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL) && !!(process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY);
 
-    return res.status(200).json({
-      success: true,
-      reports: transformedReports,
-      total: transformedReports.length,
-      timestamp: new Date().toISOString()
-    });
+    // Supabase path
+    if (hasSupabase) {
+      try {
+        console.log('[ListReports] { code:"OK", env:"supabase", msg:"query" }'); // Rule: StableList
+        const { data, error } = await supabase
+          .from('reports')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-  } catch (error: any) {
-    console.error('[Vercel API] Failed to list reports:', error);
-    
-    return res.status(500).json({
-      success: false,
-      error: {
-        message: 'Failed to list reports',
-        details: error.message,
-        timestamp: new Date().toISOString()
+        if (error) throw error;
+
+        const reports = Array.isArray(data) ? data : [];
+        const mapped = reports.map(mapRow);
+        console.log(`[ListReports] { code:"OK", env:"supabase", count:${mapped.length} }`); // Rule: StableList
+        return res.status(200).json({ success: true, reports: mapped, total: mapped.length, timestamp: new Date().toISOString() });
+      } catch (e) {
+        console.error('[ListReports] { code:"LSUP-001", env:"supabase", err:"'+ (e && e.message) +'" }'); // Rule: StableList
+        return res.status(200).json({ success: true, reports: [], total: 0, errorCode: 'LSUP-001', timestamp: new Date().toISOString() });
       }
-    });
-  } catch (error) {
-    console.error('Reports list error:', error);
-    return res.status(500).json({
-      success: false,
-      error: {
-        message: 'Server error in reports list',
-        details: error.message,
-        timestamp: new Date().toISOString()
-      }
-    });
+    }
+
+    // FS path
+    try {
+      const reportsDir = path.join(process.cwd(), 'generated-reports');
+      await fs.mkdir(reportsDir, { recursive: true });
+      const files = await fs.readdir(reportsDir);
+      const stats = await Promise.all(files.map(async (f) => ({ f, s: await fs.stat(path.join(reportsDir, f)) })));
+      const sorted = stats.sort((a, b) => b.s.mtimeMs - a.s.mtimeMs).slice(0, 50);
+      const mapped = sorted.map(mapFile);
+      console.log(`[ListReports] { code:"OK", env:"fs", count:${mapped.length} }`); // Rule: StableList
+      return res.status(200).json({ success: true, reports: mapped, total: mapped.length, timestamp: new Date().toISOString() });
+    } catch (e) {
+      console.error('[ListReports] { code:"LFS-001", env:"fs", err:"'+ (e && e.message) +'" }'); // Rule: StableList
+      return res.status(200).json({ success: true, reports: [], total: 0, errorCode: 'LFS-001', timestamp: new Date().toISOString() });
+    }
+  } catch (outerErr) {
+    // Final catch-all should not 500 to client
+    console.error('[ListReports] { code:"LGEN-001", env:"unknown", err:"'+ (outerErr && outerErr.message) +'" }'); // Rule: StableList
+    return res.status(200).json({ success: true, reports: [], total: 0, errorCode: 'LGEN-001', timestamp: new Date().toISOString() });
   }
 }
 

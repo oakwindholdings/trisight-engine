@@ -368,7 +368,7 @@ module.exports = async function handler(req, res) {
       ['Market Data', reportData.rawData?.quote ? 'SUCCESS' : 'FAILED'],
       ['Financials', reportData.rawData?.incomeStatement ? 'SUCCESS' : 'FAILED'],
       ['AI Analysis', reportData.aiAnalysis && Object.keys(reportData.aiAnalysis).length > 0 ? 'SUCCESS' : 'FAILED'],
-      ['Sections', `${reportData.slides?.length || 0} sections loaded`],
+      ['Sections', `${(reportData.metadata?.totalSections ?? reportData.slides?.length ?? 0)} sections loaded`],
       ['Data Status', Object.keys(reportData.dataStatus || {}).length > 0 ? 'TRACKED' : 'UNKNOWN']
     ];
 

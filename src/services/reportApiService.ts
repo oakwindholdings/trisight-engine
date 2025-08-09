@@ -97,7 +97,7 @@ export interface ReportStatusResponse {
   metadata?: any;
 }
 
-class ReportApiService {
+export class ReportApiService {
   /**
    * Generate a new report
    */
@@ -105,7 +105,7 @@ class ReportApiService {
     try {
       // Use the INTELLIGENT REAL DATA endpoint with AI analysis
       const response = await apiClient.post<ReportGenerationResponse>('/reports/generate-intelligent-real-data', request);
-      
+
       // Emit custom event for UI updates
       if (response.data.success) {
         const event = new CustomEvent('reportGenerated', {
@@ -118,7 +118,7 @@ class ReportApiService {
         });
         window.dispatchEvent(event);
       }
-      
+
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error?.message || 'Failed to generate report');
@@ -133,7 +133,8 @@ class ReportApiService {
       const response = await apiClient.get<ReportListResponse>('/reports/list', { params });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error?.message || 'Failed to list reports');
+      // Return stable shape on client error so poller can surface errorCode safely
+      return { success: false, reports: [], total: 0, timestamp: new Date().toISOString(), ...(error.response?.data || {}) } as any;
     }
   }
 

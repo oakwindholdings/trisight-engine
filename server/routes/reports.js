@@ -141,41 +141,43 @@ router.get('/health', (req, res) => {
  * List generated reports
  */
 router.get('/list', async (req, res) => {
+  // Rule: StableList
+  function mapFile(fileEntry) {
+    const { f, s } = fileEntry;
+    return {
+      id: f,
+      symbol: f.split('_')[0],
+      createdAt: new Date(s.mtimeMs).toISOString(),
+      path: `/generated-reports/${f}`,
+      size: s.size,
+      // Back-compat fields
+      filename: f,
+      created: new Date(s.birthtimeMs || s.mtimeMs).toISOString(),
+      downloadUrl: `/generated-reports/${f}`,
+      ticker: f.split('_')[0],
+      title: f,
+      template: f.includes('comprehensive') ? 'comprehensive' : 'standard',
+      status: 'completed',
+      metadata: {}
+    };
+  }
+
   try {
     const fs = require('fs').promises;
     const path = require('path');
     const reportsDir = path.join(__dirname, '../../generated-reports');
-    
+
+    await fs.mkdir(reportsDir, { recursive: true });
     const files = await fs.readdir(reportsDir);
-    const reports = [];
-    
-    for (const file of files) {
-      if (file.endsWith('.pdf') || file.endsWith('.json')) {
-        const stats = await fs.stat(path.join(reportsDir, file));
-        reports.push({
-          filename: file,
-          size: stats.size,
-          created: stats.birthtime,
-          downloadUrl: `/generated-reports/${file}`,
-          type: file.includes('comprehensive') ? 'comprehensive' : 'standard'
-        });
-      }
-    }
-    
-    // Sort by creation date, newest first
-    reports.sort((a, b) => b.created - a.created);
-    
-    res.json({ 
-      reports,
-      total: reports.length
-    });
-    
-  } catch (error) {
-    console.error('[API] List reports failed:', error);
-    res.status(500).json({
-      error: 'Failed to list reports',
-      message: error.message
-    });
+    const stats = await Promise.all(files.map(async (f) => ({ f, s: await fs.stat(path.join(reportsDir, f)) })));
+    const sorted = stats.sort((a, b) => b.s.mtimeMs - a.s.mtimeMs).slice(0, 50);
+    const mapped = sorted.map(mapFile);
+
+    console.log(`[ListReports] { code:"OK", env:"fs", count:${mapped.length} }`); // Rule: StableList
+    return res.status(200).json({ success: true, reports: mapped, total: mapped.length, timestamp: new Date().toISOString() });
+  } catch (e) {
+    console.error('[ListReports] { code:"LFS-001", env:"fs", err:"'+ (e && e.message) +'" }'); // Rule: StableList
+    return res.status(200).json({ success: true, reports: [], total: 0, errorCode: 'LFS-001', timestamp: new Date().toISOString() });
   }
 });
 

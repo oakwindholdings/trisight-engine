@@ -366,7 +366,7 @@ export class TwelveDataAdapter extends BaseAdapter {
     }
     
     // Fetch all data in parallel for efficiency
-    const [statistics, incomeStatement, balanceSheet, cashFlow] = await Promise.allSettled([
+    const [statisticsResult, incomeResult, balanceResult, cashFlowResult] = await Promise.allSettled([
       this.fetchStatistics(symbol),
       this.fetchIncomeStatement(symbol),
       this.fetchBalanceSheet(symbol),
@@ -431,37 +431,49 @@ export class TwelveDataAdapter extends BaseAdapter {
     
     // Extract key metrics from statistics if available
     let keyMetrics: KeyFinancialMetrics = this.getDefaultKeyMetrics();
-    if (statistics.status === 'fulfilled' && statistics.value) {
-      keyMetrics = this.extractKeyMetrics(statistics.value);
+    const statistics = statisticsResult.status === 'fulfilled' ? statisticsResult.value : null;
+    if (statistics?.ok && statistics.data) {
+      keyMetrics = this.extractKeyMetrics(statistics.data);
+    } else if (statistics && !statistics.ok) {
+      console.error(`[FinanceFallback] Statistics processing failed: ${statistics.reason}`);
     }
-    
+
     // Process income statements
     let incomeStatements: FinancialStatement[] = [];
-    if (incomeStatement.status === 'fulfilled' && incomeStatement.value) {
-      const data = incomeStatement.value;
+    const incomeStatement = incomeResult.status === 'fulfilled' ? incomeResult.value : null;
+    if (incomeStatement?.ok && incomeStatement.data) {
+      const data = incomeStatement.data;
       incomeStatements = data.income_statement?.map(transformStatement) || [];
+    } else if (incomeStatement && !incomeStatement.ok) {
+      console.error(`[FinanceFallback] Income statement processing failed: ${incomeStatement.reason}`);
     }
-    
+
     // Process balance sheets
     let balanceSheets: FinancialStatement[] = [];
-    if (balanceSheet.status === 'fulfilled' && balanceSheet.value) {
-      const data = balanceSheet.value;
+    const balanceSheet = balanceResult.status === 'fulfilled' ? balanceResult.value : null;
+    if (balanceSheet?.ok && balanceSheet.data) {
+      const data = balanceSheet.data;
       balanceSheets = data.balance_sheet?.map(transformStatement) || [];
+    } else if (balanceSheet && !balanceSheet.ok) {
+      console.error(`[FinanceFallback] Balance sheet processing failed: ${balanceSheet.reason}`);
     }
-    
+
     // Process cash flow statements
     let cashFlows: FinancialStatement[] = [];
-    if (cashFlow.status === 'fulfilled' && cashFlow.value) {
-      const data = cashFlow.value;
+    const cashFlow = cashFlowResult.status === 'fulfilled' ? cashFlowResult.value : null;
+    if (cashFlow?.ok && cashFlow.data) {
+      const data = cashFlow.data;
       cashFlows = data.cash_flow?.map(transformStatement) || [];
+    } else if (cashFlow && !cashFlow.ok) {
+      console.error(`[FinanceFallback] Cash flow processing failed: ${cashFlow.reason}`);
     }
     
     // Log any failures for debugging
     if (this.debugMode) {
-      if (statistics.status === 'rejected') console.error('[TwelveData] Statistics fetch failed:', statistics.reason);
-      if (incomeStatement.status === 'rejected') console.error('[TwelveData] Income statement fetch failed:', incomeStatement.reason);
-      if (balanceSheet.status === 'rejected') console.error('[TwelveData] Balance sheet fetch failed:', balanceSheet.reason);
-      if (cashFlow.status === 'rejected') console.error('[TwelveData] Cash flow fetch failed:', cashFlow.reason);
+      if (statisticsResult.status === 'rejected') console.error('[FinanceFallback] Statistics fetch failed:', statisticsResult.reason);
+      if (incomeResult.status === 'rejected') console.error('[FinanceFallback] Income statement fetch failed:', incomeResult.reason);
+      if (balanceResult.status === 'rejected') console.error('[FinanceFallback] Balance sheet fetch failed:', balanceResult.reason);
+      if (cashFlowResult.status === 'rejected') console.error('[FinanceFallback] Cash flow fetch failed:', cashFlowResult.reason);
     }
     
     return {
@@ -480,13 +492,13 @@ export class TwelveDataAdapter extends BaseAdapter {
     const url = new URL(`${this.baseUrl}/statistics`);
     url.searchParams.append('symbol', symbol);
     url.searchParams.append('apikey', this.apiKey);
-    
+
     try {
       const response = await this.makeRequest<any>(url.toString());
-      return response;
+      return { ok: true, data: response };
     } catch (error) {
-      console.warn(`[TwelveData] Failed to fetch statistics for ${symbol}:`, error);
-      return null;
+      console.error(`[FinanceFallback] statistics failed: ${error?.message || 'unknown error'}`);
+      return { ok: false, reason: `Statistics endpoint failed: ${error?.message}`, data: [] };
     }
   }
   
@@ -497,13 +509,13 @@ export class TwelveDataAdapter extends BaseAdapter {
     const url = new URL(`${this.baseUrl}/income_statement`);
     url.searchParams.append('symbol', symbol);
     url.searchParams.append('apikey', this.apiKey);
-    
+
     try {
       const response = await this.makeRequest<any>(url.toString());
-      return response;
+      return { ok: true, data: response };
     } catch (error) {
-      console.warn(`[TwelveData] Failed to fetch income statement for ${symbol}:`, error);
-      return null;
+      console.error(`[FinanceFallback] income_statement failed: ${error?.message || 'unknown error'}`);
+      return { ok: false, reason: `Income statement endpoint failed: ${error?.message}`, data: [] };
     }
   }
   
@@ -514,13 +526,13 @@ export class TwelveDataAdapter extends BaseAdapter {
     const url = new URL(`${this.baseUrl}/balance_sheet`);
     url.searchParams.append('symbol', symbol);
     url.searchParams.append('apikey', this.apiKey);
-    
+
     try {
       const response = await this.makeRequest<any>(url.toString());
-      return response;
+      return { ok: true, data: response };
     } catch (error) {
-      console.warn(`[TwelveData] Failed to fetch balance sheet for ${symbol}:`, error);
-      return null;
+      console.error(`[FinanceFallback] balance_sheet failed: ${error?.message || 'unknown error'}`);
+      return { ok: false, reason: `Balance sheet endpoint failed: ${error?.message}`, data: [] };
     }
   }
   
@@ -531,13 +543,13 @@ export class TwelveDataAdapter extends BaseAdapter {
     const url = new URL(`${this.baseUrl}/cash_flow`);
     url.searchParams.append('symbol', symbol);
     url.searchParams.append('apikey', this.apiKey);
-    
+
     try {
       const response = await this.makeRequest<any>(url.toString());
-      return response;
+      return { ok: true, data: response };
     } catch (error) {
-      console.warn(`[TwelveData] Failed to fetch cash flow for ${symbol}:`, error);
-      return null;
+      console.error(`[FinanceFallback] cash_flow failed: ${error?.message || 'unknown error'}`);
+      return { ok: false, reason: `Cash flow endpoint failed: ${error?.message}`, data: [] };
     }
   }
   

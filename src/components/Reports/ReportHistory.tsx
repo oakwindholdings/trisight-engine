@@ -8,6 +8,7 @@ import { Search, Filter, Calendar, Download, Eye, Trash2, Clock, FileText } from
 import { getStorageService } from '../../services/reportStorageService';
 import { logDebug, logError } from '../../utils/logger';
 import { BrowserReportViewer } from './BrowserReportViewer';
+import { reportHistoryPoller } from '../../services/reportHistoryPoller'; // Rule: StableList
 
 const HistoryContainer = styled.div`
   padding: 1.5rem;
@@ -203,56 +204,45 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
   const [reports, setReports] = useState<any[]>([]);
   const [showBrowserViewer, setShowBrowserViewer] = useState(false);
   const [selectedReportForViewer, setSelectedReportForViewer] = useState<any>(null);
+  const [historyErrorCode, setHistoryErrorCode] = useState<string | undefined>(undefined);
   
-  // Load reports from StorageService
+  // Load reports via centralized poller with backoff and visibility pause
+  // Rule: StableList
   useEffect(() => {
-    const loadReports = async () => {
+    const unsub = reportHistoryPoller.subscribe(({ reports: incoming, errorCode }) => {
       try {
-        const storageService = getStorageService();
-        const storedReports = await storageService.listReports();
-        logDebug('ReportHistory', `Loaded ${storedReports.length} reports from storage`);
-        
-        // Transform stored reports to match display format
-        const transformedReports = storedReports.map(report => ({
-          id: report.id,
-          title: report.title || 'Untitled Report',
-          description: report.metadata?.description || `${report.format?.toUpperCase() || 'Report'} for ${report.ticker}`,
-          ticker: report.ticker,
-          template: report.metadata?.template || 'custom',
-          author: report.metadata?.author || 'TriSight Analytics',
-          createdAt: new Date(report.generatedAt || report.created || Date.now()),
-          format: report.format || 'pdf',
-          size: formatFileSize(report.size ? report.size / (1024 * 1024) : 0), // Convert bytes to MB
-          status: report.metadata?.status || 'completed',
+        const transformed = (incoming || []).map((report: any) => ({
+          id: report.id || report.filename,
+          title: report.title || `${report.ticker || report.symbol} Report`,
+          description: report.metadata?.description || `${(report.format || 'pdf').toUpperCase()} for ${report.ticker || report.symbol}`,
+          ticker: report.ticker || report.symbol,
+          template: report.template || 'custom',
+          author: report.author || 'TriSight Analytics',
+          createdAt: new Date(report.createdAt || report.created || Date.now()),
+          format: report.filename?.endsWith('.pptx') ? 'pptx' : (report.format || 'pdf'),
+          size: report.size ? formatFileSize((report.size || 0) / (1024 * 1024)) : '—',
+          status: report.status || 'completed',
           tags: report.metadata?.tags || [],
-          reportData: report.metadata?.reportData || {},
-          // Include slides and other report content
+          reportData: report.reportData || {},
           slides: report.slides || report.metadata?.slides || [],
           companyData: report.companyData || report.metadata?.companyData || {},
           metadata: report.metadata || {},
           completedAt: report.completedAt || report.metadata?.completedAt || report.generatedAt,
-          downloadUrl: report.downloadUrl || report.metadata?.downloadUrl
+          downloadUrl: report.downloadUrl || report.path
         }));
-        
-        setReports(transformedReports);
-      } catch (error) {
-        logError('ReportHistory', 'Error loading reports:', error);
+        setReports(transformed);
+        setHistoryErrorCode(errorCode);
+      } catch (e) {
         setReports([]);
       }
-    };
-    
-    loadReports();
-    
-    // Listen for new reports
-    const handleReportAdded = () => loadReports();
+    });
+
+    const handleReportAdded = () => {};
     window.addEventListener('reportGenerated', handleReportAdded);
-    
-    // Refresh periodically
-    const refreshInterval = setInterval(loadReports, 30000); // Every 30 seconds
-    
+
     return () => {
+      unsub();
       window.removeEventListener('reportGenerated', handleReportAdded);
-      clearInterval(refreshInterval);
     };
   }, []);
   
@@ -325,7 +315,12 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
       </HistoryHeader>
       
       <ReportsList>
-        {filteredReports.length > 0 ? (
+        {historyErrorCode ? (
+          <EmptyState data-testid="history-error">
+            <FileText />
+            <p>⚠ Export history temporarily unavailable ({historyErrorCode})</p>
+          </EmptyState>
+        ) : filteredReports.length > 0 ? (
           filteredReports.map(report => (
             <ReportCard key={report.id}>
               <ReportHeader>
@@ -379,7 +374,7 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
                   >
                     🔧
                   </ActionButton>
-                  <ActionButton 
+                  <ActionButton
                     title="Download"
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -413,7 +408,7 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
                   >
                     <Download />
                   </ActionButton>
-                  <ActionButton 
+                  <ActionButton
                     title="Delete"
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -434,7 +429,7 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
                   </ActionButton>
                 </ReportActions>
               </ReportHeader>
-              
+
               <ReportMeta>
                 <MetaItem>
                   <Calendar />
@@ -449,14 +444,14 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
                   {report.size}
                 </MetaItem>
               </ReportMeta>
-              
+
               <ReportDescription>{report.description}</ReportDescription>
             </ReportCard>
           ))
         ) : (
-          <EmptyState>
+          <EmptyState data-testid="history-empty">
             <FileText />
-            <p>No reports found</p>
+            <p>No recent exports</p>
           </EmptyState>
         )}
       </ReportsList>

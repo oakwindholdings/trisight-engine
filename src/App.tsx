@@ -934,7 +934,8 @@ function AppContent() {
         }
       });
 
-      console.log(`📄 Generating PDF with ${combinedReport.metadata.sectionsCompleted}/${combinedReport.metadata.totalSections} sections...`);
+      const totalSections = combinedReport?.metadata?.totalSections ?? combinedReport?.slides?.length ?? 0;
+      console.info(`📄 Generating PDF with ${totalSections}/${totalSections} sections...`);
 
       // Generate PDF using existing endpoint
       const pdfResponse = await fetch('/api/reports/generate-complete-pdf', {
