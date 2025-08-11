@@ -1,0 +1,20 @@
+{
+  "spacing": { "xxs": 4, "xs": 8, "sm": 12, "md": 16, "lg": 24, "xl": 32, "xxl": 48 },
+  "radius": { "sm": 4, "md": 8, "lg": 12 },
+  "typography": {
+    "fontFamily": "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+    "sizes": { "xs": 12, "sm": 14, "md": 16, "lg": 18, "xl": 22, "xxl": 28 },
+    "weights": { "regular": 400, "medium": 500, "semibold": 600, "bold": 700 }
+  },
+  "colors": {
+    "foreground": "#0B1220",
+    "muted": "#64748B",
+    "border": "#E2E8F0",
+    "bg": "#FFFFFF",
+    "panel": "#F8FAFC",
+    "primary": { "50": "#ECFDF5", "100": "#D1FAE5", "500": "#10B981", "600": "#059669", "700": "#047857" },
+    "slate": { "50": "#F8FAFC", "100": "#F1F5F9", "500": "#64748B", "700": "#334155", "900": "#0F172A" },
+    "danger": { "50": "#FEF2F2", "100": "#FEE2E2", "500": "#EF4444", "600": "#DC2626" }
+  }
+}
+

@@ -1,0 +1,50 @@
+{
+  "templates": [
+    {
+      "id": "tmpl_earnings_snapshot",
+      "name": "Earnings Snapshot",
+      "description": "Quick earnings-oriented overview",
+      "is_default": false,
+      "sections": [
+        { "id": "sec_es_exec", "template_id": "tmpl_earnings_snapshot", "section_key": "executive_summary", "prompt_id": "prm_es_exec", "position": 0, "enabled": true, "expected_format": "markdown" },
+        { "id": "sec_es_thesis", "template_id": "tmpl_earnings_snapshot", "section_key": "investment_thesis", "prompt_id": "prm_es_thesis", "position": 1, "enabled": true, "expected_format": "bullets" },
+        { "id": "sec_es_risk", "template_id": "tmpl_earnings_snapshot", "section_key": "risk_assessment", "prompt_id": "prm_es_risk", "position": 2, "enabled": true, "expected_format": "markdown" },
+        { "id": "sec_es_cites", "template_id": "tmpl_earnings_snapshot", "section_key": "citations", "prompt_id": "prm_es_cites", "position": 3, "enabled": true, "expected_format": "json" }
+      ]
+    },
+    {
+      "id": "tmpl_momentum_playbook",
+      "name": "Momentum Playbook",
+      "description": "Momentum-focused trading commentary",
+      "is_default": false,
+      "sections": [
+        { "id": "sec_mp_exec", "template_id": "tmpl_momentum_playbook", "section_key": "executive_summary", "prompt_id": "prm_mp_exec", "position": 0, "enabled": true, "expected_format": "markdown" },
+        { "id": "sec_mp_thesis", "template_id": "tmpl_momentum_playbook", "section_key": "investment_thesis", "prompt_id": "prm_mp_thesis", "position": 1, "enabled": true, "expected_format": "bullets" },
+        { "id": "sec_mp_risk", "template_id": "tmpl_momentum_playbook", "section_key": "risk_assessment", "prompt_id": "prm_mp_risk", "position": 2, "enabled": true, "expected_format": "markdown" },
+        { "id": "sec_mp_cites", "template_id": "tmpl_momentum_playbook", "section_key": "citations", "prompt_id": "prm_mp_cites", "position": 3, "enabled": true, "expected_format": "json" }
+      ]
+    }
+  ],
+  "prompts": [
+    { "id": "prm_es_exec", "section_key": "executive_summary", "provider": "anthropic", "model": "claude-3-5-sonnet-20240620", "template": "Exec summary for {{INPUT.ticker}}", "expected_format": "markdown", "enabled": true },
+    { "id": "prm_es_thesis", "section_key": "investment_thesis", "provider": "openai", "model": "gpt-4o", "template": "Thesis bullets for {{INPUT.ticker}}", "expected_format": "bullets", "enabled": true },
+    { "id": "prm_es_risk", "section_key": "risk_assessment", "provider": "perplexity", "model": "sonar-large", "template": "Risks for {{INPUT.ticker}}", "expected_format": "markdown", "enabled": true },
+    { "id": "prm_es_cites", "section_key": "citations", "provider": "firecrawl", "template": "Citations JSON for {{INPUT.ticker}}", "expected_format": "json", "enabled": true },
+
+    { "id": "prm_mp_exec", "section_key": "executive_summary", "provider": "anthropic", "model": "claude-3-5-sonnet-20240620", "template": "Momentum exec summary for {{INPUT.ticker}}", "expected_format": "markdown", "enabled": true },
+    { "id": "prm_mp_thesis", "section_key": "investment_thesis", "provider": "openai", "model": "gpt-4o", "template": "Momentum thesis bullets for {{INPUT.ticker}}", "expected_format": "bullets", "enabled": true },
+    { "id": "prm_mp_risk", "section_key": "risk_assessment", "provider": "perplexity", "model": "sonar-large", "template": "Momentum risks for {{INPUT.ticker}}", "expected_format": "markdown", "enabled": true },
+    { "id": "prm_mp_cites", "section_key": "citations", "provider": "firecrawl", "template": "Momentum citations JSON for {{INPUT.ticker}}", "expected_format": "json", "enabled": true }
+  ],
+  "variables": [
+    { "id": "var_input_ticker", "namespace": "INPUT", "var_key": "ticker", "label": "Ticker", "example": "NVDA", "description": "Symbol under analysis", "enabled": true },
+    { "id": "var_input_timeframe", "namespace": "INPUT", "var_key": "timeframe", "label": "Timeframe", "example": "1min", "description": "Time resolution", "enabled": true },
+    { "id": "var_meta_date", "namespace": "META", "var_key": "date", "label": "Run Date", "example": "2025-01-01", "description": "Report generation date", "enabled": true }
+  ],
+  "previewInputs": [
+    { "ticker": "NVDA", "timeframe": "1min" },
+    { "ticker": "MSFT", "timeframe": "5min" },
+    { "ticker": "SPY", "timeframe": "daily" }
+  ]
+}
+

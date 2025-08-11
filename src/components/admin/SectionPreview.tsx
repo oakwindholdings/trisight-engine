@@ -33,28 +33,28 @@ export const SectionPreview: React.FC<{ section_key: string }> = ({ section_key 
   return (
     <Box>
       <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-        <input value={ticker} onChange={e => setTicker(e.target.value.toUpperCase())} placeholder="Ticker" />
-        <input value={timeframe} onChange={e => setTimeframe(e.target.value)} placeholder="Timeframe" />
-        <select value={provider} onChange={e => setProvider(e.target.value)}>
+        <input data-testid="admin-prev-ticker" value={ticker} onChange={e => setTicker(e.target.value.toUpperCase())} placeholder="Ticker" />
+        <input data-testid="admin-prev-timeframe" value={timeframe} onChange={e => setTimeframe(e.target.value)} placeholder="Timeframe" />
+        <select data-testid="admin-prev-provider" value={provider} onChange={e => setProvider(e.target.value)}>
           <option>heuristic</option>
           <option>anthropic</option>
           <option>openai</option>
           <option>perplexity</option>
           <option>firecrawl</option>
         </select>
-        <select value={expected_format} onChange={e => setExpected(e.target.value as any)}>
+        <select data-testid="admin-prev-format" value={expected_format} onChange={e => setExpected(e.target.value as any)}>
           <option>markdown</option>
           <option>bullets</option>
           <option>json</option>
         </select>
-        <Button onClick={runPreview}>{loading ? 'Running...' : 'Preview'}</Button>
+        <Button data-testid="admin-prev-run" onClick={runPreview}>{loading ? 'Running...' : 'Preview'}</Button>
       </div>
-      <Textarea value={template} onChange={e => setTemplate(e.target.value)} />
+      <Textarea data-testid="admin-prev-template" value={template} onChange={e => setTemplate(e.target.value)} />
       {error && <div style={{ color:'crimson' }}>{error}</div>}
       {result && (
         <div style={{ marginTop:8 }}>
           <div style={{ fontWeight: 600 }}>Output ({result.format})</div>
-          <pre style={{ whiteSpace:'pre-wrap' }}>{typeof result.content === 'string' ? result.content : JSON.stringify(result.content, null, 2)}</pre>
+          <pre data-testid="admin-prev-output" style={{ whiteSpace:'pre-wrap' }}>{typeof result.content === 'string' ? result.content : JSON.stringify(result.content, null, 2)}</pre>
           <div style={{ color:'#6b7280', fontSize:'0.8rem' }}>provider: {result.meta?.provider} • latency: {result.meta?.latencyMs}ms</div>
         </div>
       )}

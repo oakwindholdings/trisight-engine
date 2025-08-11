@@ -1,0 +1,83 @@
+{
+  "ReportsAdmin": {
+    "path": "src/pages/ReportsAdmin.tsx",
+    "props": ["initialTemplateId?", "initialSectionId?", "initialPreviewMode?"],
+    "state": ["selected: ReportTemplate|null"],
+    "children": ["TemplatesList", "TemplateEditor", "PromptDrawer"],
+    "handlers": ["setSelected(template)"],
+    "api": [],
+    "testIds": []
+  },
+  "TemplatesList": {
+    "path": "src/components/admin/TemplatesList.tsx",
+    "props": ["onSelect: (t: ReportTemplate) => void"],
+    "state": ["items: ReportTemplate[]", "loading: boolean", "name: string", "desc: string", "adminKey: string", "error: string|null"],
+    "handlers": ["refresh()", "saveAdminKey()", "createTemplate()", "handleSelect(t)"],
+    "api": ["listTemplates() GET /api/admin/report-templates", "createTemplate() POST /api/admin/report-templates"],
+    "testIds": [
+      "admin-templateslist-adminkey-input",
+      "admin-templateslist-save-adminkey",
+      "admin-templateslist-new-name",
+      "admin-templateslist-new-desc",
+      "admin-templateslist-create",
+      "admin-templateslist-refresh",
+      "admin-templateslist-list",
+      "admin-templateslist-row-{id}",
+      "admin-templateslist-edit-{id}"
+    ]
+  },
+  "TemplateEditor": {
+    "path": "src/components/admin/TemplateEditor.tsx",
+    "props": ["template: ReportTemplate|null", "onChanged?: (t: ReportTemplate) => void", "initialSectionId?", "initialPreviewMode?"],
+    "state": ["rows: TemplateSection[]", "newKey: string", "newFmt: ExpectedFormat", "prompts: PromptRow[]"],
+    "handlers": ["addSection()", "updateFormat(row, fmt)", "toggleEnabled(row)", "move(row, delta)", "bindPrompt(row, id)", "loadPrompts()"],
+    "api": ["addTemplateSection POST /api/admin/report-templates-sections", "updateTemplateSection PUT /api/admin/report-templates-sections", "listPrompts GET /api/admin/prompts"],
+    "testIds": [
+      "admin-te-new-key",
+      "admin-te-new-format",
+      "admin-te-add-section",
+      "admin-te-sec-key-{sectionId}",
+      "admin-te-sec-pos-{sectionId}",
+      "admin-te-sec-format-{sectionId}",
+      "admin-te-sec-toggle-{sectionId}",
+      "admin-te-sec-up-{sectionId}",
+      "admin-te-sec-down-{sectionId}",
+      "admin-te-sec-prompt-{sectionId}",
+      "admin-te-sec-prev-{sectionId}"
+    ]
+  },
+  "SectionPreview": {
+    "path": "src/components/admin/SectionPreview.tsx",
+    "props": ["section_key: string"],
+    "state": ["ticker: string", "timeframe: string", "provider: Provider", "expected_format: ExpectedFormat", "template: string", "result: any", "loading: boolean", "error: string|null"],
+    "handlers": ["runPreview()"],
+    "api": ["POST /api/admin/preview-section"],
+    "testIds": [
+      "admin-prev-ticker",
+      "admin-prev-timeframe",
+      "admin-prev-provider",
+      "admin-prev-format",
+      "admin-prev-template",
+      "admin-prev-run",
+      "admin-prev-output"
+    ]
+  },
+  "PromptDrawer": {
+    "path": "src/components/admin/PromptDrawer.tsx",
+    "props": [],
+    "state": ["section_key: string", "provider: Provider", "model: string", "expected_format: ExpectedFormat", "template: string", "vars: VariableRow[]", "msg: string"],
+    "handlers": ["savePrompt()", "insertToken(ns, key)"],
+    "api": ["listVariables GET /api/admin/variables", "createPrompt POST /api/admin/prompts"],
+    "testIds": [
+      "admin-pd-section",
+      "admin-pd-provider",
+      "admin-pd-model",
+      "admin-pd-format",
+      "admin-pd-template",
+      "admin-pd-var-{namespace}-{var_key}",
+      "admin-pd-save",
+      "admin-pd-msg"
+    ]
+  }
+}
+

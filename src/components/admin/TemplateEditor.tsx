@@ -14,8 +14,7 @@ const TitleText = styled.div` font-weight: 600; min-width: 220px; `;
 const PosTag = styled.span` color: #6b7280; `;
 const PreviewWrap = styled.div` margin-top: 10px; `;
 
-const KNOWN_SECTIONS = ['executive_summary','investment_thesis','risk_assessment','citations'];
-const FORMATS: Array<'markdown'|'json'|'bullets'> = ['markdown','json','bullets'];
+import { SECTIONS as KNOWN_SECTIONS, FORMATS } from '../../models/adminConstants';
 
 export const TemplateEditor: React.FC<{ template: ReportTemplate | null, onChanged?: (t: ReportTemplate) => void } > = ({ template, onChanged }) => {
   const [rows, setRows] = useState<TemplateSection[]>(template?.sections || []);
@@ -77,38 +76,38 @@ export const TemplateEditor: React.FC<{ template: ReportTemplate | null, onChang
     <Container>
       <Card>
         <Row>
-          <Select value={newKey} onChange={e => setNewKey(e.target.value)}>
+          <Select data-testid="admin-te-new-key" value={newKey} onChange={e => setNewKey(e.target.value)}>
             {KNOWN_SECTIONS.map(k => <option key={k} value={k}>{k}</option>)}
           </Select>
-          <Select value={newFmt} onChange={e => setNewFmt(e.target.value as any)}>
+          <Select data-testid="admin-te-new-format" value={newFmt} onChange={e => setNewFmt(e.target.value as any)}>
             {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
           </Select>
-          <Button onClick={addRow}>Add Section</Button>
+          <Button data-testid="admin-te-add-section" onClick={addRow}>Add Section</Button>
         </Row>
       </Card>
 
       {(ordered || []).map(r => (
         <Card key={r.id}>
           <Row>
-            <TitleText>{r.section_key}</TitleText>
-            <PosTag>pos {r.position}</PosTag>
-            <Select value={r.expected_format} onChange={e => updateFormat(r, e.target.value as any)}>
+            <TitleText data-testid={`admin-te-sec-key-${r.id}`}>{r.section_key}</TitleText>
+            <PosTag data-testid={`admin-te-sec-pos-${r.id}`}>pos {r.position}</PosTag>
+            <Select data-testid={`admin-te-sec-format-${r.id}`} value={r.expected_format} onChange={e => updateFormat(r, e.target.value as any)}>
               {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
             </Select>
-            <Button onClick={() => toggleEnabled(r)}>{r.enabled ? 'Disable' : 'Enable'}</Button>
-            <Button onClick={() => move(r, -1)}>Up</Button>
-            <Button onClick={() => move(r, 1)}>Down</Button>
+            <Button data-testid={`admin-te-sec-toggle-${r.id}`} onClick={() => toggleEnabled(r)}>{r.enabled ? 'Disable' : 'Enable'}</Button>
+            <Button data-testid={`admin-te-sec-up-${r.id}`} onClick={() => move(r, -1)}>Up</Button>
+            <Button data-testid={`admin-te-sec-down-${r.id}`} onClick={() => move(r, 1)}>Down</Button>
           </Row>
           <Row>
             <label>Bind Prompt:</label>
-            <Select value={r.prompt_id || ''} onChange={e => bindPrompt(r, e.target.value || null)}>
+            <Select data-testid={`admin-te-sec-prompt-${r.id}`} value={r.prompt_id || ''} onChange={e => bindPrompt(r, e.target.value || null)}>
               <option value="">Default</option>
               {prompts.filter(p => p.section_key === r.section_key).map(p => (
                 <option key={p.id} value={p.id}>{p.provider} • {p.model || ''} • {new Date(p.updated_at||'').toLocaleString()}</option>
               ))}
             </Select>
           </Row>
-          <PreviewWrap>
+          <PreviewWrap data-testid={`admin-te-sec-prev-${r.id}`}>
             <SectionPreview section_key={r.section_key} />
           </PreviewWrap>
         </Card>
