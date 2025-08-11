@@ -9,6 +9,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 const { createClient } = require('@supabase/supabase-js');
 
+const { generateSection } = require('../_lib/section-generator');
+
 // Load environment variables
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
@@ -193,6 +195,67 @@ module.exports = async function handler(req, res) {
       timeframe: timeframe || 'daily',
       options: { ...(options || {}), ...flags }
     });
+
+    // Generate dynamic section outputs via provider-agnostic generator (serverless-safe)
+    let sectionOutputs = [];
+    try {
+      const providers = {
+        anthropic: process.env.ANTHROPIC_API_KEY ? { apiKey: process.env.ANTHROPIC_API_KEY, model: 'claude-3-5-sonnet-20240620' } : undefined,
+        openai: process.env.OPENAI_API_KEY ? { apiKey: process.env.OPENAI_API_KEY, model: 'gpt-4o-mini' } : undefined,
+        perplexity: process.env.PERPLEXITY_API_KEY ? { apiKey: process.env.PERPLEXITY_API_KEY, model: 'llama-3.1-sonar-small-128k-online' } : undefined,
+        firecrawl: process.env.FIRECRAWL_API_KEY ? { apiKey: process.env.FIRECRAWL_API_KEY } : undefined,
+        twelvedata: process.env.TWELVE_DATA_API_KEY ? { apiKey: process.env.TWELVE_DATA_API_KEY } : undefined
+      };
+      const inputs = { ticker: requested, timeframe: timeframe || 'daily' };
+      const reportData = {
+        companyData: generator.companyData,
+        marketData: generator.marketData,
+        financialData: generator.financialData,
+        technicalAnalysis: generator.technicalData,
+        earningsData: (generator.financialData && generator.financialData.earnings) ? generator.financialData.earnings : undefined,
+        newsAndSentiment: generator.newsData,
+        webContent: generator.webContent
+      };
+
+      // If templateId present, load sections from DB; else default to a sensible set
+      const templateId = req.body?.templateId;
+      let templateSections = [];
+      if (templateId && process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+        try {
+          const { createClient } = require('@supabase/supabase-js');
+          const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+          const { data, error } = await sb
+            .from('report_template_sections')
+            .select('*')
+            .eq('template_id', templateId)
+            .eq('enabled', true)
+            .order('position', { ascending: true });
+          if (!error && Array.isArray(data)) templateSections = data;
+        } catch (err) {
+          console.warn('[Templates] failed to load template sections:', err?.message || err);
+        }
+      }
+
+      if (templateSections.length) {
+        for (const r of templateSections) {
+          const out = await generateSection({
+            sectionKey: r.section_key,
+            promptId: r.prompt_id || undefined,
+            inputs,
+            reportData,
+            providers
+          });
+          sectionOutputs.push(out);
+        }
+      } else {
+        const keys = ['executive_summary','investment_thesis','risk_assessment','citations'];
+        sectionOutputs = await Promise.all(keys.map(k => generateSection({ sectionKey: k, inputs, reportData, providers })));
+      }
+
+      if (report) report.sectionOutputs = sectionOutputs;
+    } catch (e) {
+      console.warn('[Sections] generation failed:', e?.message || e);
+    }
 
     const generationTime = Date.now() - startTime;
 
@@ -538,7 +601,7 @@ class ComprehensiveReportGenerator {
         },
         timeout: 15000
       });
-      
+
       if (response.data?.earnings) {
         this.financialData.earnings = response.data.earnings;
         console.log('[Generator] Earnings data fetched:', response.data.earnings.length, 'quarters');
@@ -600,7 +663,7 @@ class ComprehensiveReportGenerator {
       // For now, generate placeholder news based on market data
       const trend = this.marketData.changePercent > 0 ? 'positive' : 'negative';
       const volume = this.marketData.volume > this.marketData.avgVolume ? 'high' : 'normal';
-      
+
       this.newsData = [
         {
           title: `${this.ticker} Shows ${trend === 'positive' ? 'Strong' : 'Weak'} Performance in Recent Trading`,
@@ -660,7 +723,7 @@ class ComprehensiveReportGenerator {
   async generateAIAnalysis(config) {
     try {
       console.log('[Generator] Generating AI analysis with Claude...');
-      
+
       // Prepare context for Claude
       const context = {
         ticker: this.ticker,
@@ -749,7 +812,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const change = this.marketData.changePercent;
     const volume = this.marketData.volume;
     const rsi = parseFloat(this.technicalData.rsi?.rsi) || 50;
-    
+
     this.aiAnalysis = {
       executiveSummary: `${this.companyData.name || this.ticker} is currently trading at $${price} with a ${change}% change. ` +
                        `The company operates in the ${this.companyData.sector || 'technology'} sector and has shown ` +
@@ -757,22 +820,22 @@ Format your response as JSON with these exact keys: executiveSummary, investment
                        `Trading volume of ${volume?.toLocaleString() || 'N/A'} shares indicates ` +
                        `${volume > this.marketData.avgVolume ? 'above-average' : 'normal'} market interest. ` +
                        `Technical indicators show RSI at ${rsi.toFixed(2)}, suggesting ${rsi > 70 ? 'overbought' : rsi < 30 ? 'oversold' : 'neutral'} conditions.`,
-      
+
       investmentThesis: `The investment case for ${this.ticker} rests on several key factors: ` +
                        `1) Current valuation metrics with the stock trading at $${price} ` +
                        `2) ${this.calculateGrowthRate() > 0 ? 'Positive' : 'Challenging'} revenue growth trajectory ` +
                        `3) Strong market position in ${this.companyData.industry || 'its industry'} ` +
                        `4) Technical indicators suggesting ${this.technicalData.analysis?.trend || 'neutral'} momentum`,
-      
+
       riskAssessment: `Key risk factors include: ` +
                      `Market volatility with the stock showing ${this.calculateVolatility()}% historical volatility. ` +
                      `Current RSI of ${rsi.toFixed(2)} ${rsi > 70 ? 'indicates overbought conditions' : rsi < 30 ? 'indicates oversold conditions' : 'suggests balanced trading'}. ` +
                      `Sector-specific risks in ${this.companyData.sector || 'the market'} should be monitored.`,
-      
+
       futureOutlook: `Looking ahead, ${this.ticker} shows ${this.determineTrend()} trend characteristics. ` +
                     `Key technical levels to watch: Support at $${this.calculateSupport()}, Resistance at $${this.calculateResistance()}. ` +
                     `${this.calculateGrowthRate() > 0 ? 'Positive growth trends' : 'Current market conditions'} suggest ${this.determineTrend() === 'bullish' ? 'continued upside potential' : 'cautious optimism'}.`,
-      
+
       keyInsights: [
         `Current price of $${price} represents ${this.calculateValuePosition()}`,
         `Technical indicators show ${this.technicalData.analysis?.signal || 'neutral'} signals with RSI at ${rsi.toFixed(2)}`,
@@ -780,7 +843,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
         `Volume patterns suggest ${this.analyzeVolumePattern()} investor interest`,
         `Risk-reward profile appears ${this.assessRiskReward()}`
       ],
-      
+
       recommendation: {
         rating: this.generateRating(),
         targetPrice: this.calculateTargetPrice(),
@@ -794,7 +857,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const rsi = parseFloat(this.technicalData.rsi?.rsi) || 50;
     const trend = this.determineTrend();
     const valuation = this.assessValuation();
-    
+
     if (rsi < 30 && valuation === 'undervalued') return 'BUY';
     if (rsi > 70 && valuation === 'overvalued') return 'SELL';
     if (trend === 'bullish' && valuation !== 'overvalued') return 'BUY';
@@ -804,7 +867,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
 
   async generateComprehensiveSlides(config) {
     const slides = [];
-    
+
     // Generate all slides with actual content
     slides.push(this.generateTitleSlide(config));
     slides.push(this.generateTriSightSummarySlide());
@@ -842,7 +905,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const currentPrice = this.marketData.currentPrice || 'N/A';
     const fairValue = this.calculateFairValue();
     const targetPrice = this.calculateTargetPrice();
-    
+
     return {
       slideNumber: 2,
       type: 'trisight_summary',
@@ -897,7 +960,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   generateGuidanceProfileSlide() {
     const earnings = this.financialData.earnings || [];
     const latestEarnings = earnings[0] || {};
-    
+
     return {
       slideNumber: 4,
       type: 'guidance_profile',
@@ -1164,26 +1227,26 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   // Helper methods for calculations
   calculateFinancialMetrics(income, balance, cashFlow) {
     const metrics = {};
-    
+
     if (income && income.length > 0) {
       const latest = income[0];
       metrics.grossMargin = ((parseFloat(latest.gross_profit) / parseFloat(latest.revenue)) * 100).toFixed(2);
       metrics.operatingMargin = ((parseFloat(latest.operating_income) / parseFloat(latest.revenue)) * 100).toFixed(2);
       metrics.netMargin = ((parseFloat(latest.net_income) / parseFloat(latest.revenue)) * 100).toFixed(2);
     }
-    
+
     if (balance && balance.length > 0) {
       const latest = balance[0];
       metrics.currentRatio = (parseFloat(latest.current_assets) / parseFloat(latest.current_liabilities)).toFixed(2);
       metrics.debtToEquity = (parseFloat(latest.total_debt) / parseFloat(latest.total_equity)).toFixed(2);
       metrics.roe = ((parseFloat(income?.[0]?.net_income) / parseFloat(latest.total_equity)) * 100).toFixed(2);
     }
-    
+
     if (cashFlow && cashFlow.length > 0) {
       const latest = cashFlow[0];
       metrics.fcfMargin = ((parseFloat(latest.free_cash_flow) / parseFloat(income?.[0]?.revenue)) * 100).toFixed(2);
     }
-    
+
     return metrics;
   }
 
@@ -1204,23 +1267,23 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const dataCompleteness = this.calculateDataCompleteness();
     const volatility = parseFloat(this.calculateVolatility());
     const volumeStrength = this.marketData.volume > this.marketData.avgVolume ? 10 : 0;
-    
+
     let confidence = dataCompleteness + volumeStrength;
     if (volatility > 50) confidence -= 20;
     else if (volatility > 30) confidence -= 10;
-    
+
     return Math.max(0, Math.min(100, confidence));
   }
 
   calculateVolatility() {
     const prices = this.marketData.priceHistory?.slice(0, 30).map(d => parseFloat(d.close)) || [];
     if (prices.length < 2) return '20';
-    
+
     const returns = [];
     for (let i = 1; i < prices.length; i++) {
       returns.push((prices[i] - prices[i-1]) / prices[i-1]);
     }
-    
+
     const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
     const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
     return (Math.sqrt(variance * 252) * 100).toFixed(2);
@@ -1229,10 +1292,10 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateGrowthRate() {
     const income = this.financialData.incomeStatement;
     if (!income || income.length < 2) return 0;
-    
+
     const current = parseFloat(income[0]?.revenue) || 0;
     const previous = parseFloat(income[4]?.revenue) || parseFloat(income[1]?.revenue) || 0;
-    
+
     if (previous === 0) return 0;
     return (((current - previous) / previous) * 100).toFixed(2);
   }
@@ -1240,13 +1303,13 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   determineTrend() {
     const rsi = parseFloat(this.technicalData.rsi?.rsi) || 50;
     const prices = this.marketData.priceHistory?.slice(0, 20).map(d => parseFloat(d.close)) || [];
-    
+
     if (prices.length < 2) return 'neutral';
-    
+
     const recent = prices[0];
     const older = prices[prices.length - 1];
     const change = ((recent - older) / older) * 100;
-    
+
     if (change > 5 && rsi > 50) return 'bullish';
     if (change < -5 && rsi < 50) return 'bearish';
     return 'neutral';
@@ -1255,7 +1318,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateSupport() {
     const prices = this.marketData.priceHistory?.slice(0, 20) || [];
     if (!prices.length) return 'N/A';
-    
+
     const lows = prices.map(d => parseFloat(d.low));
     return Math.min(...lows).toFixed(2);
   }
@@ -1263,7 +1326,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateResistance() {
     const prices = this.marketData.priceHistory?.slice(0, 20) || [];
     if (!prices.length) return 'N/A';
-    
+
     const highs = prices.map(d => parseFloat(d.high));
     return Math.max(...highs).toFixed(2);
   }
@@ -1272,11 +1335,11 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const current = parseFloat(this.marketData.currentPrice) || 0;
     const pe = parseFloat(this.marketData.statistics?.pe_ratio) || 20;
     const growth = parseFloat(this.calculateGrowthRate()) || 0;
-    
+
     // Simple target price model
     const growthMultiplier = 1 + (growth / 100);
     const peAdjustment = pe < 15 ? 1.2 : pe > 30 ? 0.9 : 1;
-    
+
     return (current * growthMultiplier * peAdjustment).toFixed(2);
   }
 
@@ -1285,17 +1348,17 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const eps = this.calculateEPS();
     const growthRate = parseFloat(this.calculateGrowthRate()) || 5;
     const pe = parseFloat(this.marketData.statistics?.pe_ratio) || 20;
-    
+
     return (parseFloat(eps) * pe * (1 + growthRate/100)).toFixed(2);
   }
 
   formatMarketCap() {
     const marketCap = this.companyData.marketCap || this.marketData.statistics?.market_cap;
     if (!marketCap) return 'N/A';
-    
+
     const billions = marketCap / 1e9;
     if (billions > 1) return `$${billions.toFixed(2)}B`;
-    
+
     const millions = marketCap / 1e6;
     return `$${millions.toFixed(2)}M`;
   }
@@ -1303,12 +1366,12 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   getNextEarningsDate() {
     const earnings = this.financialData.earnings;
     if (!earnings || !earnings.length) return 'N/A';
-    
+
     // Estimate next earnings date (typically quarterly)
     const lastEarnings = new Date(earnings[0].date);
     const nextEarnings = new Date(lastEarnings);
     nextEarnings.setMonth(nextEarnings.getMonth() + 3);
-    
+
     return nextEarnings.toLocaleDateString();
   }
 
@@ -1320,19 +1383,19 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateEPS() {
     const income = this.financialData.incomeStatement;
     if (!income || !income.length) return 'N/A';
-    
+
     // Calculate TTM EPS
     const ttmEPS = income.slice(0, Math.min(4, income.length)).reduce((sum, quarter) => {
       return sum + (parseFloat(quarter.eps) || 0);
     }, 0);
-    
+
     return ttmEPS.toFixed(2);
   }
 
   calculateForwardPE() {
     const currentPE = parseFloat(this.marketData.statistics?.pe_ratio) || 20;
     const growth = parseFloat(this.calculateGrowthRate()) || 0;
-    
+
     if (growth > 0) {
       return (currentPE / (1 + growth/100)).toFixed(2);
     }
@@ -1343,10 +1406,10 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const rsi = parseFloat(this.technicalData.rsi?.rsi) || 50;
     const macdValue = parseFloat(this.technicalData.macd?.macd) || 0;
     const macdSignal = parseFloat(this.technicalData.macd?.macd_signal) || 0;
-    
+
     let trend = 'neutral';
     let signal = 'hold';
-    
+
     if (rsi > 70) {
       trend = 'overbought';
       signal = 'sell';
@@ -1360,7 +1423,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
       trend = 'bearish';
       signal = 'sell';
     }
-    
+
     return { trend, signal };
   }
 
@@ -1369,11 +1432,11 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const current = parseFloat(this.marketData.currentPrice);
     const yearHigh = parseFloat(this.marketData.yearHigh);
     const yearLow = parseFloat(this.marketData.yearLow);
-    
+
     if (!current || !yearHigh || !yearLow) return 'fair value';
-    
+
     const position = ((current - yearLow) / (yearHigh - yearLow)) * 100;
-    
+
     if (position > 80) return 'near 52-week high';
     if (position < 20) return 'near 52-week low';
     if (position > 60) return 'upper trading range';
@@ -1384,9 +1447,9 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   assessFinancialHealth() {
     const income = this.financialData.incomeStatement?.[0];
     if (!income) return 'stable';
-    
+
     const profitMargin = (parseFloat(income.net_income) / parseFloat(income.revenue)) * 100;
-    
+
     if (profitMargin > 20) return 'excellent';
     if (profitMargin > 10) return 'strong';
     if (profitMargin > 5) return 'moderate';
@@ -1397,11 +1460,11 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   analyzeVolumePattern() {
     const volume = this.marketData.volume;
     const avgVolume = this.marketData.avgVolume;
-    
+
     if (!volume || !avgVolume) return 'normal';
-    
+
     const ratio = volume / avgVolume;
-    
+
     if (ratio > 2) return 'very high';
     if (ratio > 1.5) return 'elevated';
     if (ratio > 0.7) return 'normal';
@@ -1412,7 +1475,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const volatility = parseFloat(this.calculateVolatility());
     const upside = parseFloat(this.calculateTargetPrice()) - parseFloat(this.marketData.currentPrice);
     const upsidePercent = (upside / parseFloat(this.marketData.currentPrice)) * 100;
-    
+
     if (upsidePercent > 20 && volatility < 30) return 'attractive';
     if (upsidePercent > 10 && volatility < 40) return 'favorable';
     if (upsidePercent < 5 || volatility > 50) return 'unfavorable';
@@ -1422,9 +1485,9 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   assessValuation() {
     const pe = parseFloat(this.marketData.statistics?.pe_ratio);
     const sectorAvgPE = 25; // Default sector average
-    
+
     if (!pe) return 'neutral';
-    
+
     if (pe < sectorAvgPE * 0.7) return 'undervalued';
     if (pe > sectorAvgPE * 1.3) return 'overvalued';
     return 'fairly valued';
@@ -1434,8 +1497,8 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   generateFinancialHighlights() {
     const income = this.financialData.incomeStatement?.[0];
     const metrics = this.financialData.metrics || {};
-    
-    return income ? 
+
+    return income ?
       `Revenue: $${this.formatNumber(income.revenue)} | Net Income: $${this.formatNumber(income.net_income)} | Gross Margin: ${metrics.grossMargin || 'N/A'}%` :
       'Financial data pending';
   }
@@ -1494,23 +1557,23 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateYTDPerformance() {
     const prices = this.marketData.priceHistory || [];
     if (prices.length === 0) return 0;
-    
+
     const current = parseFloat(this.marketData.currentPrice);
     const currentYear = new Date().getFullYear();
-    
+
     // Find the first price of the year
     const yearStart = prices.find(p => {
       const date = new Date(p.datetime);
       return date.getFullYear() === currentYear && date.getMonth() === 0;
     });
-    
+
     if (!yearStart) {
       // Use oldest available price
       const oldest = prices[prices.length - 1];
       const startPrice = parseFloat(oldest.close);
       return (((current - startPrice) / startPrice) * 100).toFixed(2);
     }
-    
+
     const startPrice = parseFloat(yearStart.close);
     return (((current - startPrice) / startPrice) * 100).toFixed(2);
   }
@@ -1518,21 +1581,21 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateAnnualRevenue() {
     const income = this.financialData.incomeStatement;
     if (!income || income.length < 4) return 'N/A';
-    
+
     const annualRevenue = income.slice(0, 4).reduce((sum, quarter) => {
       return sum + (parseFloat(quarter.revenue) || 0);
     }, 0);
-    
+
     return this.formatNumber(annualRevenue);
   }
 
   calculateRevenueGrowthTrend() {
     const income = this.financialData.incomeStatement;
     if (!income || income.length < 5) return 'N/A';
-    
+
     const current = parseFloat(income[0]?.revenue) || 0;
     const yearAgo = parseFloat(income[4]?.revenue) || 0;
-    
+
     if (yearAgo === 0) return 'N/A';
     return (((current - yearAgo) / yearAgo) * 100).toFixed(2) + '%';
   }
@@ -1540,10 +1603,10 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateEarningsGrowthTrend() {
     const income = this.financialData.incomeStatement;
     if (!income || income.length < 5) return 'N/A';
-    
+
     const current = parseFloat(income[0]?.net_income) || 0;
     const yearAgo = parseFloat(income[4]?.net_income) || 0;
-    
+
     if (yearAgo === 0) return 'N/A';
     return (((current - yearAgo) / yearAgo) * 100).toFixed(2) + '%';
   }
@@ -1560,7 +1623,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   getQuarterlyData(quarterIndex) {
     const income = this.financialData.incomeStatement;
     if (!income || income.length <= quarterIndex) return {};
-    
+
     const quarter = income[quarterIndex];
     return {
       revenue: this.formatNumber(quarter.revenue),
@@ -1579,10 +1642,10 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateEPSGrowth() {
     const earnings = this.financialData.earnings || [];
     if (earnings.length < 2) return 'N/A';
-    
+
     const current = parseFloat(earnings[0]?.eps) || 0;
     const previous = parseFloat(earnings[1]?.eps) || 0;
-    
+
     if (previous === 0) return 'N/A';
     return (((current - previous) / previous) * 100).toFixed(2) + '%';
   }
@@ -1590,10 +1653,10 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   calculateFCFGrowth() {
     const cashFlow = this.financialData.cashFlow;
     if (!cashFlow || cashFlow.length < 2) return 'N/A';
-    
+
     const current = parseFloat(cashFlow[0]?.free_cash_flow) || 0;
     const previous = parseFloat(cashFlow[1]?.free_cash_flow) || 0;
-    
+
     if (previous === 0) return 'N/A';
     return (((current - previous) / previous) * 100).toFixed(2) + '%';
   }
@@ -1601,7 +1664,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   generateAutopilotAnalysis() {
     const trend = this.determineTrend();
     const rsi = parseFloat(this.technicalData.rsi?.rsi) || 50;
-    
+
     return {
       signal: this.technicalData.analysis?.signal || 'hold',
       strength: rsi > 70 ? 'strong sell' : rsi < 30 ? 'strong buy' : 'neutral',
@@ -1614,7 +1677,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     // Simplified relative strength calculation
     const changePercent = parseFloat(this.marketData.changePercent) || 0;
     const marketAvg = 0.5; // Assume market average
-    
+
     const rs = ((1 + changePercent/100) / (1 + marketAvg/100) - 1) * 100;
     return {
       value: rs.toFixed(2),
@@ -1624,10 +1687,10 @@ Format your response as JSON with these exact keys: executiveSummary, investment
 
   generateNewsSynopsis() {
     if (this.newsData.length === 0) return 'No recent news available';
-    
+
     const positive = this.newsData.filter(n => n.sentiment === 'positive').length;
     const negative = this.newsData.filter(n => n.sentiment === 'negative').length;
-    
+
     if (positive > negative) {
       return `Recent news sentiment is predominantly positive with ${positive} positive articles out of ${this.newsData.length} total.`;
     } else if (negative > positive) {
@@ -1639,7 +1702,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   analyzeSentiment() {
     const positive = this.newsData.filter(n => n.sentiment === 'positive').length;
     const total = this.newsData.length || 1;
-    
+
     const ratio = positive / total;
     if (ratio > 0.7) return 'positive';
     if (ratio < 0.3) return 'negative';
@@ -1659,40 +1722,40 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   generateIncomeHighlights() {
     const income = this.financialData.incomeStatement;
     if (!income || income.length < 2) return 'Limited historical data available';
-    
+
     const current = parseFloat(income[0]?.revenue) || 0;
     const previous = parseFloat(income[1]?.revenue) || 0;
     const growth = previous ? ((current - previous) / previous * 100).toFixed(1) : 0;
-    
+
     const netMargin = this.financialData.metrics?.netMargin || 'N/A';
-    
+
     return `Revenue growth: ${growth}% QoQ | Net margin: ${netMargin}% | EPS: ${income[0]?.eps || 'N/A'}`;
   }
 
   generateBalanceSheetHighlights() {
     const balance = this.financialData.balanceSheet;
     if (!balance || !balance.length) return 'Balance sheet data pending';
-    
+
     const metrics = this.financialData.metrics || {};
-    
+
     return `Current ratio: ${metrics.currentRatio || 'N/A'}x | Debt/Equity: ${metrics.debtToEquity || 'N/A'}x | ROE: ${metrics.roe || 'N/A'}%`;
   }
 
   generateCashFlowHighlights() {
     const cashFlow = this.financialData.cashFlow;
     if (!cashFlow || !cashFlow.length) return 'Cash flow data pending';
-    
+
     const fcf = parseFloat(cashFlow[0]?.free_cash_flow) || 0;
     const ocf = parseFloat(cashFlow[0]?.operating_cash_flow) || 0;
     const metrics = this.financialData.metrics || {};
-    
+
     return `FCF: $${this.formatNumber(fcf)} | OCF: $${this.formatNumber(ocf)} | FCF Margin: ${metrics.fcfMargin || 'N/A'}%`;
   }
 
   generateInvestmentThesis() {
     const pe = this.marketData.statistics?.pe_ratio;
     const growth = this.calculateGrowthRate();
-    
+
     return `Investment case for ${this.ticker}: ` +
            `1) Valuation at ${pe || 'N/A'} P/E ratio ${this.assessValuation()}. ` +
            `2) Revenue growth of ${growth}% demonstrates ${parseFloat(growth) > 10 ? 'strong' : parseFloat(growth) > 0 ? 'moderate' : 'challenging'} momentum. ` +
@@ -1714,7 +1777,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const volatility = this.calculateVolatility();
     const beta = this.marketData.statistics?.beta || 'N/A';
     const debtToEquity = this.financialData.metrics?.debtToEquity || 'N/A';
-    
+
     return `Risk factors: ` +
            `1) Volatility at ${volatility}% indicates ${parseFloat(volatility) > 40 ? 'high' : parseFloat(volatility) > 20 ? 'moderate' : 'low'} price variability. ` +
            `2) Beta of ${beta} suggests ${beta > 1 ? 'above-market' : 'below-market'} systematic risk. ` +
@@ -1727,7 +1790,7 @@ Format your response as JSON with these exact keys: executiveSummary, investment
     const support = this.calculateSupport();
     const resistance = this.calculateResistance();
     const growth = this.calculateGrowthRate();
-    
+
     return `12-month outlook: ${this.ticker} exhibits ${trend} technical setup. ` +
            `Key levels: Support $${support}, Resistance $${resistance}. ` +
            `Growth trajectory of ${growth}% suggests ${parseFloat(growth) > 15 ? 'robust expansion' : parseFloat(growth) > 5 ? 'steady progress' : 'stabilization phase'}. ` +
@@ -2046,9 +2109,9 @@ Format your response as JSON with these exact keys: executiveSummary, investment
   renderObjectToPDF(doc, obj, indent = 0) {
     Object.entries(obj).forEach(([key, value]) => {
       if (value === null || value === undefined) return;
-      
+
       const indentStr = ' '.repeat(indent);
-      
+
       if (Array.isArray(value)) {
         doc.text(`${indentStr}${key}:`, { underline: indent === 0 });
         value.forEach(item => {

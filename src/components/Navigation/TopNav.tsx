@@ -128,13 +128,18 @@ const PDFButton = styled.button`
   }
 `;
 
+const TemplateSlot = styled.div`
+  display: inline-block;
+`;
+
 interface TopNavProps {
   activeTab: 'chart' | 'dashboard' | 'targets' | 'reports';
   onTabChange: (tab: 'chart' | 'dashboard' | 'targets' | 'reports') => void;
   onGeneratePDF?: () => void;
+  templateSelector?: React.ReactNode;
 }
 
-export const TopNav: React.FC<TopNavProps> = ({ activeTab, onTabChange, onGeneratePDF }) => {
+export const TopNav: React.FC<TopNavProps> = ({ activeTab, onTabChange, onGeneratePDF, templateSelector }) => {
   const tabs = [
     { id: 'chart', label: 'Chart', icon: TrendingUp },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -161,6 +166,9 @@ export const TopNav: React.FC<TopNavProps> = ({ activeTab, onTabChange, onGenera
       </NavTabs>
       
       <NavActions>
+        {templateSelector && (
+          <TemplateSlot>{templateSelector}</TemplateSlot>
+        )}
         {onGeneratePDF && (
           <PDFButton
             data-testid="generate-pdf"

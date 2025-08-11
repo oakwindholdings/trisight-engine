@@ -34,6 +34,7 @@ import ReportsPage from './pages/ReportsPage'; // World-class report generation 
 import ContextBar from './components/Navigation/ContextBar';
 import { TopNav } from './components/Navigation/TopNav';
 import ChartWorkspace from './components/Chart/ChartWorkspace';
+import { TemplateDropdown } from './components/Reports/TemplateDropdown';
 import ChartControlBar from './components/Chart/ChartControlBar';
 import PatternPanel from './components/Patterns/PatternPanel';
 import AnalysisPanel from './components/Analysis/AnalysisPanel';
@@ -92,25 +93,25 @@ const getSavedDate = (): Date => {
   } catch (e) {
     logDebug('DEBUG_SETTINGS', 'Error loading saved date from localStorage:', e);
   }
-  
+
   // Default to the last trading day if no saved date or error
   const today = new Date();
   const day = today.getDay(); // 0 = Sunday, 6 = Saturday
-  
+
   // If today is Sunday, go back to Friday
   if (day === 0) {
     const friday = new Date(today);
     friday.setDate(today.getDate() - 2);
     return friday;
   }
-  
+
   // If today is Saturday, go back to Friday
   if (day === 6) {
     const friday = new Date(today);
     friday.setDate(today.getDate() - 1);
     return friday;
   }
-  
+
   return today;
 };
 
@@ -200,7 +201,7 @@ const Tab = styled.button<{ $active: boolean }>`
   font-weight: ${props => props.$active ? '500' : 'normal'};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background-color: #f9f9f9;
   }
@@ -259,11 +260,11 @@ const RefreshButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   &:hover {
     background-color: #1976d2;
   }
-  
+
   &:disabled {
     background-color: #bdbdbd;
     cursor: not-allowed;
@@ -297,23 +298,23 @@ const App: React.FC = () => {
 function AppContent() {
   // Initialize API key from localStorage
   useTwelveDataApiKey();
-  
-  const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay, timeframe, setTimeframe } = useMarketDataContext(); 
-  const { 
-    patterns, 
-    patternCounts, 
-    selectedPattern, 
-    setSelectedPattern, 
-    detectPatterns, 
+
+  const { data, fetchDateRange, setIsUsingCustomRange, fetchSpecificDay, timeframe, setTimeframe } = useMarketDataContext();
+  const {
+    patterns,
+    patternCounts,
+    selectedPattern,
+    setSelectedPattern,
+    detectPatterns,
     goldmineQual,
     selectedPatternForFeedback,
     setSelectedPatternForFeedback,
     submitPatternFeedback
   } = usePatternContext();
-  
+
   // Generate a simple user ID for the session
   const [userId] = useState(() => Math.random().toString(36).substring(2, 10));
-  
+
   // Initialize activeTab based on URL path
   const getInitialTab = (): 'chart' | 'dashboard' | 'targets' | 'reports' => {
     const path = window.location.pathname;
@@ -322,20 +323,20 @@ function AppContent() {
     if (path === '/reports') return 'reports';
     return 'chart';
   };
-  
+
   const [activeTab, setActiveTab] = useState<'chart' | 'dashboard' | 'targets' | 'reports'>(getInitialTab());
-  
+
   // Handle browser navigation (back/forward buttons)
   useEffect(() => {
     const handlePopState = () => {
       const tab = getInitialTab();
       setActiveTab(tab);
     };
-    
+
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
-  
+
   // Debug render
   console.log('[App] Component rendering, selectedPatternForFeedback:', {
     pattern: selectedPatternForFeedback,
@@ -343,30 +344,30 @@ function AppContent() {
     id: selectedPatternForFeedback?.id,
     timestamp: Date.now()
   });
-  
+
   // Symbol selection state
   const [selectedSymbol, setSelectedSymbol] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_SYMBOL);
     return (saved || '').toUpperCase(); // Rule: LockTicker — no AAPL fallback
   });
-  
+
   // State for symbol rankings - initialize empty
   const [symbolRankings, setSymbolRankings] = useState<SymbolRanking[]>([]);
-  
+
   // UI panel visibility state with localStorage persistence
   const [showRightPanel, setShowRightPanel] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_SHOW_RIGHT_PANEL);
     return saved !== null ? JSON.parse(saved) : true;
   });
-  
+
   const [showBottomTable, setShowBottomTable] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY_SHOW_BOTTOM_TABLE);
     return saved !== null ? JSON.parse(saved) : true;
   });
-  
+
   // Custom date range state to track UI-selected dates
   const [customDateRange, setCustomDateRange] = useState<{ startDate: Date; endDate: Date } | null>(null);
-  
+
   // Debug: Log when customDateRange changes
   useEffect(() => {
     logDebug('DEBUG_UI', '[App] customDateRange changed:', customDateRange ? {
@@ -374,13 +375,13 @@ function AppContent() {
       endDate: customDateRange.endDate.toISOString()
     } : 'null');
   }, [customDateRange]);
-  
+
   // Calculate dynamic dimensions based on panel visibility
   const [dimensions, setDimensions] = useState(() => ({
     width: window.innerWidth - (showRightPanel ? 284 : 48),
     height: window.innerHeight - (showBottomTable ? 400 : 200) // Adjust for header and optional bottom table
   }));
-  
+
   // Update dimensions when panels toggle or window resizes
   useEffect(() => {
     const updateDimensions = () => {
@@ -389,58 +390,58 @@ function AppContent() {
       setDimensions({ width: newWidth, height: newHeight });
       logDebug('DEBUG_UI', '[UI] Updated chart dimensions:', { width: newWidth, height: newHeight });
     };
-    
+
     // Update immediately
     updateDimensions();
-    
+
     // Handle window resize
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, [showRightPanel, showBottomTable]);
-  
+
   // Handle right panel toggle
   const handleToggleRightPanel = useCallback(() => {
     setShowRightPanel((prev: boolean) => {
       const newValue = !prev;
       localStorage.setItem(STORAGE_KEY_SHOW_RIGHT_PANEL, JSON.stringify(newValue));
       logDebug('DEBUG_UI', '[UI] Toggled Right Panel: ' + newValue);
-      
+
       // Force chart redraw by triggering resize event
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
         logDebug('DEBUG_UI', '[UI] Dispatched resize event for chart redraw');
       }, 0);
-      
+
       return newValue;
     });
   }, []);
-  
+
   // Handle bottom table toggle
   const handleToggleBottomTable = useCallback(() => {
     setShowBottomTable((prev: boolean) => {
       const newValue = !prev;
       localStorage.setItem(STORAGE_KEY_SHOW_BOTTOM_TABLE, JSON.stringify(newValue));
       logDebug('DEBUG_UI', '[UI] Toggled Bottom Table: ' + newValue);
-      
+
       // Force chart redraw by triggering resize event
       setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
         logDebug('DEBUG_UI', '[UI] Dispatched resize event for chart redraw');
       }, 0);
-      
+
       return newValue;
     });
   }, []);
-  
+
   // Handle symbol select
   const handleSymbolSelect = useCallback((symbol: string) => {
     logDebug('DEBUG_UI', '[App] handleSymbolSelect called with: ' + symbol);
     setSelectedSymbol(symbol);
     localStorage.setItem(STORAGE_KEY_SYMBOL, symbol);
-    
+
     // Check if symbol already exists in rankings
     const symbolExists = symbolRankings.some(ranking => ranking.symbol === symbol);
-    
+
     if (!symbolExists) {
       logDebug('DEBUG_UI', '[App] Adding new symbol to rankings: ' + symbol);
       // Create a new ranking entry for the symbol with default values
@@ -455,11 +456,11 @@ function AppContent() {
         sectorRating: Math.floor(Math.random() * 60) + 20,
         currentPrice: Math.round(Math.random() * 900 * 100) / 100 + 10 // 10-910
       };
-      
+
       setSymbolRankings(prevRankings => [...prevRankings, newRanking]);
     }
   }, [symbolRankings]);
-  
+
   // Type-safe tab change handler
   const handleTabChange = (tab: 'chart' | 'dashboard' | 'targets' | 'reports') => {
     setActiveTab(tab);
@@ -471,10 +472,10 @@ function AppContent() {
   const [chartHeight, setChartHeight] = useState(getSavedChartHeight());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getSavedDate());
-  
+
   // Privacy consent for pattern feedback
   const { hasConsent, showConsentModal, requestConsent, setShowConsentModal } = usePrivacyConsent();
-  
+
   // Debug selectedPatternForFeedback changes - add deep comparison
   useEffect(() => {
     console.log('[App] selectedPatternForFeedback effect triggered:', {
@@ -484,11 +485,11 @@ function AppContent() {
       timestamp: Date.now()
     });
   }, [selectedPatternForFeedback?.id, selectedPatternForFeedback?.type]); // Use specific properties to ensure updates
-  
+
   // Local state for pattern analysis modal
   const [showPatternAnalysisModal, setShowPatternAnalysisModal] = useState(false);
   const [analysisPattern, setAnalysisPattern] = useState<Pattern | null>(null);
-  
+
   // Sync with context - use specific properties to ensure updates
   useEffect(() => {
     console.log('[App] Modal sync useEffect triggered:', {
@@ -509,16 +510,16 @@ function AppContent() {
       setAnalysisPattern(null);
     }
   }, [selectedPatternForFeedback]); // Use the whole object to ensure any change triggers
-  
+
   // Initialize selectedDate to the last trading day
   useEffect(() => {
     const today = new Date();
-    
+
     // Clear any lingering selected pattern on mount
     logDebug('DEBUG_UI', '[App] Clearing selectedPattern on mount');
     setSelectedPattern(null);
     setShowFeedbackModal(false);
-    
+
     // Check if today is Saturday or Sunday
     const dayOfWeek = today.getDay();
     if (dayOfWeek === 0) { // Sunday
@@ -528,16 +529,16 @@ function AppContent() {
       // Go back to Friday
       today.setDate(today.getDate() - 1);
     }
-    
+
     // Set time to 4 PM ET (end of trading day)
     today.setHours(16, 0, 0, 0);
-    
+
     // Only update if different from current selectedDate
     if (selectedDate.getTime() !== today.getTime()) {
       setSelectedDate(today);
     }
   }, []); // Empty dependency array - run only on mount
-  
+
   // Handle pattern selection
   const handlePatternSelect = (pattern: Pattern | null) => {
     logDebug('DEBUG_UI', '[App] handlePatternSelect called with pattern:', pattern);
@@ -547,7 +548,7 @@ function AppContent() {
       setShowFeedbackModal(true);
     }
   };
-  
+
   // Handle chart height change
   const handleChartHeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newHeight = parseInt(event.target.value, 10);
@@ -556,7 +557,7 @@ function AppContent() {
       saveChartHeight(newHeight);
     }
   };
-  
+
   // Handle date change
   const handleDateChange = (date: Date | null) => {
     if (date) {
@@ -565,14 +566,14 @@ function AppContent() {
       localStorage.setItem(STORAGE_KEY_DATE, date.toISOString());
     }
   };
-  
+
   // Handle feedback modal close
   const handleFeedbackModalClose = () => {
     logDebug('DEBUG_UI', '[App] Closing feedback modal and clearing selectedPattern');
     setShowFeedbackModal(false);
     setSelectedPattern(null); // Clear selected pattern when closing modal
   };
-  
+
   // Refresh pattern detection
   const handleRefreshPatterns = () => {
     if (data.length > 0) {
@@ -584,13 +585,13 @@ function AppContent() {
       }, 100);
     }
   };
-  
+
   // Calculate total patterns detected
   const totalPatterns = Object.values(patternCounts).reduce(
     (sum, count) => sum + count,
     0
   );
-  
+
   // State for UI interactions specific to new components
   const [showTradingHoursOnly, setShowTradingHoursOnly] = useState(() => {
     try {
@@ -601,7 +602,7 @@ function AppContent() {
       return true; // Default to true if there's an error
     }
   });
-  
+
   // Initialize active time range from localStorage or default to 1D
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRangeOption>(() => {
     try {
@@ -612,22 +613,22 @@ function AppContent() {
       return '1D';
     }
   });
-  
+
   logDebug('DEBUG_UI', `AppContent render - activeTimeRange: ${activeTimeRange}, activeTab: ${activeTab}`);
   logDebug('DEBUG_UI', `About to check activeTab === 'chart': ${activeTab === 'chart'}`);
   logDebug('DEBUG_UI', `Chart should render: ${activeTab === 'chart'}`);
-  
+
   // Debug which chart component will render
   if (activeTab === 'chart') {
     logDebug('DEBUG_UI', `Chart tab is active. Will render ChartWithContext`);
   }
-  
+
   // Viewport state for chart controls
   const [viewportState] = useState({
     autoScaled: false,
     resetView: false
   });
-  
+
   // Pattern filters state
   const [patternFilters, setPatternFilters] = useState({
     successRate: 0,
@@ -635,21 +636,21 @@ function AppContent() {
     patternType: 'all',
     showOnlyGoldenCandles: getSavedGoldenCandleFilter()
   });
-  
+
   // Apply Golden Candle filter to patterns
   const filteredPatterns = useMemo(() => {
     if (!patternFilters.showOnlyGoldenCandles || !goldmineQual?.length || !data?.length) {
       return patterns;
     }
-    
+
     // Filter patterns to only show those that correspond to Golden Candles
     return patterns.filter(pattern => {
       // Find the candle index that corresponds to this pattern's start time
       const patternStartTime = pattern.startTime.getTime();
-      const candleIndex = data.findIndex(candle => 
+      const candleIndex = data.findIndex(candle =>
         new Date(candle.timestamp).getTime() >= patternStartTime
       );
-      
+
       // Check if the pattern corresponds to a Golden Candle
       if (candleIndex >= 0 && candleIndex < goldmineQual.length) {
         return goldmineQual[candleIndex];
@@ -657,11 +658,11 @@ function AppContent() {
       return false;
     });
   }, [patterns, patternFilters.showOnlyGoldenCandles, goldmineQual, data]);
-  
+
   // Handle timeframe change
   const handleTimeframeChange = (newTimeframe: string) => {
     logDebug('DEBUG_UI', `[App] handleTimeframeChange: ${newTimeframe}`);
-    
+
     // Map the dropdown value to the correct timeframe
     const timeframeMap: { [key: string]: string } = {
       '1m': '1min',
@@ -671,16 +672,16 @@ function AppContent() {
       '1h': '1hour',
       '1D': '1day'
     };
-    
+
     const mappedTimeframe = timeframeMap[newTimeframe] || newTimeframe;
     setTimeframe(mappedTimeframe as any); // Use setTimeframe from MarketDataContext
     localStorage.setItem(STORAGE_KEY_TIMEFRAME, mappedTimeframe);
   };
-  
+
   // Handle filter change
   const handleFilterChange = (filters: any) => {
     setPatternFilters(filters);
-    
+
     // Save Golden Candle filter state to localStorage for persistence
     if (filters.hasOwnProperty('showOnlyGoldenCandles')) {
       try {
@@ -689,15 +690,15 @@ function AppContent() {
         logDebug('DEBUG_SETTINGS', 'Error saving Golden Candle filter to localStorage:', e);
       }
     }
-    
+
     logDebug('DEBUG_UI', 'Pattern filters updated:', filters);
   };
-  
+
   // Handle trading hours toggle
   const handleTradingHoursToggle = () => {
     const newValue = !showTradingHoursOnly;
     setShowTradingHoursOnly(newValue);
-    
+
     // Save to localStorage for persistence across sessions
     try {
       localStorage.setItem(STORAGE_KEY_TRADING_HOURS, newValue.toString());
@@ -705,7 +706,7 @@ function AppContent() {
       logDebug('DEBUG_SETTINGS', 'Failed to save trading hours setting to localStorage:', e);
     }
   };
-  
+
   // Handle auto-scale
   const handleAutoScale = () => {
     logDebug('DEBUG_UI', '[App] Auto-scale triggered');
@@ -713,7 +714,7 @@ function AppContent() {
       chartRef.current.autoScale();
     }
   };
-  
+
   // Handle reset view
   const handleResetView = () => {
     logDebug('DEBUG_UI', '[App] Reset view triggered');
@@ -721,11 +722,11 @@ function AppContent() {
       chartRef.current.resetView();
     }
   };
-  
+
   // Handle time range selection
   const handleTimeRangeSelect = (range: TimeRangeOption, startDate: Date, endDate: Date) => {
     logDebug('DEBUG_UI', `Changing time range to: ${range}`, { startDate, endDate });
-    
+
     // Adjust end date to last trading day if it's a weekend
     const adjustedEndDate = new Date(endDate);
     const dayOfWeek = adjustedEndDate.getDay();
@@ -736,24 +737,24 @@ function AppContent() {
       // Go back to Friday
       adjustedEndDate.setDate(adjustedEndDate.getDate() - 1); // Go back to Friday
     }
-    
+
     logDebug('DEBUG_UI', 'Adjusted dates for fetch:', { startDate, endDate: adjustedEndDate });
-    
+
     // Save to localStorage for persistence across sessions
     try {
       localStorage.setItem(STORAGE_KEY_TIME_RANGE, range);
     } catch (e) {
       logDebug('DEBUG_SETTINGS', 'Failed to save time range to localStorage:', e);
     }
-    
+
     // Update state
     setActiveTimeRange(range);
     setSelectedDate(startDate); // Update the selected date to the start date of the range
-    
+
     // Adjust timeframe based on range for optimal view
     let newTimeframe = timeframe;
     let intervalForFetch: string = '5min'; // Default value
-    
+
     if (range === '1D') {
       newTimeframe = '1min';
       intervalForFetch = '5min';
@@ -770,7 +771,7 @@ function AppContent() {
       newTimeframe = '60min';
       intervalForFetch = '1day';
     }
-    
+
     if (newTimeframe !== timeframe) {
       setTimeframe(newTimeframe);
       try {
@@ -779,7 +780,7 @@ function AppContent() {
         logDebug('DEBUG_SETTINGS', 'Failed to save timeframe to localStorage:', e);
       }
     }
-    
+
     // Fetch data based on the selected time range
     if (range === '1D') {
       logDebug('DEBUG_UI', 'App - Fetching data for 1D range');
@@ -794,7 +795,7 @@ function AppContent() {
       fetchDataForRange();
     }
   };
-  
+
   // Handle settings toggle
   const handleSettingsToggle = () => {
     setShowSettingsPanel(!showSettingsPanel);
@@ -844,6 +845,7 @@ function AppContent() {
       window.__trisightGeneratingPdf = true;
 
       // Rule: ReportV2Only — legacy modular fetching disabled in toolbar flow
+      const templateId = localStorage.getItem('trisight_selected_template_id') || undefined;
       const compRes = await fetch('/api/reports/generate-comprehensive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -851,6 +853,7 @@ function AppContent() {
           // Rule: LockTicker
           ticker: tickerRaw,
           timeframe,
+          templateId,
           // Rule: AlwaysOn — force server-side behavior regardless of UI
           options: {
             enhancedMarketOverview: true,
@@ -957,11 +960,11 @@ function AppContent() {
     logDebug('DEBUG_UI', 'showFeedbackModal:', showFeedbackModal);
     logDebug('DEBUG_UI', 'isFeatureEnabled(NEW_LAYOUT):', isFeatureEnabled('NEW_LAYOUT'));
     logDebug('DEBUG_UI', 'Modal should render:', !isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal);
-    
+
     // Check localStorage for feature flag
     const features = localStorage.getItem('features');
     logDebug('DEBUG_SETTINGS', 'Features in localStorage:', features);
-    
+
     // Add a global click listener to debug
     const debugClickHandler = (e: MouseEvent) => {
       logDebug('DEBUG_UI', 'Global click detected:', {
@@ -973,14 +976,14 @@ function AppContent() {
         targetClass: (e.target as HTMLElement)?.className,
       });
     };
-    
+
     document.addEventListener('click', debugClickHandler, true);
-    
+
     // Run click blocking diagnostic
     setTimeout(() => {
       // Removed unused import: debugClickBlocking
     }, 1000);
-    
+
     return () => {
       document.removeEventListener('click', debugClickHandler, true);
     };
@@ -992,7 +995,7 @@ function AppContent() {
     if (savedHeight !== null) {
       setChartHeight(savedHeight);
     }
-    
+
     // Clear any stale pattern selection on mount
     setSelectedPattern(null);
     setShowFeedbackModal(false);
@@ -1003,7 +1006,7 @@ function AppContent() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const patternParam = params.get('pattern');
-    
+
     if (patternParam) {
       try {
         const pattern = JSON.parse(decodeURIComponent(patternParam));
@@ -1027,13 +1030,13 @@ function AppContent() {
   // Update URL when pattern is selected
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    
+
     if (selectedPattern) {
       params.set('pattern', encodeURIComponent(JSON.stringify(selectedPattern)));
     } else {
       params.delete('pattern');
     }
-    
+
     const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
   }, [selectedPattern]);
@@ -1050,7 +1053,7 @@ function AppContent() {
       {isFeatureEnabled('NEW_LAYOUT') ? (
         // New UI using wrapper components
         <>
-          <TopNav activeTab={activeTab} onTabChange={handleTabChange} onGeneratePDF={generatePDFReport} />
+          <TopNav activeTab={activeTab} onTabChange={handleTabChange} onGeneratePDF={generatePDFReport} templateSelector={<TemplateDropdown />} />
           <div className={mainGridStyles.header}>
             <ContextBar
               selectedDate={selectedDate}
@@ -1128,12 +1131,12 @@ function AppContent() {
               <LearningDashboard />
             )}
           </div>
-          
+
           {/* Bottom Table - conditionally rendered based on showBottomTable state */}
           {showBottomTable && (
-            <div style={{ 
-              height: '200px', 
-              borderTop: '1px solid #e5e7eb', 
+            <div style={{
+              height: '200px',
+              borderTop: '1px solid #e5e7eb',
               backgroundColor: '#ffffff',
               overflow: 'hidden'
             }}>
@@ -1151,7 +1154,7 @@ function AppContent() {
               />
             </div>
           )}
-          
+
           <div className={mainGridStyles.footer}>
             TriSight Pattern Training Interface v2025.07.04.12.09 &copy; {new Date().getFullYear()}
           </div>
@@ -1164,26 +1167,26 @@ function AppContent() {
             <SymbolSearch />
           </Header>
           <TabBar>
-            <Tab 
-              $active={activeTab === 'chart'} 
+            <Tab
+              $active={activeTab === 'chart'}
               onClick={() => setActiveTab('chart')}
             >
               Chart View
             </Tab>
-            <Tab 
-              $active={activeTab === 'dashboard'} 
+            <Tab
+              $active={activeTab === 'dashboard'}
               onClick={() => setActiveTab('dashboard')}
             >
               Learning Dashboard
             </Tab>
-            <Tab 
-              $active={activeTab === 'targets'} 
+            <Tab
+              $active={activeTab === 'targets'}
               onClick={() => setActiveTab('targets')}
             >
               Targets Analysis
             </Tab>
-            <Tab 
-              $active={activeTab === 'reports'} 
+            <Tab
+              $active={activeTab === 'reports'}
               onClick={() => setActiveTab('reports')}
             >
               Reports
@@ -1232,7 +1235,7 @@ function AppContent() {
                   <PatternSelector />
                   <ChartContainer $chartHeight={chartHeight}>
                     {/* Add ChartControlBar component above the chart */}
-                    <ChartControlBar 
+                    <ChartControlBar
                       timeframe={timeframe}
                       onTimeframeChange={handleTimeframeChange}
                       showTradingHoursOnly={showTradingHoursOnly}
@@ -1243,9 +1246,9 @@ function AppContent() {
                       activeTimeRange={activeTimeRange}
                       onTimeRangeSelect={handleTimeRangeSelect}
                     />
-                    <ChartWithContext 
+                    <ChartWithContext
                       ref={chartRef}
-                      width={window.innerWidth - 48} 
+                      width={window.innerWidth - 48}
                       height={chartHeight}
                       onPatternSelect={handlePatternSelect}
                       selectedPattern={selectedPattern}
@@ -1278,7 +1281,7 @@ function AppContent() {
       )}
       <div>
         {showFeedbackModal && selectedPattern && (
-          <FeedbackModalWithContext 
+          <FeedbackModalWithContext
             pattern={selectedPattern}
             onClose={handleFeedbackModalClose}
             userId={userId}
@@ -1288,7 +1291,7 @@ function AppContent() {
         {!isFeatureEnabled('NEW_LAYOUT') && selectedPattern && !showFeedbackModal && (
           <PatternDetailsModal />
         )}
-        
+
         {/* New Pattern Feedback System */}
         {(() => {
           console.log('[App] Pattern feedback state:', selectedPatternForFeedback?.type || 'null');
@@ -1338,7 +1341,7 @@ function AppContent() {
                 if (submitPatternFeedback) {
                   await submitPatternFeedback(feedback);
                 }
-                
+
                 // After successful submission, also restore zoom
                 console.log('[App] Dispatching restore-zoom event after submission');
                 window.dispatchEvent(new CustomEvent('trisight-restore-zoom'));
@@ -1346,15 +1349,15 @@ function AppContent() {
             />
           </>
         )}
-        
+
         {/* Privacy Consent Modal */}
         <ConsentModal
           isOpen={showConsentModal}
           onClose={() => setShowConsentModal(false)}
         />
-        
+
         {/* Settings Panel */}
-        <SettingsPanel 
+        <SettingsPanel
           isOpen={showSettingsPanel}
           onClose={() => setShowSettingsPanel(false)}
         />
