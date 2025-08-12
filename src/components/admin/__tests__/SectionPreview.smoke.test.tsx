@@ -3,10 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SectionPreview } from '../SectionPreview';
 
-// Mock fetch to avoid network
-const mockFetch = jest.fn(async () => ({ json: async () => ({ success: true, data: { content: 'OK', format: 'markdown', meta: { provider: 'heuristic', latencyMs: 10 } } }) })) as any;
-
-beforeAll(() => { (global as any).fetch = mockFetch; });
+// fetch is mocked in setupTests.ts to return success for preview-section
 
 test('SectionPreview exposes critical testids', async () => {
   render(<SectionPreview section_key="executive_summary" />);

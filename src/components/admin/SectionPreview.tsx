@@ -1,6 +1,7 @@
 // src/components/admin/SectionPreview.tsx
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { PROVIDERS, FORMATS } from '../../models/adminConstants';
 
 const Box = styled.div` border:1px solid #e5e7eb; border-radius:8px; padding:10px; background:#fff; `;
 const Button = styled.button` padding: 6px 10px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.9rem; &:hover { background: #f9fafb; }`;
@@ -18,12 +19,12 @@ export const SectionPreview: React.FC<{ section_key: string }> = ({ section_key 
 
   async function runPreview() {
     try {
-      setLoading(true); setError(null);
+      setLoading(true); setError(null); setResult(null);
       const res = await fetch('/api/admin/preview-section', {
         method: 'POST', headers: { 'Content-Type':'application/json', 'X-Admin-Key': localStorage.getItem('trisight_admin_key') || '' },
         body: JSON.stringify({ section_key, override: { provider, expected_format, template }, inputs: { ticker, timeframe } })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ success: false, message: 'Invalid JSON' }));
       if (!data?.success) throw new Error(data?.message || data?.code || 'PREVIEW');
       setResult(data.data);
     } catch (e: any) { setError(e?.message || 'Preview failed'); }

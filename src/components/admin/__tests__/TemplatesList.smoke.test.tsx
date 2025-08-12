@@ -3,12 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { TemplatesList } from '../TemplatesList';
 
-jest.mock('../../../services/adminApi', () => ({
-  createTemplate: jest.fn(async (name: string, desc: string) => ({ id: 't1', name, description: desc })),
-  listTemplates: jest.fn(async () => ([{ id: 't1', name: 'One', description: 'Desc' }])),
-  setStoredAdminKey: jest.fn(),
-  getStoredAdminKey: jest.fn(() => ''),
-}));
+jest.mock('../../../services/adminApi');
 
 test('TemplatesList exposes critical testids', async () => {
   const onSelect = jest.fn();

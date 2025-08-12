@@ -25,7 +25,7 @@ export const PromptDrawer: React.FC = () => {
   const [msg, setMsg] = useState<string>('');
   const adminKey = getStoredAdminKey();
 
-  useEffect(() => { (async () => { try { const v = await listVariables(); setVars(v); } catch {} })(); }, []);
+  useEffect(() => { (async () => { try { const v = await listVariables(); setVars(v || []); } catch (e: any) { setMsg(e?.message || 'Failed to load variables'); setVars([]);} })(); }, []);
 
   async function savePrompt() {
     try {

@@ -118,3 +118,18 @@ afterAll(() => {
 
 // Global test timeout
 jest.setTimeout(30000);
+
+
+// Admin API manual mock for smoke tests
+jest.mock('./services/adminApi');
+
+// Safe fetch mock default; tests may override
+if (!(global as any).fetch) {
+  (global as any).fetch = jest.fn(async (input: RequestInfo, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    if (url.includes('/api/admin/preview-section')) {
+      return { json: async () => ({ success: true, data: { content: 'OK', format: 'markdown', meta: {} } }) } as any;
+    }
+    return { json: async () => ({}) } as any;
+  });
+}
