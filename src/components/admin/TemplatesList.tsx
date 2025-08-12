@@ -69,7 +69,10 @@ export const TemplatesList: React.FC<{ onSelect: (t: ReportTemplate) => void } >
       {error && <div style={{ color: 'crimson' }}>{error}</div>}
 
       <div data-testid="admin-templateslist-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map(t => (
+        {(items || []).length === 0 && (
+          <div data-testid="admin-templateslist-empty" style={{ color: '#6b7280' }}>No templates</div>
+        )}
+        {(items || []).map(t => (
           <Row key={t.id} data-testid={`admin-templateslist-row-${t.id}`}>
             <div>
               <div style={{ fontWeight: 600 }}>{t.name}</div>

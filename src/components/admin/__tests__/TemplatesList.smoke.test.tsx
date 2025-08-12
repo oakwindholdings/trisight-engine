@@ -1,14 +1,11 @@
+jest.mock('../../../services/adminApi');
+
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { TemplatesList } from '../TemplatesList';
 
-jest.mock('../../../services/adminApi', () => ({
-  createTemplate: jest.fn(async (name: string, desc: string) => ({ id: 't1', name, description: desc })),
-  listTemplates: jest.fn(async () => ([{ id: 't1', name: 'One', description: 'Desc' }])),
-  setStoredAdminKey: jest.fn(),
-  getStoredAdminKey: jest.fn(() => ''),
-}));
+jest.mock('../../../services/adminApi');
 
 test('TemplatesList exposes critical testids', async () => {
   const onSelect = jest.fn();
@@ -27,3 +24,19 @@ test('TemplatesList exposes critical testids', async () => {
   expect(list.querySelector('[data-testid="admin-templateslist-row-t1"]')).toBeTruthy();
 });
 
+
+
+// Empty state lock: when API returns no templates, show placeholder
+it('TemplatesList shows empty state when no items', async () => {
+  const onSelect = jest.fn();
+  const api = require('../../../services/adminApi');
+  // Override listTemplates for refresh to return empty
+  (api as any).listTemplates = jest.fn(async () => []);
+  render(<TemplatesList onSelect={onSelect} />);
+  // Trigger a refresh to use the new mock
+  const refreshBtn = await screen.findByTestId('admin-templateslist-refresh');
+  fireEvent.click(refreshBtn);
+  const list = await screen.findByTestId('admin-templateslist-list');
+  expect(list).toBeInTheDocument();
+  expect(await screen.findByTestId('admin-templateslist-empty')).toBeInTheDocument();
+});

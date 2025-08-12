@@ -1,13 +1,11 @@
+jest.mock('../../../services/adminApi');
+
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { PromptDrawer } from '../PromptDrawer';
 
-jest.mock('../../../services/adminApi', () => ({
-  listVariables: jest.fn(async () => ([{ id: 'v1', namespace: 'INPUT', var_key: 'ticker', enabled: true }])),
-  createPrompt: jest.fn(async () => ({ id: 'p1' })),
-  getStoredAdminKey: jest.fn(() => 'KEY')
-}));
+jest.mock('../../../services/adminApi');
 
 test('PromptDrawer exposes critical testids', async () => {
   render(<PromptDrawer />);
