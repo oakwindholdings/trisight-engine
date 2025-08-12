@@ -3,7 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SectionPreview } from '../SectionPreview';
 
-// fetch is mocked in setupTests.ts to return success for preview-section
+beforeEach(() => {
+  (global as any).fetch = jest.fn(async () => ({ json: async () => ({ success: true, data: { content: 'OK', format: 'markdown', meta: {} } }) })) as any;
+});
 
 test('SectionPreview exposes critical testids', async () => {
   render(<SectionPreview section_key="executive_summary" />);
@@ -13,6 +15,7 @@ test('SectionPreview exposes critical testids', async () => {
   expect(screen.getByTestId('admin-prev-format')).toBeInTheDocument();
   expect(screen.getByTestId('admin-prev-template')).toBeInTheDocument();
   fireEvent.click(screen.getByTestId('admin-prev-run'));
-  expect(await screen.findByTestId('admin-prev-output')).toHaveTextContent('OK');
+  const output = await screen.findByTestId('admin-prev-output');
+  expect(output).toHaveTextContent('OK');
 });
 

@@ -120,16 +120,16 @@ afterAll(() => {
 jest.setTimeout(30000);
 
 
-// Admin API manual mock for smoke tests
-jest.mock('./services/adminApi');
 
-// Safe fetch mock default; tests may override
-if (!(global as any).fetch) {
+// Safe fetch mock default for admin preview; delegate others to original if present
+{
+  const originalFetch = (global as any).fetch;
   (global as any).fetch = jest.fn(async (input: RequestInfo, init?: RequestInit) => {
-    const url = typeof input === 'string' ? input : input.toString();
-    if (url.includes('/api/admin/preview-section')) {
+    const url = typeof input === 'string' ? input : (input as any).url || input.toString();
+    if (typeof url === 'string' && url.includes('/api/admin/preview-section')) {
       return { json: async () => ({ success: true, data: { content: 'OK', format: 'markdown', meta: {} } }) } as any;
     }
+    if (typeof originalFetch === 'function') return originalFetch(input as any, init as any);
     return { json: async () => ({}) } as any;
   });
 }

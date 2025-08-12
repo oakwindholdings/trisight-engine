@@ -69,7 +69,7 @@ export const PromptDrawer: React.FC = () => {
       </Row>
       <Textarea data-testid="admin-pd-template" id="prompt-editor-ta" value={template} onChange={e => setTemplate(e.target.value)} />
       <div style={{ display:'flex', gap: 8, flexWrap:'wrap' }}>
-        {vars.map(v => (
+        {(vars || []).map(v => (
           <Button data-testid={`admin-pd-var-${v.namespace}-${v.var_key}`} key={v.id} onClick={() => insertToken(v.namespace, v.var_key)} title={v.description || ''}>
             {v.namespace}.{v.var_key}
           </Button>

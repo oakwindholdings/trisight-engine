@@ -51,7 +51,7 @@ export const SectionPreview: React.FC<{ section_key: string }> = ({ section_key 
         <Button data-testid="admin-prev-run" onClick={runPreview}>{loading ? 'Running...' : 'Preview'}</Button>
       </div>
       <Textarea data-testid="admin-prev-template" value={template} onChange={e => setTemplate(e.target.value)} />
-      {error && <div style={{ color:'crimson' }}>{error}</div>}
+      {error && <div data-testid="admin-prev-error" style={{ color:'crimson' }}>{error}</div>}
       {result && (
         <div style={{ marginTop:8 }}>
           <div style={{ fontWeight: 600 }}>Output ({result.format})</div>
