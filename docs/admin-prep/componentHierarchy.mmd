@@ -1,0 +1,15 @@
+flowchart TD
+  A[ReportsAdmin] --> B[TemplatesList]
+  A --> C[TemplateEditor]
+  A --> D[PromptDrawer]
+  C --> E[SectionPreview (per section)]
+
+  subgraph Data
+    X[adminApi:list/create\n/prompts/variables\n/preview-section]
+  end
+
+  B -. uses .-> X
+  C -. uses .-> X
+  D -. uses .-> X
+  E -. uses .-> X
+

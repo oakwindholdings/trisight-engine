@@ -55,28 +55,31 @@ export const TemplatesList: React.FC<{ onSelect: (t: ReportTemplate) => void } >
     <Container>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <Label>Admin Key</Label>
-        <Input value={adminKey} onChange={e => setAdminKey(e.target.value)} placeholder="X-Admin-Key" />
-        <Button onClick={saveAdminKey}>Save</Button>
+        <Input data-testid="admin-templateslist-adminkey-input" value={adminKey} onChange={e => setAdminKey(e.target.value)} placeholder="X-Admin-Key" />
+        <Button data-testid="admin-templateslist-save-adminkey" onClick={saveAdminKey}>Save</Button>
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <Input placeholder="Template name" value={name} onChange={e => setName(e.target.value)} />
-        <Input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
-        <Button onClick={handleCreate}>New Template</Button>
-        <Button onClick={refresh}>{loading ? 'Loading...' : 'Refresh'}</Button>
+        <Input data-testid="admin-templateslist-new-name" placeholder="Template name" value={name} onChange={e => setName(e.target.value)} />
+        <Input data-testid="admin-templateslist-new-desc" placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
+        <Button data-testid="admin-templateslist-create" onClick={handleCreate}>New Template</Button>
+        <Button data-testid="admin-templateslist-refresh" onClick={refresh}>{loading ? 'Loading...' : 'Refresh'}</Button>
       </div>
 
       {error && <div style={{ color: 'crimson' }}>{error}</div>}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map(t => (
-          <Row key={t.id}>
+      <div data-testid="admin-templateslist-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {(items || []).length === 0 && (
+          <div data-testid="admin-templateslist-empty" style={{ color: '#6b7280' }}>No templates</div>
+        )}
+        {(items || []).map(t => (
+          <Row key={t.id} data-testid={`admin-templateslist-row-${t.id}`}>
             <div>
               <div style={{ fontWeight: 600 }}>{t.name}</div>
               <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>{t.description}</div>
             </div>
             <Actions>
-              <Button onClick={() => onSelect(t)}>Edit</Button>
+              <Button data-testid={`admin-templateslist-edit-${t.id}`} onClick={() => onSelect(t)}>Edit</Button>
             </Actions>
           </Row>
         ))}

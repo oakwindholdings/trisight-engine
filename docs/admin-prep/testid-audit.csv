@@ -1,0 +1,37 @@
+Component Name,Control Name,Current Selector,Proposed data-testid
+TemplatesList,Admin Key Input,,admin-templateslist-adminkey-input
+TemplatesList,Save Admin Key Button,,admin-templateslist-save-adminkey
+TemplatesList,New Template Name Input,,admin-templateslist-new-name
+TemplatesList,New Template Description Input,,admin-templateslist-new-desc
+TemplatesList,Create Template Button,,admin-templateslist-create
+TemplatesList,Refresh Button,,admin-templateslist-refresh
+TemplatesList,Templates List Container,,admin-templateslist-list
+TemplatesList,Template Row (per id),,admin-templateslist-row-{id}
+TemplatesList,Edit Template Button (per id),,admin-templateslist-edit-{id}
+TemplateEditor,New Section Key Select,,admin-te-new-key
+TemplateEditor,New Section Format Select,,admin-te-new-format
+TemplateEditor,Add Section Button,,admin-te-add-section
+TemplateEditor,Section Key Label (per section),,admin-te-sec-key-{sectionId}
+TemplateEditor,Section Position Label (per section),,admin-te-sec-pos-{sectionId}
+TemplateEditor,Section Format Select (per section),,admin-te-sec-format-{sectionId}
+TemplateEditor,Toggle Enabled Button (per section),,admin-te-sec-toggle-{sectionId}
+TemplateEditor,Move Up Button (per section),,admin-te-sec-up-{sectionId}
+TemplateEditor,Move Down Button (per section),,admin-te-sec-down-{sectionId}
+TemplateEditor,Bind Prompt Select (per section),,admin-te-sec-prompt-{sectionId}
+TemplateEditor,Section Preview Container (per section),,admin-te-sec-prev-{sectionId}
+SectionPreview,Ticker Input,,admin-prev-ticker
+SectionPreview,Timeframe Input,,admin-prev-timeframe
+SectionPreview,Provider Select,,admin-prev-provider
+SectionPreview,Expected Format Select,,admin-prev-format
+SectionPreview,Template Textarea,,admin-prev-template
+SectionPreview,Run Preview Button,,admin-prev-run
+SectionPreview,Preview Output Container,,admin-prev-output
+PromptDrawer,Section Select,,admin-pd-section
+PromptDrawer,Provider Select,,admin-pd-provider
+PromptDrawer,Model Input,,admin-pd-model
+PromptDrawer,Expected Format Select,,admin-pd-format
+PromptDrawer,Template Textarea,,admin-pd-template
+PromptDrawer,Variable Token Button (per var),,admin-pd-var-{namespace}-{var_key}
+PromptDrawer,Save Prompt Button,,admin-pd-save
+PromptDrawer,Status Message,,admin-pd-msg
+

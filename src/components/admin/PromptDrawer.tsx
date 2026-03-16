@@ -13,8 +13,7 @@ const Select = styled.select` border: 1px solid #d1d5db; padding: 6px 8px; borde
 const Row = styled.div` display: flex; gap: 8px; align-items: center; `;
 const Small = styled.div` font-size: 0.8rem; color: #6b7280; `;
 
-const PROVIDERS = ['anthropic','openai','perplexity','firecrawl','twelvedata','hybrid','heuristic'];
-const FORMATS: Array<'markdown'|'json'|'bullets'> = ['markdown','json','bullets'];
+import { PROVIDERS, FORMATS } from '../../models/adminConstants';
 
 export const PromptDrawer: React.FC = () => {
   const [section_key, setSectionKey] = useState('executive_summary');
@@ -26,7 +25,7 @@ export const PromptDrawer: React.FC = () => {
   const [msg, setMsg] = useState<string>('');
   const adminKey = getStoredAdminKey();
 
-  useEffect(() => { (async () => { try { const v = await listVariables(); setVars(v); } catch {} })(); }, []);
+  useEffect(() => { (async () => { try { const v = await listVariables(); setVars(v || []); } catch (e: any) { setMsg(e?.message || 'Failed to load variables'); setVars([]);} })(); }, []);
 
   async function savePrompt() {
     try {
@@ -52,35 +51,35 @@ export const PromptDrawer: React.FC = () => {
     <Drawer>
       <h3 style={{ marginTop: 0 }}>Prompt Editor</h3>
       <Row>
-        <Select value={section_key} onChange={e => setSectionKey(e.target.value)}>
+        <Select data-testid="admin-pd-section" value={section_key} onChange={e => setSectionKey(e.target.value)}>
           <option>executive_summary</option>
           <option>investment_thesis</option>
           <option>risk_assessment</option>
           <option>citations</option>
         </Select>
-        <Select value={provider} onChange={e => setProvider(e.target.value)}>
+        <Select data-testid="admin-pd-provider" value={provider} onChange={e => setProvider(e.target.value)}>
           {PROVIDERS.map(p => <option key={p} value={p}>{p}</option>)}
         </Select>
       </Row>
       <Row>
-        <Input placeholder="model (optional)" value={model} onChange={e => setModel(e.target.value)} />
-        <Select value={expected_format} onChange={e => setExpectedFormat(e.target.value as any)}>
+        <Input data-testid="admin-pd-model" placeholder="model (optional)" value={model} onChange={e => setModel(e.target.value)} />
+        <Select data-testid="admin-pd-format" value={expected_format} onChange={e => setExpectedFormat(e.target.value as any)}>
           {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
         </Select>
       </Row>
-      <Textarea id="prompt-editor-ta" value={template} onChange={e => setTemplate(e.target.value)} />
+      <Textarea data-testid="admin-pd-template" id="prompt-editor-ta" value={template} onChange={e => setTemplate(e.target.value)} />
       <div style={{ display:'flex', gap: 8, flexWrap:'wrap' }}>
-        {vars.map(v => (
-          <Button key={v.id} onClick={() => insertToken(v.namespace, v.var_key)} title={v.description || ''}>
+        {(vars || []).map(v => (
+          <Button data-testid={`admin-pd-var-${v.namespace}-${v.var_key}`} key={v.id} onClick={() => insertToken(v.namespace, v.var_key)} title={v.description || ''}>
             {v.namespace}.{v.var_key}
           </Button>
         ))}
       </div>
       <Small>Tip: Use OR fallbacks like {'{{INPUT.ticker || "TICKER"}}'}</Small>
       <div style={{ display:'flex', gap:8, marginTop:8 }}>
-        <Button onClick={savePrompt}>Save Prompt</Button>
+        <Button data-testid="admin-pd-save" onClick={savePrompt}>Save Prompt</Button>
       </div>
-      {msg && <Small>{msg}</Small>}
+      {msg && <Small data-testid="admin-pd-msg">{msg}</Small>}
     </Drawer>
   );
 };
