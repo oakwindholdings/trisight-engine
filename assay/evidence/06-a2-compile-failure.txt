@@ -1,0 +1,7 @@
+tests/tmp_typeharness_stripped.ts(15,15): error TS2345: Argument of type 'Span<"CALENDAR">' is not assignable to parameter of type 'Span<"TRADING">'.
+  Type '"CALENDAR"' is not assignable to type '"TRADING"'.
+tests/tmp_typeharness_stripped.ts(17,13): error TS2345: Argument of type 'Span<"CALENDAR">' is not assignable to parameter of type 'Span<"TRADING">'.
+  Type '"CALENDAR"' is not assignable to type '"TRADING"'.
+tests/tmp_typeharness_stripped.ts(21,11): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Span<"TRADING">'.
+tests/tmp_typeharness_stripped.ts(24,7): error TS2741: Property '[SpanBrand]' is missing in type '{ basis: "TRADING"; count: number; }' but required in type 'Span<"TRADING">'.
+tests/tmp_typeharness_stripped.ts(27,7): error TS2741: Property '[AsOfBrand]' is missing in type '{ symbol: string; asOf: number; length: number; bar: () => { kind: "refused"; reason: "missing_bar"; detail: string; }; }' but required in type 'AsOfSeries'.

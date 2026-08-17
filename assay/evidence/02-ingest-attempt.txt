@@ -1,0 +1,4 @@
+AAPL: REFUSED missing_credential — MASSIVE_API_KEY absent or empty — name reported, value never
+MSFT: REFUSED missing_credential — MASSIVE_API_KEY absent or empty — name reported, value never
+NVDA: REFUSED missing_credential — MASSIVE_API_KEY absent or empty — name reported, value never
+SPY: REFUSED missing_credential — MASSIVE_API_KEY absent or empty — name reported, value never

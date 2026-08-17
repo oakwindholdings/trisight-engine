@@ -1,0 +1,1 @@
+{"kind":"refused","reason":"lookahead_at_load","detail":"DEMO: bar at 2000 exceeds asOf 1000"}

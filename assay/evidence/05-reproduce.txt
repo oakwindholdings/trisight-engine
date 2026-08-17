@@ -1,0 +1,5 @@
+{
+  "identical": true,
+  "expected": "sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c",
+  "actual": "sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c"
+}

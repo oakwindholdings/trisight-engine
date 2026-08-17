@@ -1,0 +1,9 @@
+{
+  "name": "sma-cross-20-50-daily-v1",
+  "universe": ["AAPL", "MSFT", "NVDA", "SPY"],
+  "signal": { "kind": "sma_cross", "fast": 20, "slow": 50 },
+  "sizing": { "kind": "fixed_cash", "cashMicros": 25000000000 },
+  "entry": { "kind": "next_open" },
+  "exit": { "kind": "signal_flip" },
+  "risk": { "maxOpenPositions": 4 }
+}

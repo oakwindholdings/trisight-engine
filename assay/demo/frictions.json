@@ -1,0 +1,10 @@
+{
+  "version": "demo-frictions-v1",
+  "slippageBps": 5,
+  "commissionPerShareMicros": 5000,
+  "borrowAvailable": false,
+  "fillModel": "next_open",
+  "gapPolicy": "fill_at_open",
+  "periodsPerYear": 252,
+  "universeAvailability": { "AAPL": true, "MSFT": true, "NVDA": true, "SPY": true }
+}

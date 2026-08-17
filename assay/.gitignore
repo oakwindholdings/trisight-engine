@@ -1,0 +1,10 @@
+# derived, rebuildable from objects/ — never the source of truth
+store-data/index.sqlite
+store-data/index.sqlite-*
+# local env — the key arrives via environment only
+.env
+.env.*
+node_modules/
+tests/.tmp_*
+tests/tmp_*
+.tmp_coverage.txt

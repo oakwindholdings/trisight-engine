@@ -1,0 +1,16 @@
+{
+  "name": "assay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ASSAY — a machine that decides whether a claim about returns is true. Phase 1.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "bunx tsc --noEmit",
+    "test": "bun test",
+    "gate": "./gate.sh"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.5.0"
+  }
+}
