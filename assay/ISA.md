@@ -3,7 +3,7 @@ project: ASSAY
 task: Build ASSAY Phase 1 — deterministic claim-verification engine per one-shot PRD
 slug: assay-phase1
 effort: E4
-phase: verify
+phase: complete
 progress: 147/150
 mode: standard
 started: 2026-08-17T16:20:00-04:00
