@@ -92,6 +92,17 @@ test('store: index is derived — delete it, rebuild it, identical query results
   expect(after).toEqual(before);
 });
 
+test('cold start: a fresh openStore over existing objects self-materializes the index (A1)', () => {
+  const root = tempStore();
+  const r = putRecord(root, 'Spec', { record_type: 'Spec', spec: { cold: true } });
+  if (isRefused(r)) throw new Error('unexpected');
+  rmSync(join(root.dir, 'index.sqlite'));
+  const reopened = openStore(root.dir); // simulates a clone where the gitignored index never existed
+  const specs = recordsOfType(reopened, 'Spec');
+  if (isRefused(specs)) throw new Error('unexpected');
+  expect(specs.length).toBe(1);
+});
+
 test('store: record_type field must match the declared type', () => {
   const root = tempStore();
   const bad = putRecord(root, 'Result', { record_type: 'Spec' });

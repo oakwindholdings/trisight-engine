@@ -34,7 +34,14 @@ function objectPath(root: StoreRoot, hash: Hash): string {
 export function openStore(dir: string): StoreRoot {
   mkdirSync(join(dir, 'objects'), { recursive: true });
   mkdirSync(join(dir, 'traces'), { recursive: true });
-  return { dir };
+  const root: StoreRoot = { dir };
+  // Cold-clone finding (A1): the index is derived and gitignored, so on a fresh checkout it must
+  // self-materialize from objects — A1's reproduction command must be a SINGLE command.
+  if (!existsSync(join(dir, 'index.sqlite'))) {
+    const hasObjects = readdirSync(join(dir, 'objects')).some((f) => f.startsWith('sha256-'));
+    if (hasObjects) rebuildIndex(root); // a refusal here surfaces on the first query; objects stay the truth
+  }
+  return root;
 }
 
 /** Write-once put. Existing identical bytes: idempotent. Existing different bytes: refuse (I7). */
