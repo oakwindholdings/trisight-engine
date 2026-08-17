@@ -16,7 +16,7 @@ reads NOT RUN.
 | 05-reproduce.txt | `bun run cli.ts reproduce --result sha256:cb29c69a…` | 0 | A1 mechanism: byte-identical, reproduced: "refusal" (self-described), code_drift: false, store unmutated |
 | 06-a2-compile-failure.txt | stripped type harness under `bunx tsc --noEmit -p tsconfig.json` | 2 | A2 compile layer: 5 distinct misuses fail under project strictness (count asserted by gate step 2) |
 | 07-a2-load-refusal.txt | `bun -e "loadAsOf(… future bar …)"` | 0 | A2 load layer: lookahead_at_load refusal value |
-| gate-run-final.txt | `./gate.sh` | 0 | 9-step gate: typecheck, guard-shown-failing (counted), 65 tests/1507 assertions, purity greps, unmasked scans, A5 replay + code-drift check, verify-store (index complete both directions, zero stale seals), A6 secret scan (DISCLOSED: predicate NOT RUN with empty key), coverage |
+| gate-run-final.txt | `./gate.sh` | 0 | 9-step gate: typecheck, guard-shown-failing (counted), 66 tests/1509 assertions, purity greps, unmasked scans, A5 replay + code-drift check, verify-store (index complete both directions, zero stale seals), A6 secret scan (DISCLOSED: predicate NOT RUN with empty key), coverage |
 | coverage.txt | written by gate step 9 (`bun test --coverage`) | 0 | line/function coverage per file |
 
 NOT RUN (and why): A4 real-data worst slice and the A6 live-key grep — both require a non-empty

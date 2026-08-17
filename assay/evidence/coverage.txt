@@ -1,7 +1,7 @@
 ------------------------|---------|---------|-------------------
 File                    | % Funcs | % Lines | Uncovered Line #s
 ------------------------|---------|---------|-------------------
-All files               |   96.94 |   92.79 |
+All files               |   96.94 |   92.97 |
  adversary/adversary.ts |  100.00 |   96.43 | 37-38,48
  kernel/bars.ts         |  100.00 |  100.00 | 
  kernel/canonical.ts    |  100.00 |   98.21 | 
@@ -17,11 +17,11 @@ All files               |   96.94 |   92.79 |
  substrate/ingress.ts   |  100.00 |   95.28 | 89,113,122,129
  substrate/invoke.ts    |  100.00 |   94.37 | 114,116,133-134,137-138,143-144,153,157,294-295
  substrate/registry.ts  |   57.14 |   73.81 | 52-62
- substrate/store.ts     |   90.91 |   74.24 | 46-47,136-137,141-142,166-193
+ substrate/store.ts     |   90.91 |   77.27 | 136-137,166-193
  tests/prop.ts          |  100.00 |   95.24 | 
 ------------------------|---------|---------|-------------------
 
- 65 pass
+ 66 pass
  0 fail
- 1507 expect() calls
-Ran 65 tests across 8 files. [135.00ms]
+ 1509 expect() calls
+Ran 66 tests across 8 files. [140.00ms]

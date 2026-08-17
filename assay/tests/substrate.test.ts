@@ -92,6 +92,18 @@ test('store: index is derived — delete it, rebuild it, identical query results
   expect(after).toEqual(before);
 });
 
+test('RED-FIRST (Cato U2): a corrupt object makes cold-start openStore THROW and remove the partial index', () => {
+  const root = tempStore();
+  const ok = putRecord(root, 'Spec', { record_type: 'Spec', spec: { good: 1 } });
+  const bad = putRecord(root, 'Spec', { record_type: 'Spec', spec: { bad: 1 } });
+  if (isRefused(ok) || isRefused(bad)) throw new Error('unexpected');
+  const badPath = join(root.dir, 'objects', bad.replace(':', '-'));
+  writeFileSync(badPath, readFileSync(badPath, 'utf8') + 'x'); // corrupt one byte
+  rmSync(join(root.dir, 'index.sqlite'));
+  expect(() => openStore(root.dir)).toThrow(/store is corrupt, refusing to operate/);
+  expect(existsSync(join(root.dir, 'index.sqlite'))).toBe(false); // no silent partial index survives
+});
+
 test('cold start: a fresh openStore over existing objects self-materializes the index (A1)', () => {
   const root = tempStore();
   const r = putRecord(root, 'Spec', { record_type: 'Spec', spec: { cold: true } });
