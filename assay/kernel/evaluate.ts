@@ -34,11 +34,17 @@ export interface EvalResult {
   readonly kind: 'result';
   readonly window: EvalWindow;
   readonly foldCount: number;
+  /** Declared semantics (Cato M3): each fold is an INDEPENDENT flat-start account; positions open
+   *  at a fold boundary are marked-to-market and abandoned, never carried; the headline composes
+   *  fold returns multiplicatively. */
+  readonly fold_semantics: 'independent_flat_start_folds';
   readonly folds: readonly FoldReport[];
   readonly headline: {
     readonly totalReturn: number;
     readonly cagrValue: number;
-    readonly maxDrawdownMagnitude: number;
+    /** max over PER-FOLD drawdowns — NOT the composed-curve drawdown; cross-fold drawdowns are
+     *  unrepresentable under these fold semantics and this figure can only understate them (declared) */
+    readonly worstFoldDrawdown: number;
     readonly tradingDays: number;
     readonly periodsPerYear: number;
   };
@@ -227,11 +233,12 @@ export function evaluate(
     kind: 'result',
     window,
     foldCount: params.foldCount,
+    fold_semantics: 'independent_flat_start_folds',
     folds,
     headline: {
       totalReturn: headlineReturn,
       cagrValue: cg,
-      maxDrawdownMagnitude: worstDd,
+      worstFoldDrawdown: worstDd,
       tradingDays,
       periodsPerYear: frictions.periodsPerYear,
     },

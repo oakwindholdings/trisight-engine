@@ -48,7 +48,9 @@ export interface Ledger {
   readonly openPositions: readonly { symbol: string; shares: number; costMicros: number }[];
   readonly equityPath: readonly { t: number; equityMicros: number }[];
   readonly totalCommissionsMicros: number;
-  readonly realizedTradingPnlMicros: number; // excludes commissions; commissions are their own line
+  /** NET of per-share commissions allocated to closed portions; slippage is embedded in fill prices.
+   *  totalCommissionsMicros remains the full cash-side commission line (open+close, all fills). */
+  readonly realizedTradingPnlMicros: number;
 }
 
 /** Forge finding 4 (proven +296%): a negative commission MINTS cash. Frictions are declared
@@ -197,8 +199,19 @@ export function simulate(
           if (isRefused(proceeds)) return proceeds;
           const cost = mulMicros(lot.priceMicros, take, `cost ${d.id}`);
           if (isRefused(cost)) return cost;
-          closed.push({ symbol: d.symbol, openFillId: lot.openFillId, closeFillId: fillId, pnlMicros: proceeds - cost });
-          const realizedNext = addMicros(realized, proceeds - cost, `realized after ${d.id}`);
+          // Cato M1: position P&L is NET of frictions — per-share commission allocates exactly
+          // (integer × integer) to the closed portion, both open and close side. A round trip that
+          // loses after commissions is a LOSS, and winRate downstream now says so.
+          const commAlloc = mulMicros(frictions.commissionPerShareMicros, take, `comm alloc ${d.id}`);
+          if (isRefused(commAlloc)) return commAlloc;
+          const grossPnl = addMicros(proceeds, -cost, `gross pnl ${d.id}`);
+          if (isRefused(grossPnl)) return grossPnl;
+          const afterOpenComm = addMicros(grossPnl, -commAlloc, `pnl less open comm ${d.id}`);
+          if (isRefused(afterOpenComm)) return afterOpenComm;
+          const netPnl = addMicros(afterOpenComm, -commAlloc, `pnl less close comm ${d.id}`);
+          if (isRefused(netPnl)) return netPnl;
+          closed.push({ symbol: d.symbol, openFillId: lot.openFillId, closeFillId: fillId, pnlMicros: netPnl });
+          const realizedNext = addMicros(realized, netPnl, `realized after ${d.id}`);
           if (isRefused(realizedNext)) return realizedNext;
           realized = realizedNext;
           lot.shares -= take;

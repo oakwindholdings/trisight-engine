@@ -1,5 +1,9 @@
 {
   "identical": true,
-  "expected": "sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c",
-  "actual": "sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c"
+  "reproduced": "refusal",
+  "code_drift": false,
+  "recorded_code": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
+  "current_code": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
+  "expected": "sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7",
+  "actual": "sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7"
 }

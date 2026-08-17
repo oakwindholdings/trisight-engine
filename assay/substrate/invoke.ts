@@ -30,10 +30,11 @@ export interface ResultRecord {
   readonly spec_registered_at: string | null;
   readonly registered_after_window: boolean | null;
   readonly window: EvalWindow;
-  // Forge finding 7: a Result must be self-describing so one result_hash cannot be reachable
-  // from two different input sets — inputs and params ride inside the record.
+  // Forge finding 7 + Cato C2: a Result must be self-describing so one result_hash cannot be
+  // reachable from two different triples — inputs, params, AND code ride inside the record.
   readonly inputs_hash: Hash;
   readonly params_hash: Hash;
+  readonly code_hash: Hash;
   readonly outcome: EvalResult | Refused;
 }
 
@@ -96,7 +97,8 @@ function computeResult(
   snapshotHashes: readonly Hash[],
   params: EvaluateParamsRecord,
   inputs_hash: Hash,
-  params_hash: Hash
+  params_hash: Hash,
+  code_hash: Hash
 ): Outcome<ResultRecord> {
   let outcome: EvalResult | Refused;
   let afterWindow: boolean | null = null;
@@ -168,6 +170,7 @@ function computeResult(
     window: params.window,
     inputs_hash,
     params_hash,
+    code_hash,
     outcome,
   };
 }
@@ -220,7 +223,7 @@ export function invokeEvaluate(
     }
   }
 
-  const result = computeResult(root, sortedSnaps, params, inputs_hash, params_hash);
+  const result = computeResult(root, sortedSnaps, params, inputs_hash, params_hash, code_hash);
   if (isRefused(result)) return result; // store-level failure, not a domain refusal
   const output_hash = persist
     ? putRecord(root, 'Result', result as unknown as Record<string, unknown>)
@@ -267,21 +270,30 @@ export function invokeEvaluate(
 export interface ReplayReport {
   readonly checked: number;
   readonly drifted: { trace_id: string; expected: Hash; actual: Hash }[];
+  /** Cato C2 / Forge F29: code-changed is a DIFFERENT fact from nondeterminism — reported separately. */
+  readonly code_drift: { trace_id: string; recorded_code: Hash; current_code: Hash }[];
 }
 
 /** Determinism CI (A5): re-execute recorded invocations, assert byte-identical output hashes. */
 export function replayTraces(root: StoreRoot): Outcome<ReplayReport> {
   const p = tracesPath(root);
-  if (!existsSync(p)) return { checked: 0, drifted: [] };
+  if (!existsSync(p)) return { checked: 0, drifted: [], code_drift: [] };
   const lines = readFileSync(p, 'utf8').split('\n').filter((l) => l.length > 0);
   const seen = new Set<string>();
   let checked = 0;
   const drifted: { trace_id: string; expected: Hash; actual: Hash }[] = [];
+  const code_drift: { trace_id: string; recorded_code: Hash; current_code: Hash }[] = [];
+  const currentCode = kernelCodeHash();
   for (const line of lines) {
     const t = JSON.parse(line) as Trace;
     if (t.cache_hit) continue;
     if (seen.has(t.triple)) continue;
     seen.add(t.triple);
+    if (t.code_hash !== currentCode) {
+      // the trace certifies a code state the tree no longer contains — a distinct failure (Cato C1/C2)
+      code_drift.push({ trace_id: t.trace_id, recorded_code: t.code_hash, current_code: currentCode });
+      continue;
+    }
     const paramsObj = getObject(root, t.params_hash);
     if (isRefused(paramsObj)) return paramsObj;
     const re = invokeEvaluate(root, t.snapshot_hashes, paramsObj as EvaluateParamsRecord, {
@@ -295,5 +307,5 @@ export function replayTraces(root: StoreRoot): Outcome<ReplayReport> {
       drifted.push({ trace_id: t.trace_id, expected: t.output_hash, actual: re.result_hash });
     }
   }
-  return { checked, drifted };
+  return { checked, drifted, code_drift };
 }

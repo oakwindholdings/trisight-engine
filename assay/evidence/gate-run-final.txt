@@ -1,51 +1,62 @@
-== [1/8] typecheck (project config, tests included) ==
-== [2/8] guard-shown-failing: stripped type harness MUST fail under the PROJECT config (A2) ==
-ok: misuse fails to compile under the project's own strictness (guard demonstrated failing)
-== [3/8] tests ==
+== [1/9] typecheck (project config, tests included) ==
+== [2/9] guard-shown-failing: stripped type harness MUST fail under the PROJECT config (A2) ==
+ok: all 5 stripped guards fail to compile under the project's own strictness
+== [3/9] tests ==
 bun test v1.3.10 (30e609e0)
 
  65 pass
  0 fail
  1507 expect() calls
-Ran 65 tests across 8 files. [142.00ms]
-== [4/8] kernel purity greps (I1/I2 hygiene) ==
+Ran 65 tests across 8 files. [134.00ms]
+== [4/9] kernel purity greps (I1/I2 hygiene) ==
 ok: kernel pure — no clock, no env, no fs/network, no annualization constants
-== [5/8] no masked exits anywhere (gate.sh included) ==
+== [5/9] no masked exits anywhere (gate.sh included) ==
 ok: nothing masked
-== [6/8] determinism replay of stored traces (A5) ==
+== [6/9] determinism replay of stored traces (A5) ==
 {
   "checked": 1,
-  "drifted": []
+  "drifted": [],
+  "code_drift": []
 }
 DISCLOSED: replay corpus contains only refusal invocations — kernel-arithmetic determinism is
            proven by tests (tests/substrate.test.ts A5) but NOT yet by a live successful run.
            A real MASSIVE_API_KEY run upgrades this. (Recorded honestly, per I6.)
-== [7/8] secret scan over stored material (A6) ==
-ok: no live key in env (set-but-empty counts as missing); structural redaction proven by tests
-== [8/8] coverage (captured as evidence; per-file numbers in ISA) ==
+== [7/9] store verification: index completeness + seal-tree code-hash consistency (Cato C1/C4) ==
+{
+  "objects": 6,
+  "indexed": 6,
+  "missing_from_index": [],
+  "indexed_without_object": [],
+  "current_code": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
+  "stale_code_records": []
+}
+== [8/9] secret scan over stored material (A6) ==
+DISCLOSED: no live key in env (set-but-empty counts as missing), so the live-key grep CANNOT run —
+           this step's predicate is NOT RUN, not passed. Structural redaction is proven by tests.
+== [9/9] coverage (captured as evidence; per-file numbers in ISA) ==
 ------------------------|---------|---------|-------------------
-All files               |   97.48 |   94.30 |
+All files               |   96.94 |   92.79 |
  adversary/adversary.ts |  100.00 |   96.43 | 37-38,48
  kernel/bars.ts         |  100.00 |  100.00 | 
- kernel/canonical.ts    |  100.00 |   98.11 | 
+ kernel/canonical.ts    |  100.00 |   98.21 | 
  kernel/evaluate.ts     |  100.00 |  100.00 | 
  kernel/metrics.ts      |  100.00 |   76.39 | 95-111
  kernel/micros.ts       |  100.00 |   96.43 | 
  kernel/refusal.ts      |  100.00 |  100.00 | 
- kernel/sim.ts          |  100.00 |   94.31 | 75,106,189-190,242-249
+ kernel/sim.ts          |  100.00 |   94.52 | 77,108,191-192,255-262
  kernel/span.ts         |  100.00 |   92.31 | 
  kernel/spec.ts         |  100.00 |   93.75 | 35,47,56
- receipt/receipt.ts     |  100.00 |   95.95 | 47,68
+ receipt/receipt.ts     |  100.00 |   96.51 | 49,70
  substrate/codehash.ts  |  100.00 |  100.00 | 
  substrate/ingress.ts   |  100.00 |   95.28 | 89,113,122,129
- substrate/invoke.ts    |  100.00 |   95.12 | 112,114,131-132,135-136,141-142,151
+ substrate/invoke.ts    |  100.00 |   94.37 | 114,116,133-134,137-138,143-144,153,157,294-295
  substrate/registry.ts  |   57.14 |   73.81 | 52-62
- substrate/store.ts     |  100.00 |  100.00 | 
+ substrate/store.ts     |   90.91 |   74.24 | 46-47,136-137,141-142,166-193
  tests/prop.ts          |  100.00 |   95.24 | 
 ------------------------|---------|---------|-------------------
 
  65 pass
  0 fail
  1507 expect() calls
-Ran 65 tests across 8 files. [141.00ms]
+Ran 65 tests across 8 files. [135.00ms]
 GATE PASS

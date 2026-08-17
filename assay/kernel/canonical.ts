@@ -9,10 +9,15 @@ import { refuse, type Outcome, isRefused } from './refusal.ts';
 // numbers via ECMA-262 shortest-round-trip (deterministic across conforming engines),
 // -0 preserved as "-0" (two numbers that differ in the last bit are two different numbers),
 // NaN/Infinity refused — they never enter a record.
-const MAX_DEPTH = 64; // cycles refuse as values instead of throwing RangeError (kernel totality)
+const MAX_DEPTH = 64;
 
-export function canonicalize(value: unknown, depth = 0): Outcome<string> {
-  if (depth > MAX_DEPTH) return refuse('invalid_params', 'value too deep or cyclic — cannot canonicalize');
+// Cato N6: cycles and pathological depth are DIFFERENT facts — detected separately, refused as
+// values (kernel totality), each with its own honest message.
+export function canonicalize(value: unknown, depth = 0, ancestors?: Set<unknown>): Outcome<string> {
+  if (depth > MAX_DEPTH) return refuse('invalid_params', `value deeper than ${MAX_DEPTH} levels — cannot canonicalize`);
+  if (typeof value === 'object' && value !== null) {
+    if (ancestors?.has(value)) return refuse('invalid_params', 'cyclic value — cannot canonicalize');
+  }
   if (value === null) return 'null';
   const t = typeof value;
   if (t === 'boolean') return value ? 'true' : 'false';

@@ -2,7 +2,7 @@
 // Append-only content-addressed object store; sqlite index is DERIVED and rebuildable (I7).
 // Objects are the truth. No delete, no update — supersede records only. Postgres swap point: this interface.
 
-import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { Database } from 'bun:sqlite';
 import { canonicalize, hashBytes, isHash, type Hash } from '../kernel/canonical.ts';
@@ -37,9 +37,16 @@ export function openStore(dir: string): StoreRoot {
   const root: StoreRoot = { dir };
   // Cold-clone finding (A1): the index is derived and gitignored, so on a fresh checkout it must
   // self-materialize from objects — A1's reproduction command must be a SINGLE command.
+  // Cato C3: a refused rebuild must never leave a silently PARTIAL index — remove it and fail loudly.
   if (!existsSync(join(dir, 'index.sqlite'))) {
     const hasObjects = readdirSync(join(dir, 'objects')).some((f) => f.startsWith('sha256-'));
-    if (hasObjects) rebuildIndex(root); // a refusal here surfaces on the first query; objects stay the truth
+    if (hasObjects) {
+      const rebuilt = rebuildIndex(root);
+      if (isRefused(rebuilt)) {
+        rmSync(join(dir, 'index.sqlite'), { force: true });
+        throw new Error(`store index rebuild refused (${rebuilt.reason}): ${rebuilt.detail} — store is corrupt, refusing to operate`);
+      }
+    }
   }
   return root;
 }
@@ -74,9 +81,9 @@ export function getObject(root: StoreRoot, hash: Hash): Outcome<unknown> {
 
 function indexDb(root: StoreRoot): Database {
   const db = new Database(join(root.dir, 'index.sqlite'));
-  db.run(
-    'CREATE TABLE IF NOT EXISTS records (hash TEXT PRIMARY KEY, record_type TEXT NOT NULL, created_seq INTEGER)'
-  );
+  // no created_seq column at all (Cato N7): a derived index must be exactly reproducible from
+  // objects, and wall-clock or insertion-order columns cannot be
+  db.run('CREATE TABLE IF NOT EXISTS records (hash TEXT PRIMARY KEY, record_type TEXT NOT NULL)');
   return db;
 }
 
@@ -88,12 +95,7 @@ export function putRecord(root: StoreRoot, recordType: RecordType, value: Record
   if (isRefused(hash)) return hash;
   const db = indexDb(root);
   try {
-    // created_seq is NOT wall-clock: rebuildIndex assigns hash-order ordinals, and a derived
-    // index must reproduce identically (Forge 17). NULL here; ordinals come from rebuild.
-    db.run('INSERT OR IGNORE INTO records (hash, record_type, created_seq) VALUES (?, ?, NULL)', [
-      hash,
-      recordType,
-    ]);
+    db.run('INSERT OR IGNORE INTO records (hash, record_type) VALUES (?, ?)', [hash, recordType]);
   } finally {
     db.close();
   }
@@ -118,26 +120,76 @@ export function recordsOfType(root: StoreRoot, recordType: RecordType): Outcome<
   }
 }
 
-/** Drop and rebuild the index purely from objects on disk — proof the index is derived. */
+/** Drop and rebuild the index purely from objects on disk — proof the index is derived.
+ *  Transactional (Cato N7/C3): a refused rebuild rolls back rather than leaving partial rows. */
 export function rebuildIndex(root: StoreRoot): Outcome<number> {
   const db = indexDb(root);
   try {
+    db.run('BEGIN');
     db.run('DELETE FROM records');
     const files = readdirSync(objectsDir(root)).sort();
     let n = 0;
     for (const f of files) {
       if (!f.startsWith('sha256-')) continue; // .DS_Store and friends are not store content (Forge 16)
       const hash = f.replace('sha256-', 'sha256:') as Hash;
-      if (!isHash(hash)) return refuse('invalid_params', `malformed object filename ${f}`);
+      if (!isHash(hash)) {
+        db.run('ROLLBACK');
+        return refuse('invalid_params', `malformed object filename ${f}`);
+      }
       const v = getObject(root, hash);
-      if (isRefused(v)) return v;
+      if (isRefused(v)) {
+        db.run('ROLLBACK');
+        return v;
+      }
       const rt = (v as { record_type?: unknown }).record_type;
       if (typeof rt === 'string') {
-        db.run('INSERT OR IGNORE INTO records (hash, record_type, created_seq) VALUES (?, ?, ?)', [hash, rt, n]);
+        db.run('INSERT OR IGNORE INTO records (hash, record_type) VALUES (?, ?)', [hash, rt]);
         n++;
       }
     }
+    db.run('COMMIT');
     return n;
+  } finally {
+    db.close();
+  }
+}
+
+export interface StoreVerification {
+  readonly objects: number;
+  readonly indexed: number;
+  readonly missing_from_index: Hash[];
+  readonly indexed_without_object: Hash[];
+}
+
+/** Cato C4: the derived index must never be trusted — this proves completeness in both directions.
+ *  Every object hash-verifies on read; every record object appears in the index; no phantom rows. */
+export function verifyStore(root: StoreRoot): Outcome<StoreVerification> {
+  const files = readdirSync(objectsDir(root)).filter((f) => f.startsWith('sha256-')).sort();
+  const onDisk = new Set<string>();
+  let recordObjects = 0;
+  const missing: Hash[] = [];
+  const db = indexDb(root);
+  try {
+    const rows = db.query('SELECT hash FROM records ORDER BY hash').all() as { hash: Hash }[];
+    const indexed = new Set(rows.map((r) => r.hash));
+    for (const f of files) {
+      const hash = f.replace('sha256-', 'sha256:') as Hash;
+      if (!isHash(hash)) return refuse('invalid_params', `malformed object filename ${f}`);
+      const v = getObject(root, hash); // hash-verifies bytes; corruption refuses here
+      if (isRefused(v)) return v;
+      onDisk.add(hash);
+      if (typeof (v as { record_type?: unknown }).record_type === 'string') {
+        recordObjects++;
+        if (!indexed.has(hash)) missing.push(hash);
+      }
+    }
+    const phantom = rows.map((r) => r.hash).filter((h) => !onDisk.has(h));
+    return {
+      objects: recordObjects,
+      indexed: indexed.size,
+      missing_from_index: missing,
+      indexed_without_object: phantom,
+    };
   } finally {
     db.close();
   }

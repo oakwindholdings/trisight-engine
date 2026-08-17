@@ -21,10 +21,12 @@ export interface Receipt {
   readonly snapshot_hashes: readonly Hash[];
   readonly frictions_hash: Hash;
   readonly window: { readonly startT: number; readonly endT: number };
+  /** Cato M6: the receipt says out loud whether it certifies a refusal or a number. */
+  readonly outcome_kind: 'refused' | 'result';
   readonly headline: {
     readonly totalReturn: number;
     readonly cagrValue: number;
-    readonly maxDrawdownMagnitude: number;
+    readonly worstFoldDrawdown: number; // per-fold max, convention declared in EvalResult (Cato M3)
     readonly tradingDays: number;
     readonly periodsPerYear: number;
   } | null;
@@ -90,6 +92,7 @@ export function buildReceipt(root: StoreRoot, result_hash: Hash): Outcome<{ hash
     snapshot_hashes: run.snapshot_hashes,
     frictions_hash,
     window: result.window,
+    outcome_kind: result.outcome.kind === 'refused' ? 'refused' : 'result',
     headline: result.outcome.kind === 'result' ? result.outcome.headline : null,
     refusals,
     adversary_hash: advHash,
@@ -105,14 +108,24 @@ export function buildReceipt(root: StoreRoot, result_hash: Hash): Outcome<{ hash
 
 export interface ReproduceReport {
   readonly identical: boolean;
+  /** Cato M6: say WHAT was reproduced — a refusal record and a headline are different claims. */
+  readonly reproduced: 'refusal' | 'headline';
+  /** Cato C2: code drift is checked explicitly, never inferred from a silent byte mismatch. */
+  readonly code_drift: boolean;
+  readonly recorded_code: Hash;
+  readonly current_code: Hash;
   readonly expected: Hash;
   readonly actual: Hash;
 }
 
-/** Recompute from the committed cache with the cache bypassed; byte-compare via content hash (A1). */
+/** Recompute from the committed cache with the cache bypassed; byte-compare via content hash (A1),
+ *  and assert the recorded code_hash matches the tree actually doing the recomputing. */
 export function reproduce(root: StoreRoot, result_hash: Hash): Outcome<ReproduceReport> {
   const run = findRunForResult(root, result_hash);
   if (isRefused(run)) return run;
+  const original = getObject(root, result_hash);
+  if (isRefused(original)) return original;
+  const originalResult = original as ResultRecord;
   const paramsObj = getObject(root, run.params_hash);
   if (isRefused(paramsObj)) return paramsObj;
   const re = invokeEvaluate(root, run.snapshot_hashes, paramsObj as EvaluateParamsRecord, {
@@ -121,5 +134,13 @@ export function reproduce(root: StoreRoot, result_hash: Hash): Outcome<Reproduce
     persist: false, // verification must not mutate the store it verifies (Forge finding 15)
   });
   if (isRefused(re)) return re;
-  return { identical: re.result_hash === result_hash, expected: result_hash, actual: re.result_hash };
+  return {
+    identical: re.result_hash === result_hash,
+    reproduced: originalResult.outcome.kind === 'refused' ? 'refusal' : 'headline',
+    code_drift: re.result.code_hash !== run.code_hash,
+    recorded_code: run.code_hash,
+    current_code: re.result.code_hash,
+    expected: result_hash,
+    actual: re.result_hash,
+  };
 }

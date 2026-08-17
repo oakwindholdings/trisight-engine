@@ -4,7 +4,7 @@ task: Build ASSAY Phase 1 — deterministic claim-verification engine per one-sh
 slug: assay-phase1
 effort: E4
 phase: verify
-progress: 144/150
+progress: 145/150
 mode: standard
 started: 2026-08-17T16:20:00-04:00
 updated: 2026-08-17T16:20:00-04:00
@@ -150,7 +150,7 @@ A committed, self-contained `assay/` project in which one pre-registered real st
 
 ### Evaluate & walk-forward
 - [x] ISC-83: `evaluate(spec, asofBars, frictions)` returns `Result | Refused` — total function, tested both ways
-- [x] ISC-84: Walk-forward schedule: declared train/test windows; each fold evaluated only on data loaded as-of fold end
+- [x] ISC-84: Fold schedule of as-of-restricted evaluation slices — each fold sees only data loaded as-of its own fold end *(refined 2026-08-17 per Cato M2: original "train/test windows" wording described fitting that does not exist in the Phase 1 spec grammar; the point-in-time half was always the real criterion and is what the lookahead property tests prove)*
 - [x] ISC-85: Result contains equity path, ledger summary hashes, metric values, refusals encountered
 - [x] ISC-86: Insufficient history for the signal's lookback refuses (`Refused('insufficient_history')`)
 - [x] ISC-87: Partial universe (any missing symbol/bars) refuses rather than silently completing (A7 evidence)
@@ -205,7 +205,7 @@ A committed, self-contained `assay/` project in which one pre-registered real st
 ### Receipt & CLI
 - [x] ISC-127: Receipt contains: every hash (spec, data, frictions, code, params, result), exact window, friction model, refusals, worst slice, repro command
 - [x] ISC-128: `bun run cli.ts reproduce <receipt>` recomputes from the committed cache and byte-compares the headline (A1 mechanism)
-- [ ] ISC-129: Reproduction on this machine from a clean clone of the committed worktree state matches byte-identically (A1 evidence file)
+- [x] ISC-129: Reproduction on this machine from a clean clone of the committed worktree state matches byte-identically (A1 evidence file)
 - [x] ISC-130: CLI commands exist: ingest, register, evaluate, adversary, receipt, reproduce, gate — each with captured stdout evidence
 - [x] ISC-131: CLI never prints secret material — evidence grep over all captured CLI output (A6)
 - [x] ISC-132: Receipt marks registered_after_window honestly for the demo spec (registered 2026-08-17, window earlier)
@@ -213,12 +213,12 @@ A committed, self-contained `assay/` project in which one pre-registered real st
 - [x] ISC-134: Anti: the CLI re-derives nothing — it prints values read from stored records only (grep: no metric imports in CLI display path)
 
 ### Acceptance gates (PRD §5)
-- [ ] ISC-135: A1 — reproduction command re-runs from committed cache, byte-identical headline; evidence file committed
+- [x] ISC-135: A1 — reproduction command re-runs from committed cache, byte-identical headline; evidence file committed
 - [x] ISC-136: A2 — lookahead attempt fails (compile and load); both failures captured to evidence files
 - [x] ISC-137: A3 — corrupted input hash refuses; evidence file committed
 - [ ] ISC-138: A4 — worst slice named and materially worse than headline (or finding reported); evidence file committed
 - [x] ISC-139: A5 — determinism replay in gate.sh passes on stored traces; shown failing first on doctored data
-- [x] ISC-140: A6 — grep over all captured traces/logs/stores for the live key returns zero hits; evidence file committed
+- [ ] ISC-140: A6 — grep over all captured traces/logs/stores for the live key returns zero hits; evidence file committed *(NOT RUN — Cato M4: with the key set-but-empty the live-key grep cannot execute; gate step 8 now says DISCLOSED, not ok. Structural redaction is proven by tests; this ISC completes with the first real-key run)*
 - [x] ISC-141: A7 — missing bars, partial universe, insufficient history each produce Refused with reason; evidence files committed
 
 ### Process anti-criteria (PRD §2/§7)
@@ -229,7 +229,7 @@ A committed, self-contained `assay/` project in which one pre-registered real st
 - [x] ISC-146: Every guard shown failing before passing — red-first evidence files exist for A2, A3, A5, secret-redaction
 - [ ] ISC-147: Independent verifier (not the executor) re-ran gate.sh and re-derived headline claims from evidence files; verifier report committed or captured
 - [x] ISC-148: All numeric claims in the final report cite evidence files; fields without evidence read NOT RUN
-- [ ] ISC-149: Commit is the final atomic action; `git log` shows one commit containing the whole deliverable
+- [ ] ISC-149: The deliverable lands as an atomic, reviewed commit series; every commit's seal-tree consistency is mechanically enforced by gate step 7 (verify-store) *(refined 2026-08-17 per Cato M5: the original "one commit" wording became unsatisfiable the moment the cold-clone fix landed as a second commit — and that unreviewed second commit is exactly what produced Cato C1. The refined criterion encodes the real invariant: no commit may leave the store certifying code the tree does not contain)*
 - [x] ISC-150: Anti: no Python anywhere in assay/ (grep)
 
 ## Test Strategy
@@ -284,6 +284,9 @@ A committed, self-contained `assay/` project in which one pre-registered real st
 - 2026-08-17 17:50 — Deferred with disclosure (Forge minors): F11 Math.pow is implementation-approximated per ECMA-262 — cross-machine byte-identity of cagrValue is a latent risk; single-host reproduction unaffected; fix (deterministic pow or declared-precision rounding) queued for Phase 1.1 before any cross-machine A1 claim. F23 injectable-now format validation, F27 atomic temp-rename writes, F29 replay code-change-vs-drift disambiguation, F30 indexed cache lookup — all queued, none affect current correctness claims.
 - 2026-08-17 17:55 — Pre-commit store regenerated (record shapes changed by F2/F7): no committed history existed yet, so this is not an I7 violation; the first committed store is the fixed-shape one. Evidence re-captured end-to-end on fixed code.
 - 2026-08-17 17:58 — RED-FIRST WIN: the repaired gate caught its own repair — TypeScript include-globbing silently excludes dot-prefixed files, so the stripped-harness step was vacuous until the temp file was renamed. The gate refused; the vacuity was fixed; the failure is preserved in git history.
+- 2026-08-17 18:20 — RETROACTIVE ENTRY for commit 4a5a807 (cold-clone index fix), recorded late — which is itself the finding: the commit modified substrate/store.ts (inside code_hash's COMPUTE_ROOTS) after the Forge review, with no second-party review and no Decisions entry. Cato C1 caught the consequence: the committed Receipt certified a code_hash that existed nowhere in the tree.
+- 2026-08-17 18:40 — CATO VERDICT: FAIL (4 critical, 6 major, 9 minor). Independent 6-lane verifier fleet concurred on the critical (code-hash staleness reproduced two ways, including a from-scratch Python reimplementation of the hash) and added one new critical (reproduce never hash-verified the target Result object). Fleet lane verdicts: gate-rerun CONFIRMED (zero findings, all 8 steps genuinely executed), secret-hunter CONFIRMED (no credential material anywhere; one bookkeeping minor = Cato M4), evidence-audit PARTIAL, determinism-attacker PARTIAL, law-compliance PARTIAL, acceptance-audit returned degenerate output (placeholder text) — its scope was covered by the other lanes and it is disclosed here rather than counted.
+- 2026-08-17 19:00 — WAVE-3 FIXES (all Cato criticals + majors + fleet finding): ResultRecord now carries code_hash (C2); replay separates code_drift from nondeterminism and both fail the CLI (C2/F29); reproduce hash-verifies the target Result object (fleet critical), reports reproduced: refusal|headline (M6) and code_drift explicitly; openStore checks rebuild refusals, removes partial indexes, and fails loudly (C3); rebuildIndex is transactional; created_seq column dropped entirely (N7); NEW gate step 7 verify-store proves index completeness in both directions AND that every stored code_hash matches the running tree (C1/C4 mechanized — the seal-tree consistency no longer depends on process discipline); closed-position P&L is net of exactly-allocated per-share commissions, so winRate is friction-aware (M1); headline field renamed worstFoldDrawdown with fold_semantics: independent_flat_start_folds declared in every Result (M3); receipt carries outcome_kind (M6); gate step 2 asserts ALL stripped guards fire, counted (N1); purity grep extended to new Date(/performance.now/hrtime/Intl (N2); gate step 8 uses DISCLOSED vocabulary and ISC-140 flipped to NOT RUN (M4); cycle detection is a real ancestor check distinct from the depth bound (N6); ISC-84/149 texts refined with disclosure (M2/M5); phantom gate-run-2.txt citations rewritten and stale counts corrected (law-compliance/evidence-audit findings). Store+evidence regenerated at the final tree; verify-store green: 6/6 objects, zero stale seals.
 - 2026-08-17 17:40 — Advisor (Rule 2) attempted at the commitment boundary: `Inference.ts --mode advisor` failed with OAuth session expired (same auth failure that broke the mode classifier). Attempt transcript captured; conflict-surfacing N/A.
 - 2026-08-17 17:40 — RedTeam capability scoped: the ParallelAnalysis phase executes as the post-commit Workflow verifier fleet (PRD §7 refuters against the committed repo) rather than a 32-agent content attack — documented substitution, same adversarial function, grounded in evidence files.
 - 2026-08-17 16:20 — Money as integer micro-units (bigint-free: safe-integer micros with overflow guards) in ledger; floats only in derived metrics with fixed left-fold order.
@@ -300,10 +303,12 @@ A committed, self-contained `assay/` project in which one pre-registered real st
 
 Evidence files live in `assay/evidence/`; every claim below cites a file or a named gate/test. Fields without evidence read NOT RUN.
 
-**AMENDED 2026-08-17 18:00 (disclosure, never silent restatement):** the entries below were first written against the pre-Forge tree (gate-run-2, result sha256:06c232b2…). After the Forge review fixes, the store was regenerated and every evidence file re-captured on the fixed code: the current gate evidence is `gate-run-final.txt` (8 steps, includes coverage), the committed refusal result is sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c, and `tests/forge_fixes.test.ts` (7 tests) guards the Forge criticals. Test count 57→64, assertions 1444→1506. File-level citations below read through this mapping; the superseded hashes remain visible here by design.
+**AMENDED 2026-08-17 18:00 (disclosure, never silent restatement):** the entries below were first written against the pre-Forge tree (gate-run-2, result sha256:06c232b2…). After the Forge review fixes, the store was regenerated and every evidence file re-captured on the fixed code: the current gate evidence is `gate-run-final.txt` (8 steps, includes coverage), the committed refusal result is sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7, and `tests/forge_fixes.test.ts` (7 tests) guards the Forge criticals. Test count 57→65, assertions 1444→1507. File-level citations below read through this mapping; the superseded hashes remain visible here by design.
 
-- ISC-1..8: Bash/Read — `package.json` has devDependencies only (no `dependencies` key); `evidence/gate-run-2.txt` shows typecheck+tests+greps green; headers present in all authored `.ts` files.
-- ISC-9..24 (Span/AsOf): `evidence/gate-run-2.txt` [1/7]+[2/7] — misuse compiles NOT (guard shown failing, 4 distinct errors in `evidence/06-a2-compile-failure.txt`); runtime lookahead refusal in `evidence/07-a2-load-refusal.txt` (`lookahead_at_load`); `tests/span_asof.test.ts` covers duplicates, disorder, restriction, ordering property.
+**AMENDED AGAIN 2026-08-17 19:05 (wave 3, post-Cato/fleet):** the store and every evidence file were regenerated a second time at the final tree after the Cato FAIL verdict and fleet findings were fixed (see Decisions 19:00). Current committed refusal result: sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7. Gate is now 9 steps (verify-store added as step 7). Final counts: 65 tests, 1507 assertions, 5 compile-guard errors (one per stripped `@ts-expect-error`). Prior superseded result hashes: sha256:06c232b2… (pre-Forge), sha256:7b16ad8e… (pre-Cato) — both remain visible here by design (I7).
+
+- ISC-1..8: Bash/Read — `package.json` has devDependencies only (no `dependencies` key); `evidence/gate-run-final.txt` shows typecheck+tests+greps green; headers present in all authored `.ts` files.
+- ISC-9..24 (Span/AsOf): `evidence/gate-run-final.txt` [1/7]+[2/7] — misuse compiles NOT (guard shown failing, 5 distinct errors in `evidence/06-a2-compile-failure.txt`); runtime lookahead refusal in `evidence/07-a2-load-refusal.txt` (`lookahead_at_load`); `tests/span_asof.test.ts` covers duplicates, disorder, restriction, ordering property.
 - ISC-25..38 (Refusal/hashing): `tests/canonical.test.ts` — golden bytes, key-order invariance, -0≠0, NaN refusal, cross-process hash stability via spawned bun; store tamper detection in `tests/substrate.test.ts`. ISC-35 by construction (SHA-256 over concatenated kernel bytes) + exercised in every invoke test — inspection, not dedicated test.
 - ISC-39..56 (metrics): `tests/metrics.test.ts` — hand-computed exact-in-binary goldens (0.25, 1.44140625, 0.75/0.25/0), drawdown monotonicity property (200 seeded cases), rates-sum identity, multiplicative composition on exact powers of two, full refusal enumeration. ISC-44 verified as mirrored-scenario exact negation (prices cannot be negative; documented interpretation).
 - ISC-57..70 (sim): `tests/sim.test.ts` — hand-computed fill golden (100_550_250 micros @5bps), conservation identities recomputed independently from fills (60 seeded cases), byte determinism, missing_bar/borrow/availability refusals, unfilled-never-synthetic.
@@ -311,7 +316,7 @@ Evidence files live in `assay/evidence/`; every claim below cites a file or a na
 - ISC-83..92 (evaluate): `tests/spec_evaluate.test.ts` — designed-cross trade test, LOOKAHEAD PROPERTY (future alteration never changes a fold byte, 20 seeded cases), refusal quartet; cache-hit test in `tests/substrate.test.ts` (ISC-90).
 - ISC-93..102 (ingress): `tests/substrate.test.ts` — RED-FIRST redaction (vendor echo shown leaking unredacted, then scrubbed), set-but-empty credential refusal by name, keyless stored URL, malformed/zero-row refusals. ISC-101: only `ingestDailyBars` constructs snapshots with provenance `vendor`; `invoke.computeResult` refuses non-vendor snapshots.
 - ISC-103..110 (store): `tests/substrate.test.ts` — write-once, hash-mismatch on tamper, derived index deleted+rebuilt to identical results; `.gitignore` excludes index.sqlite. ISC-106 (supersede): record type exists; full supersede flow NOT EXERCISED in Phase 1 tests beyond round-trip typing — noted honestly.
-- ISC-111..120 (invoke/traces): `tests/substrate.test.ts` — cache hit without recompute, A3 unknown-object refusal with trace, replay clean, FORGED trace caught (drift detection shown failing first); live-store replay in `evidence/gate-run-2.txt` [6/7]: checked 1, drifted 0.
+- ISC-111..120 (invoke/traces): `tests/substrate.test.ts` — cache hit without recompute, A3 unknown-object refusal with trace, replay clean, FORGED trace caught (drift detection shown failing first); live-store replay in `evidence/gate-run-final.txt` [6/7]: checked 1, drifted 0.
 - ISC-121..126 (adversary): `tests/adversary_receipt.test.ts` — ≥4 slices, deterministic (identical report hash twice), refuses refusal-results, worst ≤ headline.
 - ISC-127..134 (receipt/CLI): `evidence/04-receipt.txt` — every hash present, `verified:false` + `worst_slice: NOT_RUN` without adversary, repro command embedded; `evidence/05-reproduce.txt` — identical:true; CLI display path imports no metric owners.
 - ISC-136 (A2): `evidence/06-a2-compile-failure.txt` (tsc exit 2) + `evidence/07-a2-load-refusal.txt`.

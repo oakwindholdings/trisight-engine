@@ -28,7 +28,7 @@ bun install            # dev-only type packages; runtime dependencies are zero
 Reproduce the committed run (byte-identical or non-zero exit):
 
 ```bash
-bun run cli.ts reproduce --result sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c
+bun run cli.ts reproduce --result sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7
 ```
 
 ## Current honest status (2026-08-17)

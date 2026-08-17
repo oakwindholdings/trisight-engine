@@ -7,7 +7,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isRefused } from './kernel/refusal.ts';
 import { type Hash, isHash } from './kernel/canonical.ts';
-import { openStore, getObject, rebuildIndex, recordsOfType } from './substrate/store.ts';
+import { openStore, getObject, rebuildIndex, recordsOfType, verifyStore } from './substrate/store.ts';
+import { kernelCodeHash } from './substrate/codehash.ts';
 import { registerSpec, findRegistration } from './substrate/registry.ts';
 import { ingestDailyBars, type DataSnapshot } from './substrate/ingress.ts';
 import { invokeEvaluate, replayTraces, type EvaluateParamsRecord } from './substrate/invoke.ts';
@@ -163,6 +164,27 @@ switch (cmd) {
     if (isRefused(r)) fail(`${r.reason} — ${r.detail}`);
     out(r);
     if (r.drifted.length > 0) process.exit(4);
+    if (r.code_drift.length > 0) process.exit(5); // traces certify code the tree no longer contains (Cato C1/C2)
+    break;
+  }
+  case 'verify-store': {
+    // Cato C1/C4 mechanized: the derived index is proven complete in both directions, every object
+    // hash-verifies, and every stored code_hash matches the tree that is running right now.
+    const v = verifyStore(root);
+    if (isRefused(v)) fail(`${v.reason} — ${v.detail}`);
+    const current = kernelCodeHash();
+    const staleCode: { record: string; hash: Hash; recorded: string }[] = [];
+    for (const type of ['Run', 'Result', 'Receipt'] as const) {
+      const recs = recordsOfType(root, type);
+      if (isRefused(recs)) fail(`${recs.reason} — ${recs.detail}`);
+      for (const rec of recs) {
+        const ch = (rec.value as { code_hash?: string }).code_hash;
+        if (typeof ch === 'string' && ch !== current) staleCode.push({ record: type, hash: rec.hash, recorded: ch });
+      }
+    }
+    out({ ...v, current_code: current, stale_code_records: staleCode });
+    if (v.missing_from_index.length > 0 || v.indexed_without_object.length > 0) process.exit(6);
+    if (staleCode.length > 0) process.exit(7); // a committed seal must certify the committed tree
     break;
   }
   case 'rebuild-index': {

@@ -1,7 +1,7 @@
 {
-  "result_hash": "sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c",
+  "result_hash": "sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7",
   "cache_hit": false,
-  "triple": "sha256:8b1ce89b7371a6e4421fd1cbc5b91523f6cc790e2fdc3858e5dbcf401c6adb2c",
+  "triple": "sha256:a92ec94161e7c91998e6b5d4db0ba16453ef1e39f7c0eeb59ee939da65deaded",
   "outcome_kind": "refused",
   "refusal": "partial_universe: no snapshots for: AAPL, MSFT, NVDA, SPY — never silently completed",
   "registered_after_window": true

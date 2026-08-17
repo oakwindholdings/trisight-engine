@@ -1,27 +1,27 @@
 ------------------------|---------|---------|-------------------
 File                    | % Funcs | % Lines | Uncovered Line #s
 ------------------------|---------|---------|-------------------
-All files               |   97.48 |   94.30 |
+All files               |   96.94 |   92.79 |
  adversary/adversary.ts |  100.00 |   96.43 | 37-38,48
  kernel/bars.ts         |  100.00 |  100.00 | 
- kernel/canonical.ts    |  100.00 |   98.11 | 
+ kernel/canonical.ts    |  100.00 |   98.21 | 
  kernel/evaluate.ts     |  100.00 |  100.00 | 
  kernel/metrics.ts      |  100.00 |   76.39 | 95-111
  kernel/micros.ts       |  100.00 |   96.43 | 
  kernel/refusal.ts      |  100.00 |  100.00 | 
- kernel/sim.ts          |  100.00 |   94.31 | 75,106,189-190,242-249
+ kernel/sim.ts          |  100.00 |   94.52 | 77,108,191-192,255-262
  kernel/span.ts         |  100.00 |   92.31 | 
  kernel/spec.ts         |  100.00 |   93.75 | 35,47,56
- receipt/receipt.ts     |  100.00 |   95.95 | 47,68
+ receipt/receipt.ts     |  100.00 |   96.51 | 49,70
  substrate/codehash.ts  |  100.00 |  100.00 | 
  substrate/ingress.ts   |  100.00 |   95.28 | 89,113,122,129
- substrate/invoke.ts    |  100.00 |   95.12 | 112,114,131-132,135-136,141-142,151
+ substrate/invoke.ts    |  100.00 |   94.37 | 114,116,133-134,137-138,143-144,153,157,294-295
  substrate/registry.ts  |   57.14 |   73.81 | 52-62
- substrate/store.ts     |  100.00 |  100.00 | 
+ substrate/store.ts     |   90.91 |   74.24 | 46-47,136-137,141-142,166-193
  tests/prop.ts          |  100.00 |   95.24 | 
 ------------------------|---------|---------|-------------------
 
  65 pass
  0 fail
  1507 expect() calls
-Ran 65 tests across 8 files. [141.00ms]
+Ran 65 tests across 8 files. [135.00ms]

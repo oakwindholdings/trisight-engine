@@ -1,14 +1,14 @@
 {
-  "receipt_hash": "sha256:e29aeee36eef441c6196606ddf778af756c4b3910e86fa9447a0f92be8347991",
+  "receipt_hash": "sha256:c782ec14851f2b0aa7d17ada1e4441745fdf0320018553a2a0a528291d6f614d",
   "receipt": {
     "record_type": "Receipt",
-    "result_hash": "sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c",
-    "triple": "sha256:8b1ce89b7371a6e4421fd1cbc5b91523f6cc790e2fdc3858e5dbcf401c6adb2c",
+    "result_hash": "sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7",
+    "triple": "sha256:a92ec94161e7c91998e6b5d4db0ba16453ef1e39f7c0eeb59ee939da65deaded",
     "inputs_hash": "sha256:55a4ec3d0070f19af4f740c3bc9582295c4177632f1a0cdba191fae17a9458da",
-    "code_hash": "sha256:9548e085b1b47d1b645f75623b84616b5ba0a77bdcd5172af8245e989e6e3b6a",
-    "params_hash": "sha256:044323b676a5eeb4e48612c5e142c1c62f1064af75a0007b1cbe399a45408f4d",
+    "code_hash": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
+    "params_hash": "sha256:72b83cc5989d2648c3fd656608b0ca58b72f4663258d626a6498e035e1858f45",
     "spec_hash": "sha256:eea5abba8b48ae47a436cd2b53bb26e05a5fe6df0bfd6c06edc601e6be944d18",
-    "spec_registered_at": "2026-08-17T21:05:43.518Z",
+    "spec_registered_at": "2026-08-17T21:22:46.115Z",
     "registered_after_window": true,
     "snapshot_hashes": [],
     "frictions_hash": "sha256:cf348421f227482b73b0ca379869beec5b65937f2408979bec1b2300a5753273",
@@ -16,6 +16,7 @@
       "endT": 1767225599000,
       "startT": 1672531200000
     },
+    "outcome_kind": "refused",
     "headline": null,
     "refusals": [
       "partial_universe: no snapshots for: AAPL, MSFT, NVDA, SPY — never silently completed"
@@ -24,6 +25,6 @@
     "verified": false,
     "materially_worse": "NOT_RUN",
     "worst_slice": "NOT_RUN",
-    "repro_command": "bun run cli.ts reproduce --result sha256:7b16ad8e0b6cefc8b8257effb6ed29b489b155861a1a4a7bf1ef273aef2c7c4c"
+    "repro_command": "bun run cli.ts reproduce --result sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7"
   }
 }
