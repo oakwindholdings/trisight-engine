@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { PromptRow, createPrompt, listPrompts, listVariables, VariableRow, getStoredAdminKey } from '../../services/adminApi';
+import { PROVIDERS, FORMATS } from '../../models/adminConstants';
 
 const Drawer = styled.div`
   position: sticky; top: 0; align-self: flex-start; width: 380px; border-left: 1px solid #e5e7eb; padding: 12px; background: #fafafa;
@@ -12,8 +13,6 @@ const Button = styled.button` padding: 6px 10px; border: 1px solid #d1d5db; back
 const Select = styled.select` border: 1px solid #d1d5db; padding: 6px 8px; border-radius: 6px; `;
 const Row = styled.div` display: flex; gap: 8px; align-items: center; `;
 const Small = styled.div` font-size: 0.8rem; color: #6b7280; `;
-
-import { PROVIDERS, FORMATS } from '../../models/adminConstants';
 
 export const PromptDrawer: React.FC = () => {
   const [section_key, setSectionKey] = useState('executive_summary');
