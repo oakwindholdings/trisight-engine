@@ -86,7 +86,8 @@ signed in to GitHub with your oakwindholdings access for these links to open.
 - **`orchestration/reports/ESTATE-STATUS.md row 2 (seal 523c3369)`**
   → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/ESTATE-STATUS.md>
 - **`Snapshots/high_5_paper_trade_log.csv (Railway volume, read-only pull 2026-08-07; 279 rows: 157 BUY/122 SELL)`**
-  → Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/high_5_paper_trade_log_SNAPSHOT_20260818.csv>
+  (2026-08-18 snapshot of this append-only ledger, hash-verified against the server; the study used the 2026-08-07 pull — same ledger, fewer rows)
 
 ## How corrections work
 

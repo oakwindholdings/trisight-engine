@@ -146,7 +146,7 @@ function renderStrategy(slug) {
     const key = s.slug + '::' + e.id, saved = FEEDBACK[key];
     const cls = saved ? (saved.decision === 'confirmed' ? 'answered-confirmed' : 'answered-correction') : '';
     const links = (e.links||[]).map(l => l.is_link
-      ? `<a href="${l.target}" target="_blank" rel="noopener">${esc(l.citation)} ↗</a>`
+      ? `<a href="${l.target}" target="_blank" rel="noopener">${esc(l.citation)} ↗</a>` + (l.note ? `<div class="locnote">${esc(l.note)}</div>` : '')
       : `<div class="locnote">⚑ ${esc(l.citation)} — ${esc(l.target || 'lives on the production data volume; a downloadable snapshot is being prepared and will appear here')}</div>`).join('');
     html += `<div class="card ${cls}" id="card-${e.id}">
       <span class="step-tag">${esc(e.title)}</span>

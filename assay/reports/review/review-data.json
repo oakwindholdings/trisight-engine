@@ -248,8 +248,9 @@
      "links": [
       {
        "citation": "Snapshots/high_5_paper_trade_log.csv (Railway volume, read-only pull 2026-08-07; 279 rows: 157 BUY/122 SELL)",
-       "target": "Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy \u2014 pulls are read-only and dated.",
-       "is_link": false
+       "target": "https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/high_5_paper_trade_log_SNAPSHOT_20260818.csv",
+       "is_link": true,
+       "note": "2026-08-18 snapshot of this append-only ledger; the study used the 2026-08-07 pull (same ledger, fewer rows)"
       }
      ]
     },
@@ -667,8 +668,9 @@
      "links": [
       {
        "citation": "auto_escalator_reclaimed_trade_log.csv (production)",
-       "target": "Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy \u2014 pulls are read-only and dated.",
-       "is_link": false
+       "target": "https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/auto_escalator_reclaimed_trade_log_SNAPSHOT_20260818.csv",
+       "is_link": true,
+       "note": "2026-08-18 snapshot of this append-only ledger; the study used the 2026-08-07 pull (same ledger, fewer rows)"
       },
       {
        "citation": "dashboard since-inception roll-up, screen-verified",
@@ -1052,8 +1054,9 @@
      "links": [
       {
        "citation": "auto_ts500_lfr_shadow_paper_fill_log.csv (Railway volume)",
-       "target": "Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy \u2014 pulls are read-only and dated.",
-       "is_link": false
+       "target": "https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/auto_ts500_lfr_shadow_paper_fill_log_SNAPSHOT_20260818.csv",
+       "is_link": true,
+       "note": "2026-08-18 snapshot of this append-only ledger; the study used the 2026-08-07 pull (same ledger, fewer rows)"
       },
       {
        "citation": "D101 finding 2026-08-09",

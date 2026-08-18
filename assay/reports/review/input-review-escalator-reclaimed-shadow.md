@@ -94,7 +94,8 @@ signed in to GitHub with your oakwindholdings access for these links to open.
 - **`trisight-trader/Audits/2026-07-12_escalator_reclaimed_shadow_b5ffd4f/PROOF.md`**
   → <https://github.com/oakwindholdings/TriSight/blob/main/Audits/2026-07-12_escalator_reclaimed_shadow_b5ffd4f/PROOF.md>
 - **`auto_escalator_reclaimed_trade_log.csv (production)`**
-  → Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/auto_escalator_reclaimed_trade_log_SNAPSHOT_20260818.csv>
+  (2026-08-18 snapshot of this append-only ledger, hash-verified against the server; the study used the 2026-08-07 pull — same ledger, fewer rows)
 - **`dashboard since-inception roll-up, screen-verified`**
   → A screen-verified dashboard reading (no file). The number was read off the live dashboard on the stated date.
 
