@@ -1,0 +1,322 @@
+[
+  {
+    "strategy": "Top 40 2.0",
+    "seal_ref": "50f02064",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "213.07% CAGR (FROZEN from all external use by owner ruling D58; backing 118MB score cache absent from estate AND owner's machine, no SHA256 ever recorded; closest honest analog 88.44% CAGR; full point-in-time rebuild bound: -7.52% CAGR)",
+      "metric_kind": "CAGR, backtest, baseline_aggressive_8_linear",
+      "annualized_return": 2.1307,
+      "normalization_method": "stated CAGR used directly as annual fraction; FROZEN status and irreproducibility carried as integrity flags",
+      "win_rate": null,
+      "win_rate_n": null,
+      "window_from": "2023-04-10",
+      "window_to": "2026-04-17",
+      "integrity_flags": ["D58: irreproducible — backing cache absent everywhere, no hash recorded", "owner-FROZEN from external use 2026-07-31", "fleet-wide frozen survivor-biased universe (w4nfwu675)"],
+      "source_citations": ["trisight-trader/docs_output/TOP_40_2_0_LOCKDOWN_SPEC.md:14-22,187,338-354", "orchestration/reports/DEFECT-REGISTRY.md:78 (D58)", "orchestration/reports/DECISIONS-INBOX.md:332 (seal 50f02064)"],
+      "excerpt": "TOP40_2_VALIDATION_CAGR_PCT = 213.06656830114653 ... FROZEN FROM ALL EXTERNAL USE, effective 2026-07-31"
+    },
+    "realized": {
+      "status": "PARTIAL",
+      "value_raw": "No authoritative realized figure: displayed +22%/5d corrected to +8.03% (D77 calc artifact); +13.10%/wk sat on 144 corrupted basis-reset rows; ledger carries positions corrupted to 4.24e69 shares (CARD-99), 32/72 still corrupted as of 2026-08-10",
+      "metric_kind": "paper fills ledger, 11,355 rows, all PAPER",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": null,
+      "win_rate_n": null,
+      "window_from": "2026-05-22",
+      "window_to": "2026-08-10",
+      "integrity_flags": ["D77 calc artifact (+22%→+8.03%)", "144 paper_basis_reset rows", "CARD-99 floating-point position doubling to 4.24e69 shares", "CARD-94 side-blind sizing corrupted 87/128 positions"],
+      "source_citations": ["orchestration/reports/DEFECT-REGISTRY.md:109 (D77), :519-521, :697", "orchestration/reports/CARD-99-TRADELOG-FORENSICS.md:104", "trisight-trader/docs_output/gate_conjunction_blast_radius_20260808/prod_auto_top40_2_0_trade_log.csv"],
+      "excerpt": "the owner's 'appears fine' number was wrong: 36/55 positions ... crediting $118,619 of pre-entry movement; entry-clamped truth = +8.03%"
+    }
+  },
+  {
+    "strategy": "High 5",
+    "seal_ref": "523c3369",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "Canonical sealed benchmark (2026-07-16 replay): 5,321 trades, Win% 92.33%, 2x-levered headline row (CAGR headline row present in replay table; leverage-dependent)",
+      "metric_kind": "backtest replay, win rate + levered CAGR table",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": 0.9233,
+      "win_rate_n": 5321,
+      "window_from": "2021-04-01",
+      "window_to": "2026-04-30",
+      "integrity_flags": ["fleet-wide frozen survivor-biased universe (w4nfwu675)"],
+      "source_citations": ["trisight-trader scripts/high5_direct_allocation_replay.py committed replay runs (canonical 2026-07-16)", "orchestration/reports/ESTATE-STATUS.md row 2 (seal 523c3369)"],
+      "excerpt": "Canonical (2026-07-16 run, cited as 'the sealed benchmark'): 5,321 trades, Win% 92.33%"
+    },
+    "realized": {
+      "status": "FOUND",
+      "value_raw": "122 closed paper round-trips (pulled 2026-08-07): win rate 45.08% [95% CI 36.3%-53.9%], avg win +8.46%, avg loss -8.11%, mean per trade -0.638%; all 122 exits TIME_EXIT (no stops, per sealed contract)",
+      "metric_kind": "production paper fills ledger",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": 0.450820,
+      "win_rate_n": 122,
+      "window_from": "2026-06-17",
+      "window_to": "2026-08-06",
+      "integrity_flags": [],
+      "source_citations": ["Snapshots/high_5_paper_trade_log.csv (Railway volume, read-only pull 2026-08-07; 279 rows: 157 BUY/122 SELL)"],
+      "excerpt": "Win rate 45.0820% [Wald 95% CI 36.2525%-53.9114%] ... mean per trade -0.6380%"
+    }
+  },
+  {
+    "strategy": "Oakwind Swing Trader",
+    "seal_ref": "915248a6",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "Modeled control ledger, 5bps friction: Win% 67.65%, net executed win% 62.85%, CAGR 1,851.41%, MaxDD -1.65%, 15,028 trades / 9,408 executed (15bps variant: win 55.12%, CAGR 430.61%)",
+      "metric_kind": "modeled control-ledger backtest",
+      "annualized_return": 18.5141,
+      "normalization_method": "stated CAGR fraction; window NOT stated by the source (artifact generated 2026-05-18, no historical span declared) — return dimension will refuse on window",
+      "win_rate": 0.6765,
+      "win_rate_n": 15028,
+      "window_from": null,
+      "window_to": null,
+      "integrity_flags": ["no historical window declared by the claim artifact", "fleet-wide frozen survivor-biased universe; dip-buy amplification (w4nfwu675)"],
+      "source_citations": ["Oakwind Swing lockdown/backtest artifact (commit b5ffd4f lineage, generated 2026-05-18T14:33:54)", "Audits/ seal 915248a6 signed Dick O'Leary 2026-07-12T12:55:29Z"],
+      "excerpt": "Win% 67.65%, Net executed win% 62.85%, CAGR 1,851.41%, Max DD -1.65%"
+    },
+    "realized": {
+      "status": "FOUND",
+      "value_raw": "254 closed round-trips on production paper ledger: WR 58.66% [95% CI 52.5%-64.5%], payoff 1.680, expectancy +0.466%/trade; stated aggregate $ figure exists only for 2026-07-27..08-06 (+$5,865.65)",
+      "metric_kind": "production paper fills ledger (supply_demand_hourly_paper_fills.csv)",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": 0.5866,
+      "win_rate_n": 254,
+      "window_from": "2026-05-15",
+      "window_to": "2026-08-06",
+      "integrity_flags": [],
+      "source_citations": ["supply_demand_hourly_paper_fills.csv via railway ssh read-only pull 2026-08-07"],
+      "excerpt": "254 closed round-trip trades: WR 58.66% (95% CI 52.52%-64.54%) ... expectancy +0.466%/trade"
+    }
+  },
+  {
+    "strategy": "Oakwind Investor Daily",
+    "seal_ref": null,
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "Locked benchmark: Win 50.51%, CAGR 8,728.89%, MaxDD -10.53% — shown to collapse to 673%-891% CAGR when the sibling Swing strategy's own capacity controls are applied to the identical event set",
+      "metric_kind": "locked backtest benchmark, fixed_target_2r_control_no_liquidity_5bps",
+      "annualized_return": 87.2889,
+      "normalization_method": "stated CAGR fraction; scenario window not declared in calendar terms — return dimension will refuse on window",
+      "win_rate": 0.5051,
+      "win_rate_n": null,
+      "window_from": null,
+      "window_to": null,
+      "integrity_flags": ["headline depends on ABSENT capacity controls (collapses 8728.89%→673-891% under sibling's own caps: oakwind_capped_validation_20260809/00_VALIDATION.md)", "unsealed; fills ledger integrity defects D39/D40/D41 on record"],
+      "source_citations": ["Oakwind Investor lockdown doc (locked benchmark)", "trisight-trader/docs_output/oakwind_capped_validation_20260809/00_VALIDATION.md", "orchestration/reports/DEFECT-REGISTRY.md:59-61 (D39 phantom fills 54/104, D40 cap never enforced 54 vs 10, D41 stop-loss erasure)"],
+      "excerpt": "Win 50.51%, CAGR 8,728.89%, Max DD -10.53%"
+    },
+    "realized": {
+      "status": "PARTIAL",
+      "value_raw": "Reconstructed backlog (2026-07-30, 50 closed): aggregate WR 68.0% BUT 29/50 entries were phantom (no market crossing on entry day, D39); REAL-entry-only subset: n=21, WR 38.1%, +$9,000.49",
+      "metric_kind": "reconstructed backlog over CARD-93 fills ledger",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": 0.381,
+      "win_rate_n": 21,
+      "window_from": "2026-06-17",
+      "window_to": "2026-07-30",
+      "integrity_flags": ["D39: 54/104 live BUY fills phantom (51.9%)", "aggregate 68% WR contaminated by phantom entries — REAL-only subset used, which falls below the n>=30 floor"],
+      "source_citations": ["auto_oakwind_investor_paper_fills_log.csv (CARD-93)", "orchestration/reports/DEFECT-REGISTRY.md:59 (D39)"],
+      "excerpt": "REAL-entry trades (market actually touched the recorded price) n=21, wins=8 (38.1%)"
+    }
+  },
+  {
+    "strategy": "Escalator Reclaimed Shadow",
+    "seal_ref": "5d483f7c",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "349 trades, total return 215.97%, CAGR 16,079.18%, MaxDD 1.10%, win rate 63.04% over 57 market dates — source doc states 'No calendar-day span is claimed'",
+      "metric_kind": "golden replay backtest",
+      "annualized_return": 160.7917921783,
+      "normalization_method": "stated CAGR fraction; the claim EXPLICITLY declines to anchor a calendar window — return dimension will refuse on window",
+      "win_rate": 0.63037249,
+      "win_rate_n": 349,
+      "window_from": null,
+      "window_to": null,
+      "integrity_flags": ["claim declines to state a calendar window", "audit seal verifies code/spec drift only, not backtest numbers (PROOF.md)"],
+      "source_citations": ["escalator_reclaimed_shadow lockdown/golden replay (profile escalator_reclaimed_bidirectional_v1_20260510)", "trisight-trader/Audits/2026-07-12_escalator_reclaimed_shadow_b5ffd4f/PROOF.md"],
+      "excerpt": "349 trades, total return 215.969323%, CAGR 16079.179 ... win rate 63.037249%"
+    },
+    "realized": {
+      "status": "FOUND",
+      "value_raw": "150 closed trades (68W/82L = 45.33%), realized P&L +$370.59 (+0.05%) since inception 2026-05-15 through Aug 4 2026 (dashboard roll-up screen-verified against production ledger)",
+      "metric_kind": "shadow paper ledger roll-up",
+      "annualized_return": 0.00226,
+      "normalization_method": "+0.05% over 81 calendar days annualized as (1.0005)^(365/81)-1 ≈ 0.226%/yr — short-sample noise disclosed",
+      "win_rate": 0.45333,
+      "win_rate_n": 150,
+      "window_from": "2026-05-15",
+      "window_to": "2026-08-04",
+      "integrity_flags": ["shadow/simulated fills, not broker-routed"],
+      "source_citations": ["auto_escalator_reclaimed_trade_log.csv (production)", "dashboard since-inception roll-up, screen-verified"],
+      "excerpt": "150 closed trades (68 wins / 82 losses) · Realized P&L +$370.59 (+0.05%)"
+    }
+  },
+  {
+    "strategy": "Escalator Reclaimed Long Shadow",
+    "seal_ref": "b0d8e0f6",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "Total return 101.61%, CAGR 2,119.69%, win rate 62.50%, 264 trades, MaxDD 0.75% over 57 market dates — no calendar span claimed",
+      "metric_kind": "golden replay backtest",
+      "annualized_return": 21.196892,
+      "normalization_method": "stated CAGR fraction; no calendar window declared — return dimension will refuse on window",
+      "win_rate": 0.625,
+      "win_rate_n": 264,
+      "window_from": null,
+      "window_to": null,
+      "integrity_flags": ["claim declines to state a calendar window"],
+      "source_citations": ["escalator_reclaimed_long_shadow lockdown (audit AUD-20260712121726-59f366, git b5ffd4f)"],
+      "excerpt": "Total return 101.6130% | CAGR 2119.6892% | Win rate 62.50% | 264 trades"
+    },
+    "realized": {
+      "status": "PARTIAL",
+      "value_raw": "66 closed shadow round-trips; NO complete aggregate figure exists — only a 62-trade repaired subset (-$1,062.34) from the fake-exit-price defect repair; win rate not stated as an aggregate",
+      "metric_kind": "shadow paper ledger, partially repaired",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": null,
+      "win_rate_n": 66,
+      "window_from": "2026-06-16",
+      "window_to": "2026-07-23",
+      "integrity_flags": ["fake-exit-price defect required repair of 62/66 closed trades; complete 66-trade aggregate never stated"],
+      "source_citations": ["long-shadow production ledger + repair ledger (fake exit price defect)"],
+      "excerpt": "only a partial subset (62 of the 66 closed trades ...) sums to -$1,062.3354 in the repair ledger"
+    }
+  },
+  {
+    "strategy": "Earnings Trader Locked 93",
+    "seal_ref": "247c6367",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "Events: 93 | Win rate: 92.47% | CAGR: 419.48% | MaxDD: -4.11% | avg trade +7.77% | profit factor 59.43",
+      "metric_kind": "locked-93 selected-events backtest",
+      "annualized_return": 4.19481,
+      "normalization_method": "stated CAGR fraction; note the 93 events are a SELECTED trade set",
+      "win_rate": 0.92473,
+      "win_rate_n": 93,
+      "window_from": "2022-03-31",
+      "window_to": "2026-05-15",
+      "integrity_flags": ["93 selected events — selection process undocumented in the claim itself", "fleet-wide frozen survivor-biased universe (w4nfwu675)"],
+      "source_citations": ["trisight-trader EARNINGS_TRADER_LOCKED_93_CONTRACT.md + STRATEGY_SUMMARY.md", "Audits/2026-07-15_earnings_trader_locked_93_5feacc6/PROOF.md"],
+      "excerpt": "Events: 93 | Win rate: 92.473% | CAGR: 419.481%"
+    },
+    "realized": {
+      "status": "NOT_FOUND",
+      "value_raw": null,
+      "metric_kind": null,
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": null,
+      "win_rate_n": null,
+      "window_from": null,
+      "window_to": null,
+      "integrity_flags": ["ZERO fills have ever occurred since sealing — investigated and confirmed 2026-07-31"],
+      "source_citations": ["trisight-trader/docs_output/zero_fill_investigation_20260731/ZERO_FILL_INVESTIGATION_20260731.md"],
+      "excerpt": "no fills ledger, paper P&L file, or physical log exists for this strategy anywhere in the estate"
+    }
+  },
+  {
+    "strategy": "TriSight 500 2.0",
+    "seal_ref": "1ac7a48a",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "CAGR 30.62% (restated 2026-08-13; originally sealed 29.96%) | basket win 70.30% | MaxDD -12.89% over 101 rotation cycles",
+      "metric_kind": "rotation backtest",
+      "annualized_return": 0.30618321,
+      "normalization_method": "stated CAGR fraction (post-restatement value; restatement disclosed)",
+      "win_rate": 0.7029703,
+      "win_rate_n": 101,
+      "window_from": "2020-03-03",
+      "window_to": "2026-02-20",
+      "integrity_flags": ["restated after sealing (29.96%→30.62%)", "~6yr frozen universe cache — most severe survivorship case per w4nfwu675"],
+      "source_citations": ["trisight_500 lockdown (registry trisight_500_late_failed_recovery_shadow)", "orchestration/reports/TOTAL-QUALITY-MATRIX.md (TS500 ~6yr freeze)"],
+      "excerpt": "CAGR 30.618321% (restated 2026-08-13; originally sealed as 29.955846%)"
+    },
+    "realized": {
+      "status": "PARTIAL",
+      "value_raw": "No aggregate realized figure; D101 measured a $2,524 open-P&L overstatement across 500 rows from restamped entry prices ($4,478.64 ledger basis vs $1,954.63 restamped basis)",
+      "metric_kind": "shadow paper fill log",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": null,
+      "win_rate_n": null,
+      "window_from": "2026-07-13",
+      "window_to": "2026-08-13",
+      "integrity_flags": ["D101: entry-price restamping overstates open P&L 2.3x on measured snapshot"],
+      "source_citations": ["auto_ts500_lfr_shadow_paper_fill_log.csv (Railway volume)", "D101 finding 2026-08-09"],
+      "excerpt": "Across all 500 rows: $4,478.64 (ledger basis) vs $1,954.63 (restamped basis)"
+    }
+  },
+  {
+    "strategy": "Manual Swing Trading",
+    "seal_ref": "0d516728",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "N=2,107 trades, WR 92.22%; CAGR +342.39% (realistic 10bps) / +420.85% (frictionless); MaxDD -14.54% (realistic)",
+      "metric_kind": "5-year backtest, production leverage 1x",
+      "annualized_return": 3.4239,
+      "normalization_method": "realistic-10bps variant used (more favorable to the claim than ASSAY frictions would be)",
+      "win_rate": 0.9222,
+      "win_rate_n": 2107,
+      "window_from": "2021-05-18",
+      "window_to": "2026-04-24",
+      "integrity_flags": ["fleet-wide frozen survivor-biased universe (w4nfwu675)"],
+      "source_citations": ["manual_swing governed backtest artifact (5yr, 2021-05-18..2026-04-24)", "seal 0d516728 SEALED 2026-07-17"],
+      "excerpt": "N=2,107 trades, WR=92.22%. Production leverage (1x): CAGR +342.39% (realistic 10bps)"
+    },
+    "realized": {
+      "status": "PARTIAL",
+      "value_raw": "259 closed paper trades: mean +0.517%/trade, median +1.000% — but the D86 synthetic signature (pnl_pct == +1.00% AND days_held == 1) sits on 104/259 rows, and 48 rows are BACKFILL-simulated; no aggregate win rate stated",
+      "metric_kind": "production paper ledger (swing_trade_log.csv)",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": null,
+      "win_rate_n": 259,
+      "window_from": "2025-12-29",
+      "window_to": "2026-08-06",
+      "integrity_flags": ["D86 synthetic signature on 104/259 rows", "48 BACKFILL-simulated rows", "rows before ~2026-04-26 backfilled/synthetic"],
+      "source_citations": ["/trisight-volume/Snapshots/swing_trade_log.csv (Railway, pull 2026-08-07)", "D86 (DEFECT-REGISTRY)"],
+      "excerpt": "The D86 signature (pnl_pct == +1.00 % AND days_held == 1) appears on 104 of 259 rows"
+    }
+  },
+  {
+    "strategy": "Automated Swing Trading",
+    "seal_ref": "5a60b8b9",
+    "claim": {
+      "status": "FOUND",
+      "value_raw": "N=2,107, WR 92.22% | CAGR 1x +420.85% | 2x +2,304.32% frictionless / +1,636.16% realistic-10bps",
+      "metric_kind": "5-year backtest (shares ledger lineage with Manual Swing)",
+      "annualized_return": 4.2085,
+      "normalization_method": "1x CAGR as stated; WINDOW derived only from a ledger filename (2021-2026, no exact dates) — return dimension will refuse on window",
+      "win_rate": 0.9222,
+      "win_rate_n": 2107,
+      "window_from": null,
+      "window_to": null,
+      "integrity_flags": ["window known only from filename", "fleet-wide frozen survivor-biased universe (w4nfwu675)"],
+      "source_citations": ["backtest_results/manual_swing_phase6* ledger artifacts", "seal 5a60b8b9 SEALED 2026-07-17"],
+      "excerpt": "N=2,107 trades, WR=92.22% | CAGR 1x=+420.85%"
+    },
+    "realized": {
+      "status": "FOUND",
+      "value_raw": "Since-inception realized WR 56.7% (59W/45L, n=104) — of which 37 were later ruled fabricated phantom stop-exits and VOIDED by owner 2026-08-05; since strategy-tagging: raw 42.9%, phantom-excluded 76.9%; real-only P&L weekly -0.44%, monthly/YTD -0.88%",
+      "metric_kind": "production paper ledger (auto_swing_trade_log.csv)",
+      "annualized_return": null,
+      "normalization_method": null,
+      "win_rate": 0.567,
+      "win_rate_n": 104,
+      "window_from": "2026-04-26",
+      "window_to": "2026-08-05",
+      "integrity_flags": ["37/104 round-trips VOIDED as fabricated phantom stop-exits (owner ruling 2026-08-05) — WR shown uses the pre-void population and is therefore itself unreliable; phantom-excluded since-tagging WR is 76.9%"],
+      "source_citations": ["Snapshots/auto_swing_trade_log.csv (116 rows)", "owner ruling 2026-08-05 (phantom exits voided)"],
+      "excerpt": "realized WR 56.7% (59W/45L of 104 ... 37 were later ruled fabricated 'phantom' stop-exits and VOIDED)"
+    }
+  }
+]

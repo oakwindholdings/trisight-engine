@@ -4,10 +4,10 @@ ok: all 5 stripped guards fail to compile under the project's own strictness
 == [3/9] tests ==
 bun test v1.3.10 (30e609e0)
 
- 71 pass
+ 74 pass
  0 fail
- 1521 expect() calls
-Ran 71 tests across 9 files. [740.00ms]
+ 1523 expect() calls
+Ran 74 tests across 9 files. [301.00ms]
 == [4/9] kernel purity greps (I1/I2 hygiene) ==
 ok: kernel pure — no clock, no env, no fs/network, no annualization constants
 == [5/9] no masked exits anywhere (gate.sh included) ==
@@ -41,7 +41,7 @@ ok: live key appears nowhere in store-data/ or evidence/
  kernel/span.ts          |  100.00 |   92.31 | 
  kernel/spec.ts          |  100.00 |   93.75 | 35,47,56
  phase2/campaignStore.ts |  100.00 |  100.00 | 
- phase2/inflation.ts     |  100.00 |   96.15 | 49
+ phase2/inflation.ts     |  100.00 |   90.91 | 63-66,100
  receipt/receipt.ts      |  100.00 |   96.51 | 49,70
  substrate/codehash.ts   |  100.00 |  100.00 | 
  substrate/ingress.ts    |  100.00 |   95.28 | 89,113,122,129
@@ -51,8 +51,8 @@ ok: live key appears nowhere in store-data/ or evidence/
  tests/prop.ts           |  100.00 |   95.24 | 
 -------------------------|---------|---------|-------------------
 
- 71 pass
+ 74 pass
  0 fail
- 1521 expect() calls
-Ran 71 tests across 9 files. [211.00ms]
+ 1523 expect() calls
+Ran 74 tests across 9 files. [292.00ms]
 GATE PASS

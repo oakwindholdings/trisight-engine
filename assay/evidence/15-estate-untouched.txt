@@ -1,0 +1,4 @@
+/Users/bobstewart/dev/trisight: 30 changed files
+/Users/bobstewart/dev/trisight/trisight-trader: 1434 changed files
+/Users/bobstewart/dev/trisight/trisight-reports: 0 changed files
+/Users/bobstewart/dev/trisight/trisight-website: 0 changed files

@@ -1,7 +1,7 @@
 -------------------------|---------|---------|-------------------
 File                     | % Funcs | % Lines | Uncovered Line #s
 -------------------------|---------|---------|-------------------
-All files                |   97.27 |   93.51 |
+All files                |   97.27 |   93.23 |
  adversary/adversary.ts  |  100.00 |   96.43 | 37-38,48
  kernel/bars.ts          |  100.00 |  100.00 | 
  kernel/canonical.ts     |  100.00 |   98.21 | 
@@ -13,7 +13,7 @@ All files                |   97.27 |   93.51 |
  kernel/span.ts          |  100.00 |   92.31 | 
  kernel/spec.ts          |  100.00 |   93.75 | 35,47,56
  phase2/campaignStore.ts |  100.00 |  100.00 | 
- phase2/inflation.ts     |  100.00 |   96.15 | 49
+ phase2/inflation.ts     |  100.00 |   90.91 | 63-66,100
  receipt/receipt.ts      |  100.00 |   96.51 | 49,70
  substrate/codehash.ts   |  100.00 |  100.00 | 
  substrate/ingress.ts    |  100.00 |   95.28 | 89,113,122,129
@@ -23,7 +23,7 @@ All files                |   97.27 |   93.51 |
  tests/prop.ts           |  100.00 |   95.24 | 
 -------------------------|---------|---------|-------------------
 
- 71 pass
+ 74 pass
  0 fail
- 1521 expect() calls
-Ran 71 tests across 9 files. [211.00ms]
+ 1523 expect() calls
+Ran 74 tests across 9 files. [292.00ms]

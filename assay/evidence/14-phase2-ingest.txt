@@ -1,0 +1,10 @@
+Top 40 2.0: return REFUSED invalid_params | win-rate n/c — NOT COMPUTED: a side lacks a stated win rate
+High 5: return REFUSED invalid_params | win-rate ratio 2.05x — claimed 92.3% vs realized 45.1% over 122 closed trades
+Oakwind Swing Trader: return REFUSED invalid_params | win-rate ratio 1.15x — claimed 67.7% vs realized 58.7% over 254 closed trades
+Oakwind Investor Daily: return REFUSED invalid_params | win-rate n/c — NOT COMPUTED: realized population 21 < declared 30 floor
+Escalator Reclaimed Shadow: return REFUSED invalid_params | win-rate ratio 1.39x — claimed 63.0% vs realized 45.3% over 150 closed trades
+Escalator Reclaimed Long Shadow: return REFUSED invalid_params | win-rate n/c — NOT COMPUTED: a side lacks a stated win rate
+Earnings Trader Locked 93: REFUSED missing_data — Earnings Trader Locked 93: claim FOUND, realized NOT_FOUND — no comparison without both sides
+TriSight 500 2.0: return REFUSED invalid_params | win-rate n/c — NOT COMPUTED: a side lacks a stated win rate
+Manual Swing Trading: return REFUSED invalid_params | win-rate n/c — NOT COMPUTED: a side lacks a stated win rate
+Automated Swing Trading: return REFUSED invalid_params | win-rate ratio 1.63x — claimed 92.2% vs realized 56.7% over 104 closed trades

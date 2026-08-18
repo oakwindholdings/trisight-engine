@@ -1,6 +1,7 @@
 // assay/phase2/inflation.ts
-// The inflation factor: claimed vs realized, or an explicit refusal — never a stretched ratio.
-// Pure computation over campaign records; annualization method is declared on every output.
+// The inflation factor: claimed vs realized on two declared dimensions — annualized return and
+// win rate — or an explicit refusal. Backtest and paper windows differ BY NATURE (claims are
+// history, paper is 2026); that regime difference is disclosed on every output, never hidden.
 
 import { refuse, isRefused, type Outcome, type Refused } from '../kernel/refusal.ts';
 import { type Hash } from '../kernel/canonical.ts';
@@ -12,19 +13,23 @@ export interface SideRecord {
   readonly status: 'FOUND' | 'PARTIAL' | 'NOT_FOUND';
   readonly value_raw: string | null; // the figure exactly as the source states it
   readonly metric_kind: string | null;
-  /** normalized to an annualized simple-return fraction, or null when not normalizable */
+  /** normalized to an annualized simple-return fraction, or null when not honestly normalizable */
   readonly annualized_return: number | null;
   readonly normalization_method: string | null; // declared, human-auditable
+  /** win rate as a fraction, when the source states one */
+  readonly win_rate: number | null;
+  readonly win_rate_n: number | null; // population behind the win rate
   readonly window_from: string | null; // YYYY-MM-DD
   readonly window_to: string | null;
+  readonly integrity_flags: readonly string[]; // known contamination on record (defect ids etc.)
   readonly source_citations: readonly string[];
   readonly excerpt: string | null;
   readonly provenance: 'estate-readonly';
 }
 
-export type InflationOutcome =
+export type ReturnOutcome =
   | { readonly kind: 'ratio'; readonly value: number }
-  | { readonly kind: 'sign_divergence'; readonly detail: string } // claimed positive, realized <= 0: not ratio-able, categorically inflated
+  | { readonly kind: 'sign_divergence'; readonly detail: string } // claimed positive, realized <= 0
   | Refused;
 
 export interface InflationFactor {
@@ -32,31 +37,50 @@ export interface InflationFactor {
   readonly strategy: string;
   readonly claim_hash: Hash;
   readonly realized_hash: Hash;
-  readonly claimed_annualized: number;
-  readonly realized_annualized: number;
-  readonly outcome: InflationOutcome;
-  readonly window_overlap_days: number;
+  readonly return_outcome: ReturnOutcome;
+  readonly claimed_annualized: number | null;
+  readonly realized_annualized: number | null;
+  /** claimed win rate / realized win rate — >1 means the claim overstated hit rate */
+  readonly win_rate_ratio: number | null;
+  readonly win_rate_note: string;
+  readonly claim_days: number | null;
+  readonly realized_days: number | null;
+  readonly regime_note: string;
   readonly method: string;
 }
 
-function daysBetween(from: string, to: string): number {
-  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+export const MIN_SIDE_DAYS = 60; // annualizing a shorter record is noise dressed as measurement
+export const MIN_WIN_RATE_N = 30; // a hit-rate over fewer closed trades is not a population
+
+function sideDays(s: SideRecord): number | null {
+  if (s.window_from === null || s.window_to === null) return null;
+  const d = Math.round((Date.parse(`${s.window_to}T00:00:00Z`) - Date.parse(`${s.window_from}T00:00:00Z`)) / 86_400_000);
+  return Number.isFinite(d) && d > 0 ? d : null;
 }
 
-/** Overlap in calendar days between the two windows; both sides must carry complete windows. */
-export function windowOverlapDays(a: SideRecord, b: SideRecord): Outcome<number> {
-  if (a.window_from === null || a.window_to === null || b.window_from === null || b.window_to === null) {
-    return refuse('invalid_params', `window incomplete: claim ${a.window_from}..${a.window_to} vs realized ${b.window_from}..${b.window_to}`);
+function returnOutcome(claim: SideRecord, realized: SideRecord): ReturnOutcome {
+  if (claim.annualized_return === null || realized.annualized_return === null) {
+    return refuse(
+      'invalid_params',
+      `${claim.strategy}: side not normalizable to annualized return (claim: ${claim.normalization_method ?? 'none'}; realized: ${realized.normalization_method ?? 'none'})`
+    );
   }
-  const from = a.window_from > b.window_from ? a.window_from : b.window_from;
-  const to = a.window_to < b.window_to ? a.window_to : b.window_to;
-  if (from >= to) return refuse('invalid_params', `windows do not overlap: ${a.window_from}..${a.window_to} vs ${b.window_from}..${b.window_to}`);
-  return daysBetween(from, to);
+  const cd = sideDays(claim);
+  const rd = sideDays(realized);
+  if (cd === null || rd === null) return refuse('invalid_params', `${claim.strategy}: side window incomplete`);
+  if (cd < MIN_SIDE_DAYS || rd < MIN_SIDE_DAYS) {
+    return refuse('insufficient_history', `${claim.strategy}: side duration below declared ${MIN_SIDE_DAYS}d floor (claim ${cd}d, realized ${rd}d)`);
+  }
+  const c = claim.annualized_return;
+  const r = realized.annualized_return;
+  if (c > 0 && r <= 0) {
+    return { kind: 'sign_divergence', detail: `claimed +${(c * 100).toFixed(1)}%/yr while realized ${(r * 100).toFixed(1)}%/yr — not ratio-able, categorically inflated` };
+  }
+  if (c <= 0 && r <= 0) return refuse('invalid_params', `${claim.strategy}: both sides non-positive — inflation undefined`);
+  return { kind: 'ratio', value: c / r };
 }
 
-export const MIN_OVERLAP_DAYS = 90; // declared threshold: below this, a ratio would be noise dressed as measurement
-
-/** (claim, realized) -> inflation outcome. Total function; every failure mode is a value. */
+/** (claim, realized) -> inflation record. Total; every failure mode is a value on the record. */
 export function computeInflation(
   claim: SideRecord,
   claimHash: Hash,
@@ -67,35 +91,36 @@ export function computeInflation(
     return refuse('invalid_params', `strategy mismatch: '${claim.strategy}' vs '${realized.strategy}'`);
   }
   if (claim.status === 'NOT_FOUND' || realized.status === 'NOT_FOUND') {
-    return refuse('missing_data', `${claim.strategy}: claim ${claim.status}, realized ${realized.status} — no ratio without both sides`);
+    return refuse('missing_data', `${claim.strategy}: claim ${claim.status}, realized ${realized.status} — no comparison without both sides`);
   }
-  if (claim.annualized_return === null || realized.annualized_return === null) {
-    return refuse('invalid_params', `${claim.strategy}: side not normalizable to annualized return (claim method: ${claim.normalization_method ?? 'none'}, realized: ${realized.normalization_method ?? 'none'})`);
-  }
-  const overlap = windowOverlapDays(claim, realized);
-  if (isRefused(overlap)) return overlap;
-  if (overlap < MIN_OVERLAP_DAYS) {
-    return refuse('insufficient_history', `${claim.strategy}: window overlap ${overlap}d < declared minimum ${MIN_OVERLAP_DAYS}d`);
-  }
-  const c = claim.annualized_return;
-  const r = realized.annualized_return;
-  let outcome: InflationOutcome;
-  if (c > 0 && r <= 0) {
-    outcome = { kind: 'sign_divergence', detail: `claimed +${(c * 100).toFixed(1)}%/yr while realized ${(r * 100).toFixed(1)}%/yr — not ratio-able, categorically inflated` };
-  } else if (c <= 0 && r <= 0) {
-    outcome = refuse('invalid_params', `${claim.strategy}: both sides non-positive — inflation undefined for jointly losing records`);
+
+  let win_rate_ratio: number | null = null;
+  let win_rate_note: string;
+  if (claim.win_rate === null || realized.win_rate === null) {
+    win_rate_note = 'NOT COMPUTED: a side lacks a stated win rate';
+  } else if (realized.win_rate_n === null || realized.win_rate_n < MIN_WIN_RATE_N) {
+    win_rate_note = `NOT COMPUTED: realized population ${realized.win_rate_n ?? '?'} < declared ${MIN_WIN_RATE_N} floor`;
+  } else if (realized.win_rate <= 0) {
+    win_rate_note = 'NOT COMPUTED: realized win rate is zero — ratio undefined; see records';
   } else {
-    outcome = { kind: 'ratio', value: c / r };
+    win_rate_ratio = claim.win_rate / realized.win_rate;
+    win_rate_note = `claimed ${(claim.win_rate * 100).toFixed(1)}% vs realized ${(realized.win_rate * 100).toFixed(1)}% over ${realized.win_rate_n} closed trades`;
   }
+
   return {
     record_type: 'InflationFactor',
     strategy: claim.strategy,
     claim_hash: claimHash,
     realized_hash: realizedHash,
-    claimed_annualized: c,
-    realized_annualized: r,
-    outcome,
-    window_overlap_days: overlap,
-    method: `annualized-return ratio over >=${MIN_OVERLAP_DAYS}d overlap; sides normalized per their declared normalization_method fields`,
+    return_outcome: returnOutcome(claim, realized),
+    claimed_annualized: claim.annualized_return,
+    realized_annualized: realized.annualized_return,
+    win_rate_ratio,
+    win_rate_note,
+    claim_days: sideDays(claim),
+    realized_days: sideDays(realized),
+    regime_note:
+      'Claim and realized windows cover DIFFERENT market regimes by nature (backtest history vs 2026 paper); rate-vs-rate comparison assumes claim rates were offered as forward-looking. Realized samples are short — treat ratios as lower-noise-bound estimates, not precision measurements.',
+    method: `annualized-return ratio (sides >=${MIN_SIDE_DAYS}d) + win-rate ratio (realized n>=${MIN_WIN_RATE_N}); normalization per declared per-side methods`,
   };
 }
