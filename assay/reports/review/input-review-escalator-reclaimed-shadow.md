@@ -84,6 +84,20 @@ Every integrity flag in the slice, plain-English:
 - If you can point to something that verifies the backtest numbers themselves (not just code/spec drift — Step 5, flag 2), that flag's "direction unknown" status can be resolved.
 - If broker-routed fills exist to replace the shadow/simulated fills (Step 5, flag 3), that flag can be closed out.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`escalator_reclaimed_shadow lockdown/golden replay (profile escalator_reclaimed_bidirectional_v1_20260510)`**
+  → Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md
+- **`trisight-trader/Audits/2026-07-12_escalator_reclaimed_shadow_b5ffd4f/PROOF.md`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/Audits/2026-07-12_escalator_reclaimed_shadow_b5ffd4f/PROOF.md>
+- **`auto_escalator_reclaimed_trade_log.csv (production)`**
+  → Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.
+- **`dashboard since-inception roll-up, screen-verified`**
+  → A screen-verified dashboard reading (no file). The number was read off the live dashboard on the stated date.
+
 ## How corrections work
 
 Name a file path or a correction against any item above and send it back. The record set is append-only — nothing gets deleted or silently changed. A correction supersedes the prior value but the original stays visible, and hashes keep every version auditable. Record hashes for this study:

@@ -86,6 +86,20 @@ Every integrity flag on this strategy, in plain English:
 - If you can explain the ~6yr frozen universe cache (intentional methodology choice vs. error), that changes how integrity flag 2 should be weighted.
 - If you can confirm the correct entry-price basis (ledger vs. restamped) for the 500-row shadow log, that resolves integrity flag 3.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`trisight_500 lockdown (registry trisight_500_late_failed_recovery_shadow)`**
+  → Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md
+- **`orchestration/reports/TOTAL-QUALITY-MATRIX.md (TS500 ~6yr freeze)`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/TOTAL-QUALITY-MATRIX.md>
+- **`auto_ts500_lfr_shadow_paper_fill_log.csv (Railway volume)`**
+  → Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.
+- **`D101 finding 2026-08-09`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DEFECT-REGISTRY.md>
+
 ## How corrections work
 
 Name a file path or state a correction for any item above and we'll re-run the study on it. The record set is append-only — nothing gets deleted — so your correction supersedes the original, but the original stays visible for the audit trail. Every version is hash-tracked. The three records behind this guide:

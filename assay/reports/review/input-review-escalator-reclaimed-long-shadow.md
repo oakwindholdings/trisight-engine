@@ -66,5 +66,15 @@ Integrity flags, in plain English:
 - If you supply or confirm a complete 66-trade realized aggregate — total P&L and win rate — for the ledger in Step 4/5, the win-rate check becomes computable and the return comparison can use a real, complete realized figure instead of the partial 62-trade subset.
 - If a cleaner or more complete realized ledger exists (Step 4), name it so we can re-run against real fills instead of the shadow paper ledger.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`escalator_reclaimed_long_shadow lockdown (audit AUD-20260712121726-59f366, git b5ffd4f)`**
+  → Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md
+- **`long-shadow production ledger + repair ledger (fake exit price defect)`**
+  → Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.
+
 ## How corrections work
 To correct anything above, name the file path or state the correction next to the relevant item. The record set is append-only — nothing gets overwritten. Your correction supersedes what we used, but the original stays visible alongside it, and every version is hashed so the whole chain stays auditable. Record hashes for this review: claim `sha256:285c04811c9b77d668d0ceefe4b9e6ce1c3d0a2f4a87182df2c82255b02c1642`, realized `sha256:74ccdec21948257cc2b8ccfde6d44e0120a25d030c3bc7bbc059fe8ddada9955`, verdict `sha256:ed16f819e904d202286c1009dbd3601cec63f3886ca5c2b0da05acac3565ae35`.

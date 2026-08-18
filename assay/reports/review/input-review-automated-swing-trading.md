@@ -77,6 +77,20 @@ Report's own caveat, verbatim: "Claim and realized windows cover DIFFERENT marke
 - If you confirm or correct the fleet-wide frozen universe flagged as survivor-biased, w4nfwu675 (Step 5, flag 2), then the claim numbers can be corrected for that bias.
 - If you confirm the final win/loss tally for the since-inception 104 trades after the 37 voided phantom stop-exits are properly excluded (Step 5, flag 3), then the realized win rate feeding the 1.63× ratio can be corrected.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`backtest_results/manual_swing_phase6* ledger artifacts`**
+  → Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.
+- **`seal 5a60b8b9 SEALED 2026-07-17`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md>
+- **`Snapshots/auto_swing_trade_log.csv (116 rows)`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/Snapshots/auto_swing_trade_log.csv>
+- **`owner ruling 2026-08-05 (phantom exits voided)`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md>
+
 ## How corrections work
 
 Tell us a file path or a correction for any item above. The record set is append-only, so nothing gets overwritten — a correction supersedes the prior value while the original stays visible for comparison, and every version carries a hash so the whole chain is auditable. Records behind this guide: claim `sha256:c6e0a423d8a33a9774a6668e146d6850d8705a645ce09b9a9789e984b5c0c07c`; realized `sha256:02b83282aaf19149a8f9bbd0b40e1f46e59ba8ed06bfbd0f36ea814d2f887bc0`; verdict `sha256:e089539bd8f286589c3bfac68d1fa48971aecaafb636eb69948ce3b65b170262`.

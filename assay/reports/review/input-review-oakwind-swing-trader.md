@@ -101,6 +101,18 @@ Two integrity flags are recorded on the **claim** side:
 - If you know of a cleaner or more complete realized ledger than the paper-fills CSV
   (Step 4), the realized side could be strengthened.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`Oakwind Swing lockdown/backtest artifact (commit b5ffd4f lineage, generated 2026-05-18T14:33:54)`**
+  → Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md
+- **`Audits/ seal 915248a6 signed Dick O'Leary 2026-07-12T12:55:29Z`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md>
+- **`supply_demand_hourly_paper_fills.csv via railway ssh read-only pull 2026-08-07`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/docs_output/supply_demand_hourly_paper_fills.csv>
+
 ## How corrections work
 
 Name a file path or a correction for any item above and send it back — the record set is

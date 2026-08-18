@@ -115,6 +115,18 @@ change?
 - If you confirm the actual seal/generation date (or correct the 2026-07-15 embedded
   in the audit folder name), Step 1's dating becomes confirmed rather than inferred.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`trisight-trader EARNINGS_TRADER_LOCKED_93_CONTRACT.md + STRATEGY_SUMMARY.md`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/docs_output/EARNINGS_TRADER_LOCKED_93_CONTRACT.md>
+- **`Audits/2026-07-15_earnings_trader_locked_93_5feacc6/PROOF.md`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/Audits/2026-07-15_earnings_trader_locked_93_5feacc6/PROOF.md>
+- **`trisight-trader/docs_output/zero_fill_investigation_20260731/ZERO_FILL_INVESTIGATION_20260731.md`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/docs_output/zero_fill_investigation_20260731/ZERO_FILL_INVESTIGATION_20260731.md>
+
 ## How corrections work
 
 Name a file path or a correction for any item above. The record set is append-only —

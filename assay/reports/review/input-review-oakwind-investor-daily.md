@@ -112,6 +112,22 @@ Known problems, one per flag:
 - If you have context that resolves defects D39, D40, or D41 on the fills ledger, that
   could correct both the phantom-fill count and the realized numbers derived from it.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`Oakwind Investor lockdown doc (locked benchmark)`**
+  → Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md
+- **`trisight-trader/docs_output/oakwind_capped_validation_20260809/00_VALIDATION.md`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/docs_output/oakwind_capped_validation_20260809/00_VALIDATION.md>
+- **`orchestration/reports/DEFECT-REGISTRY.md:59-61 (D39 phantom fills 54/104, D40 cap never enforced 54 vs 10, D41 stop-loss erasure)`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DEFECT-REGISTRY.md>
+- **`auto_oakwind_investor_paper_fills_log.csv (CARD-93)`**
+  → A July-29 production snapshot of this ledger is viewable at <https://github.com/oakwindholdings/TriSight/blob/main/docs_output/d26_lrcx_trigger_forensics_20260729/auto_oakwind_investor_paper_fills_log_PROD_SNAPSHOT_20260729.csv>. The exact 2026-08-07 pull used in this study lives on the Railway volume; ask Bob for it.
+- **`orchestration/reports/DEFECT-REGISTRY.md:59 (D39)`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DEFECT-REGISTRY.md>
+
 ## How corrections work
 Name a file path or state a correction against any item above. Our record set is
 append-only: your correction supersedes what we used, but the original stays visible next

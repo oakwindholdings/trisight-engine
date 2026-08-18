@@ -76,6 +76,18 @@ Report's own caveat: "Claim and realized windows cover DIFFERENT market regimes 
 - If you can supply an annualized-return figure or normalization method for the realized paper ledger (Step 5), the return-inflation refusal becomes computable on that side too.
 - If you have context on how the "fleet-wide frozen survivor-biased universe" (`w4nfwu675`, Step 5) was built — specifically, whether failed or delisted symbols were excluded — that could correct how the claimed 92.33% win rate should be read.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`trisight-trader scripts/high5_direct_allocation_replay.py committed replay runs (canonical 2026-07-16)`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/scripts/high5_direct_allocation_replay.py>
+- **`orchestration/reports/ESTATE-STATUS.md row 2 (seal 523c3369)`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/ESTATE-STATUS.md>
+- **`Snapshots/high_5_paper_trade_log.csv (Railway volume, read-only pull 2026-08-07; 279 rows: 157 BUY/122 SELL)`**
+  → Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.
+
 ## How corrections work
 
 Name a file path or a correction for any item above. The record set is append-only: corrections supersede the current reading, but the original stays visible for audit — nothing is overwritten or deleted. Every version, claim, and verdict is hashed so the full history stays checkable.

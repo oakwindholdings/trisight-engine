@@ -2,6 +2,13 @@
 
 *Draft set for Bob's review. Nothing here goes to Dick until Bob signs off.*
 
+**Dick starts at [START-HERE-DICK.md](START-HERE-DICK.md)** ([printable PDF](pdf/START-HERE-DICK.pdf)) — a zero-setup walkthrough with three review
+paths (paper, browser, AI-guided). Each strategy below also has a comprehensive printable
+PDF packet (guide + findings appendix) in [pdf/](pdf/), and every guide ends with a
+"Where the files live" section giving full clickable URLs for every cited source.
+Governance reports cited by the guides are snapshotted with hashes in
+[evidence/](evidence/PROVENANCE.md).
+
 One guide per sealed strategy. Each walks the strategy owner step by step through every
 input ASSAY used — the claim document, the numbers read from it, the assumed time window,
 the realized ledger, the integrity flags, and what was computed vs. refused — with a
@@ -10,18 +17,18 @@ study re-runs on corrected inputs and the original reading stays visible under i
 
 ## The guides
 
-| Strategy | Guide | Win-rate finding | Return finding |
-|---|---|---|---|
-| High 5 | [input-review-high-5.md](input-review-high-5.md) | 2.05× inflation | refused |
-| Automated Swing Trading | [input-review-automated-swing-trading.md](input-review-automated-swing-trading.md) | 1.63× inflation* | refused |
-| Escalator Reclaimed Shadow | [input-review-escalator-reclaimed-shadow.md](input-review-escalator-reclaimed-shadow.md) | 1.39× inflation | refused |
-| Oakwind Swing Trader | [input-review-oakwind-swing-trader.md](input-review-oakwind-swing-trader.md) | 1.15× inflation | refused |
-| Oakwind Investor Daily | [input-review-oakwind-investor-daily.md](input-review-oakwind-investor-daily.md) | not computable | refused |
-| Top 40 2.0 | [input-review-top-40-2-0.md](input-review-top-40-2-0.md) | not computable | refused |
-| TriSight 500 2.0 | [input-review-trisight-500-2-0.md](input-review-trisight-500-2-0.md) | not computable | refused |
-| Escalator Reclaimed Long Shadow | [input-review-escalator-reclaimed-long-shadow.md](input-review-escalator-reclaimed-long-shadow.md) | not computable | refused |
-| Earnings Trader (locked 93) | [input-review-earnings-trader-locked-93.md](input-review-earnings-trader-locked-93.md) | not computable | refused |
-| Manual Swing Trading | [input-review-manual-swing-trading.md](input-review-manual-swing-trading.md) | not computable | refused |
+| Strategy | Guide | PDF packet | Win-rate finding | Return finding |
+|---|---|---|---|---|
+| High 5 | [input-review-high-5.md](input-review-high-5.md) | [pdf/high-5.pdf](pdf/high-5.pdf) | 2.05× inflation | refused |
+| Automated Swing Trading | [input-review-automated-swing-trading.md](input-review-automated-swing-trading.md) | [pdf/automated-swing-trading.pdf](pdf/automated-swing-trading.pdf) | 1.63× inflation* | refused |
+| Escalator Reclaimed Shadow | [input-review-escalator-reclaimed-shadow.md](input-review-escalator-reclaimed-shadow.md) | [pdf/escalator-reclaimed-shadow.pdf](pdf/escalator-reclaimed-shadow.pdf) | 1.39× inflation | refused |
+| Oakwind Swing Trader | [input-review-oakwind-swing-trader.md](input-review-oakwind-swing-trader.md) | [pdf/oakwind-swing-trader.pdf](pdf/oakwind-swing-trader.pdf) | 1.15× inflation | refused |
+| Oakwind Investor Daily | [input-review-oakwind-investor-daily.md](input-review-oakwind-investor-daily.md) | [pdf/oakwind-investor-daily.pdf](pdf/oakwind-investor-daily.pdf) | not computable | refused |
+| Top 40 2.0 | [input-review-top-40-2-0.md](input-review-top-40-2-0.md) | [pdf/top-40-2-0.pdf](pdf/top-40-2-0.pdf) | not computable | refused |
+| TriSight 500 2.0 | [input-review-trisight-500-2-0.md](input-review-trisight-500-2-0.md) | [pdf/trisight-500-2-0.pdf](pdf/trisight-500-2-0.pdf) | not computable | refused |
+| Escalator Reclaimed Long Shadow | [input-review-escalator-reclaimed-long-shadow.md](input-review-escalator-reclaimed-long-shadow.md) | [pdf/escalator-reclaimed-long-shadow.pdf](pdf/escalator-reclaimed-long-shadow.pdf) | not computable | refused |
+| Earnings Trader (locked 93) | [input-review-earnings-trader-locked-93.md](input-review-earnings-trader-locked-93.md) | [pdf/earnings-trader-locked-93.pdf](pdf/earnings-trader-locked-93.pdf) | not computable | refused |
+| Manual Swing Trading | [input-review-manual-swing-trading.md](input-review-manual-swing-trading.md) | [pdf/manual-swing-trading.pdf](pdf/manual-swing-trading.pdf) | not computable | refused |
 
 *\*Automated Swing's realized side includes 37 voided phantom exits — see its guide, Step 5.*
 

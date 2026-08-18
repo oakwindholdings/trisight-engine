@@ -118,6 +118,20 @@ Three integrity flags apply to this ledger:
 - If you confirm what the pre-2026-04-26 backfilled/synthetic rows actually represent,
   the true start of the live track record can be corrected.
 
+## Where the files live — click to open
+
+Every source this guide cites, with a direct link where one exists. You will need to be
+signed in to GitHub with your oakwindholdings access for these links to open.
+
+- **`manual_swing governed backtest artifact (5yr, 2021-05-18..2026-04-24)`**
+  → Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md
+- **`seal 0d516728 SEALED 2026-07-17`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md>
+- **`/trisight-volume/Snapshots/swing_trade_log.csv (Railway, pull 2026-08-07)`**
+  → <https://github.com/oakwindholdings/TriSight/blob/main/Snapshots/swing_trade_log.csv>
+- **`D86 (DEFECT-REGISTRY)`**
+  → <https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DEFECT-REGISTRY.md>
+
 ## How corrections work
 
 Name a file path or a correction for any item above. The record set is append-only —
