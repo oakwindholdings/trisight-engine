@@ -1,6 +1,5 @@
 // src/components/admin/PromptDrawer.tsx
 import React, { useEffect, useState } from 'react';
-import { PROVIDERS, FORMATS } from '../../models/adminConstants';
 import styled from 'styled-components';
 import { PromptRow, createPrompt, listPrompts, listVariables, VariableRow, getStoredAdminKey } from '../../services/adminApi';
 import { PROVIDERS, FORMATS } from '../../models/adminConstants';
