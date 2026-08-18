@@ -7,6 +7,15 @@ import { createPriceScale } from '../../utils/scaling';
 import { createSequentialTimeScale } from '../../utils/sequentialScale';
 import { logDebug } from '../../utils/logger';
 
+// Local hybrid wrapper: this file calls scales directly (d3-style) AND via .ticks/.invert;
+// the shared factories return method objects, so bind the callable form here.
+function asCallableScale(obj: any): any {
+  const fn: any = (v: any) => obj.scale(v);
+  fn.scale = obj.scale; fn.invert = obj.invert; fn.ticks = obj.ticks;
+  return fn;
+}
+
+
 export interface CanvasChartConfig {
   width: number;
   height: number;
@@ -68,12 +77,13 @@ export class CanvasChartGenerator {
 
     // Create scales
     const priceExtent = this.getPriceExtent(data);
-    const priceScale = createPriceScale(priceExtent, [chartHeight, 0]);
+    const priceScale = asCallableScale(createPriceScale(chartHeight, priceExtent, [chartHeight, 0]));
     
-    const timeScale = createSequentialTimeScale(
-      data.map(d => d.date),
+    const timeScale = asCallableScale(createSequentialTimeScale(
+      chartWidth,
+      data as any, // rows carry date/OHLC fields; the scale indexes by position
       [0, chartWidth]
-    );
+    ));
 
     // Translate to chart area
     ctx.save();
@@ -132,12 +142,13 @@ export class CanvasChartGenerator {
     // Create scales
     const allValues = data.flatMap(d => series.map(s => d[s])).filter(v => v != null);
     const yExtent = [Math.min(...allValues) * 0.95, Math.max(...allValues) * 1.05];
-    const yScale = createPriceScale(yExtent, [chartHeight, 0]);
+    const yScale = asCallableScale(createPriceScale(chartHeight, yExtent as [number, number], [chartHeight, 0]));
     
-    const timeScale = createSequentialTimeScale(
-      data.map(d => d.date),
+    const timeScale = asCallableScale(createSequentialTimeScale(
+      chartWidth,
+      data as any, // rows carry date/OHLC fields; the scale indexes by position
       [0, chartWidth]
-    );
+    ));
 
     // Translate to chart area
     ctx.save();
@@ -154,7 +165,7 @@ export class CanvasChartGenerator {
       ctx.beginPath();
       
       data.forEach((d, i) => {
-        const x = timeScale(d.date);
+        const x = timeScale((d as any).date ?? (d as any).datetime);
         const y = yScale(d[seriesName]);
         if (i === 0) {
           ctx.moveTo(x, y);
@@ -214,7 +225,7 @@ export class CanvasChartGenerator {
     // Create scales
     const allValues = data.flatMap(d => valueFields.map(f => d[f])).filter(v => v != null);
     const yExtent = [0, Math.max(...allValues) * 1.1];
-    const yScale = createPriceScale(yExtent, [chartHeight, 0]);
+    const yScale = asCallableScale(createPriceScale(chartHeight, yExtent as [number, number], [chartHeight, 0]));
 
     const categories = data.map(d => d[categoryField]);
     const barWidth = chartWidth / (categories.length * (valueFields.length + 1));
@@ -444,7 +455,7 @@ export class CanvasChartGenerator {
     const candleWidth = Math.max(1, (width / data.length) * 0.8);
     
     data.forEach(candle => {
-      const x = timeScale(candle.date);
+      const x = timeScale((candle as any).date ?? candle.datetime);
       const openY = priceScale(candle.open);
       const closeY = priceScale(candle.close);
       const highY = priceScale(candle.high);

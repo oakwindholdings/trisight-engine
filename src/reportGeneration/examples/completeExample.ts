@@ -2,13 +2,16 @@
 // Complete example showing the full data fetching pipeline with performance optimization
 // Context: Demonstrates how to use the orchestrated system with all performance features
 
-import { DataOrchestrator } from '../core/dataOrchestrator';
 import { createDataFetcher } from '../core/dataFetcher';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import { cacheWarmer, commonStrategies } from '../utils/cacheWarming';
 import { ParallelOrchestrator } from '../utils/parallelOrchestrator';
 import { ResourcePool } from '../utils/resourcePool';
-import { logger } from '../../utils/logger';
+import logger from '../../utils/logger';
+
+// '../core/dataOrchestrator' never existed in this repo; local stub keeps this
+// unreferenced example compiling without inventing a fake module.
+const DataOrchestrator: any = class { constructor(_cfg: any) { throw new Error('DataOrchestrator was never implemented'); } };
 
 // Example configuration for production-ready data fetching
 const EXAMPLE_CONFIG = {
@@ -32,7 +35,7 @@ async function setupCacheWarming(fetcher: ReturnType<typeof createDataFetcher>) 
     commonStrategies.marketDataWarming(
       POPULAR_STOCKS,
       async (symbol) => {
-        return fetcher.adapters.marketData.fetchHistoricalPrices(symbol, '1day', 30);
+        return (fetcher as any).adapters.marketData.fetchHistoricalPrices(symbol, '1day', 30);
       }
     )
   );
@@ -42,7 +45,7 @@ async function setupCacheWarming(fetcher: ReturnType<typeof createDataFetcher>) 
     commonStrategies.companyProfileWarming(
       POPULAR_STOCKS,
       async (symbol) => {
-        return fetcher.adapters.companyProfile.fetchCompanyProfile(symbol);
+        return (fetcher as any).adapters.companyProfile.fetchCompanyProfile(symbol);
       }
     )
   );
@@ -71,21 +74,21 @@ async function demonstrateParallelFetching() {
       id: 'company_profile',
       priority: 100,
       execute: async () => {
-        return fetcher.adapters.companyProfile.fetchCompanyProfile('NVDA');
+        return (fetcher as any).adapters.companyProfile.fetchCompanyProfile('NVDA');
       }
     },
     {
       id: 'market_data',
       priority: 90,
       execute: async () => {
-        return fetcher.adapters.marketData.fetchHistoricalPrices('NVDA', '1day', 365);
+        return (fetcher as any).adapters.marketData.fetchHistoricalPrices('NVDA', '1day', 365);
       }
     },
     {
       id: 'financials',
       priority: 80,
       execute: async () => {
-        return fetcher.adapters.financials.fetchIncomeStatement('NVDA');
+        return (fetcher as any).adapters.financials.fetchIncomeStatement('NVDA');
       }
     },
     {
@@ -93,14 +96,14 @@ async function demonstrateParallelFetching() {
       priority: 70,
       dependencies: ['financials', 'market_data'],
       execute: async () => {
-        return fetcher.adapters.financials.fetchKeyMetrics('NVDA');
+        return (fetcher as any).adapters.financials.fetchKeyMetrics('NVDA');
       }
     },
     {
       id: 'news',
       priority: 60,
       execute: async () => {
-        return fetcher.adapters.news.fetchNews('NVDA', 20);
+        return (fetcher as any).adapters.news.fetchNews('NVDA', 20);
       }
     },
     {
@@ -275,7 +278,7 @@ async function generateComprehensiveReport() {
     
     // Source status
     console.log('\n--- Source Status ---');
-    Object.entries(companyData.metadata.sources).forEach(([source, info]) => {
+    Object.entries(companyData.metadata.sources).forEach(([source, info]: [string, any]) => {
       const status = info.status === 'success' ? '✅' : info.status === 'partial' ? '⚠️' : '❌';
       console.log(`${status} ${source}: ${info.status}${
         info.recordCount ? ` (${info.recordCount} records)` : ''

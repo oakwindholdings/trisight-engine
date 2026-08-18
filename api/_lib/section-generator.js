@@ -5,7 +5,7 @@
 const axios = require('axios');
 let supabase = null;
 try {
-  const { createClient } = require('@supabase/supabase-js');
+  const { createClient } = require('./dbclient');
   if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
     supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
   }

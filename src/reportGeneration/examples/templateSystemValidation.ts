@@ -89,7 +89,7 @@ async function validateTemplateSystem() {
     console.log('\n3. Testing Slide Generation from Template...');
     
     const template = REPORT_TEMPLATES['equity-research'];
-    const slides = generateSlidesFromTemplate(
+    const slides = await generateSlidesFromTemplate(
       template,
       companyData,
       analysis,
@@ -192,7 +192,7 @@ async function validateTemplateSystem() {
     
     const quickTakeReportConfig = mapWizardToReportConfig(quickTakeConfig);
     const quickTakeTemplate = REPORT_TEMPLATES['quick-take'];
-    const quickTakeSlides = generateSlidesFromTemplate(
+    const quickTakeSlides = await generateSlidesFromTemplate(
       quickTakeTemplate,
       companyData,
       analysis,
@@ -273,12 +273,12 @@ async function testContentInterpolation() {
     
     const interpolated = investmentThesis.replace(/\{\{([\w.]+)\}\}/g, (match, path) => {
       const keys = path.split('.');
-      let value = testData;
+      let value: any = testData;
       for (const key of keys) {
         value = value[key];
         if (value === undefined) return match;
       }
-      return typeof value === 'number' ? (value * 100).toFixed(1) : value;
+      return typeof value === 'number' ? (value * 100).toFixed(1) : String(value);
     });
     
     console.log('Investment Thesis:');

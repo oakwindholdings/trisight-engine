@@ -10,7 +10,7 @@ import { getStorageService } from '../../services/reportStorageService';
 import { PDFReportGenerator } from './PDFTemplates/PDFReportGenerator';
 import { generateReport } from '../../services/reportApiService';
 import { logDebug } from '../../utils/debug';
-import { ALWAYS_ON } from '@/config/reportDefaults'; // Rule: AlwaysOn
+import { ALWAYS_ON } from '../../config/reportDefaults'; // Rule: AlwaysOn
 
 const Container = styled.div`
   padding: 1rem;
@@ -149,13 +149,14 @@ const QueueName = styled.div`
   color: #1f2937;
 `;
 
-const QueueStatus = styled.div<{ $status: 'pending' | 'processing' | 'completed' }>`
+const QueueStatus = styled.div<{ $status: 'pending' | 'processing' | 'completed' | 'error' }>`
   font-size: 0.75rem;
   color: ${props => {
     switch (props.$status) {
       case 'pending': return '#6b7280';
       case 'processing': return '#f59e0b';
       case 'completed': return '#10b981';
+      case 'error': return '#ef4444';
     }
   }};
 `;

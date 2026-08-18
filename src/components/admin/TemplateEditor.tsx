@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { ReportTemplate, TemplateSection, addTemplateSection, listPrompts, PromptRow, updateTemplateSection, getStoredAdminKey } from '../../services/adminApi';
 import { SectionPreview } from './SectionPreview';
+import { SECTIONS as KNOWN_SECTIONS, FORMATS } from '../../models/adminConstants';
 
 const Container = styled.div` display: flex; flex-direction: column; gap: 12px; `;
 const Row = styled.div` display: flex; gap: 8px; align-items: center; flex-wrap: wrap; `;
@@ -14,7 +15,6 @@ const TitleText = styled.div` font-weight: 600; min-width: 220px; `;
 const PosTag = styled.span` color: #6b7280; `;
 const PreviewWrap = styled.div` margin-top: 10px; `;
 
-import { SECTIONS as KNOWN_SECTIONS, FORMATS } from '../../models/adminConstants';
 
 export const TemplateEditor: React.FC<{ template: ReportTemplate | null, onChanged?: (t: ReportTemplate) => void } > = ({ template, onChanged }) => {
   const [rows, setRows] = useState<TemplateSection[]>(template?.sections || []);

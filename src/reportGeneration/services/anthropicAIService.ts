@@ -14,20 +14,23 @@ export interface AIGeneratedContent {
   executiveSummary: string;
   investmentThesis: string;
   keyInsights: string[];
-  riskAnalysis: string;
+  riskAnalysis?: string;
+  riskAssessment?: string; // alias emitted by the fallback generator
   futureOutlook: string;
   technicalCommentary?: string;
   competitiveAnalysis?: string;
-  recommendationRationale: string;
-  actionItems: string[];
+  recommendationRationale?: string;
+  recommendation?: string; // fallback generator's shorter field
+  actionItems?: string[];
+  [extra: string]: any; // sectorAnalysis, catalysts, …
 }
 
 /**
  * AI generation options
  */
 export interface AIGenerationOptions {
-  tone?: 'professional' | 'conversational' | 'executive';
-  depth?: 'concise' | 'standard' | 'comprehensive';
+  tone?: 'professional' | 'conversational' | 'executive' | (string & {});
+  depth?: 'concise' | 'standard' | 'comprehensive' | (string & {});
   focusAreas?: string[];
   includeCharts?: boolean;
   riskTolerance?: 'conservative' | 'moderate' | 'aggressive';
@@ -182,7 +185,7 @@ export class AnthropicAIService {
       temperature: 0.7 // Balanced creativity and accuracy
     });
     
-    const content = response.content[0].text;
+    const content = (response.content[0] as any).text;
     return this.parseSlideContent(slideTitle, content, slideType);
   }
 
@@ -211,7 +214,7 @@ export class AnthropicAIService {
       temperature: 0.7
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   private async generateInvestmentThesis(
@@ -231,7 +234,7 @@ export class AnthropicAIService {
       temperature: 0.8 // Slightly more creative for compelling narrative
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   private async generateKeyInsights(
@@ -260,7 +263,7 @@ ${context}`
     });
     
     try {
-      const content = response.content[0].text;
+      const content = (response.content[0] as any).text;
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
@@ -270,7 +273,7 @@ ${context}`
     }
     
     // Fallback: split by newlines if JSON parsing fails
-    return response.content[0].text
+    return (response.content[0] as any).text
       .split('\n')
       .filter(line => line.trim().length > 10)
       .slice(0, 7);
@@ -303,7 +306,7 @@ ${context}`
       temperature: 0.6 // Lower temperature for risk analysis
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   private async generateFutureOutlook(
@@ -322,7 +325,7 @@ ${context}`
       temperature: 0.8 // Higher creativity for future projections
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   private async generateRecommendationRationale(
@@ -355,7 +358,7 @@ ${context}`
       temperature: 0.7
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   private async generateTechnicalCommentary(
@@ -386,7 +389,7 @@ Context: ${context}`
       temperature: 0.7
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   private async generateCompetitiveAnalysis(
@@ -405,7 +408,7 @@ Context: ${context}`
       temperature: 0.7
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   private async generateActionItems(
@@ -435,7 +438,7 @@ Context: ${context}`
     });
     
     try {
-      const content = response.content[0].text;
+      const content = (response.content[0] as any).text;
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
@@ -619,7 +622,7 @@ Make it compelling, professional, and actionable. Use specific numbers and avoid
       temperature: 0.8
     });
     
-    return response.content[0].text;
+    return (response.content[0] as any).text;
   }
 
   /**

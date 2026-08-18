@@ -106,7 +106,7 @@ module.exports = {
     '^axios$': '<rootDir>/src/__mocks__/axios.js',
     '^d3$': '<rootDir>/src/__mocks__/d3.js',
     '^d3-(.*)$': '<rootDir>/src/__mocks__/d3.js',
-    '^.*/twelveDataApi$': '<rootDir>/src/__mocks__/twelveDataApi.ts',
+    '^.*/marketApi$': '<rootDir>/src/__mocks__/marketApi.ts',
     '^.*/anthropicAIService$': '<rootDir>/src/__mocks__/anthropicAIService.ts'
   },
   

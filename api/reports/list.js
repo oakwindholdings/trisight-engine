@@ -2,7 +2,7 @@
 // Vercel serverless function for listing reports
 // In serverless architecture, we'll integrate with Supabase for storage
 
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require('../_lib/dbclient');
 const fs = require('fs').promises;
 const path = require('path');
 

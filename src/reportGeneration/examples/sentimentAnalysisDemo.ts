@@ -197,7 +197,7 @@ async function demonstrateIntegratedAnalysis(ticker: string = 'NVDA') {
     // Sentiment analysis
     if (analysis.sentiment) {
       console.log('\n💭 Market Sentiment:');
-      console.log(`├─ Overall: ${analysis.sentiment.overall.toUpperCase()}`);
+      console.log(`├─ Overall: ${(analysis.sentiment as any).overall.toUpperCase()}`);
       console.log(`├─ Score: ${analysis.sentiment.score.toFixed(2)}`);
       console.log(`├─ Confidence: ${(analysis.sentiment.confidence * 100).toFixed(0)}%`);
       

@@ -23,21 +23,14 @@ const localStorageMock = {
 };
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-// Mock Supabase
-jest.mock('../../utils/supabase/client', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      insert: jest.fn(() => ({
-        select: jest.fn(() => Promise.resolve({ data: null, error: null }))
-      })),
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          order: jest.fn(() => Promise.resolve({ data: [], error: null }))
-        }))
-      }))
-    }))
-  }
-}));
+// Mock the /api/data/* fetch calls (patternApi.ts talks to the Express data API, not Supabase directly)
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 201,
+    json: () => Promise.resolve({ data: [] })
+  })
+) as jest.Mock;
 
 // Mock console methods
 const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();

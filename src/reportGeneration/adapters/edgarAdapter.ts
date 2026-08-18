@@ -515,7 +515,7 @@ export class EdgarAdapter extends BaseAdapter {
     };
   }
   
-  private async extractFinancialStatements(url: string, period: string): Promise<FinancialStatement[]> {
+  private async extractFinancialStatements(url: string, period: 'annual' | 'quarterly'): Promise<FinancialStatement[]> {
     const content = await this.firecrawl.scrapeUrl(url);
     
     // This is simplified - real implementation would parse XBRL or tables

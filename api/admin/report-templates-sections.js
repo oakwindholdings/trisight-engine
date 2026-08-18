@@ -1,7 +1,7 @@
 // api/admin/report-templates-sections.js
 // Serverless-safe admin endpoint: add or update template sections (Supabase-backed)
 
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require('../_lib/dbclient');
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

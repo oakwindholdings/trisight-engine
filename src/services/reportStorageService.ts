@@ -71,7 +71,7 @@ class ReportStorageService {
       await reportApiService.downloadReport(reportId); // TODO: Add delete method to reportApiService
     } catch (error) {
       // If delete endpoint doesn't exist, log and continue
-      logDebug('Delete endpoint not available');
+      logDebug('ReportStorage', 'Delete endpoint not available');
     }
   }
 

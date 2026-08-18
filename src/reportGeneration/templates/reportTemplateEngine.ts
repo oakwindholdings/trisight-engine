@@ -21,6 +21,8 @@ export interface ReportConfig {
   language: 'en' | 'es' | 'zh' | 'ja';
   includeDisclaimer: boolean;
   includeMetadata: boolean;
+  // Demo callers pass presentation toggles beyond the declared set
+  [toggle: string]: any;
 }
 
 /**
@@ -35,7 +37,9 @@ export enum ReportType {
   SECTOR_ANALYSIS = 'sector_analysis',         // Industry comparison
   QUICK_TAKE = 'quick_take',                  // 1-page summary
   DEEP_DIVE = 'deep_dive',                    // Comprehensive analysis
-  PORTFOLIO_REVIEW = 'portfolio_review'        // Multi-stock analysis
+  PORTFOLIO_REVIEW = 'portfolio_review',       // Multi-stock analysis
+  SCREENING = 'screening',                     // Quick screening report
+  TECHNICAL = 'technical'                      // legacy alias used by demo templates
 }
 
 /**
@@ -80,10 +84,11 @@ export interface BrandingConfig {
 export interface GeneratedReport {
   title: string;
   subtitle: string;
-  date: string;
+  date: string | Date; // demo paths pass Date objects
   sections: GeneratedSection[];
   metadata: ReportMetadata;
-  formatting: FormattingInstructions;
+  formatting?: FormattingInstructions; // optional: demo/batch-export paths omit it
+  [runField: string]: any; // id, style, and other run extras
 }
 
 /**
@@ -103,7 +108,7 @@ export interface GeneratedSection {
  * Chart specification for visualization
  */
 export interface ChartSpecification {
-  type: 'line' | 'bar' | 'candlestick' | 'pie' | 'scatter' | 'heatmap';
+  type: 'line' | 'bar' | 'candlestick' | 'pie' | 'scatter' | 'heatmap' | 'gauge' | (string & {}); // callers request further chart kinds; engine validates at runtime
   data: any;
   config: any;
   caption?: string;
@@ -123,11 +128,12 @@ export interface TableSpecification {
  * Report metadata
  */
 export interface ReportMetadata {
-  generatedAt: string;
+  generatedAt: string | Date;
   dataFreshness: string;
   confidence: number;
-  warnings: string[];
-  sources: string[];
+  warnings?: string[]; // optional: demo writers omit these
+  sources?: string[];
+  [runField: string]: any; // generatedBy, version, …
 }
 
 /**

@@ -12,17 +12,19 @@ export interface AIContext {
   companyName: string;
   sector: string;
   metrics?: any;
-  companyData?: CompanyData;
-  analysisResults?: AnalysisResults;
+  companyData?: Partial<CompanyData> | any; // example scripts pass trimmed fixtures
+  analysisResults?: Partial<AnalysisResults> | any; // example scripts pass trimmed fixtures
 }
 
 export interface SummarizationOptions {
   maxLength?: number;
-  style?: 'technical' | 'executive' | 'simple';
+  style?: 'technical' | 'executive' | 'simple' | (string & {});
   includeMetrics?: boolean;
-  tone?: 'professional' | 'conversational' | 'executive';
-  depth?: 'concise' | 'standard' | 'comprehensive';
+  tone?: 'professional' | 'conversational' | 'executive' | (string & {});
+  depth?: 'concise' | 'standard' | 'comprehensive' | (string & {});
   focusAreas?: string[];
+  // Callers pass extra generation hints (includeCharts, riskTolerance, …)
+  [hint: string]: any;
 }
 
 /**

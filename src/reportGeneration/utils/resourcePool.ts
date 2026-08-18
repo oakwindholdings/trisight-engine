@@ -3,7 +3,7 @@
 // Context: Prevents resource exhaustion and improves performance through reuse
 
 import { performanceMonitor } from './performanceMonitor';
-import { logger } from '../../utils/logger';
+import logger from '../../utils/logger';
 
 export interface PooledResource<T> {
   resource: T;
@@ -47,7 +47,7 @@ export class ResourcePool<T> {
    * Initializes the pool with minimum resources
    */
   private async initialize(): Promise<void> {
-    logger.info(`Initializing resource pool: ${this.config.name}`);
+    logger.info('resourcePool', `Initializing resource pool: ${this.config.name}`);
     
     // Create minimum resources
     const promises = [];
@@ -86,7 +86,7 @@ export class ResourcePool<T> {
               return this.checkoutResource(newResource);
             }
           } catch (error) {
-            logger.warn(`Failed to create new resource: ${error}`);
+            logger.warn('resourcePool', `Failed to create new resource: ${error}`);
           }
         }
         
@@ -101,7 +101,7 @@ export class ResourcePool<T> {
    */
   async release(pooledResource: PooledResource<T>): Promise<void> {
     if (!this.resources.has(pooledResource.id)) {
-      logger.warn(`Attempting to release unknown resource: ${pooledResource.id}`);
+      logger.warn('resourcePool', `Attempting to release unknown resource: ${pooledResource.id}`);
       return;
     }
     
@@ -121,7 +121,7 @@ export class ResourcePool<T> {
       waiter.resolve(this.checkoutResource(pooledResource));
     }
     
-    logger.debug(`Released resource ${pooledResource.id} back to pool`);
+    logger.debug('resourcePool', `Released resource ${pooledResource.id} back to pool`);
   }
   
   /**
@@ -129,7 +129,7 @@ export class ResourcePool<T> {
    */
   reportError(pooledResource: PooledResource<T>): void {
     pooledResource.errors++;
-    logger.warn(
+    logger.warn('resourcePool', 
       `Resource ${pooledResource.id} reported error (total: ${pooledResource.errors})`
     );
   }
@@ -140,7 +140,7 @@ export class ResourcePool<T> {
   async dispose(): Promise<void> {
     if (this.disposed) return;
     
-    logger.info(`Disposing resource pool: ${this.config.name}`);
+    logger.info('resourcePool', `Disposing resource pool: ${this.config.name}`);
     this.disposed = true;
     
     // Clear maintenance interval
@@ -158,7 +158,7 @@ export class ResourcePool<T> {
     // Destroy all resources
     const destroyPromises = Array.from(this.resources.values()).map(resource =>
       this.destroyResource(resource).catch(error =>
-        logger.error(`Error destroying resource ${resource.id}:`, error)
+        logger.error('resourcePool', `Error destroying resource ${resource.id}:`, error)
       )
     );
     
@@ -203,11 +203,11 @@ export class ResourcePool<T> {
       };
       
       this.resources.set(pooledResource.id, pooledResource);
-      logger.debug(`Created new resource: ${pooledResource.id}`);
+      logger.debug('resourcePool', `Created new resource: ${pooledResource.id}`);
       
       return pooledResource;
     } catch (error) {
-      logger.error(`Failed to create resource:`, error);
+      logger.error('resourcePool', `Failed to create resource:`, error);
       return null;
     }
   }
@@ -222,11 +222,11 @@ export class ResourcePool<T> {
       try {
         await this.config.destroyer(pooledResource.resource);
       } catch (error) {
-        logger.error(`Error destroying resource ${pooledResource.id}:`, error);
+        logger.error('resourcePool', `Error destroying resource ${pooledResource.id}:`, error);
       }
     }
     
-    logger.debug(`Destroyed resource: ${pooledResource.id}`);
+    logger.debug('resourcePool', `Destroyed resource: ${pooledResource.id}`);
   }
   
   /**
@@ -313,7 +313,7 @@ export class ResourcePool<T> {
   private async performMaintenance(): Promise<void> {
     if (this.disposed) return;
     
-    logger.debug(`Performing maintenance for pool: ${this.config.name}`);
+    logger.debug('resourcePool', `Performing maintenance for pool: ${this.config.name}`);
     
     // Remove idle resources
     const toDestroy: PooledResource<T>[] = [];
@@ -335,11 +335,11 @@ export class ResourcePool<T> {
         try {
           const isValid = await this.config.validator(resource.resource);
           if (!isValid) {
-            logger.warn(`Resource ${resource.id} failed validation`);
+            logger.warn('resourcePool', `Resource ${resource.id} failed validation`);
             await this.destroyResource(resource);
           }
         } catch (error) {
-          logger.error(`Error validating resource ${resource.id}:`, error);
+          logger.error('resourcePool', `Error validating resource ${resource.id}:`, error);
           await this.destroyResource(resource);
         }
       }
@@ -352,7 +352,7 @@ export class ResourcePool<T> {
     
     // Log stats
     const stats = this.getStats();
-    logger.debug(`Pool stats: ${JSON.stringify(stats)}`);
+    logger.debug('resourcePool', `Pool stats: ${JSON.stringify(stats)}`);
   }
 }
 

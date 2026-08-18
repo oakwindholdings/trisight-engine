@@ -1,7 +1,9 @@
 // api/reports/generate-simple.ts
 // Simplified Vercel serverless function for report generation
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Runs under Express now; the old serverless types were plain req/res shapes.
+type VercelRequest = any;
+type VercelResponse = any;
 
 // CORS headers
 const corsHeaders = {

@@ -388,7 +388,7 @@ export class PPTXEngine {
       fontSize: 16,
       color: this.theme.primary,
       fontFace: this.theme.bodyFont,
-      bullet: { type: 'bullet', color: this.theme.accent },
+      bullet: { type: 'bullet' },
       lineSpacing: 24
     });
   }
@@ -429,7 +429,7 @@ export class PPTXEngine {
         w: 0.5,
         h: 0.5,
         fill: { color: this.theme.accent },
-        line: 'none'
+        line: { type: 'none' }
       });
 
       slide.addText((i + 1).toString(), {
@@ -639,7 +639,7 @@ export class PPTXEngine {
       fontSize: 16,
       color: this.theme.primary,
       fontFace: this.theme.bodyFont,
-      bullet: { type: 'bullet', color: this.theme.accent },
+      bullet: { type: 'bullet' },
       lineSpacing: 22
     });
 
@@ -673,7 +673,7 @@ export class PPTXEngine {
       w: 9,
       h: 1.2,
       fill: { color: recColor },
-      line: 'none'
+      line: { type: 'none' }
     });
 
     slide.addText(`Recommendation: ${recommendation}`, {
@@ -720,7 +720,7 @@ export class PPTXEngine {
       fontSize: 18,
       color: this.theme.primary,
       fontFace: this.theme.bodyFont,
-      bullet: { type: 'bullet', color: this.theme.accent },
+      bullet: { type: 'bullet' },
       lineSpacing: 26
     });
   }
@@ -762,7 +762,7 @@ export class PPTXEngine {
       fontSize: 14,
       color: this.theme.secondary,
       fontFace: this.theme.bodyFont,
-      bullet: { type: 'bullet', color: this.theme.secondary },
+      bullet: { type: 'bullet' },
       lineSpacing: 24
     });
 

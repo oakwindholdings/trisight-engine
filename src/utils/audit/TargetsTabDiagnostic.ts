@@ -3,7 +3,7 @@
 // Validates import → scan → render → route workflow
 
 import { TradeActionSignal, TradeAction, SignalType } from '../trading/TradeActionSignal';
-import { fetchCandlestickData } from '../../api/twelveDataApi';
+import { fetchCandlestickData } from '../../api/marketApi';
 import { CandlestickData } from '../../models/ChartTypes';
 import PatternDetector from '../patternDetection/PatternDetector';
 import { logDebug } from '../../utils/debug';

@@ -65,12 +65,13 @@ export function hasRequiredProperties<T extends object>(
  * Type guard for financial statement data
  */
 export function isValidFinancialStatement(data: any): boolean {
+  const d: any = data; // keep `any` past the hasRequiredProperties narrowing
   return (
     hasRequiredProperties(data, ['date']) &&
-    isValidDateString(data.date) &&
-    (isValidNumber(data.revenue) || data.revenue === undefined) &&
-    (isValidNumber(data.netIncome) || data.netIncome === undefined) &&
-    (isValidNumber(data.eps) || data.eps === undefined)
+    isValidDateString(d.date) &&
+    (isValidNumber(d.revenue) || d.revenue === undefined) &&
+    (isValidNumber(d.netIncome) || d.netIncome === undefined) &&
+    (isValidNumber(d.eps) || d.eps === undefined)
   );
 }
 

@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CandlestickData } from '../models/ChartTypes';
-import { fetchCandlestickData } from '../api/twelveDataApi';
+import { fetchCandlestickData } from '../api/marketApi';
 import { ResolutionConfig, getOptimalResolution, InfiniteZoomState, VisibleRange, RESOLUTION_CONFIGS } from '../utils/dataResolution';
 import { PanState } from './usePanController';
 import { useSmoothZoom } from './useSmoothZoom';

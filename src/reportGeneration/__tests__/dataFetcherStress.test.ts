@@ -173,7 +173,7 @@ describe('DataFetcher Stress Tests', () => {
       console.log(`  Total duration: ${duration}ms`);
       console.log(`  Sources attempted: ${Object.keys(data.metadata.sources).length}`);
       console.log(`  Sources succeeded: ${Object.values(data.metadata.sources)
-        .filter(s => s.status === 'success').length}`);
+        .filter((s: any) => typeof s === 'object' && s.status === 'success').length}`);
       console.log(`  Sources timed out: ${Object.values(data.metadata.sources)
         .filter(s => s.error === 'Request timeout').length}`);
       

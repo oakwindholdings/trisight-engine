@@ -312,7 +312,7 @@ class EnhancedReportApiService {
         downloadUrl: standardResponse.downloadUrl,
         fileSize: standardResponse.fileSize,
         format: standardResponse.format,
-        error: standardResponse.error
+        error: standardResponse.error ? { code: 'UNKNOWN', ...standardResponse.error } : undefined
       };
     }
   }

@@ -126,7 +126,7 @@ async function runManualTest() {
     // Data Source Status
     console.log('\n🔌 Data Source Status:');
     const sources = result.metadata.sources;
-    const successCount = Object.values(sources).filter(s => s.status === 'success').length;
+    const successCount = Object.values(sources).filter((s: any) => typeof s === 'object' && s.status === 'success').length;
     const totalCount = Object.keys(sources).length;
     console.log(`  Success Rate: ${Math.round((successCount / totalCount) * 100)}%`);
     

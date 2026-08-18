@@ -5,7 +5,6 @@
 import { getTwelveDataEnhanced } from '../../utils/twelveDataEnhanced';
 import { getClaudeOpusEnhanced } from '../../utils/claudeOpusEnhanced';
 import { FirecrawlAdapter } from '../adapters/firecrawlAdapter';
-import { supabase } from '../../config/supabase';
 import { logDebug, logError } from '../../utils/logger';
 
 interface EnhancedReportConfig {
@@ -202,11 +201,8 @@ export class EnhancedReportOrchestrator {
 
     logDebug('EnhancedReportOrchestrator', `Gathering news intelligence for ${config.symbol}`);
 
-    const newsData = await this.firecrawl.gatherCompanyNews(config.symbol, {
-      maxArticles: 20,
-      timeframe: config.timeframe,
-      includeAnalysis: true
-    });
+    // Adapter signature is (companyName, ticker, limit) — the symbol doubles as the name here
+    const newsData = await this.firecrawl.getCompanyNews(config.symbol, config.symbol, 20);
 
     return newsData;
   }
@@ -217,7 +213,7 @@ export class EnhancedReportOrchestrator {
   private async gatherCompanyProfile(config: EnhancedReportConfig): Promise<any> {
     logDebug('EnhancedReportOrchestrator', `Gathering company profile for ${config.symbol}`);
 
-    const profile = await this.firecrawl.gatherCompanyProfile(config.symbol, {
+    const profile = await (this.firecrawl as any).gatherCompanyProfile(config.symbol, {
       includeFinancials: true,
       includeManagement: true,
       includeCompetitors: true
@@ -323,19 +319,24 @@ export class EnhancedReportOrchestrator {
   }
 
   /**
-   * Store report metadata in Supabase for audit trail
+   * Store report metadata for the audit trail via the server data API
+   * (the direct Supabase client is eradicated — Postgres sits behind the server)
    */
   private async storeReportMetadata(reportId: string, config: EnhancedReportConfig, analysis: any): Promise<void> {
     try {
-      await supabase.from('report_metadata').insert({
-        report_id: reportId,
-        symbol: config.symbol,
-        report_type: config.reportType,
-        timeframe: config.timeframe,
-        confidence: analysis.confidence,
-        price_target: analysis.priceTarget,
-        generated_at: new Date().toISOString(),
-        config: JSON.stringify(config)
+      await fetch('/api/data/report-metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          report_id: reportId,
+          symbol: config.symbol,
+          report_type: config.reportType,
+          timeframe: config.timeframe,
+          confidence: analysis.confidence,
+          price_target: analysis.priceTarget,
+          generated_at: new Date().toISOString(),
+          config: JSON.stringify(config)
+        })
       });
 
       logDebug('EnhancedReportOrchestrator', `Report metadata stored for ${reportId}`);

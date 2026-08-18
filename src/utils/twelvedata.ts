@@ -2,8 +2,8 @@ import axios from 'axios';
 import { logDebug } from './debug';
 import { CandlestickData } from '../models/ChartTypes';
 
-const API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY;
-const BASE_URL = 'https://api.twelvedata.com/time_series';
+const API_KEY = 'proxy-managed';
+const BASE_URL = '/api/market/time_series';
 
 export async function fetchPriceNDayChange(symbol: string, daysAgo: number): Promise<number> {
   try {

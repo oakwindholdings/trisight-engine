@@ -1,4 +1,4 @@
-// src/__mocks__/twelveDataApi.ts
+// src/__mocks__/marketApi.ts
 // Mock for TwelveData API
 // Context: Provides mock data for testing without real API calls
 

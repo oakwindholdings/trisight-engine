@@ -5,7 +5,7 @@
 import { CompanyData } from '../models/reportTypes';
 import { AnalysisResults } from '../models/financialMetrics';
 
-export const mockCompanyData: CompanyData = {
+export const mockCompanyData = {
   ticker: 'MOCK',
   companyName: 'Mock Corporation',
   description: 'A leading provider of mock services',
@@ -224,9 +224,9 @@ export const mockCompanyData: CompanyData = {
     },
     completeness: 95
   }
-};
+} as unknown as CompanyData; // historical fixture shape, cast on purpose
 
-export const mockAnalysisResults: AnalysisResults = {
+export const mockAnalysisResults = {
   growth: {
     revenueGrowth: {
       yoy: 0.15,
@@ -415,11 +415,11 @@ export const mockAnalysisResults: AnalysisResults = {
     },
     summary: 'Sentiment analysis shows strong positive momentum with improving market perception and management confidence.'
   }
-};
+} as unknown as AnalysisResults; // historical fixture shape, cast on purpose
 
 // Additional mock data variations for different test scenarios
 
-export const mockBearishAnalysisResults: AnalysisResults = {
+export const mockBearishAnalysisResults = {
   ...mockAnalysisResults,
   growth: {
     revenueGrowth: {
@@ -456,14 +456,14 @@ export const mockBearishAnalysisResults: AnalysisResults = {
     recommendation: 'sell'
   },
   sentiment: {
-    ...mockAnalysisResults.sentiment!,
+    ...(mockAnalysisResults as any).sentiment,
     overall: 'negative',
     score: -0.45,
     confidence: 0.75
   }
-};
+} as unknown as AnalysisResults; // historical fixture shape, cast on purpose
 
-export const mockMinimalCompanyData: CompanyData = {
+export const mockMinimalCompanyData = {
   ticker: 'MIN',
   companyName: 'Minimal Corp',
   description: 'A company with minimal data',
@@ -498,4 +498,4 @@ export const mockMinimalCompanyData: CompanyData = {
     sources: {},
     completeness: 20
   }
-};
+} as unknown as CompanyData; // historical fixture shape, cast on purpose

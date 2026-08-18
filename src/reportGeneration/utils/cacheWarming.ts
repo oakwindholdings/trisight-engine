@@ -3,7 +3,7 @@
 // Context: Proactively loads frequently accessed data to improve performance
 
 import { performanceMonitor } from './performanceMonitor';
-import { logger } from '../../utils/logger';
+import logger from '../../utils/logger';
 
 export interface CacheWarmingStrategy {
   name: string;
@@ -32,7 +32,7 @@ export class CacheWarmer {
   registerStrategy(strategy: CacheWarmingStrategy): void {
     this.strategies.push(strategy);
     this.strategies.sort((a, b) => b.priority - a.priority);
-    logger.info(`Registered cache warming strategy: ${strategy.name}`);
+    logger.info('cacheWarming', `Registered cache warming strategy: ${strategy.name}`);
   }
   
   /**
@@ -40,7 +40,7 @@ export class CacheWarmer {
    */
   async warmAllCaches(): Promise<WarmingResult[]> {
     if (this.warmingInProgress) {
-      logger.warn('Cache warming already in progress, skipping...');
+      logger.warn('cacheWarming', 'Cache warming already in progress, skipping...');
       return [];
     }
     
@@ -48,11 +48,11 @@ export class CacheWarmer {
     const results: WarmingResult[] = [];
     
     try {
-      logger.info('Starting cache warming process...');
+      logger.info('cacheWarming', 'Starting cache warming process...');
       
       for (const strategy of this.strategies) {
         if (!strategy.shouldWarm()) {
-          logger.debug(`Skipping strategy ${strategy.name} - conditions not met`);
+          logger.debug('cacheWarming', `Skipping strategy ${strategy.name} - conditions not met`);
           continue;
         }
         
@@ -61,7 +61,7 @@ export class CacheWarmer {
       }
       
       this.lastWarmingTime = Date.now();
-      logger.info(`Cache warming completed. ${results.length} strategies executed.`);
+      logger.info('cacheWarming', `Cache warming completed. ${results.length} strategies executed.`);
       
       return results;
     } finally {
@@ -91,7 +91,7 @@ export class CacheWarmer {
       };
     } catch (error) {
       const duration = performance.now() - start;
-      logger.error(`Cache warming strategy ${strategy.name} failed:`, error);
+      logger.error('cacheWarming', `Cache warming strategy ${strategy.name} failed:`, error);
       
       return {
         strategy: strategy.name,
@@ -120,14 +120,14 @@ export class CacheWarmer {
     
     // Initial warming
     this.warmAllCaches().catch(error => {
-      logger.error('Initial cache warming failed:', error);
+      logger.error('cacheWarming', 'Initial cache warming failed:', error);
     });
     
     // Set up interval
     setInterval(() => {
       if (this.shouldWarmCaches()) {
         this.warmAllCaches().catch(error => {
-          logger.error('Scheduled cache warming failed:', error);
+          logger.error('cacheWarming', 'Scheduled cache warming failed:', error);
         });
       }
     }, 60000); // Check every minute
@@ -149,7 +149,7 @@ export const commonStrategies = {
     priority: 100,
     shouldWarm: () => symbols.length > 0,
     warmCache: async () => {
-      logger.info(`Warming cache for ${symbols.length} symbols`);
+      logger.info('cacheWarming', `Warming cache for ${symbols.length} symbols`);
       
       // Batch symbols to avoid overwhelming the API
       const batchSize = 5;
@@ -163,7 +163,7 @@ export const commonStrategies = {
         await Promise.all(
           batch.map(symbol => 
             fetchData(symbol).catch(error => {
-              logger.warn(`Failed to warm cache for ${symbol}:`, error);
+              logger.warn('cacheWarming', `Failed to warm cache for ${symbol}:`, error);
             })
           )
         );
@@ -185,12 +185,12 @@ export const commonStrategies = {
     priority: 80,
     shouldWarm: () => indicators.length > 0,
     warmCache: async () => {
-      logger.info(`Warming cache for ${indicators.length} indicators`);
+      logger.info('cacheWarming', `Warming cache for ${indicators.length} indicators`);
       
       await Promise.all(
         indicators.map(indicator =>
           fetchIndicator(indicator).catch(error => {
-            logger.warn(`Failed to warm cache for ${indicator}:`, error);
+            logger.warn('cacheWarming', `Failed to warm cache for ${indicator}:`, error);
           })
         )
       );
@@ -208,7 +208,7 @@ export const commonStrategies = {
     priority: 60,
     shouldWarm: () => companies.length > 0,
     warmCache: async () => {
-      logger.info(`Warming cache for ${companies.length} company profiles`);
+      logger.info('cacheWarming', `Warming cache for ${companies.length} company profiles`);
       
       // Sequential to be gentle on the API
       for (const company of companies) {
@@ -216,7 +216,7 @@ export const commonStrategies = {
           await fetchProfile(company);
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
-          logger.warn(`Failed to warm cache for ${company}:`, error);
+          logger.warn('cacheWarming', `Failed to warm cache for ${company}:`, error);
         }
       }
     }

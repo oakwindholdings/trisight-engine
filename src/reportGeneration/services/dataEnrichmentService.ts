@@ -2,7 +2,7 @@
 // Data enrichment and cross-validation service
 // Context: Enhances data quality by filling gaps and reconciling discrepancies
 
-import { CompanyData, FinancialStatement, KeyMetrics } from '../models/reportTypes';
+import { CompanyData, FinancialStatement, KeyFinancialMetrics as KeyMetrics } from '../models/reportTypes';
 import { TwelveDataAdapter } from '../adapters/twelveDataAdapter';
 import { NewsAdapter } from '../adapters/newsAdapter';
 import { getDataQualityService } from './dataQualityService';
@@ -168,7 +168,7 @@ export class DataEnrichmentService {
     // Fill missing company description
     if (!enriched.description || enriched.description.length < 50) {
       try {
-        const profile = await this.twelveDataAdapter.getCompanyProfile(enriched.ticker);
+        const profile = await (this.twelveDataAdapter as any).getCompanyProfile(enriched.ticker);
         if (profile.description && profile.description.length > enriched.description?.length) {
           log.push({
             field: 'description',
@@ -188,7 +188,7 @@ export class DataEnrichmentService {
     // Fill missing sector/industry
     if (!enriched.sector || !enriched.industry) {
       try {
-        const profile = await this.twelveDataAdapter.getCompanyProfile(enriched.ticker);
+        const profile = await (this.twelveDataAdapter as any).getCompanyProfile(enriched.ticker);
         if (!enriched.sector && profile.sector) {
           enriched.sector = profile.sector;
           fieldsAdded++;
@@ -351,8 +351,8 @@ export class DataEnrichmentService {
     }
 
     const metrics = enriched.financials.keyMetrics || {};
-    const income = enriched.financials.incomeStatement?.[0];
-    const balance = enriched.financials.balanceSheet?.[0];
+    const income: any = enriched.financials.incomeStatement?.[0];
+    const balance: any = enriched.financials.balanceSheet?.[0];
     const cashFlow = enriched.financials.cashFlow?.[0];
 
     // Calculate additional ratios
@@ -520,7 +520,7 @@ export class DataEnrichmentService {
       if (enriched.financials.incomeStatement && 
           enriched.financials.incomeStatement.length < 8) {
         try {
-          const historicalIncome = await this.twelveDataAdapter.getIncomeStatement(
+          const historicalIncome = await (this.twelveDataAdapter as any).getIncomeStatement(
             enriched.ticker,
             'quarterly',
             12
@@ -620,8 +620,8 @@ export class DataEnrichmentService {
 
   private calculateMissingMetrics(financials: any): Partial<KeyMetrics> {
     const metrics: Partial<KeyMetrics> = {};
-    const income = financials.incomeStatement?.[0];
-    const balance = financials.balanceSheet?.[0];
+    const income: any = financials.incomeStatement?.[0];
+    const balance: any = financials.balanceSheet?.[0];
     const cashFlow = financials.cashFlow?.[0];
 
     // Calculate ROE if missing
@@ -693,7 +693,7 @@ export class DataEnrichmentService {
   private classifyBusinessModel(data: CompanyData): string {
     // Simple business model classification based on metrics
     const income = data.financials?.incomeStatement?.[0];
-    const balance = data.financials?.balanceSheet?.[0];
+    const balance: any = data.financials?.balanceSheet?.[0];
     
     if (!income || !balance) {
       return 'unknown';

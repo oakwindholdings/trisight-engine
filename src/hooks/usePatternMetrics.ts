@@ -6,9 +6,64 @@ import { useState, useEffect, useMemo } from 'react';
 import { Pattern, PatternType, EscalatorPattern, BlackjackPattern, GoldenCandlePattern, PivotPattern } from '../models/PatternTypes';
 import { ComprehensivePatternMetrics, CorePatternMetrics, LearningPatternMetrics, PatternSpecificMetrics, MarketContextMetrics, TechnicalMetrics } from '../models/PatternMetricsTypes';
 import { usePatternContext } from '../contexts/PatternContext';
-import { getPatternFeedbackSummary } from '../utils/supabase/patternFeedbackService';
 import { getLearningMetrics } from '../api/patternApi';
 import { logDebug } from '../utils/debug';
+
+/**
+ * Shape returned by the pattern feedback summary aggregation, mirrored
+ * from the previous Supabase RPC (`get_pattern_feedback_summary`) result
+ * so downstream consumers of this hook see no behavior change.
+ */
+interface PatternFeedbackSummary {
+  totalFeedbacks: number;
+  averageAccuracy: number;
+  averageConfidence: number;
+  validityRate: number;
+}
+
+/**
+ * Fetch aggregated feedback metrics for a pattern from the server API.
+ * Replaces the direct Supabase RPC call; maps the API's snake_case
+ * aggregate row (total_feedback/valid_count/invalid_count/avg_accuracy/avg_confidence)
+ * onto the same fields the hook previously consumed.
+ */
+async function fetchPatternFeedbackSummary(patternId: string): Promise<PatternFeedbackSummary> {
+  const response = await fetch(`/api/data/feedback-summary?pattern_id=${encodeURIComponent(patternId)}`);
+
+  if (!response.ok) {
+    let message = `Failed to fetch feedback summary: ${response.status}`;
+    try {
+      const body = await response.json();
+      if (body?.error) message = body.error;
+    } catch {
+      // Response body wasn't JSON; keep default message
+    }
+    throw new Error(message);
+  }
+
+  const { data } = await response.json();
+  const row = data?.[0];
+
+  if (!row) {
+    return {
+      totalFeedbacks: 0,
+      averageAccuracy: 0,
+      averageConfidence: 0,
+      validityRate: 0
+    };
+  }
+
+  const totalFeedbacks = row.total_feedback || 0;
+  const validCount = row.valid_count || 0;
+
+  return {
+    totalFeedbacks,
+    averageAccuracy: row.avg_accuracy || 0,
+    averageConfidence: row.avg_confidence || 0,
+    // Fraction (0-1), matching the prior RPC's validityRate semantics
+    validityRate: totalFeedbacks > 0 ? validCount / totalFeedbacks : 0
+  };
+}
 
 /**
  * Hook to get comprehensive metrics for a selected pattern
@@ -162,7 +217,7 @@ export function usePatternMetrics(pattern: Pattern | null) {
         // Try to fetch real feedback metrics if pattern has feedback
         if (pattern.feedbackCount && pattern.feedbackCount > 0) {
           try {
-            const feedbackSummary = await getPatternFeedbackSummary(pattern.id);
+            const feedbackSummary = await fetchPatternFeedbackSummary(pattern.id);
             learningMetrics = {
               ...learningMetrics,
               averageAccuracy: feedbackSummary.averageAccuracy,

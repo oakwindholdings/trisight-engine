@@ -1,8 +1,7 @@
 // src/utils/supabase/dynamicPatternFeedbackService.ts
-// Dynamic service for persisting pattern feedback to Supabase
+// Dynamic service for persisting pattern feedback via the Express data API
 // Handles all pattern-specific feedback fields dynamically
 
-import { supabase } from './client';
 import { logDebug } from '../debug';
 
 interface DynamicFeedbackPayload {
@@ -22,15 +21,38 @@ interface DynamicFeedbackPayload {
 }
 
 /**
- * Convert dynamic feedback to Supabase row format
+ * Minimal JSON fetch wrapper for the /api/data/* endpoints.
+ * Errors come back as non-2xx with { error: string }.
+ */
+async function apiRequest<T = any>(path: string, init?: RequestInit): Promise<{ data: T }> {
+  const response = await fetch(path, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers || {})
+    }
+  });
+
+  const body = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = (body && body.error) || `Request failed with status ${response.status}`;
+    throw new Error(message);
+  }
+
+  return body as { data: T };
+}
+
+/**
+ * Convert dynamic feedback to API row format
  */
 function toSupabaseRow(feedback: DynamicFeedbackPayload): Record<string, any> {
   const row: Record<string, any> = {};
-  
+
   // Map all fields, converting camelCase to snake_case
   Object.entries(feedback).forEach(([key, value]) => {
     const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    
+
     // Convert Date objects to ISO strings
     if (value instanceof Date) {
       row[snakeKey] = value.toISOString();
@@ -41,14 +63,14 @@ function toSupabaseRow(feedback: DynamicFeedbackPayload): Record<string, any> {
       row[snakeKey] = value;
     }
   });
-  
+
   // Ensure required fields
   row.pattern_id = row.pattern_id || `synthetic_${Date.now()}`;
   row.pattern_type = row.pattern_type || 'UNKNOWN';
   row.symbol = row.symbol || 'UNKNOWN';
   row.session_id = row.session_id || generateSessionId();
   row.feedback_timestamp = row.feedback_timestamp || new Date().toISOString();
-  
+
   return row;
 }
 
@@ -58,42 +80,33 @@ function toSupabaseRow(feedback: DynamicFeedbackPayload): Record<string, any> {
 function generateSessionId(): string {
   const stored = localStorage.getItem('trisight_session_id');
   if (stored) return stored;
-  
+
   const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   localStorage.setItem('trisight_session_id', sessionId);
   return sessionId;
 }
 
 /**
- * Submit dynamic pattern feedback to Supabase
+ * Submit dynamic pattern feedback via the data API
  */
 export async function submitDynamicPatternFeedback(feedback: DynamicFeedbackPayload): Promise<void> {
   try {
     logDebug('feedback', '[DynamicPatternFeedbackService] Submitting feedback:', feedback);
-    
-    if (!supabase) {
-      throw new Error('Supabase client not initialized');
-    }
-    
+
     const row = toSupabaseRow(feedback);
-    
-    console.log('[DynamicPatternFeedbackService] Supabase row data:', row);
-    
-    const { error } = await supabase
-      .from('pattern_feedback')
-      .insert(row);
-      
-    if (error) {
-      console.error('[DynamicPatternFeedbackService] Supabase error:', error);
-      console.error('[DynamicPatternFeedbackService] Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
+
+    console.log('[DynamicPatternFeedbackService] API row data:', row);
+
+    try {
+      await apiRequest('/api/data/feedback', {
+        method: 'POST',
+        body: JSON.stringify(row)
       });
+    } catch (error: any) {
+      console.error('[DynamicPatternFeedbackService] API error:', error);
       throw new Error(`Failed to submit feedback: ${error.message}`);
     }
-    
+
     logDebug('feedback', '[DynamicPatternFeedbackService] Feedback submitted successfully');
 
     // Dispatch custom event for real-time metrics updates
@@ -131,4 +144,4 @@ export async function submitDynamicPatternFeedback(feedback: DynamicFeedbackPayl
 }
 
 // Re-export the dynamic version as the main function
-export { submitDynamicPatternFeedback as submitPatternFeedback }; 
+export { submitDynamicPatternFeedback as submitPatternFeedback };

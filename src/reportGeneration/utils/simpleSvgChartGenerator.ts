@@ -6,8 +6,8 @@ import { GeneratedChart } from './chartGenerator';
 import { logDebug } from '../../utils/logger';
 
 export interface SimpleChartOptions {
-  width: number;
-  height: number;
+  width?: number; // optional: callers default to {} and the generator falls back internally
+  height?: number;
   title?: string;
   theme?: 'light' | 'dark';
 }

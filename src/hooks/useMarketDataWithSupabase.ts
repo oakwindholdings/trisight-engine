@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 import { fetchMarketData, getCachedSymbols, clearSymbolCache } from '../utils/supabase/marketDataService';
 import { logDebug } from '../utils/debug';
-import { timeframeToInterval } from '../api/twelveDataApi';
+import { timeframeToInterval } from '../api/marketApi';
 
 interface UseMarketDataWithSupabaseReturn {
   data: CandlestickData[];

@@ -242,7 +242,7 @@ function getFileExtension(format: ExportFormat): string {
 }
 
 function getTemplateName(template: ReportType): string {
-  const names: Record<ReportType, string> = {
+  const names: Partial<Record<ReportType, string>> = {
     [ReportType.EQUITY_RESEARCH]: 'Equity Research',
     [ReportType.SCREENING]: 'Market Screening',
     [ReportType.TECHNICAL]: 'Technical Analysis',

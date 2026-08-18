@@ -2,6 +2,15 @@
 
 **A machine that decides whether a claim about returns is true.** A strategy is an input to it, not the product of it. The product is earned confidence: a number with an honest error bar, a named worst case, and a full reproduction receipt — or an explicit refusal to produce one.
 
+> **What this tests:** the real subject is the TriSight strategy estate at
+> [`oakwindholdings/TriSight`](https://github.com/oakwindholdings/TriSight) (local clones:
+> `trisight-trader`) — Top 40 2.0, High 5, both Oakwinds, the Escalator family, TriSight 500 2.0,
+> Earnings-93, Manual/Automated Swing. Phase 2's inflation study measured those directly
+> (`reports/ESTATE-INFLATION.md`); build waves W2–W4 express their shapes (dip-buy, rotation,
+> earnings-event) inside this gauntlet for point-in-time re-validation. The SMA-cross spec used in
+> Phase 1 is deliberate scaffolding that proved the *measurement machine* — it is not, and never
+> was, a strategy of interest.
+
 Full ideal-state articulation, criteria, and verification evidence: [ISA.md](./ISA.md). Product requirements: the ASSAY PRD (Phase 1 is the only authorized phase).
 
 ## Layout

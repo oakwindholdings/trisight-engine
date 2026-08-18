@@ -45,20 +45,63 @@ async function ensureDirectories() {
 }
 
 // Routes
+const marketRoutes = require('./routes/market');
+const dataRoutes = require('./routes/data');
+const { applySchema, dbHealth } = require('./db');
+
+app.use('/api/market', marketRoutes);
+app.use('/api/data', dataRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/enhanced-reports', enhancedReportRoutes);
 app.use('/api/prompts', promptRoutes);
 
+// Vercel-era serverless handlers mounted as Express routes (their (req,res) signatures are
+// compatible; the platform is gone, the handlers live on behind the same paths)
+const legacyHandlers = [
+  ['all', '/api/reports/generate', '../api/reports/generate.ts'],
+  ['all', '/api/reports/status', '../api/reports/status.ts'],
+  ['all', '/api/reports/cancel', '../api/reports/cancel.ts'],
+  ['all', '/api/reports/download', '../api/reports/download.ts'],
+  ['all', '/api/reports/list', '../api/reports/list.js'],
+  ['all', '/api/reports/generate-comprehensive', '../api/reports/generate-comprehensive.js'],
+  ['all', '/api/admin/prompts', '../api/admin/prompts.js'],
+  ['all', '/api/admin/report-templates', '../api/admin/report-templates.js'],
+  ['all', '/api/admin/report-templates-sections', '../api/admin/report-templates-sections.js'],
+  ['all', '/api/admin/variables', '../api/admin/variables.js'],
+];
+for (const [method, route, mod] of legacyHandlers) {
+  try {
+    const handler = require(mod);
+    const fn = handler.default ?? handler;
+    app[method](route, (req, res) => Promise.resolve(fn(req, res)).catch((e) => {
+      console.error(`handler ${route} failed:`, e);
+      if (!res.headersSent) res.status(500).json({ error: String(e.message ?? e) });
+    }));
+  } catch (e) {
+    console.error(`could not mount ${route}:`, e.message);
+  }
+}
+
 // Static file serving for generated reports
 app.use('/generated-reports', express.static(path.join(__dirname, '../generated-reports')));
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+// Health check endpoint — reports real dependency state, never a bare "healthy"
+app.get('/api/health', async (req, res) => {
+  const db = await dbHealth();
+  res.json({
+    status: db.ok ? 'healthy' : 'degraded',
+    db: db.ok ? 'ok' : `unavailable: ${db.reason ?? 'unknown'}`,
+    market_credential: process.env.MASSIVE_API_KEY ? 'configured' : 'missing',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// Production frontend: serve the CRA build + SPA fallback (replaces the Vercel rewrites)
+const buildDir = path.join(__dirname, '../build');
+app.use(express.static(buildDir));
+app.get(/^\/(?!api\/|generated-reports\/).*/, (req, res, next) => {
+  res.sendFile(path.join(buildDir, 'index.html'), (err) => { if (err) next(); });
 });
 
 // Error handling middleware
@@ -76,16 +119,19 @@ app.use((err, req, res, next) => {
 // Start server
 async function startServer() {
   await ensureDirectories();
-  
-  app.listen(PORT, () => {
-    console.log(`\n🚀 TriSight API Server running on http://localhost:${PORT}`);
-    console.log(`📊 Report generation endpoint: http://localhost:${PORT}/api/reports/generate`);
-    console.log(`⚡ Enhanced reports endpoint: http://localhost:${PORT}/api/enhanced-reports/generate`);
-    console.log(`📁 Generated reports served at: http://localhost:${PORT}/generated-reports/`);
-    console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`🔑 TwelveData API Key: ${process.env.REACT_APP_TWELVE_DATA_API_KEY ? 'Loaded ✓' : 'Missing ✗'}`);
-    console.log(`🧠 Anthropic API Key: ${process.env.REACT_APP_ANTHROPIC_API_KEY ? 'Loaded ✓' : 'Missing ✗'}`);
-    console.log(`🔥 Firecrawl API Key: ${process.env.REACT_APP_FIRECRAWL_API_KEY ? 'Loaded ✓' : 'Missing ✗'}`);
+
+  // self-provision the schema — the Railway Postgres is internal-only; the server is the migrator
+  try {
+    const applied = await applySchema();
+    console.log(applied.ok ? '🗄️  Schema applied (idempotent)' : `🗄️  Schema NOT applied: ${applied.reason}`);
+  } catch (e) {
+    console.error('🗄️  Schema apply failed:', e.message); // surfaces in /api/health as db state
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 TriSight engine on port ${PORT}`);
+    console.log(`🏥 Health: /api/health`);
+    console.log(`📈 Market data: /api/market/* (Massive, server-held credential: ${process.env.MASSIVE_API_KEY ? 'configured ✓' : 'MISSING ✗'})`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
   });
 }

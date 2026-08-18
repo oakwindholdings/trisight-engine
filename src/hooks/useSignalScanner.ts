@@ -4,10 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import { TradeActionSignal, TradeAction, SignalType } from '../utils/trading/TradeActionSignal';
-import { fetchCandlestickData } from '../api/twelveDataApi';
+import { fetchCandlestickData } from '../api/marketApi';
 import PatternDetector from '../utils/patternDetection/PatternDetector';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
-import { timeframeToInterval } from '../api/twelveDataApi';
+import { timeframeToInterval } from '../api/marketApi';
 import { PatternType } from '../models/PatternTypes';
 import { TradeActionBus } from '../utils/trading/TradeActionSignal';
 import { transformToHeikinAshi, heikinAshiToCandlestickData } from '../utils/heikinAshiUtils';
@@ -130,7 +130,7 @@ export function useSignalScanner(symbols: string[], timeframe: string, shouldSca
       for (const batch of chunks) {
         try {
           const symbolParam = batch.join(',');
-          const apiUrl = `https://api.twelvedata.com/time_series?symbol=${symbolParam}&interval=${intervalParam}&outputsize=${outputsize}&apikey=${process.env.REACT_APP_TWELVE_DATA_API_KEY}`;
+          const apiUrl = `/api/market/time_series?symbol=${symbolParam}&interval=${intervalParam}&outputsize=${outputsize}`;
           logDebug('DEBUG_TRADE_SIGNALS', `[BatchScanner] API Request: url=${apiUrl.replace(/apikey=[^&]*/, 'apikey=***')}, symbols=${batch.join(',')}, interval=${intervalParam}, outputsize=${outputsize}`);
           
           const res = await fetch(apiUrl);

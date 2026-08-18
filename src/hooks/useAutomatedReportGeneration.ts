@@ -8,7 +8,8 @@ import { reportApiService } from '../services/reportApiService';
 
 export function useAutomatedReportGeneration() {
   const [status, setStatus] = useState<ProcessingStatus | null>(null);
-  const [report, setReport] = useState<GeneratedReport | null>(null);
+  // Holds either the mapped GeneratedReport shape or the raw wire response (server returns the latter)
+  const [report, setReport] = useState<GeneratedReport | Awaited<ReturnType<typeof reportApiService.generateReport>> | null>(null);
 
   const generateReport = useCallback(async (config: ReportConfig | any) => {
     try {
@@ -45,7 +46,7 @@ export function useAutomatedReportGeneration() {
         await reportApiService.cancelReport(report?.id || '');
         setStatus({
           ...status,
-          stage: 'error',
+          stage: 'failed',
           currentTask: 'Report generation cancelled'
         });
       } catch (error) {

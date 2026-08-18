@@ -103,6 +103,9 @@ export function useEnhancedReportGeneration() {
       metadata: null
     });
 
+    // Hoisted so the catch block can clear it too
+    let progressInterval: ReturnType<typeof setInterval> | undefined;
+
     try {
       // Update progress during generation
       const progressUpdates = [
@@ -116,7 +119,7 @@ export function useEnhancedReportGeneration() {
       ];
 
       // Simulate progress updates
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setStatus(prev => {
           const nextUpdate = progressUpdates.find(update => update.progress > prev.progress);
           if (nextUpdate) {

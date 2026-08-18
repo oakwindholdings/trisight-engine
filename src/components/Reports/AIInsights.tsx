@@ -135,7 +135,9 @@ export const AIInsights: React.FC<AIInsightsProps> = ({ currentReport }) => {
     
     try {
       const storageService = getStorageService();
-      const reports = await storageService.getAllReports();
+      // Loosely typed: this heuristic panel probes optional fields (quality/config/performance)
+      // that only some report payloads carry; optional chaining below guards every access.
+      const reports: any[] = await storageService.listReports();
       
       // Analyze current report for insights
       if (currentReport) {

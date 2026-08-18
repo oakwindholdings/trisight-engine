@@ -71,13 +71,13 @@ export function useReportPerformance(): UseReportPerformanceResult {
   }, [isMonitoring]);
   
   const startMonitoring = useCallback(() => {
-    logDebug('Starting performance monitoring');
+    logDebug('DEBUG_PERFORMANCE', 'Starting performance monitoring');
     startTime.current = Date.now();
     setIsMonitoring(true);
   }, []);
   
   const stopMonitoring = useCallback(() => {
-    logDebug('Stopping performance monitoring');
+    logDebug('DEBUG_PERFORMANCE', 'Stopping performance monitoring');
     setIsMonitoring(false);
   }, []);
   
@@ -92,7 +92,7 @@ export function useReportPerformance(): UseReportPerformanceResult {
   }, [metrics]);
   
   const reset = useCallback(() => {
-    logDebug('Resetting performance metrics');
+    logDebug('DEBUG_PERFORMANCE', 'Resetting performance metrics');
     startTime.current = Date.now();
     setMetrics({
       operationsCompleted: 0,

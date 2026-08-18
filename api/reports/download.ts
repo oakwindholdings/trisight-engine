@@ -2,8 +2,10 @@
 // Vercel serverless function for downloading reports
 // In serverless, we'll fetch from Supabase Storage or regenerate on-demand
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+// Runs under Express now; the old serverless types were plain req/res shapes.
+type VercelRequest = any;
+type VercelResponse = any;
+const { createClient } = require('../_lib/dbclient');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -68,19 +70,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw error;
     }
 
-    // Check if report has a storage path
-    if (report.storage_path) {
-      // Download from Supabase Storage
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from('reports')
-        .download(report.storage_path);
-
-      if (downloadError) {
-        throw downloadError;
-      }
-
-      // Convert blob to buffer
-      const buffer = Buffer.from(await fileData.arrayBuffer());
+    // Report bytes live in Postgres (reports.file_bytes) — durable, no bucket, no volume
+    if (report.file_bytes) {
+      const buffer = Buffer.isBuffer(report.file_bytes) ? report.file_bytes : Buffer.from(report.file_bytes);
 
       // Set appropriate headers for file download
       res.setHeader('Content-Type', report.mime_type || 'application/vnd.openxmlformats-officedocument.presentationml.presentation');

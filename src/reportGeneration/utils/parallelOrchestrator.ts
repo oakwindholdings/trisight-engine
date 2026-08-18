@@ -3,7 +3,7 @@
 // Context: Manages concurrent operations with rate limiting and dependency resolution
 
 import { performanceMonitor } from './performanceMonitor';
-import { logger } from '../../utils/logger';
+import logger from '../../utils/logger';
 
 export interface Task<T> {
   id: string;
@@ -56,7 +56,7 @@ export class ParallelOrchestrator {
    * Executes multiple tasks with dependency resolution and concurrency control
    */
   async executeTasks<T>(tasks: Task<T>[]): Promise<Map<string, TaskResult<T>>> {
-    logger.info(`Starting parallel execution of ${tasks.length} tasks`);
+    logger.info('parallelOrchestrator', `Starting parallel execution of ${tasks.length} tasks`);
     
     // Reset state
     this.runningTasks.clear();
@@ -70,7 +70,7 @@ export class ParallelOrchestrator {
     await this.processQueue();
     
     const totalDuration = performance.now() - startTime;
-    logger.info(
+    logger.info('parallelOrchestrator', 
       `Completed ${this.completedTasks.size} tasks in ${totalDuration.toFixed(2)}ms`
     );
     
@@ -141,7 +141,7 @@ export class ParallelOrchestrator {
    * Starts executing a task with monitoring and error handling
    */
   private async startTask(task: Task<any>): Promise<void> {
-    logger.debug(`Starting task: ${task.id}`);
+    logger.debug('parallelOrchestrator', `Starting task: ${task.id}`);
     this.rateLimitTokens--;
     
     const taskPromise = this.executeTaskWithRetry(task);
@@ -177,7 +177,7 @@ export class ParallelOrchestrator {
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        logger.warn(
+        logger.warn('parallelOrchestrator', 
           `Task ${task.id} failed (attempt ${retries + 1}/${maxRetries + 1}): ${lastError.message}`
         );
         
@@ -334,7 +334,7 @@ export function validateTaskDependencies(tasks: Task<any>[]): boolean {
   for (const task of tasks) {
     if (!visited.has(task.id)) {
       if (hasCycle(task.id)) {
-        logger.error(`Circular dependency detected involving task: ${task.id}`);
+        logger.error('parallelOrchestrator', `Circular dependency detected involving task: ${task.id}`);
         return false;
       }
     }

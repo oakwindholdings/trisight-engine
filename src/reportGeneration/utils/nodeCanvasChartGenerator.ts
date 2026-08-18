@@ -477,7 +477,7 @@ export class NodeCanvasChartGenerator {
     for (let i = 0; i < timeLabels; i++) {
       const idx = i * step;
       const x = (idx / data.length) * width + width / (2 * data.length);
-      const date = data[idx]?.date || '';
+      const date = (data[idx] as any)?.date ?? data[idx]?.datetime ?? '';
       ctx.textAlign = 'center';
       ctx.fillText(date.substring(5, 10), x, height + 20); // MM-DD format
     }

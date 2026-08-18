@@ -113,7 +113,7 @@ export const HTMLReportTemplate: React.FC<HTMLReportTemplateProps> = ({ reportDa
 
   // Helper function to format AI analysis content
   const formatAnalysisContent = (content: string) => {
-    if (!content) return 'Analysis not available';
+    if (!content) return ['Analysis not available']; // array: every call site .map()s the result
 
     // Split by double newlines to create paragraphs
     const paragraphs = content.split('\n\n').filter(p => p.trim());

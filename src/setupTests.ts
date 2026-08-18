@@ -77,7 +77,7 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
 }));
 
 // Mock the TwelveData API module
-jest.mock('./api/twelveDataApi', () => ({
+jest.mock('./api/marketApi', () => ({
   twelveDataApi: {
     fetchHistoricalData: jest.fn().mockResolvedValue([]),
     fetchLiveData: jest.fn().mockResolvedValue([]),

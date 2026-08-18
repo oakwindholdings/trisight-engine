@@ -26,8 +26,10 @@ export interface CalculationConfig {
   taxRate: number;          // Corporate tax rate for after-tax calculations
   industryMultiples?: {     // Industry-specific valuation multiples
     peRatio?: number;
+    pbRatio?: number;
     evSales?: number;
     pegRatio?: number;
+    [multiple: string]: number | undefined;
   };
 }
 
@@ -297,8 +299,8 @@ export class FinancialCalculationsEngine {
   ): any {
     // Calculate FCF for each period
     const fcfData = cashFlowStatements.map(cf => {
-      const operatingCashFlow = cf.operatingCashFlow || cf.cashFromOperations || 0;
-      const capex = Math.abs(cf.capitalExpenditures || cf.capex || 0);
+      const operatingCashFlow = Number(cf.operatingCashFlow || cf.cashFromOperations || 0);
+      const capex = Math.abs(Number(cf.capitalExpenditures || cf.capex || 0));
       
       return {
         date: cf.date,
@@ -387,8 +389,8 @@ export class FinancialCalculationsEngine {
     
     // Calculate average FCF over recent periods for stability
     const recentFCFs = cashFlows.slice(0, 4).map(cf => {
-      const operating = cf.operatingCashFlow || cf.cashFromOperations || 0;
-      const capex = Math.abs(cf.capitalExpenditures || cf.capex || 0);
+      const operating = Number(cf.operatingCashFlow || cf.cashFromOperations || 0);
+      const capex = Math.abs(Number(cf.capitalExpenditures || cf.capex || 0));
       return operating - capex;
     });
     
@@ -430,8 +432,8 @@ export class FinancialCalculationsEngine {
    */
   private calculateWACC(financials: FinancialData): number {
     // Extract necessary components from financial statements
-    const balanceSheet = financials.balanceSheet?.[0] || {};
-    const incomeStatement = financials.incomeStatement?.[0] || {};
+    const balanceSheet: any = financials.balanceSheet?.[0] || {};
+    const incomeStatement: any = financials.incomeStatement?.[0] || {};
     
     // Calculate cost of equity using CAPM
     const beta = financials.keyMetrics?.beta || 1.0; // Default to market beta

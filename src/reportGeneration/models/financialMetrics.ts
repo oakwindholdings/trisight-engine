@@ -2,13 +2,16 @@
 // Financial calculation types and formulas
 // Context: Ensures consistency in all financial computations
 
-import { PriceData, TechnicalIndicators } from './reportTypes';
 
 export interface GrowthMetrics {
-  revenueGrowth: GrowthRate;
-  earningsGrowth: GrowthRate;
-  fcfGrowth: GrowthRate;
-  bookValueGrowth: GrowthRate;
+  // Two shape generations coexist: current calculators emit GrowthRate objects,
+  // comprehensiveSlideGenerator treats these fields as flat numbers. `any` bridges
+  // both until the flat-number call sites are migrated to GrowthRate.
+  revenueGrowth: GrowthRate | any;
+  earningsGrowth: GrowthRate | any;
+  fcfGrowth: GrowthRate | any;
+  bookValueGrowth?: GrowthRate | any;
+  [derived: string]: any;
 }
 
 export interface GrowthRate {
@@ -21,28 +24,34 @@ export interface GrowthRate {
 
 export interface ValuationMetrics {
   intrinsicValue: number;
-  fairValue: number;
+  fairValue?: number; // optional to match the merged second declaration's modifier
   marginOfSafety: number;
   valuation: 'undervalued' | 'fairlyValued' | 'overvalued';
   confidence: number;
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 export interface RiskMetrics {
   beta: number;
-  volatility: number;
+  volatility?: number; // optional to match the merged second declaration's modifiers
   sharpeRatio: number;
   maxDrawdown: number;
-  var95: number; // Value at Risk 95%
-  riskScore: number; // 0-100
+  var95?: number; // Value at Risk 95%
+  riskScore?: number; // 0-100
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 export interface QualityMetrics {
-  roic: number; // Return on Invested Capital
-  fcfYield: number;
-  earningsQuality: number; // 0-100
-  balanceSheetStrength: number; // 0-100
-  moat: 'none' | 'narrow' | 'wide';
-  roe: number; // Return on Equity
+  roic?: number; // Return on Invested Capital
+  fcfYield?: number;
+  earningsQuality?: number; // 0-100
+  balanceSheetStrength?: number; // 0-100
+  moat?: 'none' | 'narrow' | 'wide';
+  roe?: number; // Return on Equity
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 // Calculation configuration
@@ -63,13 +72,14 @@ export interface AnalysisResults {
   technicals: TechnicalSignals;
   composite: CompositeScore;
   // Additional commonly accessed fields
-  sentiment?: 'positive' | 'neutral' | 'negative';
+  sentiment?: any; // polymorphic across generations: scalar label, score number, or {overall, score, themes, …}
   profitability?: {
     grossMargin: number;
     operatingMargin: number;
     netMargin: number;
-    roe: number;
-    roa: number;
+    roe?: number;
+    roa?: number;
+    [extraMargin: string]: any; // fcfMargin and other derived margins
   };
   patternAnalysis?: {
     trend: string;
@@ -77,34 +87,42 @@ export interface AnalysisResults {
     signals: string[];
     confidence: number;
   };
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 export interface TechnicalSignals {
   trend: 'bullish' | 'neutral' | 'bearish';
-  momentum: 'strong' | 'moderate' | 'weak';
-  support: number;
-  resistance: number;
-  entry: number;
-  stopLoss: number;
-  signals: Signal[];
+  momentum?: 'strong' | 'moderate' | 'weak';
+  support?: number;
+  resistance?: number;
+  entry?: number;
+  stopLoss?: number;
+  signals?: Signal[];
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 export interface Signal {
   type: string;
   strength: number;
-  date: string;
-  price: number;
+  date?: string;
+  price?: number;
+  indicator?: string; // legacy field naming the source indicator
+  [extra: string]: any;
 }
 
 export interface CompositeScore {
   overall: number; // 0-100
-  growth: number;
-  value: number;
-  quality: number;
-  momentum: number;
-  sentiment: number;
-  recommendation: 'strongBuy' | 'buy' | 'hold' | 'sell' | 'strongSell';
-  confidence: number;
+  growth?: number;
+  value?: number;
+  quality?: number;
+  momentum?: number;
+  sentiment?: number;
+  recommendation: 'strongBuy' | 'buy' | 'hold' | 'sell' | 'strongSell' | (string & {});
+  confidence?: number;
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 // Formula definitions for transparency
@@ -327,19 +345,24 @@ export interface PerformanceMetrics {
 }
 
 export interface ValuationMetrics {
-  fairValue: number;
-  currentPrice: number;
-  upside: number;
-  valuationScore: number; // 0-100
-  peerComparison: PeerComparison;
+  // NOTE: this file declares ValuationMetrics twice; TS merges them, so these
+  // legacy-shape fields must stay optional to keep the primary shape constructible.
+  fairValue?: number;
+  currentPrice?: number;
+  upside?: number;
+  valuationScore?: number; // 0-100
+  peerComparison?: PeerComparison;
+  // (index signature lives on the first merged declaration)
 }
 
 export interface RiskMetrics {
-  volatility: number;
-  var95: number; // Value at Risk 95%
-  cvar95: number; // Conditional VaR
-  downsideDeviation: number;
-  riskScore: number; // 0-100
+  // NOTE: second declaration of RiskMetrics (merged by TS) — fields optional on purpose.
+  volatility?: number;
+  var95?: number; // Value at Risk 95%
+  cvar95?: number; // Conditional VaR
+  downsideDeviation?: number;
+  riskScore?: number; // 0-100
+  // (index signature lives on the first merged declaration)
 }
 
 export interface MomentumMetrics {
@@ -347,6 +370,8 @@ export interface MomentumMetrics {
   volumeStrength: number;
   trendStrength: number;
   momentumScore: number; // 0-100
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 export interface QualityMetricsV2 {
@@ -354,6 +379,8 @@ export interface QualityMetricsV2 {
   profitability: number;
   financialHealth: number;
   qualityScore: number; // 0-100
+  // Bridging index: comprehensiveSlideGenerator probes fields beyond the declared set
+  [probed: string]: any;
 }
 
 export interface PeerComparison {

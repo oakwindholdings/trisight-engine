@@ -55,7 +55,7 @@ export const extractOrFallback = <T>(
   result: SectionResult<T>, 
   fallback: T
 ): T => {
-  return result.ok ? result.data : fallback;
+  return result.ok ? (result as any).data : fallback;
 };
 
 /**
@@ -65,7 +65,8 @@ export const extractOrGenerate = <T>(
   result: SectionResult<T>, 
   fallbackFn: (reason: string) => T
 ): T => {
-  return result.ok ? result.data : fallbackFn(result.reason);
+  if (result.ok) return (result as any).data;
+  return fallbackFn((result as any).reason); // TS 4.9 mis-narrows this generic discriminated union
 };
 
 /**
@@ -80,9 +81,9 @@ export const combineResults = <T extends Record<string, any>>(
   
   for (const [key, result] of Object.entries(results)) {
     if (result.ok) {
-      (data as any)[key] = result.data;
+      (data as any)[key] = (result as any).data;
     } else {
-      failures.push(`${key}: ${result.reason}`);
+      failures.push(`${key}: ${(result as any).reason}`);
     }
   }
   
@@ -106,9 +107,9 @@ export const combinePartial = <T extends Record<string, any>>(
   
   for (const [key, result] of Object.entries(results)) {
     if (result.ok) {
-      (data as any)[key] = result.data;
+      (data as any)[key] = (result as any).data;
     } else {
-      failures.push(`${key}: ${result.reason}`);
+      failures.push(`${key}: ${(result as any).reason}`);
       // Use fallback if available
       if (fallbacks && key in fallbacks) {
         (data as any)[key] = (fallbacks as any)[key];
@@ -222,12 +223,12 @@ export const hasFailures = (results: SectionResult<any>[]): boolean => {
  * Utility to get all failure reasons
  */
 export const getFailureReasons = (results: SectionResult<any>[]): string[] => {
-  return results.filter(result => !result.ok).map(result => result.reason);
+  return results.filter(result => !result.ok).map(result => (result as any).reason);
 };
 
 /**
  * Utility to get all successful data
  */
 export const getSuccessfulData = <T>(results: SectionResult<T>[]): T[] => {
-  return results.filter(result => result.ok).map(result => result.data);
+  return results.filter(result => result.ok).map(result => (result as any).data);
 };

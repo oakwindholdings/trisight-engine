@@ -3,7 +3,7 @@
 // Queries TwelveData suggestions
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { searchSymbols } from '../api/twelveDataApi';
+import { searchSymbols } from '../api/marketApi';
 import { useMarketDataContext } from '../contexts/MarketDataContext';
 
 const SearchContainer = styled.div`

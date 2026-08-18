@@ -219,8 +219,8 @@ class TokenBucket {
  * Handles all interactions with the TwelveData API including rate limiting and response transformation
  */
 export class TwelveDataAdapter extends BaseAdapter {
-  private apiKey: string;
-  private baseUrl: string;
+  protected apiKey: string; // protected: the Ultra subclass builds its own requests
+  protected baseUrl: string;
   private tokenBucket: TokenBucket;
   private isUltraTier: boolean;
   
@@ -244,11 +244,11 @@ export class TwelveDataAdapter extends BaseAdapter {
       }
     });
     
-    this.apiKey = config.apiKey || process.env.REACT_APP_TWELVE_DATA_API_KEY || '';
+    this.apiKey = config.apiKey || 'proxy-managed';
     if (!this.apiKey) {
       logDebug('TwelveDataAdapter', 'API key not found - adapter will operate in mock mode');
     }
-    this.baseUrl = config.baseUrl || 'https://api.twelvedata.com';
+    this.baseUrl = config.baseUrl || `http://127.0.0.1:${process.env.PORT || 3001}/api/market`;
     this.isUltraTier = config.isUltraTier !== false; // Default to true
     
     // Initialize token bucket with Ultra tier limits (10,946 credits/minute)

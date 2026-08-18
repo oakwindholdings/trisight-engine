@@ -2,7 +2,7 @@
 // Performance monitoring and optimization utilities for report generation
 // Context: Tracks operation metrics, identifies bottlenecks, and provides optimization insights
 
-import { logger } from '../../utils/logger';
+import logger from '../../utils/logger';
 
 export interface PerformanceMetric {
   duration: number;
@@ -70,7 +70,7 @@ export class PerformanceMonitor {
         metadata
       });
       
-      logger.debug(`Operation ${name} completed in ${duration.toFixed(2)}ms`);
+      logger.debug('performanceMonitor', `Operation ${name} completed in ${duration.toFixed(2)}ms`);
       
       return result;
     } catch (error) {
@@ -84,7 +84,7 @@ export class PerformanceMonitor {
         metadata
       });
       
-      logger.error(`Operation ${name} failed after ${duration.toFixed(2)}ms: ${error}`);
+      logger.error('performanceMonitor', `Operation ${name} failed after ${duration.toFixed(2)}ms: ${error}`);
       
       throw error;
     } finally {

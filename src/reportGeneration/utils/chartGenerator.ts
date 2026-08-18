@@ -19,8 +19,14 @@ export interface ChartOptions {
 export interface GeneratedChart {
   type: string;
   data: string; // SVG string or base64 image
-  format: string;
-  dimensions: { width: number; height: number };
+  title?: string; // consumers match charts by title
+  format?: string;
+  dimensions?: { width: number; height: number };
+  width?: number; // flat aliases some consumers read instead of dimensions
+  height?: number;
+  metadata?: { [field: string]: any }; // fallback charts carry their info here instead
+  id?: string; // some generators stamp an id
+  [extra: string]: any;
 }
 
 export class ChartGenerator {
@@ -336,7 +342,7 @@ export class ChartGenerator {
     const colors = this.getColorPalette(theme);
 
     // Calculate angles
-    const total = d3.sum(data, d => d.value);
+    const total = (d3 as any).sum(data, (d: any) => d.value); // d3-array is declared shorthand, so members are untyped
     let currentAngle = -Math.PI / 2; // Start at top
     
     const arcs = data.map((d, i) => {

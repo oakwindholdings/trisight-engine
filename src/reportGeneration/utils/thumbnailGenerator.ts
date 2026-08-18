@@ -16,7 +16,7 @@ export interface ThumbnailOptions {
  * Generates thumbnail previews of reports
  */
 export class ThumbnailGenerator {
-  private defaultOptions: ThumbnailOptions = {
+  private defaultOptions: Required<ThumbnailOptions> = {
     width: 200,
     height: 150,
     quality: 0.8,
@@ -79,7 +79,7 @@ export class ThumbnailGenerator {
     const ctx = canvas.getContext('2d');
     
     if (!ctx) {
-      return this.generatePlaceholder(report.config.ticker || 'Report', options);
+      return this.generatePlaceholder(report.config.ticker || 'Report', { ...this.defaultOptions, ...options });
     }
 
     // Fill background
@@ -174,13 +174,13 @@ export class ThumbnailGenerator {
       }
 
       // Convert to base64
-      const buffer = canvas.toBuffer(options.format === 'png' ? 'image/png' : 'image/jpeg', {
+      const buffer = (canvas as any).toBuffer(options.format === 'png' ? 'image/png' : 'image/jpeg', {
         quality: options.quality
       });
       return `data:image/${options.format};base64,${buffer.toString('base64')}`;
     } catch (error) {
       logDebug('ThumbnailGenerator', `Node canvas error: ${error}`);
-      return this.generatePlaceholder(report.config.ticker || 'Report', options);
+      return this.generatePlaceholder(report.config.ticker || 'Report', { ...this.defaultOptions, ...options });
     }
   }
 

@@ -221,7 +221,7 @@ async function generateEarningsPreviewReport(ticker: string = 'GOOGL') {
     console.log(`Margin Trend: ${analysis.profitability.marginTrend}`);
     
     if (analysis.sentiment) {
-      console.log(`\nMarket Sentiment: ${analysis.sentiment.overall.toUpperCase()}`);
+      console.log(`\nMarket Sentiment: ${(analysis.sentiment as any).overall.toUpperCase()}`);
       console.log(`Sentiment Score: ${analysis.sentiment.score.toFixed(2)}`);
     }
     

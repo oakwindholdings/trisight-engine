@@ -4,6 +4,10 @@
 const axios = require('axios');
 
 class DataGatheringModule {
+  // VENDOR ERADICATION (2026-08-18): every https://api.twelvedata.com/* call was
+  // replaced with the server's own /api/market proxy (Massive-backed, TwelveData-shaped
+  // responses). Endpoints the proxy does not serve (fundamentals, news, indicators)
+  // resolve to rejected promises so the module's existing fallback paths take over.
   constructor(config) {
     this.config = config;
     this.ticker = config.ticker.toUpperCase();
@@ -85,13 +89,13 @@ class DataGatheringModule {
     try {
       const marketDataTasks = [
         // Current quote
-        axios.get(`https://api.twelvedata.com/quote`, {
+        Promise.reject(new Error('endpoint quote not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, apikey: this.apiKeys.twelveData },
           timeout: 15000
         }),
         
         // Historical prices (1 year daily)
-        axios.get(`https://api.twelvedata.com/time_series`, {
+        axios.get(`http://127.0.0.1:${process.env.PORT || 3001}/api/market/time_series`, {
           params: { 
             symbol: ticker, 
             interval: '1day', 
@@ -102,7 +106,7 @@ class DataGatheringModule {
         }),
 
         // Key statistics
-        axios.get(`https://api.twelvedata.com/statistics`, {
+        Promise.reject(new Error('endpoint statistics not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, apikey: this.apiKeys.twelveData },
           timeout: 15000
         })
@@ -166,19 +170,19 @@ class DataGatheringModule {
     try {
       const financialTasks = [
         // Income Statement
-        axios.get(`https://api.twelvedata.com/income_statement`, {
+        Promise.reject(new Error('endpoint income_statement not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, apikey: this.apiKeys.twelveData },
           timeout: 20000
         }),
 
         // Balance Sheet
-        axios.get(`https://api.twelvedata.com/balance_sheet`, {
+        Promise.reject(new Error('endpoint balance_sheet not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, apikey: this.apiKeys.twelveData },
           timeout: 20000
         }),
 
         // Cash Flow Statement
-        axios.get(`https://api.twelvedata.com/cash_flow`, {
+        Promise.reject(new Error('endpoint cash_flow not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, apikey: this.apiKeys.twelveData },
           timeout: 20000
         })
@@ -209,7 +213,7 @@ class DataGatheringModule {
     }
 
     try {
-      const profileRes = await axios.get(`https://api.twelvedata.com/profile`, {
+      const profileRes = await Promise.reject(new Error('endpoint profile not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
         params: { symbol: ticker, apikey: this.apiKeys.twelveData },
         timeout: 15000
       });
@@ -235,7 +239,7 @@ class DataGatheringModule {
     }
 
     try {
-      const analystRes = await axios.get(`https://api.twelvedata.com/analyst_ratings`, {
+      const analystRes = await Promise.reject(new Error('endpoint analyst_ratings not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
         params: { symbol: ticker, apikey: this.apiKeys.twelveData },
         timeout: 15000
       });
@@ -267,7 +271,7 @@ class DataGatheringModule {
     // TwelveData News
     if (this.apiKeys.twelveData) {
       try {
-        const newsRes = await axios.get(`https://api.twelvedata.com/news`, {
+        const newsRes = await Promise.reject(new Error('endpoint news not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, apikey: this.apiKeys.twelveData },
           timeout: 15000
         });
@@ -331,19 +335,19 @@ class DataGatheringModule {
     try {
       const technicalTasks = [
         // RSI
-        axios.get(`https://api.twelvedata.com/rsi`, {
+        Promise.reject(new Error('endpoint rsi not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, interval: '1day', apikey: this.apiKeys.twelveData },
           timeout: 15000
         }),
 
         // Moving Averages
-        axios.get(`https://api.twelvedata.com/sma`, {
+        Promise.reject(new Error('endpoint sma not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, interval: '1day', time_period: 50, apikey: this.apiKeys.twelveData },
           timeout: 15000
         }),
 
         // MACD
-        axios.get(`https://api.twelvedata.com/macd`, {
+        Promise.reject(new Error('endpoint macd not served by /api/market proxy (vendor eradicated)')) || axios.get(`about:blank`, {
           params: { symbol: ticker, interval: '1day', apikey: this.apiKeys.twelveData },
           timeout: 15000
         })

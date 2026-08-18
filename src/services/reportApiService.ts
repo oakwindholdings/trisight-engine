@@ -41,8 +41,9 @@ export interface ReportGenerationRequest {
   ticker: string;
   template: string;
   title: string;
-  author: string;
-  outputFormat?: 'pptx' | 'pdf' | 'html';
+  author?: string; // optional: server defaults the byline when omitted (BrowserReportViewer omits it)
+  // 'json' = browser viewer flow; (string & {}) admits caller-inferred string while keeping hints
+  outputFormat?: 'pptx' | 'pdf' | 'html' | 'json' | (string & {});
   reportType?: string;
   dataSources?: string[];
   sections?: string[];
@@ -50,6 +51,9 @@ export interface ReportGenerationRequest {
 }
 
 export interface ReportGenerationResponse {
+  // Wire response: older server versions returned format/fileSize/downloadUrl at the
+  // top level; callers probe both shapes, so admit unlisted fields.
+  [legacyField: string]: any;
   success: boolean;
   generationId?: string;
   reportId?: string;
@@ -227,5 +231,4 @@ export const generateReport = (request: ReportGenerationRequest): Promise<Report
   return reportApiService.generateReport(request);
 };
 
-// Export types
-export type { ReportApiService };
+// (class export above already exports the ReportApiService type)

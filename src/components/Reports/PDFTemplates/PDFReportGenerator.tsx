@@ -16,6 +16,8 @@ interface PDFReportGeneratorProps {
       title: string;
       content: string;
       type: string;
+      // Legacy payloads carry extra fields this template probes defensively
+      [legacyField: string]: any;
     }>;
     charts: Array<{
       id: string;
@@ -418,7 +420,7 @@ export const PDFReportGenerator: React.FC<PDFReportGeneratorProps> = ({
         {slides && Array.isArray(slides) && slides.length > 0 && slides.map((slide, index) => {
           // Extract slide properties with maximum safety
           const slideTitle = String(slide && slide.title ? slide.title : `Section ${index + 1}`);
-          const slideContent = String(slide && (slide.content || slide.text) ? (slide.content || slide.text) : `Analysis for ${slideTitle}`);
+          const slideContent = String(slide && ((slide as any).content || (slide as any).text) ? ((slide as any).content || (slide as any).text) : `Analysis for ${slideTitle}`);
 
           return (
             <Page key={index} size="A4" style={styles.page}>

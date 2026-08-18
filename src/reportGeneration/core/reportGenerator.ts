@@ -947,7 +947,7 @@ export class ReportGenerator {
         metadata: {
           error: error.message,
           timestamp: new Date().toISOString()
-        }
+        } as any // degraded-path stub, lacks the full DataSourceMetadata shape
       },
       slides: [errorSlide],
       metadata: {

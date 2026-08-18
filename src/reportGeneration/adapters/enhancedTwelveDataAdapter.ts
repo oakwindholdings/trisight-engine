@@ -74,8 +74,8 @@ export class EnhancedTwelveDataAdapter extends TwelveDataAdapter {
         })
       ]);
       
-      // Build comprehensive company data
-      const companyData: CompanyData = {
+      // Build comprehensive company data (news/transcripts/metadata attach later in the pipeline — cast on purpose)
+      const companyData = {
         ticker: symbol,
         companyName,
         exchange,
@@ -100,7 +100,7 @@ export class EnhancedTwelveDataAdapter extends TwelveDataAdapter {
         employees: this.getEmployeeCount(symbol),
         marketCap,
         lastUpdated: new Date().toISOString()
-      };
+      } as unknown as CompanyData;
       
       // Validate the data before returning
       this.validateCompanyData(companyData);

@@ -4,7 +4,6 @@
 import { PatternFeedback, LearningModelState } from '../models/FeedbackTypes';
 import { LearningMetrics } from '../models/LearningTypes';
 import { PatternType } from '../models/PatternTypes';
-import { supabase } from '../utils/supabase/client';
 
 // Recursively clamp all numeric fields in an object to 9.99
 function clampNumericFields(obj: any): any {
@@ -84,7 +83,7 @@ const saveLearningModel = (model: LearningModelState): void => {
 // Submit new feedback
 export const submitFeedback = async (feedback: PatternFeedback): Promise<void> => {
   await simulateNetworkDelay();
-  // Validate and serialize payload for Supabase
+  // Validate and serialize payload for the data API
   const feedbackRow = {
     ...clampNumericFields(feedback),
     createdAt: (feedback.createdAt instanceof Date ? feedback.createdAt.toISOString() : String(feedback.createdAt)),
@@ -100,29 +99,31 @@ export const submitFeedback = async (feedback: PatternFeedback): Promise<void> =
     boundaryAdjustment: feedback.boundaryAdjustment ? JSON.stringify(feedback.boundaryAdjustment) : undefined,
   };
 
-  // Debug: log payload and client status
-  console.log('[submitFeedback] Supabase client:', supabase);
+  // Debug: log payload
   console.log('[submitFeedback] Payload:', feedbackRow);
 
-  if (supabase) {
-    const { error } = await supabase
-      .from('pattern_feedback')
-      .insert([feedbackRow]);
-    if (error) {
-      console.error('[submitFeedback] Supabase feedback insert error:', error);
-      // Fallback to local storage
-      const feedbackData = getStoredFeedback();
-      feedbackData.push(feedback);
-      saveFeedback(feedbackData);
-      throw new Error('Failed to submit feedback to Supabase. Saved locally. ' + error.message);
+  let apiError: string | null = null;
+  try {
+    const response = await fetch('/api/data/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify([feedbackRow])
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      apiError = (body && body.error) || `Request failed with status ${response.status}`;
     }
-  } else {
-    // Supabase not configured, fallback to local storage
-    console.error('[submitFeedback] Supabase client not configured.');
+  } catch (error) {
+    apiError = error instanceof Error ? error.message : String(error);
+  }
+
+  if (apiError) {
+    console.error('[submitFeedback] API feedback insert error:', apiError);
+    // Fallback to local storage
     const feedbackData = getStoredFeedback();
     feedbackData.push(feedback);
     saveFeedback(feedbackData);
-    throw new Error('Supabase client not configured. Saved feedback locally.');
+    throw new Error('Failed to submit feedback to server. Saved locally. ' + apiError);
   }
 
   // After submitting feedback, update the learning model

@@ -2,7 +2,6 @@
 // Utility for exporting pattern feedback data for model training
 // Generates formatted datasets for ML pipeline
 
-import { supabase } from '../supabase/client';
 import { PatternType } from '../../models/PatternTypes';
 import { logDebug } from '../debug';
 
@@ -42,49 +41,49 @@ interface TrainingDataPoint {
 export async function exportFeedbackData(options: ExportOptions = {}): Promise<string> {
   try {
     logDebug('feedback', '[FeedbackExporter] Exporting feedback data:', options);
-    
-    if (!supabase) {
-      throw new Error('Supabase client not initialized');
-    }
-    
-    // Build query
-    let query = supabase
-      .from('pattern_feedback')
-      .select('*')
-      .eq('consent_given', true) // Only export consented data
-      .order('created_at', { ascending: false });
-    
-    // Apply filters
+
+    // Build query - only export consented data
+    const params = new URLSearchParams();
+    params.set('consented', '1');
     if (options.startDate) {
-      query = query.gte('created_at', options.startDate.toISOString());
+      params.set('from', options.startDate.toISOString());
     }
     if (options.endDate) {
-      query = query.lte('created_at', options.endDate.toISOString());
+      params.set('to', options.endDate.toISOString());
     }
+
+    const response = await fetch(`/api/data/feedback?${params.toString()}`);
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({} as { error?: string }));
+      throw new Error(`Failed to fetch feedback data: ${body.error || response.statusText}`);
+    }
+
+    const { data } = await response.json();
+    let rows: any[] = data || [];
+
+    // Apply filters not supported directly by the query API
     if (options.patternTypes?.length) {
-      query = query.in('pattern_type', options.patternTypes);
+      rows = rows.filter(row => options.patternTypes!.includes(row.pattern_type));
     }
     if (options.minAccuracy) {
-      query = query.gte('accuracy', options.minAccuracy);
+      rows = rows.filter(row => row.accuracy >= options.minAccuracy!);
     }
     if (!options.includeInvalid) {
-      query = query.eq('is_valid', true);
+      rows = rows.filter(row => row.is_valid === true);
     }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      throw new Error(`Failed to fetch feedback data: ${error.message}`);
-    }
-    
+
+    // Preserve original ordering: newest first
+    rows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
     // Format based on requested format
     switch (options.format) {
       case 'csv':
-        return formatAsCSV(data || []);
+        return formatAsCSV(rows);
       case 'training':
-        return formatAsTrainingData(data || []);
+        return formatAsTrainingData(rows);
       default:
-        return JSON.stringify(data || [], null, 2);
+        return JSON.stringify(rows, null, 2);
     }
   } catch (error) {
     console.error('[FeedbackExporter] Export error:', error);
@@ -184,19 +183,14 @@ export async function getFeedbackStatistics(): Promise<{
   topContributors: Array<{ sessionId: string; count: number }>;
 }> {
   try {
-    if (!supabase) {
-      throw new Error('Supabase client not initialized');
+    const response = await fetch('/api/data/feedback?consented=1');
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({} as { error?: string }));
+      throw new Error(`Failed to fetch feedback statistics: ${body.error || response.statusText}`);
     }
-    
-    const { data, error } = await supabase
-      .from('pattern_feedback')
-      .select('pattern_type, accuracy, is_valid, session_id')
-      .eq('consent_given', true);
-    
-    if (error) {
-      throw new Error(`Failed to fetch feedback statistics: ${error.message}`);
-    }
-    
+
+    const { data } = await response.json();
     const feedbacks = data || [];
     
     // Calculate statistics

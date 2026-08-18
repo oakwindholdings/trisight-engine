@@ -2,7 +2,7 @@
 // Stores TwelveData API key locally
 // Hydrates and persists key for API calls
 import { useState, useEffect } from 'react';
-import { setApiKey as setClientApiKey } from '../api/twelveDataApi';
+import { setApiKey as setClientApiKey } from '../api/marketApi';
 import { logDebug } from '../utils/debug';
 
 const STORAGE_KEY = 'twelveDataApiKey';

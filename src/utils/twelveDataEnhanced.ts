@@ -31,8 +31,8 @@ class TwelveDataEnhanced {
   private lastResetTime: number = Date.now();
 
   constructor(config: TwelveDataConfig = {}) {
-    this.apiKey = process.env.REACT_APP_TWELVE_DATA_API_KEY || process.env.TWELVE_DATA_API_KEY || '';
-    this.baseUrl = 'https://api.twelvedata.com';
+    this.apiKey = 'proxy-managed';
+    this.baseUrl = '/api/market';
     this.config = {
       enableCaching: true,
       debugMode: false,

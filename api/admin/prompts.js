@@ -1,7 +1,7 @@
 // api/admin/prompts.js
 // Serverless-safe admin endpoint: list, create, and update prompts (Supabase-backed)
 
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require('../_lib/dbclient');
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

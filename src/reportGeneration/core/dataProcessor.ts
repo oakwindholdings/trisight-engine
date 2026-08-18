@@ -186,8 +186,8 @@ export class DataProcessor {
     const latestCashFlow = data.financials.cashFlow?.[0];
 
     // Calculate intrinsic value using DCF method with fallbacks
-    const operatingCF = latestCashFlow?.operatingCashFlow || latestCashFlow?.cashFromOperations || 0;
-    const capex = Math.abs(latestCashFlow?.capitalExpenditures || latestCashFlow?.capex || 0);
+    const operatingCF = Number(latestCashFlow?.operatingCashFlow || latestCashFlow?.cashFromOperations || 0);
+    const capex = Math.abs(Number(latestCashFlow?.capitalExpenditures || latestCashFlow?.capex || 0));
     const fcf = operatingCF - capex;
 
     // Estimate growth rate based on historical performance with fallbacks

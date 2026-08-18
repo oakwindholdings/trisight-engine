@@ -1,4 +1,4 @@
-// src/api/twelveDataApi.ts
+// src/api/marketApi.ts
 // TwelveData HTTP client
 // Fetches market data and symbols
 import axios from 'axios';
@@ -73,30 +73,20 @@ async function decrypt(encrypted: string, key: CryptoKey): Promise<string> {
 
 const PASSWORD = 'trisight-secret'; // In production, derive from user session
 
-export const setApiKey = async (key: string) => {
-  const derivedKey = await deriveKey(PASSWORD);
-  const encryptedKey = await encrypt(key, derivedKey);
-  localStorage.setItem('twelvedata_api_key_enc', encryptedKey);
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[TwelveData API] Set encrypted key');
-  }
-  API_KEY = key; // Keep in memory
+// Compatibility shims: market-data credentials are server-managed as of the Railway migration.
+// Signatures preserved for existing callers; the browser neither stores nor sees a key.
+export const setApiKey = async (_key: string) => {
+  console.warn('[Market API] setApiKey is inert — the credential is server-managed');
 };
 
 export const getApiKey = async () => {
-  const stored = localStorage.getItem('twelvedata_api_key_enc');
-  if (stored) {
-    const derivedKey = await deriveKey(PASSWORD);
-    API_KEY = await decrypt(stored, derivedKey);
-  }
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[TwelveData API] Got key:', API_KEY ? 'set' : 'empty');
-  }
-  return API_KEY;
+  return 'server-managed';
 };
 
-const BASE_URL = 'https://api.twelvedata.com';
-const MAX_REQUESTS_PER_MINUTE = 8;
+// Market data is served by the trisight-engine server's Massive-backed proxy (same origin).
+// The vendor key lives server-side only — never in this bundle, never in localStorage.
+const BASE_URL = '/api/market';
+const MAX_REQUESTS_PER_MINUTE = 60;
 const CACHE_EXPIRY = 60 * 1000; // 1 minute in milliseconds
 
 // Request tracking for throttling
@@ -155,32 +145,9 @@ const apiRequest = async <T>(
   }
 
   try {
-    const apiKey = await getApiKey();
-    if (!apiKey) {
-      throw new Error('API key not found. Please add it to localStorage with key "twelvedata_api_key"');
-    }
-
     const url = `${BASE_URL}${endpoint}`;
-    const fullParams = { ...params, apikey: apiKey };
-    
-    // Add comprehensive logging
-    console.log('[TwelveData API] Making request:', {
-      endpoint,
-      url,
-      params: fullParams,
-      cacheKey
-    });
-    
-    // Build full URL with params for logging
-    const fullUrl = `${url}?${new URLSearchParams({ ...params, apikey: 'YOUR_API_KEY_HIDDEN' }).toString()}`;
-    console.log(`API Request URL: ${fullUrl}`);
-    
-    console.log('API call to endpoint:', endpoint, 'with params keys:', Object.keys(params));
+    const fullParams = { ...params }; // no client-side credential — the server proxy holds the key
 
-    // Avoid logging full params if sensitive
-    
-    console.log(`Actual API URL: ${url}?${new URLSearchParams(fullParams).toString()}`);
-    
     const response = await axios.get<T>(url, {
       params: fullParams,
       timeout: 10000, // 10 second timeout

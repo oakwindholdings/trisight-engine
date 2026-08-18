@@ -693,8 +693,8 @@ const TabButton = styled.button<TabButtonProps>`
 `;
 
 interface ViewModeToggleProps {
-  activeTab: 'chart' | 'dashboard' | 'targets';
-  onTabChange: (tab: 'chart' | 'dashboard' | 'targets') => void;
+  activeTab: 'chart' | 'dashboard' | 'targets' | 'reports';
+  onTabChange: (tab: 'chart' | 'dashboard' | 'targets' | 'reports') => void;
 }
 
 const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ activeTab, onTabChange }) => {

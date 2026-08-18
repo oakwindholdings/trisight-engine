@@ -31,6 +31,7 @@ export interface ProcessingStatus {
   stage: 'initializing' | 'fetching-data' | 'processing' | 'generating-charts' | 'assembling' | 'completed' | 'failed';
   progress: number;
   currentTask: string;
+  currentStep?: string; // human-readable step label some status payloads carry alongside currentTask
   subTasks?: Array<{
     name: string;
     status: 'pending' | 'in-progress' | 'completed' | 'failed';

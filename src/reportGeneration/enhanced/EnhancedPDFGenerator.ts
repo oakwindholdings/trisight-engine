@@ -95,7 +95,7 @@ export class EnhancedPDFGenerator {
   /**
    * Generate professional cover page
    */
-  private async generateCoverPage(doc: PDFKit.PDFDocument, reportData: EnhancedReportData): Promise<void> {
+  private async generateCoverPage(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData): Promise<void> {
     // Header with logo and branding
     doc.fontSize(24)
        .fillColor('#1a365d')
@@ -152,7 +152,7 @@ export class EnhancedPDFGenerator {
   /**
    * Generate executive summary section
    */
-  private async generateExecutiveSummary(doc: PDFKit.PDFDocument, reportData: EnhancedReportData): Promise<void> {
+  private async generateExecutiveSummary(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData): Promise<void> {
     this.addSectionHeader(doc, 'Executive Summary');
 
     // Investment thesis
@@ -191,7 +191,7 @@ export class EnhancedPDFGenerator {
   /**
    * Generate market analysis section
    */
-  private async generateMarketAnalysis(doc: PDFKit.PDFDocument, reportData: EnhancedReportData): Promise<void> {
+  private async generateMarketAnalysis(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData): Promise<void> {
     this.addSectionHeader(doc, 'Market Analysis');
 
     const marketData = reportData.data.marketData;
@@ -230,7 +230,7 @@ export class EnhancedPDFGenerator {
   /**
    * Generate technical analysis section
    */
-  private async generateTechnicalAnalysis(doc: PDFKit.PDFDocument, reportData: EnhancedReportData): Promise<void> {
+  private async generateTechnicalAnalysis(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData): Promise<void> {
     this.addSectionHeader(doc, 'Technical Analysis');
 
     if (reportData.data.patternAnalysis) {
@@ -254,7 +254,7 @@ export class EnhancedPDFGenerator {
   /**
    * Generate risk assessment section
    */
-  private async generateRiskAssessment(doc: PDFKit.PDFDocument, reportData: EnhancedReportData): Promise<void> {
+  private async generateRiskAssessment(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData): Promise<void> {
     this.addSectionHeader(doc, 'Risk Assessment');
 
     this.addSubsectionHeader(doc, 'Identified Risk Factors');
@@ -279,7 +279,7 @@ export class EnhancedPDFGenerator {
   /**
    * Generate recommendations section
    */
-  private async generateRecommendations(doc: PDFKit.PDFDocument, reportData: EnhancedReportData): Promise<void> {
+  private async generateRecommendations(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData): Promise<void> {
     this.addSectionHeader(doc, 'Recommendations');
 
     reportData.analysis.recommendations.forEach((recommendation, index) => {
@@ -293,7 +293,7 @@ export class EnhancedPDFGenerator {
   /**
    * Generate appendix section
    */
-  private async generateAppendix(doc: PDFKit.PDFDocument, reportData: EnhancedReportData): Promise<void> {
+  private async generateAppendix(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData): Promise<void> {
     this.addSectionHeader(doc, 'Appendix');
 
     this.addSubsectionHeader(doc, 'Data Sources');
@@ -315,7 +315,7 @@ export class EnhancedPDFGenerator {
   /**
    * Helper methods for consistent formatting
    */
-  private addSectionHeader(doc: PDFKit.PDFDocument, title: string): void {
+  private addSectionHeader(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, title: string): void {
     doc.fontSize(16)
        .fillColor('#1a365d')
        .text(title, 50, doc.y + 20);
@@ -328,13 +328,13 @@ export class EnhancedPDFGenerator {
        .stroke();
   }
 
-  private addSubsectionHeader(doc: PDFKit.PDFDocument, title: string): void {
+  private addSubsectionHeader(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, title: string): void {
     doc.fontSize(12)
        .fillColor('#2d3748')
        .text(title, 50, doc.y + 15);
   }
 
-  private drawKeyMetricsBox(doc: PDFKit.PDFDocument, reportData: EnhancedReportData, x: number, y: number): void {
+  private drawKeyMetricsBox(doc: any /* PDFKit.PDFDocument — /pdfkit not installed */, reportData: EnhancedReportData, x: number, y: number): void {
     // Draw box
     doc.rect(x, y, 500, 120)
        .strokeColor('#d1d5db')

@@ -1072,7 +1072,7 @@ export class ExportEngine {
       format: ExportFormat.POWERPOINT,
       filePath: this.config.outputPath,
       fileSize: stats.size,
-      pages: pptx.slides.length,
+      pages: (pptx as any).slides?.length ?? 0, // internal array, not in pptxgenjs typings
       warnings,
       metadata: this.config.metadata || {}
     };
@@ -1396,7 +1396,7 @@ export async function batchExport(
   report: GeneratedReport,
   charts: GeneratedChart[],
   formats: ExportFormat[],
-  baseConfig: Omit<ExportConfig, 'format' | 'outputPath'>
+  baseConfig: Omit<ExportConfig, 'format' | 'outputPath'> & { outputPath?: string } // outputPath optional override; body falls back to a generated path
 ): Promise<ExportResult[]> {
   console.log(`🚀 Starting batch export to ${formats.length} formats...`);
   

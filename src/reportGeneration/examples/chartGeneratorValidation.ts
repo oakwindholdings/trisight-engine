@@ -260,6 +260,7 @@ async function validateReportIntegration() {
     
     // Generate report with charts
     const generator = new ReportGenerator({
+      ticker: 'MOCK', // example config predates the ticker requirement
       companyData: mockData as any,
       selectedSections: ['executive_summary', 'financial_analysis', 'technical_analysis'],
       format: 'pdf',

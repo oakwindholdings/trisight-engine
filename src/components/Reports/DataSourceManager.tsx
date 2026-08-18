@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Database, Check, X, RefreshCw, AlertCircle } from 'lucide-react';
-import { checkMarketStatus } from '../../api/twelveDataApi';
+import { checkMarketStatus } from '../../api/marketApi';
 import { logDebug } from '../../utils/logger';
 
 const Container = styled.div`

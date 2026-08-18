@@ -14,7 +14,7 @@ import { Pattern, PatternType } from '../../models/PatternTypes';
 import { FeedbackAccuracy, TimingAssessment } from '../../models/FeedbackTypes';
 
 // Mock modules
-jest.mock('../../api/twelveDataApi');
+jest.mock('../../api/marketApi');
 jest.mock('../../utils/debug');
 jest.mock('../../utils/supabase/client', () => ({
   supabaseClient: {

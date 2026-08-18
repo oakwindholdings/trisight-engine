@@ -550,7 +550,7 @@ describe('DataFetcher', () => {
       const result = await dataFetcher.fetchAll('NVDA');
       
       const successCount = Object.values(result.metadata.sources)
-        .filter(s => s.status === 'success').length;
+        .filter((s: any) => typeof s === 'object' && s.status === 'success').length;
       const totalCount = Object.keys(result.metadata.sources).length;
       const expectedRate = Math.round((successCount / totalCount) * 100);
       

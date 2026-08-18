@@ -184,7 +184,7 @@ export async function testComprehensiveSlideGeneration() {
   };
   
   // Generate slides
-  const slides = generateComprehensiveSlides(
+  const slides = await generateComprehensiveSlides(
     testCompanyData,
     testAnalysis,
     undefined,

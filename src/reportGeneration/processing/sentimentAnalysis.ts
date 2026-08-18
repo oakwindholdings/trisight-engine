@@ -43,6 +43,7 @@ export interface SentimentResult {
     strategic: number;
     competitive: number;
     regulatory: number;
+    [extraDimension: string]: number | undefined; // forwardLookingConfidence and other probe-only dims
   };
   emotions: {
     optimism: number;

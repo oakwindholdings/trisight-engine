@@ -5,37 +5,45 @@
 // Main configuration for report generation
 export interface ReportConfig {
   ticker: string;
-  reportDate: string;
-  currentDate: string;
+  reportDate?: string; // optional: several callers omit the date pair
+  currentDate?: string;
   apiKey?: string; // Optional, will default to env variable
-  outputFormat?: 'pptx' | 'pdf' | 'html';
+  outputFormat?: 'pptx' | 'pdf' | 'html' | 'json' | (string & {}); // json = browser-viewer flow
   includeCharts?: boolean;
   debugMode?: boolean;
   // Legacy fields for compatibility
   symbol?: string;
   companyName?: string;
-  reportType?: 'equity_research' | 'earnings_preview' | 'technical_analysis';
-  sections?: ReportSection[];
+  author?: string;
+  title?: string;
+  reportType?: 'equity_research' | 'earnings_preview' | 'technical_analysis' | 'detailed' | 'comprehensive' | (string & {});
+  sections?: ReportSection[] | string[]; // string ids accepted; generator resolves them
   metadata?: ReportMetadata;
   dataSourcePriorities?: DataSourcePriority[];
+  // Assembler paths pass pre-fetched data and other run options through the config
+  [runOption: string]: any;
 }
 
 export interface ReportMetadata {
-  generatedAt: Date;
-  version: string;
-  author: string;
-  confidentialityLevel: 'public' | 'internal' | 'confidential';
+  generatedAt: Date | string; // writers emit both Date objects and ISO strings
+  version?: string; // optional: degraded assembler paths omit it
+  author?: string;
+  confidentialityLevel?: 'public' | 'internal' | 'confidential';
   expiresAt?: Date;
+  // Assemblers attach further run metadata (generationTime, dataFreshness, aiModel, …)
+  [runField: string]: any;
 }
 
 export interface ReportSection {
   id: string;
   title: string;
-  type: 'text' | 'chart' | 'table' | 'mixed';
+  type: 'text' | 'chart' | 'table' | 'mixed' | (string & {}); // mapped builders emit plain strings
   order: number;
   required: boolean;
   content?: SectionContent;
-  dataRequirements: DataRequirement[];
+  dataRequirements?: DataRequirement[];
+  contentTemplate?: any; // template-driven sections embed their scaffold here
+  [extra: string]: any;
 }
 
 export interface SectionContent {
@@ -66,9 +74,10 @@ export interface AIInsight {
 }
 
 export interface DataRequirement {
-  source: 'twelvedata' | 'edgar' | 'firecrawl' | 'calculated';
-  dataType: string;
-  required: boolean;
+  source: 'twelvedata' | 'edgar' | 'firecrawl' | 'calculated' | (string & {}); // demo templates use further source labels
+  dataType?: string;
+  required?: boolean;
+  fields?: string[]; // template-engine form names fields instead of dataType
   fallbackStrategy?: 'skip' | 'use_cached' | 'use_default';
 }
 
@@ -153,13 +162,18 @@ export interface CompanyData {
   description: string;
   sector: string;
   industry: string;
+  exchange?: string; // profile fields some adapters supply
+  website?: string;
+  // Adapters attach further profile metadata (employees, marketCap, lastUpdated, …)
+  [profileField: string]: any;
   financials: FinancialData;
-  news: NewsItem[];
-  transcripts: TranscriptData[];
-  technicals: TechnicalIndicators;
-  analysts: AnalystData;
-  earnings: EarningsData;
-  metadata: DataSourceMetadata;
+  // Optional below: fixture and demo payloads routinely carry only a subset
+  news?: NewsItem[];
+  transcripts?: TranscriptData[];
+  technicals?: TechnicalIndicators;
+  analysts?: AnalystData;
+  earnings?: EarningsData;
+  metadata?: DataSourceMetadata;
 }
 
 // Technical indicators for charting
@@ -174,14 +188,19 @@ export interface TechnicalIndicators {
   volatility?: number;
   resistance?: number;
   support?: number;
+  [extra: string]: any; // enrichment services attach marketCap and other cross-checks
 }
 
 // Pattern detection integration
 export interface DetectedPattern {
-  type: string;
-  startDate: string;
-  endDate: string;
-  confidence: number;
+  type?: string;
+  name?: string; // legacy label field used by the enhanced adapter's default patterns
+  startDate?: string;
+  endDate?: string;
+  confidence?: number;
+  reliability?: number;
+  direction?: string;
+  target?: number;
   priceTarget?: number;
 }
 
@@ -189,9 +208,11 @@ export interface DetectedPattern {
 export interface FinancialData {
   incomeStatement: FinancialStatement[];
   balanceSheet: FinancialStatement[];
-  cashFlow: FinancialStatement[];
-  keyMetrics: KeyFinancialMetrics;
-  historicalPrices: PriceData[];
+  cashFlow?: FinancialStatement[]; // optional: several fixtures/demo payloads omit sub-blocks
+  keyMetrics?: KeyFinancialMetrics;
+  historicalPrices?: PriceData[];
+  // Slide generators probe optional enrichments (segments, guidance, …) present on some payloads
+  [enrichment: string]: any;
   dataQuality?: {
     score: number;
     completeness: number;
@@ -203,7 +224,7 @@ export interface FinancialData {
 // Individual financial statement entry
 export interface FinancialStatement {
   date: string;
-  period: 'annual' | 'quarterly';
+  period?: 'annual' | 'quarterly'; // optional: some builders omit it
   // Income statement fields
   revenue?: number;
   costOfRevenue?: number;
@@ -271,10 +292,13 @@ export interface NewsItem {
 // Earnings call transcript data
 export interface TranscriptData {
   date: string;
-  quarter: string;
-  year: number;
+  quarter?: string;
+  year?: number;
   participants: string[];
-  highlights: string[];
+  highlights?: string[];
+  keyHighlights?: string[]; // legacy alias for highlights
+  type?: string; // legacy: 'earnings' | 'conference' etc.
+  qaSection?: string; // Q&A portion extracted from earnings-call transcripts
   fullText?: string;
   content?: string;
   sentiment?: SentimentAnalysis;
@@ -339,17 +363,25 @@ export interface ProcessingError {
 
 // Helper types
 export interface KeyFinancialMetrics {
-  marketCap: number;
-  peRatio: number;
-  pegRatio: number;
-  priceToBook: number;
-  dividendYield: number;
-  roe: number;
+  // All optional: builders across generations emit different subsets/aliases
+  // (e.g. pbRatio vs priceToBook); the index signature admits the aliases.
+  marketCap?: number;
+  peRatio?: number;
+  pegRatio?: number;
+  priceToBook?: number;
+  dividendYield?: number;
+  roe?: number;
   roa?: number;
-  currentRatio: number;
-  debtToEquity: number;
+  currentRatio?: number;
+  debtToEquity?: number;
   fcfYield?: number;
   earningsYield?: number;
+  sharesOutstanding?: number;
+  beta?: number;
+  eps?: number;
+  bookValuePerShare?: number;
+  // Slide generators probe further ratio fields (roic, margins, …)
+  [ratio: string]: any;
 }
 
 export interface PriceData {
@@ -388,10 +420,12 @@ export interface EarningsData {
 export interface DataSourceMetadata {
   lastUpdated: string;
   sources: {
-    [key: string]: {
+    // string form is the legacy shape (plain provider name); structured form is current
+    [key: string]: string | {
       status: 'success' | 'partial' | 'failed';
-      timestamp: string;
+      timestamp: string | number; // some writers store Date.now() epoch millis
       recordCount?: number;
+      recordsReturned?: number; // legacy writer field name
       error?: string;
     };
   };
@@ -405,22 +439,26 @@ export interface DataSourceMetadata {
 
 // Report output structure
 export interface GeneratedReport {
-  config: ReportConfig;
+  config?: ReportConfig;
   companyData: CompanyData;
   slides: ReportSlide[];
   metadata: ReportMetadata;
   outputPath?: string;
+  // Error/degraded paths attach reportId, fileSize, charts, aiAnalysis, …
+  [runField: string]: any;
 }
 
 export interface ReportSlide {
   slideNumber: number;
   title: string;
   content: SlideContent[];
-  layout: 'title' | 'content' | 'comparison' | 'chart';
+  layout: 'title' | 'content' | 'comparison' | 'chart' | 'two-column' | (string & {}); // templates use further layout names
+  notes?: string; // speaker notes / full AI response
+  [extra: string]: any;
 }
 
 export interface SlideContent {
-  type: 'text' | 'table' | 'chart' | 'image';
+  type: 'text' | 'table' | 'chart' | 'image' | 'logo' | (string & {}); // logo + free-form types appear in slide templates
   data: any; // Will be refined based on type
   position?: { x: number; y: number; width: number; height: number };
 }
@@ -443,7 +481,25 @@ export interface SummarizationResponse {
 export interface SentimentAnalysis {
   overall: 'positive' | 'neutral' | 'negative';
   score: number; // -1 to 1
-  aspects: { [aspect: string]: number };
+  aspects?: { [aspect: string]: number };
+  topics?: { [topic: string]: number }; // older payloads used `topics` for what `aspects` holds now
+}
+
+// SEC EDGAR types (consumed by adapters/edgarAdapter.ts — reconstructed from its usage;
+// index signature admits the raw submission fields EDGAR returns beyond the ones probed)
+export interface EdgarSearchResult {
+  accessionNumber: string;
+  filingDate: string;
+  periodEndDate?: string;
+  form?: string;
+  formType?: string; // the adapter's search path emits formType instead of form
+  primaryDocument?: string;
+  [field: string]: any;
+}
+
+export interface EdgarFiling extends EdgarSearchResult {
+  url?: string;
+  content?: string;
 }
 
 // Additional helper types
@@ -455,10 +511,11 @@ export interface AnalystConsensus {
 
 export interface PriceTarget {
   analyst: string;
-  firm: string;
+  firm?: string;
   target: number;
+  rating?: string; // legacy payloads carried the rating on the target row
   date: string;
-  horizon: '3m' | '6m' | '12m';
+  horizon?: '3m' | '6m' | '12m' | (string & {}); // computed values arrive as plain string
 }
 
 export interface AnalystRecommendation {
@@ -493,7 +550,7 @@ export interface VolumeData {
 
 export interface ReportGenerationOptions {
   templateId?: string;
-  outputFormat?: 'pptx' | 'pdf' | 'html';
+  outputFormat?: 'pptx' | 'pdf' | 'html' | 'json' | (string & {}); // json = browser-viewer flow
   includeWatermark?: boolean;
   compressionLevel?: 'none' | 'low' | 'high';
   aiModelPreference?: 'fast' | 'balanced' | 'quality';

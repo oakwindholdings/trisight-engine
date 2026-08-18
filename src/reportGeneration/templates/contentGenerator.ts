@@ -485,7 +485,7 @@ export class ContentGenerator {
       return 'margin pressure';
     }
     
-    if (analysis.sentiment && analysis.sentiment.overall === 'negative') {
+    if (analysis.sentiment && (analysis.sentiment as any).overall === 'negative') {
       return 'negative market sentiment';
     }
     

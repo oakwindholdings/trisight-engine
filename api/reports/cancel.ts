@@ -2,8 +2,10 @@
 // Vercel serverless function for cancelling report generation
 // In serverless architecture, this updates the status in database
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+// Runs under Express now; the old serverless types were plain req/res shapes.
+type VercelRequest = any;
+type VercelResponse = any;
+const { createClient } = require('../_lib/dbclient');
 
 // Initialize Supabase client
 const supabase = createClient(

@@ -56,7 +56,7 @@ export class TwelveDataUltraAdapter extends TwelveDataAdapter {
   };
 
   constructor(apiKey: string) {
-    super(apiKey);
+    super({ apiKey, isUltraTier: true });
     logDebug('TwelveDataUltraAdapter', 'Initialized with ULTRA features');
   }
 
@@ -243,37 +243,13 @@ export class TwelveDataUltraAdapter extends TwelveDataAdapter {
   }
 
   /**
-   * Establishes WebSocket connection for real-time data (ULTRA feature)
+   * Real-time streaming is not available: the legacy implementation opened a direct
+   * TwelveData websocket, and direct vendor connections are eradicated. All market data
+   * flows through the server-side /api/market proxy (poll endpoints instead). No callers
+   * existed when this was stubbed out.
    */
-  establishWebSocketConnection(symbols: string[], onData: (data: any) => void): WebSocket {
-    const wsUrl = 'wss://ws.twelvedata.com/v1/quotes/price';
-    const ws = new WebSocket(wsUrl);
-
-    ws.on('open', () => {
-      logDebug('TwelveDataUltraAdapter', 'WebSocket connection established');
-      
-      // Subscribe to symbols
-      ws.send(JSON.stringify({
-        action: 'subscribe',
-        symbols: symbols.join(','),
-        apikey: this.apiKey
-      }));
-    });
-
-    ws.on('message', (data: string) => {
-      try {
-        const parsed = JSON.parse(data);
-        onData(parsed);
-      } catch (error) {
-        logError('TwelveDataUltraAdapter', `WebSocket parse error: ${error}`);
-      }
-    });
-
-    ws.on('error', (error) => {
-      logError('TwelveDataUltraAdapter', `WebSocket error: ${error}`);
-    });
-
-    return ws;
+  establishWebSocketConnection(_symbols: string[], _onData: (data: any) => void): WebSocket {
+    throw new Error('Real-time websocket streaming is not supported; use the /api/market proxy endpoints.');
   }
 
   /**
@@ -281,6 +257,7 @@ export class TwelveDataUltraAdapter extends TwelveDataAdapter {
    */
   private transformToCandles(values: any[]): CandlestickData[] {
     return values.map((value, index) => ({
+      datetime: value.datetime,
       timestamp: new Date(value.datetime).getTime(),
       open: parseFloat(value.open),
       high: parseFloat(value.high),

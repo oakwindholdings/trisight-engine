@@ -15,6 +15,8 @@ export interface ProcessingConfig {
   includePatternDetection?: boolean;
   includeSentimentAnalysis?: boolean;
   includeComparativeAnalysis?: boolean;
+  includeValuationMetrics?: boolean; // example-script flags
+  includeRiskAssessment?: boolean;
   customCalculations?: any;
 }
 
@@ -60,7 +62,7 @@ export class DataProcessor {
   async processData(
     companyData: CompanyData,
     onProgress?: (stage: string, progress: number) => void
-  ): Promise<{ companyData: CompanyData; analysis: AnalysisResults }> {
+  ): Promise<{ companyData: CompanyData; analysis: AnalysisResults; [extra: string]: any }> { // demo callers destructure optional extras (metadata)
     try {
       // Phase 1: Financial Analysis (40% of processing)
       onProgress?.('Performing financial analysis', 10);

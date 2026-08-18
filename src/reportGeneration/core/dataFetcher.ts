@@ -38,6 +38,9 @@ export interface DataFetcherConfig {
   apiKey?: string; // TwelveData API key
   firecrawlApiKey?: string;
   includeNews?: boolean;
+  includeHistoricalPrices?: boolean; // example-script flags (accepted, fetcher decides internally)
+  includeFinancials?: boolean;
+  includeAnalystData?: boolean;
   includeTranscripts?: boolean;
   maxConcurrent?: number;
   adapters?: { // Optional: provide pre-configured adapters
@@ -379,9 +382,9 @@ export class DataFetcher {
     ]);
     
     return {
-      description: companyInfo?.description || '',
-      sector: companyInfo?.sector || 'Technology',
-      industry: companyInfo?.industry || 'Technology',
+      description: (companyInfo as any)?.description || '',
+      sector: (companyInfo as any)?.sector || 'Technology',
+      industry: (companyInfo as any)?.industry || 'Technology',
       technicals: technicals || this.getDefaultTechnicals(),
       analysts: analysts || this.getDefaultAnalystData(),
       earnings: earnings || { historical: [], upcoming: [], nextEarningsDate: null, averageSurprise: 0 }
@@ -427,8 +430,8 @@ export class DataFetcher {
     const [news, transcripts] = results;
     
     return {
-      news: news || [],
-      transcripts: transcripts || []
+      news: (news as any) || [],
+      transcripts: (transcripts as any) || []
     };
   }
   
@@ -881,7 +884,7 @@ export class DataFetcher {
   
   private calculateSuccessRate(metadata: DataSourceMetadata): number {
     const sources = Object.values(metadata.sources);
-    const successful = sources.filter(s => s.status === 'success').length;
+    const successful = sources.filter((s: any) => typeof s === 'object' && s.status === 'success').length;
     return Math.round((successful / sources.length) * 100);
   }
   
@@ -1108,7 +1111,7 @@ export function createDataFetcher(config: DataFetcherConfig): DataFetcher {
   }
   
   // Ensure API keys are available
-  const apiKey = config.apiKey || process.env.REACT_APP_TWELVE_DATA_API_KEY;
+  const apiKey = config.apiKey || 'proxy-managed';
   const firecrawlKey = config.firecrawlApiKey || process.env.FIRECRAWL_API_KEY;
   
   if (!apiKey) {

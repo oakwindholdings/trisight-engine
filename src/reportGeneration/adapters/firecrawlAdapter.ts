@@ -691,15 +691,15 @@ export class FirecrawlAdapter extends BaseAdapter {
     }
   }
   
-  private generateSummary(content: string, ): string {
+  private generateSummary(content: string, maxLength: number = 300): string {
     if (!content) return '';
-    
+
     // Simple summary: first two sentences
     const sentences = content.match(/[^.!?]+[.!?]+/g) || [];
     const summary = sentences.slice(0, 2).join(' ').trim();
-    
-    return summary.length > maxLength 
-      ? summary
+
+    return summary.length > maxLength
+      ? summary.slice(0, maxLength).trim() + '…'
       : summary;
   }
   

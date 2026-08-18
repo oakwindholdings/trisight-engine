@@ -5,7 +5,7 @@
 import { createDataFetcher } from '../core/dataFetcher';
 import { createFinancialCalculationsEngine } from '../processing/financialCalculations';
 import { createDataProcessor } from '../processing/dataProcessor';
-import { globalPerformanceMonitor } from '../utils/performanceMonitor';
+import { performanceMonitor as globalPerformanceMonitor } from '../utils/performanceMonitor';
 
 /**
  * Complete financial analysis example

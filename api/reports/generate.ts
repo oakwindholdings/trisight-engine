@@ -2,10 +2,12 @@
 // Vercel serverless function for report generation
 // This replaces the Express /api/reports/generate endpoint
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Runs under Express now; the old serverless types were plain req/res shapes.
+type VercelRequest = any;
+type VercelResponse = any;
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('../_lib/dbclient');
 
 // Initialize Supabase client
 const supabase = createClient(

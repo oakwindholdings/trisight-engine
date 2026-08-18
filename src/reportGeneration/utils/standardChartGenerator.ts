@@ -6,6 +6,7 @@ import { GeneratedChart } from './chartGenerator';
 import { logDebug } from '../../utils/logger';
 
 // Use dynamic imports for Node.js canvas and Chart.js to avoid browser issues
+type ChartConfiguration = any; // chart.js is an optional dynamic import; its types are unavailable at compile time
 let createCanvas: any;
 let Chart: any;
 
@@ -26,8 +27,8 @@ async function initializeChartLibraries() {
 }
 
 export interface StandardChartOptions {
-  width: number;
-  height: number;
+  width?: number; // optional: callers default to {} and the generator falls back internally
+  height?: number;
   title?: string;
   theme?: 'light' | 'dark';
   format?: 'png' | 'svg';

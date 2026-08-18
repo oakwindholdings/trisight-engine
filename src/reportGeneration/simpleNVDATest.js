@@ -8,7 +8,7 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const API_KEY = process.env.REACT_APP_TWELVE_DATA_API_KEY;
-const BASE_URL = 'https://api.twelvedata.com';
+const BASE_URL = '/api/market';
 
 async function testNVDAData() {
   console.log('=== Simple NVDA API Test ===\n');

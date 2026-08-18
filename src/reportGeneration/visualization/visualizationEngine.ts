@@ -317,8 +317,8 @@ export class VisualizationEngine {
           .data(dataset.data)
           .enter().append('circle')
           .attr('class', `dot-${index}`)
-          .attr('cx', (d, i) => xScale(labels[i]) as number)
-          .attr('cy', d => yScale(d) as number)
+          .attr('cx', (d: any, i: number) => xScale(labels[i]) as number)
+          .attr('cy', (d: any) => yScale(d) as number)
           .attr('r', 3)
           .attr('fill', color)
           .style('opacity', 0)
@@ -412,15 +412,15 @@ export class VisualizationEngine {
         .data(dataset.data)
         .enter().append('rect')
         .attr('class', 'bar')
-        .attr('x', (d, i) => xScale(data.labels[i]) as number)
+        .attr('x', (d: any, i: number) => xScale(data.labels[i]) as number)
         .attr('y', chartHeight)
         .attr('width', xScale.bandwidth())
         .attr('height', 0)
         .attr('fill', color)
         .transition()
         .duration(1000)
-        .attr('y', d => yScale(d) as number)
-        .attr('height', d => chartHeight - (yScale(d) as number));
+        .attr('y', (d: any) => yScale(d) as number)
+        .attr('height', (d: any) => chartHeight - (yScale(d) as number));
       
       // Add value labels
       if (config.showValues) {
@@ -428,13 +428,13 @@ export class VisualizationEngine {
           .data(dataset.data)
           .enter().append('text')
           .attr('class', 'value-label')
-          .attr('x', (d, i) => (xScale(data.labels[i]) as number) + xScale.bandwidth() / 2)
-          .attr('y', d => (yScale(d) as number) - 5)
+          .attr('x', (d: any, i: number) => (xScale(data.labels[i]) as number) + xScale.bandwidth() / 2)
+          .attr('y', (d: any) => (yScale(d) as number) - 5)
           .attr('text-anchor', 'middle')
           .style('font-size', '11px')
           .style('fill', this.colorPalette.text)
           .style('opacity', 0)
-          .text(d => this.formatValue(d, config.yAxis?.format))
+          .text((d: any) => this.formatValue(Number(d), config.yAxis?.format))
           .transition()
           .delay(1000)
           .style('opacity', 1);
@@ -450,7 +450,7 @@ export class VisualizationEngine {
         .data(data.labels)
         .enter().append('g')
         .attr('class', 'bar-group')
-        .attr('transform', d => `translate(${xScale(d)},0)`);
+        .attr('transform', (d: any) => `translate(${xScale(d)},0)`);
       
       data.datasets.forEach((dataset: any, datasetIndex: number) => {
         const color = dataset.color || this.colorPalette.series[datasetIndex % this.colorPalette.series.length];
@@ -542,7 +542,7 @@ export class VisualizationEngine {
     }));
     
     // Create scales
-    const xScale = d3Time.scaleTime()
+    const xScale = (d3Scale as any).scaleTime() // scaleTime lives in d3-scale, not d3-time
       .domain(d3Array.extent(candles, d => d.date) as [Date, Date])
       .range([0, chartWidth]);
     
@@ -611,11 +611,11 @@ export class VisualizationEngine {
       .data(candles)
       .enter().append('rect')
       .attr('class', 'volume-bar')
-      .attr('x', d => xScale(d.date) - candleWidth / 2)
-      .attr('y', d => volumeScale(d.volume))
+      .attr('x', (d: any) => xScale(d.date) - candleWidth / 2)
+      .attr('y', (d: any) => volumeScale(d.volume))
       .attr('width', candleWidth)
-      .attr('height', d => volumeChartHeight - volumeScale(d.volume))
-      .attr('fill', d => d.close >= d.open ? this.colorPalette.positive : this.colorPalette.negative)
+      .attr('height', (d: any) => volumeChartHeight - volumeScale(d.volume))
+      .attr('fill', (d: any) => d.close >= d.open ? this.colorPalette.positive : this.colorPalette.negative)
       .attr('opacity', 0.5);
     
     // Add volume axis
@@ -676,17 +676,17 @@ export class VisualizationEngine {
     
     // Prepare data
     const dataset = data.datasets[0];
-    const pieData = d3.pie<number>()
+    const pieData = (d3.pie as any)()
       .value(d => d)
       .sort(null)(dataset.data);
     
     // Create arc generator
-    const arc = d3.arc<d3.PieArcDatum<number>>()
+    const arc = (d3.arc as any)()
       .innerRadius(config.donut ? radius * 0.6 : 0)
       .outerRadius(radius);
     
     // Create label arc
-    const labelArc = d3.arc<d3.PieArcDatum<number>>()
+    const labelArc = (d3.arc as any)()
       .innerRadius(radius * 0.8)
       .outerRadius(radius * 0.8);
     
@@ -698,14 +698,14 @@ export class VisualizationEngine {
     
     slices.append('path')
       .attr('d', arc as any)
-      .attr('fill', (d, i) => this.colorPalette.series[i % this.colorPalette.series.length])
+      .attr('fill', (d: any, i: number) => this.colorPalette.series[i % this.colorPalette.series.length])
       .attr('stroke', this.colorPalette.background)
       .attr('stroke-width', 2)
       .style('opacity', 0)
       .transition()
       .duration(1000)
       .style('opacity', 1)
-      .attrTween('d', function(d) {
+      .attrTween('d', function(d: any) {
         const interpolate = d3Interpolate.interpolate({ startAngle: 0, endAngle: 0 }, d);
         return function(t) {
           return arc(interpolate(t) as any) as string;
@@ -716,12 +716,12 @@ export class VisualizationEngine {
     const threshold = 0.05; // Don't show labels for slices < 5%
     
     slices.append('text')
-      .attr('transform', d => `translate(${labelArc.centroid(d)})`)
+      .attr('transform', (d: any) => `translate(${labelArc.centroid(d)})`)
       .attr('text-anchor', 'middle')
       .style('font-size', '12px')
       .style('fill', this.colorPalette.text)
       .style('opacity', 0)
-      .text((d, i) => {
+      .text((d: any, i: number) => {
         const percent = (d.endAngle - d.startAngle) / (2 * Math.PI);
         return percent > threshold ? `${data.labels[i]}\n${(percent * 100).toFixed(1)}%` : '';
       })
@@ -937,25 +937,25 @@ export class VisualizationEngine {
       .attr('class', 'cell');
     
     cells.append('rect')
-      .attr('x', d => xScale(data.columns[d.col]) as number)
-      .attr('y', d => yScale(data.rows[d.row]) as number)
+      .attr('x', (d: any) => xScale(data.columns[d.col]) as number)
+      .attr('y', (d: any) => yScale(data.rows[d.row]) as number)
       .attr('width', xScale.bandwidth())
       .attr('height', yScale.bandwidth())
       .attr('fill', this.colorPalette.background)
       .transition()
       .duration(1000)
-      .attr('fill', d => colorScale(d.value));
+      .attr('fill', (d: any) => colorScale(d.value));
     
     // Add text values
     cells.append('text')
-      .attr('x', d => (xScale(data.columns[d.col]) as number) + xScale.bandwidth() / 2)
-      .attr('y', d => (yScale(data.rows[d.row]) as number) + yScale.bandwidth() / 2)
+      .attr('x', (d: any) => (xScale(data.columns[d.col]) as number) + xScale.bandwidth() / 2)
+      .attr('y', (d: any) => (yScale(data.rows[d.row]) as number) + yScale.bandwidth() / 2)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .style('font-size', '11px')
-      .style('fill', d => Math.abs(d.value) > 0.5 ? 'white' : this.colorPalette.text)
+      .style('fill', (d: any) => Math.abs(d.value) > 0.5 ? 'white' : this.colorPalette.text)
       .style('opacity', 0)
-      .text(d => d.value.toFixed(2))
+      .text((d: any) => d.value.toFixed(2))
       .transition()
       .delay(1000)
       .style('opacity', 1);
@@ -1052,19 +1052,19 @@ export class VisualizationEngine {
       .attr('class', 'waterfall-bar');
     
     bars.append('rect')
-      .attr('x', d => xScale(d.label) as number)
-      .attr('y', d => d.isTotal ? yScale(d.end) : yScale(Math.max(d.start, d.end)))
+      .attr('x', (d: any) => xScale(d.label) as number)
+      .attr('y', (d: any) => d.isTotal ? yScale(d.end) : yScale(Math.max(d.start, d.end)))
       .attr('width', xScale.bandwidth())
-      .attr('height', d => d.isTotal ? 
+      .attr('height', (d: any) => d.isTotal ? 
         Math.abs(yScale(0) - yScale(d.end)) :
         Math.abs(yScale(d.start) - yScale(d.end)))
-      .attr('fill', d => 
+      .attr('fill', (d: any) => 
         d.isTotal ? this.colorPalette.primary :
         d.value >= 0 ? this.colorPalette.positive : this.colorPalette.negative)
       .attr('opacity', 0)
       .transition()
       .duration(1000)
-      .attr('opacity', d => d.isTotal ? 1 : 0.8);
+      .attr('opacity', (d: any) => d.isTotal ? 1 : 0.8);
     
     // Add connectors
     processedData.forEach((d: any, i: number) => {
@@ -1086,8 +1086,8 @@ export class VisualizationEngine {
     
     // Add value labels
     bars.append('text')
-      .attr('x', d => (xScale(d.label) as number) + xScale.bandwidth() / 2)
-      .attr('y', d => {
+      .attr('x', (d: any) => (xScale(d.label) as number) + xScale.bandwidth() / 2)
+      .attr('y', (d: any) => {
         if (d.isTotal) return yScale(d.end) - 5;
         return d.value >= 0 ? yScale(d.end) - 5 : yScale(d.end) + 15;
       })
@@ -1095,7 +1095,7 @@ export class VisualizationEngine {
       .style('font-size', '11px')
       .style('fill', this.colorPalette.text)
       .style('opacity', 0)
-      .text(d => this.formatValue(Math.abs(d.value), config.valueFormat))
+      .text((d: any) => this.formatValue(Math.abs(d.value), config.valueFormat))
       .transition()
       .delay(1000)
       .style('opacity', 1);
@@ -1146,13 +1146,13 @@ export class VisualizationEngine {
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
     // Create treemap layout
-    d3.treemap<any>()
+    (d3.treemap as any)()
       .size([chartWidth, chartHeight])
       .padding(2)
       (root);
     
     // Create color scale
-    const categories = [...new Set(root.leaves().map(d => d.data.category))];
+    const categories: string[] = [...new Set<string>(root.leaves().map((d: any) => String(d.data.category)))];
     const colorScale = d3Scale.scaleOrdinal()
       .domain(categories)
       .range(this.colorPalette.series);
@@ -1162,12 +1162,12 @@ export class VisualizationEngine {
       .data(root.leaves())
       .enter().append('g')
       .attr('class', 'cell')
-      .attr('transform', d => `translate(${(d as any).x0},${(d as any).y0})`);
+      .attr('transform', (d: any) => `translate(${(d as any).x0},${(d as any).y0})`);
     
     cells.append('rect')
-      .attr('width', d => (d as any).x1 - (d as any).x0)
-      .attr('height', d => (d as any).y1 - (d as any).y0)
-      .attr('fill', d => colorScale(d.data.category) as string)
+      .attr('width', (d: any) => (d as any).x1 - (d as any).x0)
+      .attr('height', (d: any) => (d as any).y1 - (d as any).y0)
+      .attr('fill', (d: any) => colorScale(d.data.category) as string)
       .attr('opacity', 0)
       .transition()
       .duration(1000)
@@ -1177,14 +1177,14 @@ export class VisualizationEngine {
     cells.append('text')
       .attr('x', 4)
       .attr('y', 16)
-      .style('font-size', d => {
+      .style('font-size', (d: any) => {
         const width = (d as any).x1 - (d as any).x0;
         const height = (d as any).y1 - (d as any).y0;
         return Math.min(14, width / 8, height / 2) + 'px';
       })
       .style('fill', 'white')
       .style('opacity', 0)
-      .text(d => {
+      .text((d: any) => {
         const width = (d as any).x1 - (d as any).x0;
         return width > 50 ? d.data.name : '';
       })
@@ -1196,14 +1196,14 @@ export class VisualizationEngine {
     cells.append('text')
       .attr('x', 4)
       .attr('y', 32)
-      .style('font-size', d => {
+      .style('font-size', (d: any) => {
         const width = (d as any).x1 - (d as any).x0;
         const height = (d as any).y1 - (d as any).y0;
         return Math.min(11, width / 10, height / 3) + 'px';
       })
       .style('fill', 'white')
       .style('opacity', 0)
-      .text(d => {
+      .text((d: any) => {
         const width = (d as any).x1 - (d as any).x0;
         const height = (d as any).y1 - (d as any).y0;
         return width > 80 && height > 40 ? this.formatValue((d as any).value, config.valueFormat) : '';
@@ -1291,7 +1291,7 @@ export class VisualizationEngine {
       .attrTween('d', function() {
         const interpolate = d3Interpolate.interpolate(-Math.PI / 2, valueAngle);
         return function(t) {
-          return d3Shape.arc()
+          return (d3Shape.arc() as any)
             .innerRadius(radius * 0.7)
             .outerRadius(radius)
             .startAngle(-Math.PI / 2)

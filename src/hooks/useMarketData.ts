@@ -2,7 +2,7 @@
 // Hook for retrieving market data
 // Wraps TwelveData API calls
 import { useState, useEffect, useCallback } from 'react';
-import { fetchTimeSeries, fetchTradingDay, checkMarketStatus, fetchCandlestickData } from '../api/twelveDataApi';
+import { fetchTimeSeries, fetchTradingDay, checkMarketStatus, fetchCandlestickData } from '../api/marketApi';
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
 import { getMockMarketData } from '../utils/mockData';
 import { logDebug } from '../utils/debug';

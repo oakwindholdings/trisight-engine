@@ -10,8 +10,20 @@ import { createSequentialTimeScale } from '../../utils/sequentialScale';
 // Import types only to avoid runtime dependencies on React components
 import type { ConvictionCloudItem } from '../../components/Chart/ConvictionCloudRenderer';
 import { TradeActionSignal } from '../../utils/trading/TradeActionSignal';
-import { GeneratedChart } from './chartGenerator';
+import { GeneratedChart as BaseGeneratedChart } from './chartGenerator';
 import { logDebug } from '../../utils/logger';
+
+// Report paths emit node-canvas Buffers in data; widen locally rather than in the shared type
+type GeneratedChart = Omit<BaseGeneratedChart, 'data'> & { data: string | Buffer };
+
+// Local hybrid wrapper: this file calls scales directly (d3-style) AND via .ticks/.invert;
+// the shared factories return method objects, so bind the callable form here.
+function asCallableScale(obj: any): any {
+  const fn: any = (v: any) => obj.scale(v);
+  fn.scale = obj.scale; fn.invert = obj.invert; fn.ticks = obj.ticks;
+  return fn;
+}
+
 
 // TwelveData ULTRA features we can leverage
 interface TwelveDataUltraConfig {
@@ -75,13 +87,13 @@ export class CanvasReportChartGenerator {
     
     // Create scales using our proprietary scaling functions
     const priceExtent = this.getPriceExtent(data);
-    const priceScale = createPriceScale(priceExtent, [chartHeight, 0]);
+    const priceScale = asCallableScale(createPriceScale(chartHeight, priceExtent, [chartHeight, 0]));
     
-    const timeScale = createSequentialTimeScale(
-      data,
-      [0, chartWidth],
-      'day' // Default to daily for reports
-    );
+    const timeScale = asCallableScale(createSequentialTimeScale(
+      chartWidth,
+      data as any,
+      [0, chartWidth]
+    ));
     
     // Render grid if enabled
     if (showGrid) {
@@ -133,9 +145,10 @@ export class CanvasReportChartGenerator {
         patternsCtx.lineWidth = 2;
         
         // Simple pattern highlighting based on candle indices
-        if (pattern.startIndex !== undefined && pattern.endIndex !== undefined) {
-          const startX = timeScale(pattern.startIndex);
-          const endX = timeScale(pattern.endIndex);
+        const p: any = pattern; // index fields live on runtime pattern events, not the Pattern model
+        if (p.startIndex !== undefined && p.endIndex !== undefined) {
+          const startX = timeScale(p.startIndex);
+          const endX = timeScale(p.endIndex);
           const width = endX - startX;
           
           // Draw pattern highlight
@@ -241,7 +254,7 @@ export class CanvasReportChartGenerator {
       // Group items by time and aggregate conviction
       const convictionByTime = new Map<number, { bullish: number; bearish: number; neutral: number }>();
       
-      convictionItems.forEach(item => {
+      convictionItems.forEach((item: any) => { // report payloads carry timestamp/sentiment/strength, unlike the UI ConvictionCloudItem
         const key = item.timestamp;
         if (!convictionByTime.has(key)) {
           convictionByTime.set(key, { bullish: 0, bearish: 0, neutral: 0 });

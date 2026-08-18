@@ -3,7 +3,7 @@
 // Fetches and aggregates data dynamically
 
 import { CandlestickData, Timeframe } from '../models/ChartTypes';
-import { fetchTimeSeries } from '../api/twelveDataApi';
+import { fetchTimeSeries } from '../api/marketApi';
 
 export interface ResolutionConfig {
   timeframe: Timeframe;

@@ -7,7 +7,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require('../_lib/dbclient');
 
 const { generateSection } = require('../_lib/section-generator');
 
@@ -222,7 +222,7 @@ module.exports = async function handler(req, res) {
       let templateSections = [];
       if (templateId && process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
         try {
-          const { createClient } = require('@supabase/supabase-js');
+          const { createClient } = require('../_lib/dbclient');
           const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
           const { data, error } = await sb
             .from('report_template_sections')
