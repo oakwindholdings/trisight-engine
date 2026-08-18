@@ -328,3 +328,32 @@ Evidence files live in `assay/evidence/`; every claim below cites a file or a na
 - ISC-141 (A7): `evidence/02-ingest-attempt.txt` (missing_credential ×4), `evidence/03-evaluate.txt` (partial_universe), insufficient_history + missing_bar covered in kernel tests.
 - ISC-142..146, 148, 150: greps in gate steps 4+5 of 9; red-first evidence for A2/A3/A5/redaction as cited; no Python files exist.
 - ISC-125, 135/138 (A4 real-data worst slice), 129 (cold reproduction), 147 (independent verifier), 149 (commit last): NOT RUN at time of this entry — pending post-commit verification fleet and a real MASSIVE_API_KEY for the A4 real-data leg. A4 mechanism proven in test space (`tests/adversary_receipt.test.ts`).
+
+---
+
+# CAMPAIGN 2 — Phases 2+3 (authorized by Bob 2026-08-17 ~20:45, overnight run)
+
+## Goal (Campaign 2)
+
+Compute an honest inflation factor (claimed backtest vs realized paper record, or a documented refusal) for each of the nine SEALED predecessor strategies starting with Oakwind; run a pre-registered candidate sweep through the Phase-1 gauntlet; deliver evidence-linked, refutable reports for Dick — everything committed and pushed as it lands, predecessor estate strictly read-only.
+
+## Criteria (Campaign 2)
+
+- [ ] ISC-151: All work pushed to origin (assay-phase1 branch) after every milestone commit — `git log origin/assay-phase1` proves it
+- [ ] ISC-152: Discovery record per sealed strategy: name, seal ref, claim source file:line, realized-record source, window — or documented NOT FOUND
+- [ ] ISC-153: Oakwind disambiguation recorded (Swing Trader vs Investor Daily) with the evidence for "most likely correct"
+- [ ] ISC-154: Phase-2 code lives outside COMPUTE_ROOTS; gate verify-store stays green (zero stale seals) throughout
+- [ ] ISC-155: PredecessorClaim records: content-addressed, provenance = exact file path + excerpt, read-only ingestion (nothing written back — grep proves no writes outside assay/)
+- [ ] ISC-156: PredecessorRealized records: same discipline, from fills ledgers/paper reports
+- [ ] ISC-157: InflationFactor computed only when claim and realized windows overlap comparably; mismatch → Refused('window_mismatch' via invalid_params detail), never a stretched ratio
+- [ ] ISC-158: Every strategy without a computable ratio gets an explicit refusal record naming what was missing (the PRD predicts ~5/9 irreproducible — that finding IS a deliverable)
+- [ ] ISC-159: Estate inflation distribution report generated FROM records (display path re-derives nothing)
+- [ ] ISC-160: Known fleet-wide survivorship-bias finding (frozen universe pools, workflow w4nfwu675) cited in every per-strategy report as a structural inflator
+- [ ] ISC-161: Phase-3 candidates ALL pre-registered before any evaluation (registration timestamps < first Run timestamp — provable from records)
+- [ ] ISC-162: Every candidate evaluated under identical frictions/window; identical params_hash structure across the sweep
+- [ ] ISC-163: Every candidate gets an adversary pass; survivors = verified:true receipts only
+- [ ] ISC-164: Sweep report discloses the full candidate count and failure distribution — no silent survivorship in the survivor report (the tool must not commit the sin it measures)
+- [ ] ISC-165: Anti: predecessor estate untouched — `git -C <estate repos> status` clean for all four peer repos at campaign end
+- [ ] ISC-166: Anti: no claim in any Dick-facing report without a file citation or stored-record hash
+- [ ] ISC-167: Dick report set: per-strategy pages + estate summary + methodology page ("how to refute this") committed under assay/reports/
+- [ ] ISC-168: Campaign summary written for Bob with NOT RUN items listed honestly
