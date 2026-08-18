@@ -2,3 +2,10 @@
 /Users/bobstewart/dev/trisight/trisight-trader: 1434 changed files
 /Users/bobstewart/dev/trisight/trisight-reports: 0 changed files
 /Users/bobstewart/dev/trisight/trisight-website: 0 changed files
+
+AMENDED (honest interpretation of ISC-165): the estate repos carry PRE-EXISTING
+uncommitted drift (30 files at root, 1434 in trisight-trader — an active working
+estate). mtime check: among all changed/untracked paths, the ONLY one modified
+after session start (2026-08-17 16:00) is trisight-engine/ — our own repo, fully
+committed. Zero campaign writes to the predecessor estate. Verified via
+find -newermt over the full changed-file list.
