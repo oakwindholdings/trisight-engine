@@ -357,3 +357,7 @@ Compute an honest inflation factor (claimed backtest vs realized paper record, o
 - [x] ISC-166: Anti: no claim in any Dick-facing report without a file citation or stored-record hash
 - [x] ISC-167: Dick report set: per-strategy pages + estate summary + methodology page ("how to refute this") committed under assay/reports/
 - [x] ISC-168: Campaign summary written for Bob with NOT RUN items listed honestly
+
+## Decisions (Campaign 3 — design phase)
+
+- 2026-08-18 — Grammar-extension mechanism DESIGNED, not built: design/GRAMMAR-EXTENSION-MECHANISM.md presented for Bob's ratification per plan-means-stop. Core: Epoch model (declared, reviewed, content-addressed code states — verify-store asserts membership in the epoch chain + current tree = latest epoch), append-only grammar versioning with per-family birth certificates, PIT UniverseSnapshot/EventSnapshot data types (the survivorship killer), family-registered adversary slicers, four delivery waves each with red-first proof obligations. Four decisions reserved for Bob: epoch ratification, earnings-calendar caveat-vs-refusal, Massive plan tier confirmation, wave order.
