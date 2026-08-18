@@ -59,29 +59,33 @@ Everything lives on GitHub, readable in any browser on your PC. One-time setup:
 
 ## Option 3 — Guided by an AI assistant (if you use ChatGPT or Claude)
 
-If you'd like to be walked through a guide interactively — asked one question at a time,
-in plain English — paste the following into ChatGPT or Claude, then paste the full text
-of one guide underneath it (in the browser view, click the "Raw" button, press
-Ctrl+A then Ctrl+C to copy the whole guide, and Ctrl+V to paste):
+If you'd like to be walked through a review interactively — asked one question at a
+time, in plain English — open ChatGPT or Claude, **attach one strategy's PDF packet**
+(from the zip Bob sent you), and paste the following:
 
 ```
-You are helping me, a trading strategy owner, review a document called an "Input Review
-Guide." It walks through every input an audit team used when checking my strategy's
-claimed performance against its real trading record. I am not highly technical.
+I am a trading strategy owner reviewing an audit of my own strategies. I am not
+highly technical. I'm attaching a PDF called an "Input Review Guide" for one of my
+strategies. It walks through every input an audit team used when checking my
+strategy's claimed performance against its real trading record.
 
-Your job: take me through the guide ONE STEP AT A TIME (it has 7 steps). For each step:
+Your job is to take me through the guide ONE STEP AT A TIME (it has 7 steps).
+For each step:
 1. Explain in plain English what the audit team used or assumed, and why it matters.
-2. Ask me the specific review question that step poses.
+2. Ask me the specific review question that step poses. Ask one question, then wait
+   for my answer before moving on.
 3. Record my answer as either "CONFIRMED" or "CORRECTION: <what I said>".
-Do not skip steps, do not summarize multiple steps together, and do not offer your own
-opinion of whether my strategy is good. At the end, produce a clean numbered list of all
-my confirmations and corrections, formatted so I can email it as-is.
 
-Here is the guide:
-[PASTE THE GUIDE TEXT HERE]
+Rules: do not skip steps, do not combine steps, do not offer your own opinion of
+whether my strategy is good, and do not invent any numbers that are not in the
+attached document. If I say "I don't know," record that as my answer and move on.
+
+At the end, produce a clean numbered list of all my confirmations and corrections,
+labeled with the strategy name and step numbers, formatted so I can copy it into
+the review website or an email exactly as-is.
 ```
 
-The assistant's final list is exactly what Bob needs — email it to **bob@bobstewart.com**.
+The assistant's final list maps one-to-one onto the review website's cards — type the answers in there, or simply email the list to **bob@bobstewart.com**.
 
 ---
 
