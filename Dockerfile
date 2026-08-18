@@ -3,13 +3,15 @@
 # browser anymore) and runs the Express server, which serves the build, the market proxy, the data
 # API, and self-provisions the Postgres schema at boot.
 
-FROM oven/bun:1.2 AS build
+# Build with node (CRA's terser minifier crashes under bun's worker_threads —
+# resourceLimits unimplemented); runtime stays bun.
+FROM node:20 AS build
 WORKDIR /app
-COPY package.json ./
-RUN bun install
+COPY package.json package-lock.json ./
+RUN npm ci || npm install
 COPY . .
 ENV NODE_ENV=production
-RUN bunx react-scripts build
+RUN CI=false npm run build
 
 FROM oven/bun:1.2
 WORKDIR /app

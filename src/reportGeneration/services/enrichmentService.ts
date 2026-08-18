@@ -1,11 +1,10 @@
 // src/reportGeneration/services/enrichmentService.ts
 // Rule: FallbackChain + CacheFirst
 
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY
-  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
-  : null;
+// Supabase eradicated (2026-08-18). The enrich cache short-circuits to the
+// no-cache path this file always supported; the report_enrich_cache table now
+// lives in Postgres behind the server if a server-side cache is reintroduced.
+const supabase: any = null;
 
 const TTL_MIN = Number(process.env.ENRICH_CACHE_TTL_MIN || 240);
 const MIN_WORDS = Number(process.env.ENRICH_MIN_WORDS || 350);
