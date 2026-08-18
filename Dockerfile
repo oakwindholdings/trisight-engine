@@ -7,7 +7,7 @@
 # resourceLimits unimplemented); runtime stays bun.
 FROM node:20 AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci || npm install
 COPY . .
 ENV NODE_ENV=production
