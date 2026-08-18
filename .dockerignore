@@ -3,7 +3,8 @@ server/node_modules
 build
 dist
 .git
-assay
+assay/**
+!assay/reports/review/review-data.json
 generated-reports
 test-screenshots
 debug-screenshots

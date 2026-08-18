@@ -19,6 +19,7 @@ COPY package.json ./
 RUN bun install --production
 COPY --from=build /app/build ./build
 COPY server ./server
+COPY assay/reports/review/review-data.json ./assay/reports/review/review-data.json
 COPY api ./api
 COPY db ./db
 COPY src ./src

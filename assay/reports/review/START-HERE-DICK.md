@@ -7,12 +7,26 @@ used: which documents we treated as your strategies' official claims, which trad
 we treated as reality, and what assumptions we made. You know things we don't. Anything
 you correct, the study re-runs with your correction, and the original stays visible.
 
-There are **three ways to do this review**. Pick whichever suits you — they all end the
-same way (your confirmations and corrections back to Bob).
+There are **four ways to do this review**. Pick whichever suits you — they all end the
+same way (your confirmations and corrections on record).
 
 ---
 
-## Option 1 — Paper (easiest)
+## Option 0 — The review website (recommended)
+
+The easiest complete path. Open this address in any browser on your PC:
+
+**https://trisight-engine-production.up.railway.app/review**
+
+Enter the short access code Bob gives you with this link, and you'll see every strategy
+in a list on the left. Click one, and each input we used appears as its own card with a
+plain-English question, direct links to the source files, and two buttons: **Confirm**
+or **Needs correction** with a box for your words. Click **Save this answer** on each
+card — your answers are recorded instantly, you can stop and come back anytime, and you
+can revise any answer later (every version is kept). The left-hand list shows your
+progress per strategy. Nothing to install, nothing to email.
+
+## Option 1 — Paper
 
 1. Bob will hand you (or email you) **one printed PDF per strategy** — ten in all. Each
    is a self-contained packet: the review guide, the findings report, and the full web

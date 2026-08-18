@@ -131,6 +131,20 @@ CREATE TABLE IF NOT EXISTS report_enrich_cache (
   UNIQUE (ticker, timeframe, section)
 );
 
+-- input_review_feedback: Dick's per-element review responses (append-only; the latest
+-- row per (strategy, element_id) is the current answer, priors stay for audit)
+CREATE TABLE IF NOT EXISTS input_review_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  strategy TEXT NOT NULL,
+  element_id TEXT NOT NULL,
+  decision TEXT NOT NULL CHECK (decision IN ('confirmed', 'correction')),
+  correction_text TEXT,
+  guidance_text TEXT,
+  reviewer TEXT NOT NULL DEFAULT 'Dick O''Leary',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_irf_strategy_element ON input_review_feedback (strategy, element_id, created_at DESC);
+
 -- report_metadata: audit trail rows written by the enhanced-report orchestrator
 CREATE TABLE IF NOT EXISTS report_metadata (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

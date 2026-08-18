@@ -2,6 +2,8 @@
 
 *Draft set for Bob's review. Nothing here goes to Dick until Bob signs off.*
 
+**The live review UI is at `https://trisight-engine-production.up.railway.app/review`**
+(access-code gated; feedback persists per input element to Postgres, append-only).
 **Dick starts at [START-HERE-DICK.md](START-HERE-DICK.md)** ([printable PDF](pdf/START-HERE-DICK.pdf)) — a zero-setup walkthrough with three review
 paths (paper, browser, AI-guided). Each strategy below also has a comprehensive printable
 PDF packet (guide + findings appendix) in [pdf/](pdf/), and every guide ends with a

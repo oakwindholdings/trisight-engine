@@ -51,6 +51,7 @@ const { applySchema, dbHealth } = require('./db');
 
 app.use('/api/market', marketRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/review', require('./routes/review'));
 app.use('/api/reports', reportRoutes);
 app.use('/api/enhanced-reports', enhancedReportRoutes);
 app.use('/api/prompts', promptRoutes);
@@ -97,10 +98,15 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+// Dick's input-review UI (self-contained page; the API behind it is code-gated)
+app.get('/review', (req, res) => {
+  res.sendFile(path.join(__dirname, 'review-ui', 'index.html'));
+});
+
 // Production frontend: serve the CRA build + SPA fallback (replaces the Vercel rewrites)
 const buildDir = path.join(__dirname, '../build');
 app.use(express.static(buildDir));
-app.get(/^\/(?!api\/|generated-reports\/).*/, (req, res, next) => {
+app.get(/^\/(?!api\/|generated-reports\/|review$).*/, (req, res, next) => {
   res.sendFile(path.join(buildDir, 'index.html'), (err) => { if (err) next(); });
 });
 

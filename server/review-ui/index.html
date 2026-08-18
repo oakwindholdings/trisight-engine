@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strategy Input Review</title>
+<style>
+  :root { --ink:#15202b; --paper:#fbfaf7; --accent:#0b5cad; --ok:#1c7a3d; --warn:#a05a00; --line:#d8d4cc; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Georgia, 'Times New Roman', serif; color:var(--ink); background:var(--paper); font-size:17px; line-height:1.55; }
+  header { background:var(--ink); color:#fff; padding:14px 22px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  header h1 { font-size:20px; margin:0; font-weight:600; }
+  header .sub { color:#b9c4cf; font-size:14px; }
+  .layout { display:flex; min-height:calc(100vh - 54px); }
+  nav { width:300px; flex:none; border-right:2px solid var(--line); background:#f3f1ea; padding:14px 0; }
+  nav h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:#6b6459; padding:0 18px; margin:14px 0 6px; }
+  nav a.strat { display:block; padding:9px 18px; color:var(--ink); text-decoration:none; border-left:4px solid transparent; }
+  nav a.strat:hover { background:#e9e6dd; }
+  nav a.strat.active { border-left-color:var(--accent); background:#e9e6dd; font-weight:bold; }
+  nav .prog { font-size:13px; color:#6b6459; }
+  nav .navlinks a { display:block; padding:5px 18px; font-size:14px; color:var(--accent); text-decoration:none; }
+  nav .navlinks a:hover { text-decoration:underline; }
+  main { flex:1; padding:26px 34px 80px; max-width:900px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:18px 20px; margin-bottom:18px; }
+  .card h3 { margin:0 0 6px; font-size:18px; }
+  .step-tag { display:inline-block; background:#e8eef7; color:var(--accent); font-size:12px; font-family:Verdana,sans-serif; padding:2px 8px; border-radius:10px; margin-bottom:6px; }
+  .body-text { margin:8px 0 10px; white-space:pre-wrap; }
+  .question { font-style:italic; color:#4a4438; margin-bottom:10px; }
+  .links a { display:block; font-size:14px; color:var(--accent); word-break:break-all; margin:2px 0; }
+  .locnote { font-size:14px; color:var(--warn); margin:2px 0; }
+  .controls { border-top:1px dashed var(--line); padding-top:12px; margin-top:8px; font-family:Verdana,Arial,sans-serif; font-size:14px; }
+  .controls label.radio { margin-right:22px; cursor:pointer; font-size:15px; }
+  .controls input[type=radio] { transform:scale(1.35); margin-right:7px; vertical-align:-2px; }
+  textarea { width:100%; min-height:64px; font:inherit; font-size:15px; padding:8px; border:1px solid var(--line); border-radius:6px; margin-top:8px; }
+  button.save { background:var(--accent); color:#fff; border:0; border-radius:6px; padding:9px 22px; font-size:15px; cursor:pointer; margin-top:10px; font-family:Verdana,sans-serif; }
+  button.save:hover { filter:brightness(1.15); }
+  .saved-note { display:inline-block; margin-left:12px; color:var(--ok); font-size:14px; }
+  .answered-confirmed { border-left:6px solid var(--ok); }
+  .answered-correction { border-left:6px solid var(--warn); }
+  .topbox { background:#fff8e6; border:1px solid #e5d9a8; border-radius:8px; padding:14px 18px; margin-bottom:22px; }
+  #gate { max-width:460px; margin:80px auto; background:#fff; border:1px solid var(--line); border-radius:10px; padding:30px; text-align:center; }
+  #gate input { font-size:18px; padding:10px; width:70%; text-align:center; border:1px solid var(--line); border-radius:6px; }
+  #gate button { margin-top:14px; }
+  .gate-err { color:#b00020; margin-top:10px; }
+  .doclinks { font-size:14px; margin-top:4px; }
+  .doclinks a { color:var(--accent); margin-right:16px; }
+  @media (max-width: 860px) { .layout { flex-direction:column; } nav { width:100%; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Strategy Input Review</h1>
+  <span class="sub">Check every input we used. Confirm it, or correct it — the study re-runs on your corrections, and every prior reading stays on record.</span>
+</header>
+
+<div id="gate" hidden>
+  <h2>Enter your access code</h2>
+  <p>Bob gave you a short code with the link to this page.</p>
+  <input id="code-input" placeholder="access code" autocomplete="off">
+  <br><button class="save" onclick="tryCode()">Open the review</button>
+  <div class="gate-err" id="gate-err"></div>
+</div>
+
+<div class="layout" id="app" hidden>
+  <nav>
+    <h2>Strategies</h2>
+    <div id="nav-strats"></div>
+    <h2>Reference</h2>
+    <div class="navlinks" id="nav-links"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+const $ = (s, el=document) => el.querySelector(s);
+let DATA = null, FEEDBACK = {}, CODE = localStorage.getItem('review_code') || '';
+
+const REF_LINKS = [
+  ['Start Here (walkthrough)', 'https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/START-HERE-DICK.md'],
+  ['How the study works & how to refute it', 'https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/METHODOLOGY-FOR-DICK.md'],
+  ['All printable PDF packets', 'https://github.com/oakwindholdings/trisight-engine/tree/main/assay/reports/review/pdf'],
+  ['Evidence snapshots (defect registry, decisions, forensics)', 'https://github.com/oakwindholdings/trisight-engine/tree/main/assay/reports/review/evidence'],
+];
+
+async function api(path, opts={}) {
+  const r = await fetch('/api/review' + path, { ...opts,
+    headers: { 'Content-Type': 'application/json', 'x-review-code': CODE, ...(opts.headers||{}) } });
+  if (r.status === 401) { showGate('That code was not accepted — check it and try again.'); throw new Error('unauthorized'); }
+  return r.json();
+}
+
+function showGate(msg) {
+  $('#app').hidden = true; $('#gate').hidden = false;
+  $('#gate-err').textContent = msg || '';
+}
+
+async function tryCode() {
+  CODE = $('#code-input').value.trim();
+  localStorage.setItem('review_code', CODE);
+  await boot();
+}
+
+async function boot() {
+  try {
+    DATA = await api('/data');
+    if (DATA.error) { showGate(DATA.error); return; }
+  } catch (e) { return; }
+  const fb = await api('/feedback');
+  FEEDBACK = {};
+  for (const row of (fb.data || [])) FEEDBACK[row.strategy + '::' + row.element_id] = row;
+  $('#gate').hidden = true; $('#app').hidden = false;
+  renderNav();
+  const slug = location.hash.replace('#','') || DATA.strategies[0].slug;
+  renderStrategy(slug);
+}
+
+function answeredCount(s) {
+  return s.elements.filter(e => FEEDBACK[s.slug + '::' + e.id]).length;
+}
+
+function renderNav() {
+  $('#nav-strats').innerHTML = DATA.strategies.map(s =>
+    `<a class="strat" id="nav-${s.slug}" href="#${s.slug}" onclick="renderStrategy('${s.slug}')">${s.name}
+     <div class="prog">${answeredCount(s)} of ${s.elements.length} reviewed</div></a>`).join('');
+  $('#nav-links').innerHTML = REF_LINKS.map(([t,u]) => `<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('');
+}
+
+function esc(t){ const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
+
+function renderStrategy(slug) {
+  const s = DATA.strategies.find(x => x.slug === slug); if (!s) return;
+  document.querySelectorAll('nav a.strat').forEach(a => a.classList.toggle('active', a.id === 'nav-'+slug));
+  const stepNames = {1:'Step 1 — Claim document',2:'Step 2 — Claim numbers',3:'Step 3 — Window & claim-record issues',4:'Step 4 — Realized ledger',5:'Step 5 — Realized numbers & record issues',6:'Step 6 — What we computed / refused'};
+  let html = `<h2>${esc(s.name)}</h2>
+    <div class="topbox">Go card by card. For each one: <b>Confirm</b> if our input is right, or choose
+    <b>Needs correction</b> and tell us what's wrong in your own words. Nothing is final — every answer
+    can be revised later, and every version is kept. Seal reference: <code>${esc(s.seal_ref||'—')}</code>
+    <div class="doclinks">
+      <a href="${s.guide_url}" target="_blank" rel="noopener">Read the full guide ↗</a>
+      <a href="${s.pdf_url}" target="_blank" rel="noopener">Printable PDF packet ↗</a>
+      <a href="${s.findings_url}" target="_blank" rel="noopener">The findings report ↗</a>
+    </div></div>`;
+  let lastStep = 0;
+  for (const e of s.elements) {
+    if (e.step !== lastStep) { html += `<h3 style="margin:26px 0 10px;color:#6b6459">${stepNames[e.step]||('Step '+e.step)}</h3>`; lastStep = e.step; }
+    const key = s.slug + '::' + e.id, saved = FEEDBACK[key];
+    const cls = saved ? (saved.decision === 'confirmed' ? 'answered-confirmed' : 'answered-correction') : '';
+    const links = (e.links||[]).map(l => l.is_link
+      ? `<a href="${l.target}" target="_blank" rel="noopener">${esc(l.citation)} ↗</a>`
+      : `<div class="locnote">⚑ ${esc(l.citation)} — ${esc(l.target || 'lives on the production data volume; a downloadable snapshot is being prepared and will appear here')}</div>`).join('');
+    html += `<div class="card ${cls}" id="card-${e.id}">
+      <span class="step-tag">${esc(e.title)}</span>
+      <div class="body-text">${esc(e.body)}</div>
+      <div class="question">${esc(e.question)}</div>
+      ${links ? `<div class="links">${links}</div>` : ''}
+      <div class="controls">
+        <label class="radio"><input type="radio" name="dec-${e.id}" value="confirmed" ${saved&&saved.decision==='confirmed'?'checked':''}> Confirm — this input is right</label>
+        <label class="radio"><input type="radio" name="dec-${e.id}" value="correction" ${saved&&saved.decision==='correction'?'checked':''}> Needs correction</label>
+        <textarea id="corr-${e.id}" placeholder="If correcting: what's the right document / number / window / ledger? Any guidance in your own words is welcome here too.">${esc(saved ? (saved.correction_text || saved.guidance_text || '') : '')}</textarea>
+        <button class="save" onclick="save('${s.slug}','${e.id}')">Save this answer</button>
+        <span class="saved-note" id="note-${e.id}">${saved ? 'Saved ' + new Date(saved.created_at).toLocaleString() + (saved.history_count>1 ? ` (revision ${saved.history_count})` : '') : ''}</span>
+      </div></div>`;
+  }
+  html += `<div class="topbox">Done with ${esc(s.name)}? Pick the next strategy in the left-hand list.
+           Your answers are saved the moment you click <b>Save</b> — you can close this page and come back anytime.</div>`;
+  $('#main').innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+async function save(slug, elId) {
+  const dec = document.querySelector(`input[name="dec-${elId}"]:checked`);
+  const note = $('#note-'+elId);
+  if (!dec) { note.textContent = 'Pick Confirm or Needs correction first.'; note.style.color = '#b00020'; return; }
+  const text = $('#corr-'+elId).value.trim();
+  const body = { strategy: slug, element_id: elId, decision: dec.value,
+                 correction_text: dec.value === 'correction' ? text : null,
+                 guidance_text: dec.value === 'confirmed' && text ? text : null };
+  const r = await api('/feedback', { method: 'POST', body: JSON.stringify(body) });
+  if (r.error) { note.textContent = 'Could not save: ' + r.error; note.style.color = '#b00020'; return; }
+  note.style.color = ''; note.textContent = 'Saved ✓';
+  const fb = await api('/feedback'); FEEDBACK = {};
+  for (const row of (fb.data || [])) FEEDBACK[row.strategy + '::' + row.element_id] = row;
+  renderNav();
+  document.querySelectorAll('nav a.strat').forEach(a => a.classList.toggle('active', a.id === 'nav-'+slug));
+  const card = $('#card-'+elId);
+  card.classList.remove('answered-confirmed','answered-correction');
+  card.classList.add(dec.value === 'confirmed' ? 'answered-confirmed' : 'answered-correction');
+}
+
+boot();
+</script>
+</body>
+</html>
