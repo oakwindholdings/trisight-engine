@@ -1,0 +1,1 @@
+{"record_type":"Spec","spec":{"entry":{"kind":"next_open"},"exit":{"kind":"signal_flip"},"name":"sweep-sma-f20-s50-msft","risk":{"maxOpenPositions":1},"signal":{"fast":20,"kind":"sma_cross","slow":50},"sizing":{"cashMicros":100000000000,"kind":"fixed_cash"},"universe":["MSFT"]}}

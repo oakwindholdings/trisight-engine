@@ -14,5 +14,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["kernel/**/*.ts", "substrate/**/*.ts", "adversary/**/*.ts", "receipt/**/*.ts", "tests/**/*.ts", "cli.ts"]
+  "include": ["kernel/**/*.ts", "substrate/**/*.ts", "adversary/**/*.ts", "receipt/**/*.ts", "phase2/**/*.ts", "phase3/**/*.ts", "tests/**/*.ts", "cli.ts"]
 }

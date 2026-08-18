@@ -1,0 +1,1 @@
+{"record_type":"Spec","spec":{"entry":{"kind":"next_open"},"exit":{"kind":"signal_flip"},"name":"sweep-sma-f20-s200-all4","risk":{"maxOpenPositions":4},"signal":{"fast":20,"kind":"sma_cross","slow":200},"sizing":{"cashMicros":25000000000,"kind":"fixed_cash"},"universe":["AAPL","MSFT","NVDA","SPY"]}}

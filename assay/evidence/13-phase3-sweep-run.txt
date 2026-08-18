@@ -1,0 +1,15 @@
+population: 135 candidates
+registered: 135 (all before first evaluation)
+progress: 20/135
+progress: 40/135
+progress: 60/135
+progress: 80/135
+progress: 100/135
+progress: 120/135
+{
+  "population": 135,
+  "ok": 105,
+  "refused": 30,
+  "materially_worse": 105,
+  "survivors": 0
+}

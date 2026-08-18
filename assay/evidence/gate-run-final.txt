@@ -4,24 +4,24 @@ ok: all 5 stripped guards fail to compile under the project's own strictness
 == [3/9] tests ==
 bun test v1.3.10 (30e609e0)
 
- 66 pass
+ 71 pass
  0 fail
- 1509 expect() calls
-Ran 66 tests across 8 files. [161.00ms]
+ 1521 expect() calls
+Ran 71 tests across 9 files. [740.00ms]
 == [4/9] kernel purity greps (I1/I2 hygiene) ==
 ok: kernel pure — no clock, no env, no fs/network, no annualization constants
 == [5/9] no masked exits anywhere (gate.sh included) ==
 ok: nothing masked
 == [6/9] determinism replay of stored traces (A5) ==
 {
-  "checked": 2,
+  "checked": 137,
   "drifted": [],
   "code_drift": []
 }
 == [7/9] store verification: index completeness + seal-tree code-hash consistency (Cato C1/C4) ==
 {
-  "objects": 14,
-  "indexed": 14,
+  "objects": 899,
+  "indexed": 899,
   "missing_from_index": [],
   "indexed_without_object": [],
   "current_code": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
@@ -30,29 +30,29 @@ ok: nothing masked
 == [8/9] secret scan over stored material (A6) ==
 ok: live key appears nowhere in store-data/ or evidence/
 == [9/9] coverage (captured as evidence; per-file numbers in ISA) ==
-------------------------|---------|---------|-------------------
-All files               |   96.94 |   92.97 |
- adversary/adversary.ts |  100.00 |   96.43 | 37-38,48
- kernel/bars.ts         |  100.00 |  100.00 | 
- kernel/canonical.ts    |  100.00 |   98.21 | 
- kernel/evaluate.ts     |  100.00 |  100.00 | 
- kernel/metrics.ts      |  100.00 |   76.39 | 95-111
- kernel/micros.ts       |  100.00 |   96.43 | 
- kernel/refusal.ts      |  100.00 |  100.00 | 
- kernel/sim.ts          |  100.00 |   94.52 | 77,108,191-192,255-262
- kernel/span.ts         |  100.00 |   92.31 | 
- kernel/spec.ts         |  100.00 |   93.75 | 35,47,56
- receipt/receipt.ts     |  100.00 |   96.51 | 49,70
- substrate/codehash.ts  |  100.00 |  100.00 | 
- substrate/ingress.ts   |  100.00 |   95.28 | 89,113,122,129
- substrate/invoke.ts    |  100.00 |   94.37 | 114,116,133-134,137-138,143-144,153,157,294-295
- substrate/registry.ts  |   57.14 |   73.81 | 52-62
- substrate/store.ts     |   90.91 |   77.27 | 136-137,166-193
- tests/prop.ts          |  100.00 |   95.24 | 
-------------------------|---------|---------|-------------------
+ adversary/adversary.ts  |  100.00 |   96.43 | 37-38,48
+ kernel/bars.ts          |  100.00 |  100.00 | 
+ kernel/canonical.ts     |  100.00 |   98.21 | 
+ kernel/evaluate.ts      |  100.00 |  100.00 | 
+ kernel/metrics.ts       |  100.00 |   76.39 | 95-111
+ kernel/micros.ts        |  100.00 |   96.43 | 
+ kernel/refusal.ts       |  100.00 |  100.00 | 
+ kernel/sim.ts           |  100.00 |   94.52 | 77,108,191-192,255-262
+ kernel/span.ts          |  100.00 |   92.31 | 
+ kernel/spec.ts          |  100.00 |   93.75 | 35,47,56
+ phase2/campaignStore.ts |  100.00 |  100.00 | 
+ phase2/inflation.ts     |  100.00 |   96.15 | 49
+ receipt/receipt.ts      |  100.00 |   96.51 | 49,70
+ substrate/codehash.ts   |  100.00 |  100.00 | 
+ substrate/ingress.ts    |  100.00 |   95.28 | 89,113,122,129
+ substrate/invoke.ts     |  100.00 |   94.37 | 114,116,133-134,137-138,143-144,153,157,294-295
+ substrate/registry.ts   |   57.14 |   73.81 | 52-62
+ substrate/store.ts      |   90.91 |   77.27 | 136-137,166-193
+ tests/prop.ts           |  100.00 |   95.24 | 
+-------------------------|---------|---------|-------------------
 
- 66 pass
+ 71 pass
  0 fail
- 1509 expect() calls
-Ran 66 tests across 8 files. [174.00ms]
+ 1521 expect() calls
+Ran 71 tests across 9 files. [211.00ms]
 GATE PASS
