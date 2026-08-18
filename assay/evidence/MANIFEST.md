@@ -25,3 +25,16 @@ MASSIVE_API_KEY; the adversary and redaction mechanisms are proven in test space
 reproduction was executed against the committed tree and is recorded in the ISA Verification
 section. Verifier reports (Forge 30 findings; Cato FAIL→fixed; 6-lane fleet) are summarized in
 ISA.md Decisions with dates and dispositions.
+
+## Real-data completion run (2026-08-17, key supplied via assay/.env)
+
+| File | Command | Exit | What it proves |
+|---|---|---|---|
+| 08-real-ingest.txt | `bun run cli.ts ingest --symbols AAPL,MSFT,NVDA,SPY --from 2022-10-01 --to 2025-12-31` | 0 | 4 immutable vendor snapshots, 815 bars each, keyless URLs |
+| 09-real-evaluate.txt | `bun run cli.ts evaluate … --from 2023-01-01 --to 2025-12-31 --folds 8` | 0 | Real result sha256:c30b3949…, registered_after_window true |
+| 10-real-adversary.txt | `bun run cli.ts adversary --result sha256:c30b3949…` | 0 | A4: 14 slices, worst fold-5 at −5.21%, materially_worse true |
+| 11-real-receipt.txt | `bun run cli.ts receipt --result sha256:c30b3949…` | 0 | Receipt: verified FALSE (material weakness found), all hashes |
+| 12-real-reproduce.txt | `bun run cli.ts reproduce --result sha256:c30b3949…` | 0 | A1 on a real headline: identical true, reproduced "headline" |
+| gate-run-final.txt | `MASSIVE_API_KEY=… ./gate.sh` | 0 | Replay checked 2 triples; live-key grep RAN and found zero hits (A6 complete); zero stale seals |
+
+The former NOT RUN items (A4, A6-live) are now demonstrated. Nothing remains NOT RUN in Phase 1.

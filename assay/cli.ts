@@ -76,7 +76,7 @@ switch (cmd) {
   case 'evaluate': {
     const specFile = arg('spec-file') ?? fail('--spec-file required');
     const frictionsFile = arg('frictions') ?? fail('--frictions required');
-    const { startT, endT } = parseWindow();
+    const { startT, endT, from, to } = parseWindow();
     const folds = Number(arg('folds') ?? '8');
     const cash = Number(arg('cash-micros') ?? '100000000000');
     const spec = validateSpec(loadJsonFile(specFile));
@@ -95,9 +95,17 @@ switch (cmd) {
     for (const sym of spec.universe) {
       const forSym = snaps.filter((s) => (s.value as DataSnapshot).symbol === sym);
       if (forSym.length === 0) continue; // surfaces downstream as partial_universe refusal
+      // coverage = the snapshot's DECLARED vendor-request window spans the eval window.
+      // (Bar-timestamp comparison was over-strict: daily bars stamp at session START, so no bar
+      // can ever be >= the window-end instant — found red-first on the first real-data run.)
       const covering = forSym.filter((s) => {
-        const bars = (s.value as DataSnapshot).bars;
-        return Array.isArray(bars) && bars.length > 0 && bars[0]!.t <= startT && bars[bars.length - 1]!.t >= endT;
+        const snap = s.value as DataSnapshot;
+        return (
+          Array.isArray(snap.bars) &&
+          snap.bars.length > 0 &&
+          snap.window.from <= from &&
+          snap.window.to >= to
+        );
       });
       if (covering.length === 0) fail(`no snapshot for ${sym} covers ${startT}..${endT} — never silently truncated`);
       if (covering.length > 1) fail(`${covering.length} snapshots cover ${sym} for this window — ambiguous; ingest hygiene required`);

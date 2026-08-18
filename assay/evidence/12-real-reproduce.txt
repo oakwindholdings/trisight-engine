@@ -1,0 +1,9 @@
+{
+  "identical": true,
+  "reproduced": "headline",
+  "code_drift": false,
+  "recorded_code": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
+  "current_code": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
+  "expected": "sha256:c30b3949e0518687f5c5cda6ba16b0cdf87cb106b093adc570fb0bcfd5730299",
+  "actual": "sha256:c30b3949e0518687f5c5cda6ba16b0cdf87cb106b093adc570fb0bcfd5730299"
+}

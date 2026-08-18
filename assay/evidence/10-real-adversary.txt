@@ -1,0 +1,12 @@
+{
+  "adversary_hash": "sha256:f4c46482db9cedab3af8818d64404145904de79a8ddf89e635c07b9384967227",
+  "worst": {
+    "id": "fold-5",
+    "kind": "fold",
+    "def": "window 1731715199375..1743551999249",
+    "totalReturn": -0.05213477837000002,
+    "refusal_reason": null
+  },
+  "materially_worse": true,
+  "slices": 14
+}

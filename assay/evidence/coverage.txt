@@ -24,4 +24,4 @@ All files               |   96.94 |   92.97 |
  66 pass
  0 fail
  1509 expect() calls
-Ran 66 tests across 8 files. [140.00ms]
+Ran 66 tests across 8 files. [174.00ms]

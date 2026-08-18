@@ -31,20 +31,20 @@ Reproduce the committed run (byte-identical or non-zero exit):
 bun run cli.ts reproduce --result sha256:cb29c69a8265dea813b6b3804fc589517ef7886139228886f4d39ff2168de7d7
 ```
 
-## Current honest status (2026-08-17)
+## Current honest status (2026-08-17, real-data run complete)
 
-`MASSIVE_API_KEY` was **set-but-empty** in the build environment, so the committed acceptance run is a **first-class refusal chain**, exactly as I6 demands: ingest refused `missing_credential` (named by variable, never by value), evaluation stored a `Refused(partial_universe)` result, the receipt records it with `worst_slice: NOT_RUN` and `verified: false`, and reproduction of the refusal is byte-identical. The full-number path — bars → walk-forward evaluation → adversary worst slice → verified receipt — is proven end-to-end by the test suite against a fake vendor.
+All 150 ISA criteria closed. The store holds two committed chains, both byte-reproducible:
 
-With a real key exported, the real chain is:
+1. **The refusal chain** (built when the key was empty): `missing_credential` → `Refused(partial_universe)` result → receipt of refusal. Kept as history — a refusal is as reproducible as a number.
+2. **The real chain**: 4 vendor snapshots (815 daily bars each) → real evaluation `sha256:c30b3949…` → adversary (14 slices) → receipt.
+
+The real result reads: total return **+94.9%** (CAGR 25.1%, 752 trading days), worst fold drawdown 7.8% — and the receipt marks it **`verified: false`**, because the adversary found fold-5 at **−5.2%**, materially worse than the headline, and because the win rate is **18.2% over 11 closed round-trips** (net of commissions): the headline lives mostly in unrealized marks under the declared `independent_flat_start_folds` semantics. It also carries `registered_after_window: true` — the spec was registered 2026-08-17 against an earlier window. Every one of those caveats appearing *on the receipt itself* is the product working.
+
+Reproduce the real run (byte-identical or non-zero exit):
 
 ```bash
-bun run cli.ts ingest --symbols AAPL,MSFT,NVDA,SPY --from 2022-10-01 --to 2025-12-31
-bun run cli.ts evaluate --spec-file demo/spec.json --frictions demo/frictions.json --from 2023-01-01 --to 2025-12-31 --folds 8
-bun run cli.ts adversary --result <result_hash>
-bun run cli.ts receipt   --result <result_hash>
+bun run cli.ts reproduce --result sha256:c30b3949e0518687f5c5cda6ba16b0cdf87cb106b093adc570fb0bcfd5730299
 ```
-
-The demo spec was registered 2026-08-17 and will therefore carry `registered_after_window: true` on any historical window — that flag is the product working, not a defect.
 
 ## Invariants (build is wrong if any can be violated)
 
