@@ -1,6 +1,6 @@
 # How This Study Works — and How to Refute It
 
-*Prepared for Dick O'Leary. Draft — Bob reviews before anything here is treated as sent.*
+*Prepared for Dick O'Leary · Oakwind strategy estate · August 2026*
 
 ## What we measured
 

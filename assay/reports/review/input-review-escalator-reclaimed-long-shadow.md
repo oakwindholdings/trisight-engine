@@ -1,5 +1,5 @@
 # Escalator Reclaimed Long Shadow — Input Review Guide
-*Draft for Bob's review. Nothing here goes to Dick until Bob signs off.*
+*Prepared for Dick O'Leary · Oakwind strategy estate · August 2026*
 
 ## What this is
 We measured what this strategy claims against what it actually did in the shadow paper ledger. Before treating any of this as a final finding, we want you to check every input we used to get there — the claim document, the numbers we pulled from it, the realized ledger, and every problem we flagged along the way. Anything you correct re-runs the comparison automatically, and the original stays visible next to your correction.

@@ -1,6 +1,6 @@
 # Start Here, Dick — Reviewing the Strategy Study Inputs
 
-*Draft for Bob's review. Nothing here goes to Dick until Bob signs off.*
+*Prepared for Dick O'Leary · Oakwind strategy estate · August 2026*
 
 Dick — before any conclusion in this study counts, we want you to check the **inputs** we
 used: which documents we treated as your strategies' official claims, which trade ledgers

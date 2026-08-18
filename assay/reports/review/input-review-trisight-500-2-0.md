@@ -1,5 +1,5 @@
 # TriSight 500 2.0 — Input Review Guide
-*Draft for Bob's review. Nothing here goes to Dick until Bob signs off.*
+*Prepared for Dick O'Leary · Oakwind strategy estate · August 2026*
 
 ## What this is
 

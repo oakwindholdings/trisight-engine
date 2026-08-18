@@ -1,6 +1,6 @@
 # Input Review Guides — Dick's Feedback Round
 
-*Draft set for Bob's review. Nothing here goes to Dick until Bob signs off.*
+*Prepared for Dick O'Leary · Oakwind strategy estate · August 2026*
 
 **The live review UI is at `https://trisight-engine-production.up.railway.app/review`**
 (access-code gated; feedback persists per input element to Postgres, append-only).
