@@ -1,0 +1,8 @@
+{
+  "result_hash": "sha256:aab8d65b3837bf7bbe79137c4d3b69b187e439050d736ef01d0ee56986583ce4",
+  "cache_hit": false,
+  "triple": "sha256:c0425ce57e0759cd7c196750b6ab67b25a6bab2e094b9af780dfd19ec313006a",
+  "outcome_kind": "result",
+  "refusal": null,
+  "registered_after_window": true
+}

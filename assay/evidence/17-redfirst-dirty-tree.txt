@@ -1,0 +1,18 @@
+== [1/12] typecheck (project config, tests included) ==
+== [2/12] guard-shown-failing: stripped type harness MUST fail under the PROJECT config (A2) ==
+ok: all 5 stripped guards fail to compile
+== [3/12] tests ==
+bun test v1.3.10 (30e609e0)
+
+ 89 pass
+ 0 fail
+ 1551 expect() calls
+Ran 89 tests across 10 files. [167.00ms]
+== [4/12] kernel purity greps (I1/I2 hygiene; recursive per W0/F2) ==
+ok: kernel pure — greps recursive, matching the code layout (F2)
+== [5/12] compute-root completeness: hashed set == git-tracked set (W0/C7/F1) ==
+ok: 17 files sealed, exactly the tracked set (byte-level cleanliness enforced by step 6)
+== [6/12] compute roots clean: no unstaged edits, no untracked files (Cato X4) ==
+FAIL: unstaged changes under compute roots — the gate would seal a tree nobody committed; stage first
+ assay/kernel/refusal.ts | 1 +
+ 1 file changed, 1 insertion(+)

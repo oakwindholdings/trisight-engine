@@ -17,7 +17,33 @@ export type RecordType =
   | 'Result'
   | 'Adversary'
   | 'Supersede'
-  | 'Receipt';
+  | 'Receipt'
+  | 'Epoch'
+  | 'Review'
+  | 'EpochRevocation'
+  | 'ReceiptAmendment';
+
+/** Exhaustive seal-class partition (Cato X14): adding a RecordType without classifying it here is a
+ *  COMPILE ERROR, not a silent exemption. 'sealed' = carries code_hash and must bind to an epoch. */
+const RECORD_SEAL_CLASS = {
+  Spec: 'unsealed',
+  Registration: 'unsealed',
+  DataSnapshot: 'unsealed',
+  Params: 'unsealed',
+  Run: 'sealed',
+  Result: 'sealed',
+  Adversary: 'unsealed',
+  Supersede: 'unsealed',
+  Receipt: 'sealed',
+  Epoch: 'unsealed',
+  Review: 'unsealed',
+  EpochRevocation: 'unsealed',
+  ReceiptAmendment: 'unsealed',
+} as const satisfies Record<RecordType, 'sealed' | 'unsealed'>;
+
+export const SEALED_RECORD_TYPES = (Object.keys(RECORD_SEAL_CLASS) as RecordType[]).filter(
+  (k) => RECORD_SEAL_CLASS[k] === 'sealed'
+);
 
 export interface StoreRoot {
   readonly dir: string;

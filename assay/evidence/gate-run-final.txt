@@ -1,58 +1,632 @@
-== [1/9] typecheck (project config, tests included) ==
-== [2/9] guard-shown-failing: stripped type harness MUST fail under the PROJECT config (A2) ==
-ok: all 5 stripped guards fail to compile under the project's own strictness
-== [3/9] tests ==
+== [1/12] typecheck (project config, tests included) ==
+== [2/12] guard-shown-failing: stripped type harness MUST fail under the PROJECT config (A2) ==
+ok: all 5 stripped guards fail to compile
+== [3/12] tests ==
 bun test v1.3.10 (30e609e0)
 
- 74 pass
+ 89 pass
  0 fail
- 1523 expect() calls
-Ran 74 tests across 9 files. [301.00ms]
-== [4/9] kernel purity greps (I1/I2 hygiene) ==
-ok: kernel pure — no clock, no env, no fs/network, no annualization constants
-== [5/9] no masked exits anywhere (gate.sh included) ==
+ 1551 expect() calls
+Ran 89 tests across 10 files. [161.00ms]
+== [4/12] kernel purity greps (I1/I2 hygiene; recursive per W0/F2) ==
+ok: kernel pure — greps recursive, matching the code layout (F2)
+== [5/12] compute-root completeness: hashed set == git-tracked set (W0/C7/F1) ==
+ok: 17 files sealed, exactly the tracked set (byte-level cleanliness enforced by step 6)
+== [6/12] compute roots clean: no unstaged edits, no untracked files (Cato X4) ==
+ok: compute roots byte-identical to the index
+== [7/12] no masked exits anywhere (recursive; gate.sh included) ==
 ok: nothing masked
-== [6/9] determinism replay of stored traces (A5) ==
+== [8/12] determinism replay of stored traces (A5; epoch-partitioned per F7) ==
 {
-  "checked": 137,
+  "checked": 1,
   "drifted": [],
-  "code_drift": []
+  "code_drift": [],
+  "deferred": [
+    {
+      "trace_id": "sha256:a92ec94161e7c91998e6b5d4db0ba16453ef1e39f7c0eeb59ee939da65deaded#2026-08-17T21:22:46.166Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b7b92def24ef67d1a70cd41b5c8061f4232a7b0eef27da1cdedcd195a77a56f9#2026-08-18T00:59:13.657Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:70ba25414cce18429e84bc70c25e503ad9f2195bce1f12cee935c341ef4c46cc#2026-08-18T02:27:24.727Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:5f049052988856123fbc54d0de558370deedcaf4f907addb128750692684b5e1#2026-08-18T02:27:24.757Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:2344a37fae5b6a506dc9c7b060cd85f4dd208dc009b79a48dcf65b2aca7ee76d#2026-08-18T02:27:24.781Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:65a74860bf189a6a54586b0077e24df1fcfd56f5ce0c038ebe1634df96e28736#2026-08-18T02:27:24.804Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:63a95e35714650a8e8d4d26965536c713a8b21ccbec84f7c390be9284f0e5940#2026-08-18T02:27:24.823Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:6b087e7422f62ebcbf817d9f4f76d63c6c53f27e7a24dbd8bbf7f47e92f825df#2026-08-18T02:27:24.835Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:61b77329cc8c3ed70f54d2d88cf3705558a99edc5dde9634a897533a63e1a316#2026-08-18T02:27:24.858Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:fd1466774ccbb9e3c5b22912ac2af5e88adfa1e39ea99e534c59004db12fdda3#2026-08-18T02:27:24.880Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:214d209abdddc7cbe47645fe811a5893bdf87cdcb9a82c50fb2ac29c18c6f02c#2026-08-18T02:27:24.902Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:78507939f2acbf6d1495cc7095039145328da21bee702763c22cfb326833061c#2026-08-18T02:27:24.920Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b31bcdf301280494d9b79d900324741956e009b1b12c74d1dbb653237506daf5#2026-08-18T02:27:24.933Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:abab49ee6279bdc500bb567ed40d0e711a6e009de3bba8bf19dbcae208af3dd2#2026-08-18T02:27:24.955Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:2bd628c2dee621638227395bf207a57ac9aaac0e69f46b85651f8a5230cf57e3#2026-08-18T02:27:24.976Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:9a30c878dcd119245e089e52364a6c8b85454b51dcb42994f7d88969ad9e502f#2026-08-18T02:27:24.997Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:7f67d404cba1feb8db1f284635ba31fe1762f39200ee8835192f4ebdca80e47d#2026-08-18T02:27:25.016Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:33a50aa9a5d5e62471253a72d62bd5c1fc617f01dadcd574b3689117f619e7c7#2026-08-18T02:27:25.028Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:ff8ff48e3462e6c1742af1166dbc196b370c2514ffdbf6d7f992fddb98a4b65a#2026-08-18T02:27:25.050Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:d5d2953b73d5410c78d0c59b7b7cfd16cbaec157a06679280ed7df97fb03fb4b#2026-08-18T02:27:25.071Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:eed333a2c0395c8f63e253fe2ffadc32845dd5e3b6e77c34fe7d5bb9026cc389#2026-08-18T02:27:25.094Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:4fdfd50d3198727ed77609cb74bb95198c345746144951d87d8af24768e70713#2026-08-18T02:27:25.105Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:38711d4864d9dcd5cb076bae25eb176b5ca187e123914d71935af3b27b08d879#2026-08-18T02:27:25.129Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:2d0ea3c24bbccef94dff046c4403f44e7c44715ccf802fa134c2e96f2052089b#2026-08-18T02:27:25.151Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:041c0a202b37c3f29b4b34bb49c30aa859fb142cea5024870e3934e9527312d7#2026-08-18T02:27:25.168Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:2fc68752cdb00db39812ae80fccbf70d688cc640eaee6606af3162c98aa2c33e#2026-08-18T02:27:25.181Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:6edf72f0d35ab7f5af2cc6f1e44d647c4fb66132af22a0300dd6ea2bc7d7776b#2026-08-18T02:27:25.203Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:42ff98134c4f704b2738958460a95a842dedb6655170d34b2fb5d4ceb87948ee#2026-08-18T02:27:25.226Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:ca45e711d0aecf4eb263ed5b17b4d0d24d89b108c3dfbe82584a0de70788005c#2026-08-18T02:27:25.245Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:6f8cd340c2931b341d941b73788eb7445cb938f256df1b291481994f7e56765b#2026-08-18T02:27:25.253Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:7403474fd1e2de1839111ec0369028b28a3cddcd37cfaafe3fa86f95a122cfb8#2026-08-18T02:27:25.267Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:bc3ece492f0550c2f97a1728ef975b464f264b95820f76dd94d57342e869064a#2026-08-18T02:27:25.281Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:cc3fc2ce3b7da8577c32cd69f03829e8617431fb3e7333b1a345084a809a1016#2026-08-18T02:27:25.295Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:50d108ebbb4f087a938860d1ec340cfe7e813f4634427c0b27a76985d5d90741#2026-08-18T02:27:25.308Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:848371f540d366c3ae4dffe3b009226de33ecec84b6bb5e366788209e06fcc18#2026-08-18T02:27:25.317Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:9fa3bef780cc6c621b880b7d0102efa1725dccfcc957d7d39e272ac88ad366ac#2026-08-18T02:27:25.331Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e1a354c7e600e9ed1520602b6714e43c543bfb95f635862b3914bd35e132db97#2026-08-18T02:27:25.347Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:d3a1975a8fdeee60f575e1c209bd247617792d307db257d3df539be461a06d6b#2026-08-18T02:27:25.363Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:64a4dd3d2f64509e4b623e35cc895613168a6eaef7693f9dbab046645e9adf7a#2026-08-18T02:27:25.377Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:4a4278e140fbe16d4199ce60d7928017d3cdcda59df419c66f08ce1027f3ef01#2026-08-18T02:27:25.385Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:1651e75e06a6f68dd3005eef1186c22f16cf27eadc8731abf4c3ef42546a2d1b#2026-08-18T02:27:25.405Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:78c5c0134d4cb1848609a618d9f29ec5901b3662a6645c47d339f2ee74724cff#2026-08-18T02:27:25.423Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:dc3ee8f65c898a72e7a7f8cb71622d4f39c7bcf537ff1a056120ee930cd3c643#2026-08-18T02:27:25.438Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:6e275c72cc80fd173c7055089837fc25f5fde82e2584e43adebcc9c34162338d#2026-08-18T02:27:25.452Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:a9fcb88009f9f6910e7bf56edaf4a4cefd00b1bdfaef4a488a3dbc24676d2278#2026-08-18T02:27:25.462Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:1b3a8ab5a11b4410a4cb4cb80ff22a3d0380ab3b15c53a33399b9dde91767e6c#2026-08-18T02:27:25.477Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:3f69b967174c08b37beb543ebb51b9994d9bfd1d59527d1f329e318c4a6184c0#2026-08-18T02:27:25.492Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e34ff9241eae9855a873fee6166f729ee94a6b137665fa7bc34431720621d5f3#2026-08-18T02:27:25.505Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:50e572565d480bf9cd7024e08f1ebb397a7ddbda7f19a3187caabc8c4c7e47d0#2026-08-18T02:27:25.513Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:94007d0e0fd7fc6c6a6f2dfdb832bd30d58c4f50e4899bd054e971028dd9f72d#2026-08-18T02:27:25.529Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:50ef51e612d1fb29cea25bb4abadd80531820a871268e0d8a324a55b19e3c15e#2026-08-18T02:27:25.545Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:5e769d625b9167666639b417c200dc5ebc25db0fcf59b3812f7e201d70ec371f#2026-08-18T02:27:25.558Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:3f635fdd7f0fdc636e7569f44427c1dbee5769fdad20f972f4a18cd4c3bedff1#2026-08-18T02:27:25.566Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:70120cf05026b10d853b8f6b32c9b85eb49cb02da10bacaf767709cc04a11971#2026-08-18T02:27:25.582Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:30a6527cc7f4953103191abc9e94f0efaa6db5ceeff4efed8901d2d6e678f77b#2026-08-18T02:27:25.597Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:0a304a761ba0ef08a36c8cc53cc5d1cbb8914a7dde4e893fe74ec0aabee9a808#2026-08-18T02:27:25.611Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:163392ca783ab7af87dac57cbbc899e0f8e5edd4030fa80cf091fd5e0f4e6d4b#2026-08-18T02:27:25.620Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:f18c701715ba5eab7bf626598ada0c2d12ff518b92bf485291f2d1cb535a5e84#2026-08-18T02:27:25.636Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e94dae49b67c32725e8a2825ae0d0d8e23d772e8588040db192cd7a7f400c10c#2026-08-18T02:27:25.651Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:08f4ae1f8dda5ea59f099e8a794a77c3b6e61af60688afb7e00e3c61683c5888#2026-08-18T02:27:25.667Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:f3ec59ebce0ee52ee19a741bff188ba9377ba984e63cbf043f663422d973fbae#2026-08-18T02:27:25.681Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:13181159e25c1e6ae7769e6ac95108d1df51980676dd2213e2d556e877d3ecba#2026-08-18T02:27:25.689Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:622644793b944e2a3950cc0bf21a8c8e66790558af6df26b1c1932fe6e482ba7#2026-08-18T02:27:25.704Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:ffbfaec994f2e219b668d48dc1a7a333087eb0839f3d0e9e7fbd56df1cffbf50#2026-08-18T02:27:25.719Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e7cb4a3d48c073a19755c5946a2647cc3c5d59ded5e18bad1974c18670d85806#2026-08-18T02:27:25.737Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:59309dfa1754bfd6bb2e49868c884e787700e8728fa2eda0ff054d1945e4e24e#2026-08-18T02:27:25.752Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:1ee53c12ab2943a83abe456d234bd07c4cd5546899a2cee4b017bd743e4f3a60#2026-08-18T02:27:25.760Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:3244e3a9672fc6b1672123509d7ea188b9e32b5ee3698d2a46869badeffd2171#2026-08-18T02:27:25.776Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:60f0ef16949bf38cc23a3a577413ddef2182bfac58e2f56f60b95744dfab66e9#2026-08-18T02:27:25.793Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:c84f38f3046b5e4d5518560b03f89f342641d9b8c81352b77eee30ea74ec9643#2026-08-18T02:27:25.809Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:4834f61c8a39dd1d6b0eaf8d306110fba9a3a55694f7dc4c8a481288114fcfab#2026-08-18T02:27:25.823Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:4be180573c1ea3f53b3f966f2ce227f0589b71e0fe32deb573b21b1b18b79478#2026-08-18T02:27:25.832Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:c9a9270dcf37a77fc0484232bea7fb36cb8aa9eebb76f48229b10092cd6dd659#2026-08-18T02:27:25.848Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:03fa0f88daf2773b73a2f653800eedcdd1ebadf5360dc29f6336fa2775640068#2026-08-18T02:27:25.864Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:339a85983aeddb9cf6a66cc59ce8087c98a1c1cd1c0b9ea459e6e37d707308ec#2026-08-18T02:27:25.878Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:6bb8c9daad184372478065fbc088d85f2f24950e020a4e720aa3356fd42bca0a#2026-08-18T02:27:25.887Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:a91dd6242ab3d741fdf3eed307231eedd26546d37ac858c34d16cfaa6ecb1404#2026-08-18T02:27:25.904Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:5d33c87a659df39c6dedf62b9ab0aa4bdcdc1ad34dc23c7537ccd97871bb888a#2026-08-18T02:27:25.921Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b82f1e353d463350abae3721773dabf8a707b90ca550830c03b53ef849d7aac7#2026-08-18T02:27:25.936Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:8b68ef3139a6cb324a3d64d407de4bc4f9d280e09df1ef9525a76721b63c565c#2026-08-18T02:27:25.945Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e2e897f98cfd872ff2e94c11f443d34a254a2f0ca4749f2a2b2650f0ab3b7720#2026-08-18T02:27:25.961Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b14c8cb31c4e80548950c5c9920edad208827078bc5e8d64d6b9b11cd4a6e5d9#2026-08-18T02:27:25.978Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:512a443f572413e4c1772ca5e952ca13c68e7c9d62663b9b5c6f4ab6b23255d4#2026-08-18T02:27:25.993Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:caddf1edd5e14af2d51304f7923b3951437d29f5f10f5a9af5fa6f336440fa44#2026-08-18T02:27:26.001Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:c7447223ab611e060dda0a0adc621e0d7f3ac0438c31e7cb80895f13f3055846#2026-08-18T02:27:26.020Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:762583198583422b7c0b3a6fc48361e49bef5314a0ba32d7e8af73238f1ccfc8#2026-08-18T02:27:26.039Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b41b5b786ca7d1d929f68c6f6a3084bc3730921813329f68663db884ed9bd0b4#2026-08-18T02:27:26.057Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b25a12000fad6ae2597661e2c5b94cac86465b82be0e1ac86484d07836764bbe#2026-08-18T02:27:26.074Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:fa73e3f72dcb583aa3626a07152d21c998e13adf52c3b7bc5d9a748b43bb7841#2026-08-18T02:27:26.083Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:50413df4929662ca25b194c70ab7e11748c1470e8fd53fc41bc1d84abb9ff6f9#2026-08-18T02:27:26.101Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:19314676d9aad929fb151691c43fa44d87c59a3a61d4be8cd6a5947f53bb620b#2026-08-18T02:27:26.121Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:d22cd1f46b4bccc8a38527223109bd882a504ef4156680b135df917a385decb2#2026-08-18T02:27:26.139Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:68ddc64592cc8e3e7a34e2e88d56fd0d64895166174e1ba4744a89fbd6e35bc1#2026-08-18T02:27:26.156Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:0edc5aa955f3dccbff4c56fc95bb3943289da8d90c367b73ae1445e6237ed487#2026-08-18T02:27:26.165Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b49b7c59f9e4eabdb05ad7c75bba7bd4eeabfab8418edf8d79a8b73c8adadfeb#2026-08-18T02:27:26.183Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:9ee7c2758ffa31fb6bb25d7123a6e39781cccc6ce03b55fad138a46d7029de72#2026-08-18T02:27:26.201Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:fa62603b1d619b9b5d4ebee655e7c0a6a90ca0c728edba5caea7b896043af307#2026-08-18T02:27:26.218Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:052d1f7e48e1163eee55b2419645fe038f63287e17848531e6bb0d3502e653c4#2026-08-18T02:27:26.235Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:fb0203236a79bd8b7f1ec4c5d7fb4a856e28b1ae1286809ea22b6a6ca6579c2c#2026-08-18T02:27:26.244Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:b71015a4a277ab08482fedf0f7f716a660dbe52bd402e268235a89c6ba2074f4#2026-08-18T02:27:26.263Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:03d7afb2cf6b74002dad1b0b4730c0758862840aa2c78073ee9368d4bff9dd43#2026-08-18T02:27:26.280Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:26d88a393bc2ca5e2af057497e0af5eeb28278d729588a4caa80c1a9aae45d93#2026-08-18T02:27:26.297Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:678d7771673ab5073caa561bd2203a34aa285c422746ed1b7f3460981417ae62#2026-08-18T02:27:26.305Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:1c47d8c54a63d80fdbeb1cd3c22a79aafe9e387bb434aeca1c5e1caad30822d7#2026-08-18T02:27:26.325Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:fe06044131c7d738e2699b68faf041aaca288065f92ca234b7559241553c4d12#2026-08-18T02:27:26.344Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:6070b4789c4532649105d94b3e90a888eb7c4b1f6a7440ec78ffe7abb90f4bc5#2026-08-18T02:27:26.361Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e9752427c7f1a19b0842daf5ce4171ddb2efbf998fff98aff97ebf0651a588cb#2026-08-18T02:27:26.370Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:468278c12e93026ad72792e97063a89b294abadefb994107ee49d636b642f2ff#2026-08-18T02:27:26.388Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:52db41d0db802482d975ff1f8d4fc320c531956a95f6da9fc9ab45ce863b869a#2026-08-18T02:27:26.409Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:363552a9b0af8ecd4a799aa8623cc42fa0bbf7020b15254565e5db278dd23fc2#2026-08-18T02:27:26.426Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:5bdc3855cd650f2b26fcced184c8c1813905da4e1b24655389781a1639a0f945#2026-08-18T02:27:26.435Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:8aea1ef82b3aa93f39e8fe5ff64cd1750b82c63f6867faeff9fc9bb7ae229a9c#2026-08-18T02:27:26.456Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:89755e349dce02b50b99f71eccc051b57b6a18eb0c42b50a70af060dbea3bac3#2026-08-18T02:27:26.475Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:8e6b56239f9c08d3fc289f98a7d4a322e9a5966b4e36d7aa45f96f1c64940cdf#2026-08-18T02:27:26.495Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:a5cb4fdd987311e39c7515fc3fd65e379597370d091cd6c0f53a850cac94fd74#2026-08-18T02:27:26.516Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:5e1f313dd6490cfcb5ccaca8c236de85d2f0da47ba1fb45c6dd8c6152ea86ab5#2026-08-18T02:27:26.526Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:14a8a6959d1bf9b44b3e5ecabb0f51e7c821284fe881e88342c27c3e568c00c4#2026-08-18T02:27:26.546Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:976b588f893378f94eeb89d30c97c0cceb71ee40dd538f01763ff481910807c4#2026-08-18T02:27:26.566Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:aea84a4823dc8fef249c02075a23e790d8ae74fdd71f821f6fef21a33eea4b03#2026-08-18T02:27:26.587Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:2fce45619d7da673fe299c756b82ded5221555270c3c1b0f3445893a8a6404e7#2026-08-18T02:27:26.605Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:6ba918a2d7cbcaf16ceca0ae52a9bedf9198a06f9bdb3ea882a8c88ab6d3597c#2026-08-18T02:27:26.615Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:bed2421b7a688d2e7a5b0b81b49fb6326a31799c670cafa22ca31b6cddd7efc2#2026-08-18T02:27:26.636Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:2724e28e4e49126ac9e3e4d6b61218b0b21cbf35bf7a2045f53eebb46114d4ba#2026-08-18T02:27:26.656Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:8c58ab53c70c9d7b42565c3f191f61ca1c0335fd30d5113ffb85b7a1e6dd8392#2026-08-18T02:27:26.676Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e0923e1d05ade7142ed01e9da976b0c02a28a48992a157760e63770e7f0151f9#2026-08-18T02:27:26.695Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:24d663f522a960f57870e6f77132086d988848d2c1278f4f539d8fbf166bf1b5#2026-08-18T02:27:26.705Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:63585d625f5b3a7131ec9a1f5d6dc7e6ce4fc279047946ef5d87c21b4fcce729#2026-08-18T02:27:26.726Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:8cdbf8279cddf0c6cbf868684b07b7697d395e00f1556bba80c387bbf273791f#2026-08-18T02:27:26.747Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:84f4262ff46bad5d95c5ff5fce73666f503e88a282cd1713ef07600e18abde0f#2026-08-18T02:27:26.767Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:ad6f4f5124702c10b44d8ed0c7228209d6582d191c229ea02be6427f80c17cfd#2026-08-18T02:27:26.777Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:3feebcc8528913fd8f42fe84e64cc5d67df5386cc76ac1c1d940083e9924b1ea#2026-08-18T02:27:26.797Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:e4de04677aeb941c0fe568801257c26b8d529f6bc9fd29073d8ad5d4fa466bf5#2026-08-18T02:27:26.819Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:708d1c5877349f536379f3ab9a579ac7116761ece98a58b29f404ae29ae68f3b#2026-08-18T02:27:26.838Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:79dc09ffca8119c82dc3b065f84bf6c6b206cae0d52a24c02fc163ab742c00ef#2026-08-18T02:27:26.849Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:ea486c6049aa43ad1e1c03493a0ae541cfa51414024cc23e5d1a0d3af35e270d#2026-08-18T02:27:26.870Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:9983e84c9de158349a821f563614aac48223b8d9351a6e52c31a089f1490efc5#2026-08-18T02:27:26.892Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:f50c536f63ef30613c22349e17c8bf4ee59e1cfd3584a79779c400d220806f08#2026-08-18T02:27:26.912Z",
+      "deferred_to_epoch": 1
+    },
+    {
+      "trace_id": "sha256:c0425ce57e0759cd7c196750b6ab67b25a6bab2e094b9af780dfd19ec313006a#2026-08-18T13:45:30.816Z",
+      "deferred_to_epoch": 2
+    }
+  ]
 }
-== [7/9] store verification: index completeness + seal-tree code-hash consistency (Cato C1/C4) ==
+== [9/12] epoch chain: topology, git re-derivation, head==present, reviews, quarantine (W1) ==
 {
-  "objects": 899,
-  "indexed": 899,
+  "epochs": 3,
+  "head_epoch": 3,
+  "head_hash": "sha256:00bc42db46f587674f6e19831815faec9bfc34b1c60c8dc0e9132aa269a33d31",
+  "genesis_blessed_count": 381,
+  "revoked_epochs": [],
+  "sealed_records_checked": 385,
+  "retroactively_blessed": 381,
+  "epoch_declared_after_run": 381,
+  "quarantined": 0,
+  "review_authorship": "indistinct-or-no-history (disclosed weak identity)"
+}
+== [10/12] store verification: object integrity + index completeness ==
+{
+  "objects": 907,
+  "indexed": 907,
   "missing_from_index": [],
   "indexed_without_object": [],
-  "current_code": "sha256:5bde712203a91bd9cab08b794d759c7840bfd08d62519109f59940e5a457839f",
-  "stale_code_records": []
+  "current_code": "sha256:08717a5e2b255b464a00f0f48c83fbef923d3d6bc215882e314e36704023ed1e",
+  "note": "seal/code binding is verify-epochs clause 4"
 }
-== [8/9] secret scan over stored material (A6) ==
+== [11/12] secret scan over stored material (A6) ==
 ok: live key appears nowhere in store-data/ or evidence/
-== [9/9] coverage (captured as evidence; per-file numbers in ISA) ==
- adversary/adversary.ts  |  100.00 |   96.43 | 37-38,48
- kernel/bars.ts          |  100.00 |  100.00 | 
- kernel/canonical.ts     |  100.00 |   98.21 | 
- kernel/evaluate.ts      |  100.00 |  100.00 | 
- kernel/metrics.ts       |  100.00 |   76.39 | 95-111
- kernel/micros.ts        |  100.00 |   96.43 | 
- kernel/refusal.ts       |  100.00 |  100.00 | 
- kernel/sim.ts           |  100.00 |   94.52 | 77,108,191-192,255-262
- kernel/span.ts          |  100.00 |   92.31 | 
- kernel/spec.ts          |  100.00 |   93.75 | 35,47,56
- phase2/campaignStore.ts |  100.00 |  100.00 | 
- phase2/inflation.ts     |  100.00 |   90.91 | 63-66,100
- receipt/receipt.ts      |  100.00 |   96.51 | 49,70
- substrate/codehash.ts   |  100.00 |  100.00 | 
- substrate/ingress.ts    |  100.00 |   95.28 | 89,113,122,129
- substrate/invoke.ts     |  100.00 |   94.37 | 114,116,133-134,137-138,143-144,153,157,294-295
- substrate/registry.ts   |   57.14 |   73.81 | 52-62
- substrate/store.ts      |   90.91 |   77.27 | 136-137,166-193
- tests/prop.ts           |  100.00 |   95.24 | 
--------------------------|---------|---------|-------------------
+== [12/12] coverage (captured as evidence) ==
+----------------------------|---------|---------|-------------------
+All files                   |   96.61 |   90.85 |
+ adversary/adversary.ts     |  100.00 |   96.43 | 37-38,48
+ kernel/bars.ts             |  100.00 |  100.00 | 
+ kernel/canonical.ts        |  100.00 |   98.21 | 
+ kernel/evaluate.ts         |  100.00 |  100.00 | 
+ kernel/metrics.ts          |  100.00 |   76.39 | 95-111
+ kernel/micros.ts           |  100.00 |   96.43 | 
+ kernel/refusal.ts          |  100.00 |  100.00 | 
+ kernel/sim.ts              |  100.00 |   94.52 | 77,108,191-192,255-262
+ kernel/span.ts             |  100.00 |   92.31 | 
+ kernel/spec.ts             |  100.00 |   93.75 | 35,47,56
+ phase2/campaignStore.ts    |  100.00 |  100.00 | 
+ phase2/inflation.ts        |  100.00 |   90.91 | 63-66,100
+ receipt/receipt.ts         |  100.00 |   86.09 | 53,74,94-99,159-166
+ substrate/codehash.ts      |  100.00 |  100.00 | 
+ substrate/ingress.ts       |  100.00 |   95.28 | 89,113,122,129
+ substrate/invoke.ts        |  100.00 |   88.49 | 120,122,139-140,143-144,149-150,159,163,208,311,319-324,333-337,340-343,345-346
+ substrate/registry.ts      |   57.14 |   73.81 | 52-62
+ substrate/store.ts         |   91.67 |   80.00 | 162-163,192-219
+ substrate/verify/epochs.ts |   83.33 |   59.06 | 59-109,124,159,188,211,225,228,233,240,275,316-318,323-372
+ tests/prop.ts              |  100.00 |   95.24 | 
+----------------------------|---------|---------|-------------------
 
- 74 pass
+ 89 pass
  0 fail
- 1523 expect() calls
-Ran 74 tests across 9 files. [292.00ms]
+ 1551 expect() calls
+Ran 89 tests across 10 files. [159.00ms]
 GATE PASS

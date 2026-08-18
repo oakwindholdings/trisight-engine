@@ -12,6 +12,7 @@ import { type Frictions } from '../kernel/sim.ts';
 import { specHash, type Spec } from '../kernel/spec.ts';
 import { getObject, putRecord, recordsOfType, type StoreRoot } from './store.ts';
 import { kernelCodeHash } from './codehash.ts';
+import { headEpoch, type EpochRecord } from './verify/epochs.ts';
 import { type DataSnapshot } from './ingress.ts';
 
 export interface EvaluateParamsRecord {
@@ -35,6 +36,9 @@ export interface ResultRecord {
   readonly inputs_hash: Hash;
   readonly params_hash: Hash;
   readonly code_hash: Hash;
+  /** W1: the epoch this record was computed under, resolved from an ALREADY-STORED Epoch at compute
+   *  time (design clause 4). Records without it are pre-epoch and only a retroactive epoch blesses them. */
+  readonly epoch_hash: Hash | null;
   readonly outcome: EvalResult | Refused;
 }
 
@@ -58,6 +62,7 @@ export interface RunRecord {
   readonly snapshot_hashes: readonly Hash[];
   readonly output_hash: Hash;
   readonly refusal_reason: string | null;
+  readonly epoch_hash: Hash | null; // W1 — sealed records name their epoch (design clause 4)
   readonly started_at: string;
 }
 
@@ -98,7 +103,8 @@ function computeResult(
   params: EvaluateParamsRecord,
   inputs_hash: Hash,
   params_hash: Hash,
-  code_hash: Hash
+  code_hash: Hash,
+  epoch_hash: Hash | null
 ): Outcome<ResultRecord> {
   let outcome: EvalResult | Refused;
   let afterWindow: boolean | null = null;
@@ -171,6 +177,7 @@ function computeResult(
     inputs_hash,
     params_hash,
     code_hash,
+    epoch_hash,
     outcome,
   };
 }
@@ -193,6 +200,13 @@ export function invokeEvaluate(
   const code_hash = kernelCodeHash();
   const triple = contentHash({ entry: 'evaluate', inputs_hash, code_hash, params_hash });
   if (isRefused(triple)) return triple;
+  const head = headEpoch(root);
+  if (isRefused(head)) return head;
+  const epoch_hash: Hash | null = head === null ? null : head.hash;
+  if (head !== null && head.record.code_hash !== code_hash) {
+    // computing under a tree the chain does not bless is exactly the 4a5a807 failure — refuse up front
+    return refuse('epoch_unverifiable', `running code_hash ${code_hash.slice(0, 20)}… differs from head epoch ${head.record.epoch} — declare an epoch before computing`);
+  }
 
   if (opts.bypassCache !== true) {
     const runs = recordsOfType(root, 'Run');
@@ -223,7 +237,7 @@ export function invokeEvaluate(
     }
   }
 
-  const result = computeResult(root, sortedSnaps, params, inputs_hash, params_hash, code_hash);
+  const result = computeResult(root, sortedSnaps, params, inputs_hash, params_hash, code_hash, epoch_hash);
   if (isRefused(result)) return result; // store-level failure, not a domain refusal
   const output_hash = persist
     ? putRecord(root, 'Result', result as unknown as Record<string, unknown>)
@@ -241,6 +255,7 @@ export function invokeEvaluate(
     snapshot_hashes: sortedSnaps,
     output_hash,
     refusal_reason,
+    epoch_hash,
     started_at: new Date().toISOString(),
   };
   if (persist) {
@@ -272,25 +287,61 @@ export interface ReplayReport {
   readonly drifted: { trace_id: string; expected: Hash; actual: Hash }[];
   /** Cato C2 / Forge F29: code-changed is a DIFFERENT fact from nondeterminism — reported separately. */
   readonly code_drift: { trace_id: string; recorded_code: Hash; current_code: Hash }[];
+  /** W1 / Forge F7: traces from a PRIOR declared epoch neither pass nor fail here — they are that
+   *  epoch's corpus. Only a trace matching NO epoch is code_drift. */
+  readonly deferred: { trace_id: string; deferred_to_epoch: number }[];
 }
 
 /** Determinism CI (A5): re-execute recorded invocations, assert byte-identical output hashes. */
 export function replayTraces(root: StoreRoot): Outcome<ReplayReport> {
   const p = tracesPath(root);
-  if (!existsSync(p)) return { checked: 0, drifted: [], code_drift: [] };
+  if (!existsSync(p)) return { checked: 0, drifted: [], code_drift: [], deferred: [] };
   const lines = readFileSync(p, 'utf8').split('\n').filter((l) => l.length > 0);
   const seen = new Set<string>();
   let checked = 0;
   const drifted: { trace_id: string; expected: Hash; actual: Hash }[] = [];
   const code_drift: { trace_id: string; recorded_code: Hash; current_code: Hash }[] = [];
+  const deferred: { trace_id: string; deferred_to_epoch: number }[] = [];
   const currentCode = kernelCodeHash();
+  // X5: the partition anchors on the HEAD EPOCH, never on whatever tree happens to be running —
+  // a divergent tree refuses here exactly as invokeEvaluate refuses, one rule in two places.
+  const head = headEpoch(root);
+  if (isRefused(head)) return head;
+  if (head !== null && head.record.code_hash !== currentCode) {
+    return refuse('epoch_unverifiable', `running code_hash ${currentCode.slice(0, 20)}… is not the head epoch ${head.record.epoch} — declare an epoch before replaying`);
+  }
+  const epochRecs = recordsOfType(root, 'Epoch');
+  const priorEpochByCode = new Map<string, number>();
+  let genesisEpochNum: number | null = null;
+  const genesisBlessed = new Set<string>();
+  if (!isRefused(epochRecs)) {
+    for (const e of epochRecs) {
+      const v = e.value as EpochRecord;
+      if (head === null || e.hash !== head.hash) priorEpochByCode.set(v.code_hash, v.epoch);
+      if (v.retroactive) {
+        genesisEpochNum = v.epoch;
+        for (const b of v.blessed_records ?? []) genesisBlessed.add(b);
+      }
+    }
+  }
   for (const line of lines) {
     const t = JSON.parse(line) as Trace;
     if (t.cache_hit) continue;
     if (seen.has(t.triple)) continue;
     seen.add(t.triple);
     if (t.code_hash !== currentCode) {
-      // the trace certifies a code state the tree no longer contains — a distinct failure (Cato C1/C2)
+      const priorEpoch = priorEpochByCode.get(t.code_hash);
+      if (priorEpoch !== undefined) {
+        deferred.push({ trace_id: t.trace_id, deferred_to_epoch: priorEpoch }); // that epoch's corpus, not ours
+        continue;
+      }
+      // pre-epoch traces carry the RETIRED algorithm's hash, which no epoch code_hash can match —
+      // they are genesis corpus iff their OUTPUT is in the blessed enumeration (same X1 discipline)
+      if (genesisEpochNum !== null && genesisBlessed.has(t.output_hash)) {
+        deferred.push({ trace_id: t.trace_id, deferred_to_epoch: genesisEpochNum });
+        continue;
+      }
+      // a code state NO epoch blesses AND an output outside the enumeration — still fatal
       code_drift.push({ trace_id: t.trace_id, recorded_code: t.code_hash, current_code: currentCode });
       continue;
     }
@@ -307,5 +358,5 @@ export function replayTraces(root: StoreRoot): Outcome<ReplayReport> {
       drifted.push({ trace_id: t.trace_id, expected: t.output_hash, actual: re.result_hash });
     }
   }
-  return { checked, drifted, code_drift };
+  return { checked, drifted, code_drift, deferred };
 }

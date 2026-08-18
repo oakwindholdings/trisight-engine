@@ -6,6 +6,7 @@ import { refuse, isRefused, type Outcome } from '../kernel/refusal.ts';
 import { contentHash, type Hash } from '../kernel/canonical.ts';
 import { getObject, putRecord, recordsOfType, type StoreRoot } from '../substrate/store.ts';
 import { invokeEvaluate, type RunRecord, type ResultRecord, type EvaluateParamsRecord } from '../substrate/invoke.ts';
+import { headEpoch, revokedEpochs } from '../substrate/verify/epochs.ts';
 import { type AdversaryReport, type Slice } from '../adversary/adversary.ts';
 
 export interface Receipt {
@@ -18,6 +19,7 @@ export interface Receipt {
   readonly spec_hash: Hash;
   readonly spec_registered_at: string | null;
   readonly registered_after_window: boolean | null;
+  readonly epoch_hash: Hash | null; // W1: receipts name their epoch (design clause 4)
   readonly snapshot_hashes: readonly Hash[];
   readonly frictions_hash: Hash;
   readonly window: { readonly startT: number; readonly endT: number };
@@ -32,8 +34,10 @@ export interface Receipt {
   } | null;
   readonly refusals: readonly string[];
   readonly adversary_hash: Hash | null;
-  /** true only when an adversary ran AND did not find material weakness (Forge finding 18) */
+  /** THE aggregation rule (Cato X3 / design N4): verified === true requires ZERO live honesty
+   *  flags. One rule, one place; every flag is visible below rather than inferred from a boolean. */
   readonly verified: boolean;
+  readonly honesty_flags: readonly string[];
   readonly materially_worse: boolean | 'NOT_RUN'; // the adversary's actual verdict, on the receipt
   readonly worst_slice: Slice | 'NOT_RUN';
   readonly repro_command: string;
@@ -79,6 +83,25 @@ export function buildReceipt(root: StoreRoot, result_hash: Hash): Outcome<{ hash
     refusals.push(...result.outcome.notes);
   }
 
+  // X3: honesty flags — collected once, gating verified; each one names the fact it discloses
+  const honesty_flags: string[] = [];
+  if (result.outcome.kind === 'refused') honesty_flags.push('outcome_refused');
+  if (result.registered_after_window === true) honesty_flags.push('registered_after_window');
+  if (result.epoch_hash == null) {
+    // == null catches BOTH null and absent-key (X15): the 107 pre-W1 records predate the field
+    // entirely and deserialize as undefined — they are pre-epoch history, not stale-epoch history
+    honesty_flags.push('epoch_declared_after_run'); // genesis-blessed history: real, disclosed, never verified
+  } else {
+    const head = headEpoch(root);
+    if (isRefused(head)) return head;
+    if (head !== null && result.epoch_hash !== head.hash) honesty_flags.push('epoch_stale');
+    const revoked = revokedEpochs(root);
+    if (isRefused(revoked)) return revoked;
+    if (revoked.has(result.epoch_hash)) honesty_flags.push('epoch_revoked');
+  }
+  if (adv === null) honesty_flags.push('no_adversary');
+  else if (adv.materially_worse) honesty_flags.push('materially_worse');
+
   const receipt: Receipt = {
     record_type: 'Receipt',
     result_hash,
@@ -89,6 +112,7 @@ export function buildReceipt(root: StoreRoot, result_hash: Hash): Outcome<{ hash
     spec_hash: result.spec_hash,
     spec_registered_at: result.spec_registered_at,
     registered_after_window: result.registered_after_window,
+    epoch_hash: result.epoch_hash,
     snapshot_hashes: run.snapshot_hashes,
     frictions_hash,
     window: result.window,
@@ -96,7 +120,8 @@ export function buildReceipt(root: StoreRoot, result_hash: Hash): Outcome<{ hash
     headline: result.outcome.kind === 'result' ? result.outcome.headline : null,
     refusals,
     adversary_hash: advHash,
-    verified: adv !== null && !adv.materially_worse, // an adversary that found material weakness is not a pass
+    verified: honesty_flags.length === 0, // zero live flags — the one unfootnotable bit (X3/N4)
+    honesty_flags,
     materially_worse: adv !== null ? adv.materially_worse : 'NOT_RUN',
     worst_slice: adv !== null ? adv.worst : 'NOT_RUN',
     repro_command: `bun run cli.ts reproduce --result ${result_hash}`,
@@ -126,6 +151,20 @@ export function reproduce(root: StoreRoot, result_hash: Hash): Outcome<Reproduce
   const original = getObject(root, result_hash);
   if (isRefused(original)) return original;
   const originalResult = original as ResultRecord;
+  // W1 (Cato M3 / Forge F24): a non-head-epoch result refuses with the EXACT procedure, never a
+  // misleading identical:false. The store must come from HEAD; only the code checks out backward.
+  const head = headEpoch(root);
+  if (isRefused(head)) return head;
+  if (head !== null && originalResult.epoch_hash !== null && originalResult.epoch_hash !== head.hash) {
+    const target = getObject(root, originalResult.epoch_hash);
+    const epochNum = isRefused(target) ? '?' : String((target as { epoch?: number }).epoch ?? '?');
+    return refuse(
+      'epoch_mismatch',
+      `result was computed under epoch ${epochNum}, current head is ${head.record.epoch}. Reproduce it with: ` +
+        `git worktree add /tmp/assay-epoch-${epochNum} <that epoch's commit> && cd /tmp/assay-epoch-${epochNum}/assay && ` +
+        `bun install && bun run cli.ts reproduce --result ${result_hash} --store <path to HEAD store-data>`
+    );
+  }
   const paramsObj = getObject(root, run.params_hash);
   if (isRefused(paramsObj)) return paramsObj;
   const re = invokeEvaluate(root, run.snapshot_hashes, paramsObj as EvaluateParamsRecord, {

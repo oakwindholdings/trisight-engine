@@ -24,6 +24,9 @@ export const REFUSAL_REASONS = [
   'store_immutable', // attempted overwrite/edit of an existing object (I7)
   'empty_population', // statistic requested over zero members; never 0/0
   'invalid_params', // evaluation/invocation params fail validation
+  'ambiguous_epoch_chain', // epoch topology broken: fork, cycle, duplicate numbers, or no single head (W1)
+  'epoch_unverifiable', // an epoch's declared code_hash cannot be re-derived from its git tree (W1)
+  'epoch_mismatch', // reproduction requested at the wrong epoch — the exact worktree command is supplied (W1)
 ] as const;
 
 export type RefusalReason = (typeof REFUSAL_REASONS)[number];

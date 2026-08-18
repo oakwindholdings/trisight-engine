@@ -101,6 +101,7 @@ test('receipt: unverified without adversary (worst NOT_RUN), verified with; repr
   const before = buildReceipt(root, result_hash);
   if (isRefused(before)) throw new Error(before.detail);
   expect(before.receipt.verified).toBe(false);
+  expect(before.receipt.honesty_flags).toContain('no_adversary');
   expect(before.receipt.worst_slice).toBe('NOT_RUN');
   expect(before.receipt.materially_worse).toBe('NOT_RUN');
   expect(before.receipt.registered_after_window).toBe(true); // honesty marker present
@@ -108,8 +109,12 @@ test('receipt: unverified without adversary (worst NOT_RUN), verified with; repr
   if (isRefused(adv)) throw new Error('unexpected');
   const after = buildReceipt(root, result_hash);
   if (isRefused(after)) throw new Error('unexpected');
-  // verified means: adversary ran AND found no material weakness — the verdict rides on the receipt
-  expect(after.receipt.verified).toBe(!adv.report.materially_worse);
+  // X3 aggregation rule: verified requires ZERO live honesty flags — this historical chain always
+  // carries registered_after_window (and pre-epoch stores carry epoch_declared_after_run)
+  expect(after.receipt.verified).toBe(false);
+  expect(after.receipt.honesty_flags).toContain('registered_after_window');
+  expect(after.receipt.honesty_flags).toContain('epoch_declared_after_run');
+  if (adv.report.materially_worse) expect(after.receipt.honesty_flags).toContain('materially_worse');
   expect(after.receipt.materially_worse).toBe(adv.report.materially_worse);
   expect(after.receipt.worst_slice).not.toBe('NOT_RUN');
   expect(after.receipt.adversary_hash).toBe(adv.hash);
