@@ -15,7 +15,6 @@ const TitleText = styled.div` font-weight: 600; min-width: 220px; `;
 const PosTag = styled.span` color: #6b7280; `;
 const PreviewWrap = styled.div` margin-top: 10px; `;
 
-
 export const TemplateEditor: React.FC<{ template: ReportTemplate | null, onChanged?: (t: ReportTemplate) => void } > = ({ template, onChanged }) => {
   const [rows, setRows] = useState<TemplateSection[]>(template?.sections || []);
   const [newKey, setNewKey] = useState('executive_summary');
