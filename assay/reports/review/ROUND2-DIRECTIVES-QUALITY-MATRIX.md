@@ -1,10 +1,10 @@
 # Round-2 Directives — Quality Matrix & Evidence Ledger
 
 *Prepared for Bob Stewart · Oakwind strategy estate · 2026-08-19*
-*Status: PLAN v5 — confirmation pass (wf_4d616be9) applied 8 findings incl. a BLOCKER: WI-5's
-own "data-balanced" correction had itself taken D94 at face value against Dick's architect ruling
-(TQM High5·E3). Reframed. WI-4 lineage + WI-8 backfill-ruling surfaced from our own data; WI-9
-relocated into Work Items; citations tightened. Source-verified. Pending final convergence check.*
+*Status: PLAN v6 — CONVERGED. Three review cycles + confirmation + convergence pass; findings
+15 → 16 → 8 → 1 (the last a citation-attribution fix, applied). Both peer and adversarial review
+complete; every reviewer claim source-verified before applying. Read-only execution lane ready on
+Bob's go; heavy/estate-compute and anything to Dick remain gated (Gates C/D).*
 
 This matrix converts Dick's round-2 answers into a mapped, evidence-gated work plan. Its
 purpose is anti-hallucination: **no step may be marked done without a checkable evidence
@@ -274,8 +274,7 @@ this — do you intend Auto re-validated on its own execution path, or inheritin
 
 **WI-5 · High 5 92.33%.** *Known-known:* 92.33% claim vs 45.08% realized (normalized-inputs). *Known-
 unknown:* whether the sealed benchmark's inputs reproduce. *Unknown-known — with a critical caveat we
-apply to our OWN data (Rule 8):* per DEFECT-REGISTRY D94 (2026-08-07, reconfirmed line 443 and PR #856
-line 512 — cited alone; the earlier SME-CHALLENGE-V2 #1 reported non-matching figures for a 2,107-trade
+apply to our OWN data (Rule 8):* per DEFECT-REGISTRY D94 (2026-08-07, reconfirmed line 443 and PR #856 line 583 — cited alone; the earlier SME-CHALLENGE-V2 #1 reported non-matching figures for a 2,107-trade
 population that appears to conflate High 5 with the Swing benchmark, and that entry records itself as later
 superseded/mis-framed), the sealed 92.33% was **graded through a 93.05% stop-driven path** while the sealed
 contract's *written text* says no stop and production runs **127/127 TIME_EXIT**; sizing used equity-linked
