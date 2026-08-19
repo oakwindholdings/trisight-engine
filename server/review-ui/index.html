@@ -44,6 +44,18 @@
   .gate-err { color:#b00020; margin-top:10px; }
   .doclinks { font-size:14px; margin-top:4px; }
   .doclinks a { color:var(--accent); margin-right:16px; }
+  .thread { border-top:2px solid var(--accent); margin-top:14px; padding-top:10px; }
+  .qmsg { background:#eef4fb; border:1px solid #c9d9ec; border-radius:8px; padding:12px 14px; margin:10px 0; }
+  .qmsg .who { font-family:Verdana,sans-serif; font-size:12px; color:var(--accent); font-weight:bold; letter-spacing:.04em; }
+  .amsg { background:#f0f7f1; border:1px solid #c6dcc9; border-radius:8px; padding:10px 14px; margin:8px 0 8px 26px; }
+  .amsg .who { font-family:Verdana,sans-serif; font-size:12px; color:var(--ok); font-weight:bold; }
+  .ev { background:#fffdf4; border-left:4px solid #d1b855; padding:8px 12px; margin:8px 0; font-size:15px; }
+  .ev .src { font-family:Verdana,sans-serif; font-size:12px; color:#6b6459; }
+  .ev a { color:var(--accent); font-size:13px; }
+  .optbtn { display:inline-block; background:#fff; border:2px solid var(--accent); color:var(--accent); border-radius:6px; padding:7px 14px; margin:4px 8px 4px 0; cursor:pointer; font-family:Verdana,sans-serif; font-size:14px; }
+  .optbtn.picked { background:var(--accent); color:#fff; }
+  .qbadge { display:inline-block; background:#c9540a; color:#fff; border-radius:10px; font-family:Verdana,sans-serif; font-size:11px; padding:1px 8px; margin-left:6px; }
+  a.qview { display:block; padding:10px 18px; margin:4px 12px; background:#fdeee2; border:1px solid #e8c4a0; border-radius:8px; color:var(--ink); text-decoration:none; font-family:Verdana,sans-serif; font-size:14px; }
   @media (max-width: 860px) { .layout { flex-direction:column; } nav { width:100%; } }
 </style>
 </head>
@@ -73,7 +85,7 @@
 
 <script>
 const $ = (s, el=document) => el.querySelector(s);
-let DATA = null, FEEDBACK = {}, CODE = localStorage.getItem('review_code') || '';
+let DATA = null, FEEDBACK = {}, DIALOG = {}, CODE = localStorage.getItem('review_code') || '';
 
 const REF_LINKS = [
   ['Start Here (walkthrough)', 'https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/START-HERE-DICK.md'],
@@ -108,6 +120,7 @@ async function boot() {
   const fb = await api('/feedback');
   FEEDBACK = {};
   for (const row of (fb.data || [])) FEEDBACK[row.strategy + '::' + row.element_id] = row;
+  await loadDialog();
   $('#gate').hidden = true; $('#app').hidden = false;
   renderNav();
   const slug = location.hash.replace('#','') || DATA.strategies[0].slug;
@@ -118,10 +131,37 @@ function answeredCount(s) {
   return s.elements.filter(e => FEEDBACK[s.slug + '::' + e.id]).length;
 }
 
+async function loadDialog() {
+  const dl = await api('/dialog');
+  DIALOG = {};
+  for (const row of (dl.data || [])) {
+    const key = row.strategy + '::' + row.element_id;
+    (DIALOG[key] = DIALOG[key] || []).push(row);
+  }
+}
+
+function openQuestions(slug) {
+  // questions in this strategy with no owner answer yet
+  const out = [];
+  for (const [key, msgs] of Object.entries(DIALOG)) {
+    if (!key.startsWith(slug + '::')) continue;
+    for (const m of msgs) {
+      if (m.author === 'assay' && m.kind === 'question' &&
+          !msgs.some(a => a.author === 'owner' && a.question_id === m.id)) out.push(m);
+    }
+  }
+  return out;
+}
+
 function renderNav() {
-  $('#nav-strats').innerHTML = DATA.strategies.map(s =>
-    `<a class="strat" id="nav-${s.slug}" href="#${s.slug}" onclick="renderStrategy('${s.slug}')">${s.name}
-     <div class="prog">${answeredCount(s)} of ${s.elements.length} reviewed</div></a>`).join('');
+  const totalQ = DATA.strategies.reduce((n, s) => n + openQuestions(s.slug).length, 0);
+  $('#nav-strats').innerHTML =
+    (totalQ ? `<a class="qview" href="#questions" onclick="renderQuestionView()">&#9993; Questions for you: <b>${totalQ}</b> waiting</a>` : '') +
+    DATA.strategies.map(s => {
+    const q = openQuestions(s.slug).length;
+    return `<a class="strat" id="nav-${s.slug}" href="#${s.slug}" onclick="renderStrategy('${s.slug}')">${s.name}${q ? `<span class="qbadge">${q} question${q>1?'s':''}</span>` : ''}
+     <div class="prog">${answeredCount(s)} of ${s.elements.length} reviewed</div></a>`;
+  }).join('');
   $('#nav-links').innerHTML = REF_LINKS.map(([t,u]) => `<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('');
 }
 
@@ -153,6 +193,7 @@ function renderStrategy(slug) {
       <div class="body-text">${esc(e.body)}</div>
       <div class="question">${esc(e.question)}</div>
       ${links ? `<div class="links">${links}</div>` : ''}
+      ${renderThread(s.slug, e.id)}
       <div class="controls">
         <label class="radio"><input type="radio" name="dec-${e.id}" value="confirmed" ${saved&&saved.decision==='confirmed'?'checked':''}> Confirm — this input is right</label>
         <label class="radio"><input type="radio" name="dec-${e.id}" value="correction" ${saved&&saved.decision==='correction'?'checked':''}> Needs correction</label>
@@ -185,6 +226,94 @@ async function save(slug, elId) {
   const card = $('#card-'+elId);
   card.classList.remove('answered-confirmed','answered-correction');
   card.classList.add(dec.value === 'confirmed' ? 'answered-confirmed' : 'answered-correction');
+}
+
+function renderThread(slug, elId) {
+  const msgs = DIALOG[slug + '::' + elId] || [];
+  if (!msgs.length) return '';
+  let h = '<div class="thread">';
+  for (const m of msgs.filter(x => x.author === 'assay')) {
+    h += `<div class="qmsg"><div class="who">${m.kind === 'question' ? 'QUESTION FROM THE STUDY' : 'EVIDENCE FROM THE STUDY'}</div>
+          <div class="body-text">${esc(m.body)}</div>`;
+    for (const ev of (m.evidence_json || [])) {
+      h += `<div class="ev"><div class="src">${esc(ev.source || 'source')}</div>“${esc(ev.quote || '')}”` +
+           (ev.url ? `<br><a href="${evUrl(ev.url)}" target="_blank" rel="noopener">open the full file (no sign-in needed) ↗</a>` : '') + `</div>`;
+    }
+    const answers = msgs.filter(a => a.author === 'owner' && a.question_id === m.id);
+    for (const a of answers) {
+      h += `<div class="amsg"><div class="who">YOUR ANSWER — ${new Date(a.created_at).toLocaleString()}</div>
+            <div class="body-text">${esc(a.body)}</div></div>`;
+    }
+    if (m.kind === 'question') {
+      const opts = (m.options_json || []).map(o =>
+        `<span class="optbtn" onclick="pickOpt(this,'${m.id}')" data-val="${esc(o)}">${esc(o)}</span>`).join('');
+      h += `<div style="margin-top:8px">${opts}
+            <textarea id="ans-${m.id}" placeholder="${answers.length ? 'Add to or revise your answer…' : 'Your answer, in your own words…'}"></textarea>
+            <button class="save" onclick="answerQ('${slug}','${elId}','${m.id}')">${answers.length ? 'Send another answer' : 'Send answer'}</button>
+            <span class="saved-note" id="anote-${m.id}"></span></div>`;
+    }
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+
+function pickOpt(el, qid) {
+  el.parentElement.querySelectorAll('.optbtn').forEach(b => b.classList.remove('picked'));
+  el.classList.add('picked');
+  const ta = document.getElementById('ans-' + qid);
+  if (!ta.value.trim()) ta.value = el.dataset.val;
+  else if (!ta.value.includes(el.dataset.val)) ta.value = el.dataset.val + ' — ' + ta.value;
+}
+
+async function answerQ(slug, elId, qid) {
+  const ta = document.getElementById('ans-' + qid);
+  const note = document.getElementById('anote-' + qid);
+  const text = ta.value.trim();
+  if (!text) { note.textContent = 'Type an answer (or tap a choice) first.'; note.style.color = '#b00020'; return; }
+  const r = await api('/dialog', { method: 'POST',
+    body: JSON.stringify({ strategy: slug, element_id: elId, question_id: qid, body: text }) });
+  if (r.error) { note.textContent = 'Could not save: ' + r.error; note.style.color = '#b00020'; return; }
+  await loadDialog(); renderNav();
+  if (location.hash === '#questions') renderQuestionView(); else renderStrategy(slug);
+}
+
+function renderQuestionView() {
+  document.querySelectorAll('nav a.strat').forEach(a => a.classList.remove('active'));
+  let html = `<h2>Questions for you</h2>
+    <div class="topbox">These are the follow-up questions from the study — each one shows its evidence first,
+    then asks one specific thing. Answer in any order; every answer saves instantly. When a question's answer
+    changes a number, the study re-runs and the page updates.</div>`;
+  let any = false;
+  for (const s of DATA.strategies) {
+    const qs = openQuestions(s.slug);
+    if (!qs.length) continue;
+    any = true;
+    html += `<h3 style="margin:24px 0 8px;color:#6b6459">${esc(s.name)}</h3>`;
+    for (const q of qs) {
+      const el = s.elements.find(x => x.id === q.element_id);
+      html += `<div class="card"><span class="step-tag">${esc(el ? el.title : q.element_id)}</span>`;
+      html += renderThreadSingle(s.slug, q);
+      html += `</div>`;
+    }
+  }
+  if (!any) html += `<div class="topbox">Nothing waiting — every question has an answer. Thank you.</div>`;
+  $('#main').innerHTML = html; window.scrollTo(0, 0);
+}
+
+function renderThreadSingle(slug, m) {
+  const msgs = DIALOG[slug + '::' + m.element_id] || [];
+  let h = `<div class="qmsg"><div class="who">QUESTION FROM THE STUDY</div><div class="body-text">${esc(m.body)}</div>`;
+  for (const ev of (m.evidence_json || [])) {
+    h += `<div class="ev"><div class="src">${esc(ev.source || 'source')}</div>“${esc(ev.quote || '')}”` +
+         (ev.url ? `<br><a href="${evUrl(ev.url)}" target="_blank" rel="noopener">open the full file (no sign-in needed) ↗</a>` : '') + `</div>`;
+  }
+  const opts = (m.options_json || []).map(o =>
+    `<span class="optbtn" onclick="pickOpt(this,'${m.id}')" data-val="${esc(o)}">${esc(o)}</span>`).join('');
+  h += `<div style="margin-top:8px">${opts}
+        <textarea id="ans-${m.id}" placeholder="Your answer, in your own words…"></textarea>
+        <button class="save" onclick="answerQ('${slug}','${m.element_id}','${m.id}')">Send answer</button>
+        <span class="saved-note" id="anote-${m.id}"></span></div></div>`;
+  return h;
 }
 
 boot();

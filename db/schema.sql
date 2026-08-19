@@ -145,6 +145,22 @@ CREATE TABLE IF NOT EXISTS input_review_feedback (
 );
 CREATE INDEX IF NOT EXISTS idx_irf_strategy_element ON input_review_feedback (strategy, element_id, created_at DESC);
 
+-- input_review_dialog: threaded per-element Q&A between the study (assay) and the
+-- strategy owner. Append-only. `kind`: question | answer | evidence | note.
+CREATE TABLE IF NOT EXISTS input_review_dialog (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  strategy TEXT NOT NULL,
+  element_id TEXT NOT NULL,
+  question_id TEXT,                -- groups an answer to the question it answers
+  author TEXT NOT NULL CHECK (author IN ('assay', 'owner')),
+  kind TEXT NOT NULL CHECK (kind IN ('question', 'answer', 'evidence', 'note')),
+  body TEXT NOT NULL,
+  evidence_json JSONB,             -- inline excerpts: [{source, quote, url?}]
+  options_json JSONB,              -- structured answer choices, when the question defines them
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ird_thread ON input_review_dialog (strategy, element_id, created_at);
+
 -- report_metadata: audit trail rows written by the enhanced-report orchestrator
 CREATE TABLE IF NOT EXISTS report_metadata (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -5,6 +5,8 @@ dist
 .git
 assay/**
 !assay/reports/review/review-data.json
+!assay/reports/review/evidence/**
+!assay/reports/*.md
 generated-reports
 test-screenshots
 debug-screenshots

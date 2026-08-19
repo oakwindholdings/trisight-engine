@@ -69,4 +69,61 @@ router.get('/export', requireCode, async (req, res) => {
   res.json({ data: out.data });
 });
 
+// ---- Dialog layer: threaded per-element Q&A (round 2 of the review) ----
+
+function isAdmin(req) {
+  const admin = process.env.REVIEW_ADMIN_CODE;
+  return Boolean(admin) && req.get('x-review-admin') === admin;
+}
+
+// Full dialog, grouped client-side; owner and assay both read everything
+router.get('/dialog', requireCode, async (req, res) => {
+  let q = db('input_review_dialog').select('*');
+  if (req.query.strategy) q = q.eq('strategy', String(req.query.strategy));
+  const out = await q.order('created_at', { ascending: true }).limit(10000);
+  if (out.error) return res.status(500).json({ error: out.error.message });
+  res.json({ data: out.data });
+});
+
+// Post to a thread. The server stamps the author from the credential used:
+// the admin header makes it 'assay' (question/evidence/note); otherwise it is
+// an 'owner' answer — the browser can never impersonate the study.
+router.post('/dialog', requireCode, async (req, res) => {
+  const { strategy, element_id, question_id, kind, body, evidence_json, options_json } = req.body || {};
+  if (!strategy || !element_id || !body) {
+    return res.status(400).json({ error: 'strategy, element_id, and body required' });
+  }
+  const admin = isAdmin(req);
+  const row = {
+    strategy, element_id,
+    question_id: question_id || null,
+    author: admin ? 'assay' : 'owner',
+    kind: admin ? (kind || 'question') : 'answer',
+    body,
+    evidence_json: admin ? (evidence_json || null) : null,
+    options_json: admin ? (options_json || null) : null,
+  };
+  const out = await db('input_review_dialog').insert(row).select();
+  if (out.error) return res.status(500).json({ error: out.error.message });
+  res.status(201).json({ data: out.data });
+});
+
+// Evidence proxy: serves whitelisted study files through the review site itself,
+// authenticated by the same access code — no GitHub sign-in, no 404s for the owner.
+const SOURCE_ROOTS = {
+  evidence: path.join(__dirname, '..', '..', 'assay', 'reports', 'review', 'evidence'),
+  reports: path.join(__dirname, '..', '..', 'assay', 'reports'),
+};
+router.get('/source/:root/:name', requireCode, (req, res) => {
+  const root = SOURCE_ROOTS[req.params.root];
+  const name = req.params.name;
+  if (!root || name.includes('/') || name.includes('..')) return res.status(400).json({ error: 'bad path' });
+  const file = path.join(root, name);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'no such evidence file' });
+  if (name.endsWith('.md') || name.endsWith('.csv') || name.endsWith('.txt')) {
+    res.type('text/plain; charset=utf-8');
+  }
+  res.sendFile(file);
+});
+
 module.exports = router;

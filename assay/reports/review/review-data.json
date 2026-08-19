@@ -55,7 +55,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR used directly as annual fraction; FROZEN status and irreproducibility carried as integrity flags",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -344,14 +344,14 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction; window NOT stated by the source (artifact generated 2026-05-18, no historical span declared) \u2014 return dimension will refuse on window",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "Window as stated by the claim source: not stated to not stated. No calendar window is stated \u2014 without it, the return comparison refuses to run.",
+     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
      "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
      "links": []
     },
@@ -480,14 +480,14 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction; scenario window not declared in calendar terms \u2014 return dimension will refuse on window",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "Window as stated by the claim source: not stated to not stated. No calendar window is stated \u2014 without it, the return comparison refuses to run.",
+     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
      "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
      "links": []
     },
@@ -632,14 +632,14 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction; the claim EXPLICITLY declines to anchor a calendar window \u2014 return dimension will refuse on window",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "Window as stated by the claim source: not stated to not stated. No calendar window is stated \u2014 without it, the return comparison refuses to run.",
+     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
      "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
      "links": []
     },
@@ -772,14 +772,14 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction; no calendar window declared \u2014 return dimension will refuse on window",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "Window as stated by the claim source: not stated to not stated. No calendar window is stated \u2014 without it, the return comparison refuses to run.",
+     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
      "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
      "links": []
     },
@@ -903,7 +903,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction; note the 93 events are a SELECTED trade set",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -948,7 +948,7 @@
      "id": "realized-window",
      "step": 5,
      "title": "The realized window",
-     "body": "not stated to not stated",
+     "body": "The realized record states no explicit window.",
      "question": "Is this the right period to judge real performance over?",
      "links": []
     },
@@ -1018,7 +1018,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction (post-restatement value; restatement disclosed)",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -1163,7 +1163,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "realistic-10bps variant used (more favorable to the claim than ASSAY frictions would be)",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -1315,14 +1315,14 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "1x CAGR as stated; WINDOW derived only from a ledger filename (2021-2026, no exact dates) \u2014 return dimension will refuse on window",
-     "question": "Is this number / reading correct?",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "Window as stated by the claim source: not stated to not stated. No calendar window is stated \u2014 without it, the return comparison refuses to run.",
+     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
      "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
      "links": []
     },
