@@ -56,7 +56,7 @@ produce the artifact, and a different party must independently re-derive it.
 
 Status legend: 🔲 NOT STARTED · 🔄 IN PROGRESS · 📝 DONE-UNVERIFIED · ✅ VERIFIED · ⛔ BLOCKED · ⤴️ ESCALATED · 🟢 RULED (owner decision recorded per Rule 7)
 
-*Rule-7 note on the E-1/E-2/E-4 rulings below: they are recorded from Bob's 2026-08-19 conversation message, quoted verbatim in the Escalations section. That message is the source; the gold-standard Rule-7 artifact is a Bob-authored commit or reply ratifying it. Bob may ratify by replying; until then these read 🟢 RULED (genuine, conversation-sourced), not ✅ VERIFIED.*
+*Rule-7 note: Bob RATIFIED the E-1/E-2/E-4 rulings and the plan on 2026-08-19 (verbatim: "ratified — go, start work"), the out-of-band confirmation Rule 7 asks for. The rulings are ✅ ratified; execution of the read-now (verification/evidence-gathering) lane is authorized. The two heavy estate-compute steps (WI-1.3b re-validation run, WI-2.4 backtest re-runs) still pass through their own feasibility gates (WI-1.3a, WI-2.2) before running; nothing reaches Dick before Gate C; no remediation PR merges before Gate D.*
 
 ---
 
