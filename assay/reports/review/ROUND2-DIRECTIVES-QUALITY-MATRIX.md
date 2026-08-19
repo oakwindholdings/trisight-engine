@@ -1,9 +1,10 @@
 # Round-2 Directives — Quality Matrix & Evidence Ledger
 
 *Prepared for Bob Stewart · Oakwind strategy estate · 2026-08-19*
-*Status: PLAN v4 — Gate-A reviewed (wf_f31c958f, 16 findings applied) + Bob rulings E-1/E-2/E-4.
-Reconciliation facts corrected against source (venue, High 5); dependencies encoded; feasibility
-gates added; WI-9 + Gate D added. Ready for execution of read-only steps on Bob's go.*
+*Status: PLAN v5 — confirmation pass (wf_4d616be9) applied 8 findings incl. a BLOCKER: WI-5's
+own "data-balanced" correction had itself taken D94 at face value against Dick's architect ruling
+(TQM High5·E3). Reframed. WI-4 lineage + WI-8 backfill-ruling surfaced from our own data; WI-9
+relocated into Work Items; citations tightened. Source-verified. Pending final convergence check.*
 
 This matrix converts Dick's round-2 answers into a mapped, evidence-gated work plan. Its
 purpose is anti-hallucination: **no step may be marked done without a checkable evidence
@@ -91,7 +92,7 @@ against the known cache-name trap.
 | # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
 |---|------|--------------------|-------------------|----------|----------|--------|
 | 1.1 | Confirm the sealed cache is not present in any real form, guarding the near-twin trap | Search names EXACT targets: working tree; `git log --all --source`; AND the production mount `/trisight-volume/backtest_results/`. ANY filename hit must be reconciled against the sealed identity (**118,501,504 bytes / 3,317 symbols**) and against the two known decoys (`…massive-trisight-universe_3317…` at 112,428,132 B on the volume; `…top40-2-authority-universe_2666…` at 92,743,878 B / 2,666 symbols in 11+ locations) — a hit is NOT the sealed artifact unless byte count and symbol count both match | `evidence/wi1.1-cache-search.txt`: raw unedited stdout of every command incl. the volume mount; plus an identity-reconciliation table showing each hit's bytes/symbols vs the sealed identity and both decoys | agent | 2nd agent re-runs identical commands from a clean shell incl. the volume mount, attaches own output; packet then reviewed by Bob at 1.3 | 🔲 |
-| 1.2 | Record that the cache is unverifiable even if a candidate surfaces | State, quoting D58 verbatim, that the seal recorded path+size but never a SHA256, so no candidate can be proven to be the sealed artifact | `evidence/wi1.2-unverifiable.md` with the verbatim D58 excerpt quoted inline | agent | 2nd agent opens D58, confirms the quote is exact and dispositive | ✅ (already established in D58; step is to record it, not discover it) |
+| 1.2 | Record that the cache is unverifiable even if a candidate surfaces | State, quoting D58 verbatim, that the seal recorded path+size but never a SHA256, so no candidate can be proven to be the sealed artifact | `evidence/wi1.2-unverifiable.md` with the verbatim D58 excerpt quoted inline | agent | 2nd agent opens D58, confirms the quote is exact and dispositive | 🔲 (fact established in D58, but per Rule 1 the row stays NOT STARTED until evidence/wi1.2-unverifiable.md exists and a 2nd party re-derives it) |
 | 1.3 | **E-1 RULED GO** (Bob 2026-08-19): fund a full point-in-time re-validation run producing a NEW verifiable number; retraction is the fallback if the run proves infeasible | Bob's ruling recorded | Bob's verbatim ruling quoted in the Escalations section (Rule 7; conversation-sourced) | Bob | — | 🟢 RULED |
 | 1.3a | Feasibility pre-check BEFORE any compute: are the required inputs present (MASSIVE key, universe-resolution pipeline, the original run's parameter set) and is this not a duplicate of a run already done? | A go/no-go: every required input's presence confirmed with a quoted check; if any is absent the run is infeasible and the fallback is retraction | `evidence/wi1.3a-feasibility.md` with each input's presence quoted inline | agent | 2nd agent re-checks each input | 🔲 |
 | 1.3b | (If 1.3a = go) Execute the re-validation run | Run completes; produces a NEW number with a reproducible artifact | New artifact path + `sha256` + the run command captured | agent | 2nd agent re-runs or independently checks the artifact | ⛔ BLOCKED on 1.3a |
@@ -120,14 +121,21 @@ when BOTH a live code trace AND the estate's existing venue findings agree.
 | 3.3 | State venue per strategy as MEASURED only where 3.1 and 3.2 agree; else flag the conflict | A per-strategy venue table; each cell MEASURED-with-two-sources or flagged CONFLICT | Table in the same file, each cell citing both | agent | 2nd agent | 🔲 |
 
 ### WI-4 · Verify Dick's stated fact: Automated Swing = Manual Swing (params identical, execution differs)
-**Directive (verbatim):** *"The strategy parameters are identical, just the execution is
-different. Either way, you should be addressing FIXING this rather than asking to do it for you."*
-**Reading:** An owner assertion rules ACTION, not FACT — verify against the code.
+**Directive (verbatim):** *"I do not know if YOU ran a backtest to validate this or YOU elected to
+simply apply the manaul [sic] backtest to the automated strategy. The strategy parameters are identical,
+just the execution is different. Either way, you should be addressing FIXING this rather than asking to
+do it for you."*
+**Reading:** An owner assertion rules ACTION, not FACT — verify against the code. And our OWN sealed input
+already speaks to his diagnostic question: normalized-inputs' Automated Swing claim carries
+`metric_kind: "5-year backtest (shares ledger lineage with Manual Swing)"` and cites
+`backtest_results/manual_swing_phase6* ledger artifacts` — i.e. the estate's data already implies Auto's
+claim reused Manual's ledger rather than a separate validation. WI-4.2 confirms or refutes that lineage;
+it does NOT treat it as an untouched unknown.
 
 | # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
 |---|------|--------------------|-------------------|----------|----------|--------|
 | 4.1 | Diff the two strategies' parameter sets | Identical params shown, or exact divergences listed — each param quoted file:line for both | `evidence/wi4.1-param-diff.md`, verbatim params for both | agent | 2nd agent opens both, confirms | 🔲 |
-| 4.2 | Determine whether Auto Swing was validated separately or reused Manual's backtest | A yes/no with the settling artifact quoted inline | `evidence/wi4.2-validation-provenance.md`, verbatim excerpt of the settling artifact | agent | 2nd agent opens the artifact, confirms it is dispositive | 🔲 |
+| 4.2 | Confirm or refute the already-implied shared lineage: is Auto's claim the manual_swing_phase6* ledger, or a distinct Auto-specific backtest? | Starting from the normalized-inputs lineage citation, either (a) confirm the manual_swing_phase6* artifacts ARE Auto's claim source, or (b) produce a distinct Auto-specific backtest artifact that refutes it | `evidence/wi4.2-validation-provenance.md`, the normalized-inputs lineage line quoted + the settling artifact quoted inline | agent | 2nd agent opens the artifact, confirms it is dispositive | 🔲 |
 
 ### WI-5 · Present the evidence behind High 5's 92.33% claim (do not frame it as a "gap")
 **Directive (verbatim):** *"THERE IS NO GAP — YOU NEED TO FIND THE EVIDENCE THAT SUPPORTS THE ORIGINAL."*
@@ -137,7 +145,7 @@ supporting evidence, to the same standard applied to Top 40.
 | # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
 |---|------|--------------------|-------------------|----------|----------|--------|
 | 5.1 | Locate the sealed-benchmark run that produced 92.33% / 5,321 trades | The run artifact path + the win-rate line quoted inline | `evidence/wi5.1-high5-benchmark.md`, verbatim excerpt | agent | 2nd agent opens it, confirms | 🔲 |
-| 5.2 | State whether that run's inputs are reproducible to Top-40 standard, or share the same survivorship defect | A sourced reproducible / not-reproducible verdict, citing the universe-cache provenance | `evidence/wi5.2-high5-repro.md`, verbatim provenance excerpt | agent | 2nd agent | 🔲 |
+| 5.2 | Reconcile the sealed 92.33% against Dick's own architect ruling (TQM High5·E3: stop IS the design, amend contract, re-measure at 1×) and the unexecuted-edit reality per D94 | A sourced statement that the no-stop-contract is an UNEXECUTED edit (not proof of no stop), citing E3 verbatim + D94 | `evidence/wi5.2-high5-recon.md`, E3 ruling + D94 quoted inline | agent | 2nd agent opens TQM + D94, confirms | 🔲 |
 
 ### WI-6 · Put Escalator Reclaimed Shadow's existing evidence in front of Dick
 **Directive (verbatim):** *"how would i know — you still have given me NOTHING as evidence or
@@ -171,9 +179,20 @@ Manual Swing's 259-row ledger reflects real trading at all — its own integrity
 | # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
 |---|------|--------------------|-------------------|----------|----------|--------|
 | 8.1 | Identify exactly what was shown to Dick that he is rejecting | The specific card/number presented, quoted | `evidence/wi8.1-presented.md`, verbatim of what he saw | agent | 2nd agent | 🔲 |
-| 8.2 | Trace the 259 rows' provenance: paper-simulated vs 48 BACKFILL vs 104 D86-signature | Per-class row counts, each class defined by its source rule quoted inline (D86: `pnl_pct==+1.00% AND days_held==1`) | `evidence/wi8.2-ledger-provenance.md`, verbatim D86 rule + counts | agent | 2nd agent opens swing_trade_log.csv + D86, confirms | 🔲 |
+| 8.2 | Trace the 259 rows' provenance: paper-simulated vs 48 BACKFILL vs 104 D86-signature | Per-class row counts, each class defined by its source rule quoted inline (D86: `pnl_pct==+1.00% AND days_held==1`). Trace **`/trisight-volume/Snapshots/swing_trade_log.csv` (Railway live volume, pull 2026-08-07)** — do NOT trace the git-committed `Snapshots/swing_trade_log.csv`, which DECISIONS-INBOX RULING 3 (2026-08-17) reset to header-only and is not the source of the 259-row figures | `evidence/wi8.2-ledger-provenance.md`, verbatim D86 rule + counts + the live-volume path | agent | 2nd agent opens the live-volume ledger + D86, confirms | 🔲 |
+| 8.2a | Reconcile against DICK'S OWN standing ruling on backfilled data before drafting any elaboration | Cite DECISIONS-INBOX RULING 3 verbatim ("I do not trust ANY of your backfilled data for ANYTHING", 2026-08-17); confirm it reset the committed seed file only and left live volume ledgers "untouched", so it does NOT dispose of the live 104/48 rows — but records his stance | `evidence/wi8.2a-ruling3.md`, RULING 3 quoted inline | agent | 2nd agent opens DECISIONS-INBOX, confirms | 🔲 |
 | 8.3 | Produce a sourced verdict: does any subset reflect real trading, or should the ledger be flagged like WI-1's cache | A yes/no per subset with evidence | `evidence/wi8.3-real-trades-verdict.md` | agent | 2nd agent | 🔲 |
 | 8.4 | **ESCALATION (if 8.3 warrants)** — present Bob the disposition options for the flagged rows | Bob records a decision | Bob's ruling per Protocol Rule 7 | Bob | — | ⤴️ |
+
+### WI-9 · Check whether round-1's zero-save was systemic (fleet-wide integrity)
+**Source:** surfaced by WI-6's reconciliation (Escalator Reclaimed Shadow saved zero round-1 rows).
+**Reading:** If the round-1 save failure touched other strategies, some of Dick's round-1 input may
+be silently missing — a fleet-wide data-integrity risk, not one strategy's gap.
+
+| # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
+|---|------|--------------------|-------------------|----------|----------|--------|
+| 9.1 | Compare round-1 saved rows per strategy against the elements each strategy should have | A per-strategy expected-vs-saved count; any strategy with a shortfall flagged | `evidence/wi9.1-save-integrity.md` with the counts (query output quoted) | agent | 2nd agent re-queries, confirms | 🔲 |
+| 9.2 | If a shortfall exists, determine cause (save bug vs Dick skipped) and whether input was lost | A sourced cause + whether any Dick input is unrecoverable | `evidence/wi9.2-cause.md` | agent | 2nd agent | ⛔ BLOCKED on 9.1 |
 
 ---
 
@@ -203,16 +222,6 @@ known-unknowns, unknown-knowns, and unknown-unknowns."*
 - **Gate B** — reviewed again **before creating the round-3 return approach**.
 - **Gate C** — reviewed again **before any expanded-scope interface or package reaches Dick**.
 - **Gate D** — reviewed again **before any remediation change (a "FIXING" PR under E-4) merges into estate/production code**. Verification-only evidence gathering does not trigger Gate D; any change to strategy code, ledgers, or seals does.
-
-### WI-9 · Check whether round-1's zero-save was systemic (fleet-wide integrity)
-**Source:** surfaced by WI-6's reconciliation (Escalator Reclaimed Shadow saved zero round-1 rows).
-**Reading:** If the round-1 save failure touched other strategies, some of Dick's round-1 input may
-be silently missing — a fleet-wide data-integrity risk, not one strategy's gap.
-
-| # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
-|---|------|--------------------|-------------------|----------|----------|--------|
-| 9.1 | Compare round-1 saved rows per strategy against the elements each strategy should have | A per-strategy expected-vs-saved count; any strategy with a shortfall flagged | `evidence/wi9.1-save-integrity.md` with the counts (query output quoted) | agent | 2nd agent re-queries, confirms | 🔲 |
-| 9.2 | If a shortfall exists, determine cause (save bug vs Dick skipped) and whether input was lost | A sourced cause + whether any Dick input is unrecoverable | `evidence/wi9.2-cause.md` | agent | 2nd agent | ⛔ BLOCKED on 9.1 |
 
 ## Directive-vs-Data Reconciliation (Protocol Rule 8 — never at face value)
 
@@ -250,8 +259,7 @@ which governs going forward — the re-run or the seal?"
 **WI-3 · Venue.** *Known-known:* Dick won't bless our guess (his directive). Estate data already largely
 settles venue: his ratified three-term standard **"TriSight Sim / Broker Sim / Broker Live"** is the
 platform-wide convention (DECISIONS-INBOX line 202), oakwind_swing is tagged TriSight Sim today (line 119),
-and his launch instruction routes every strategy to "TriSight Sim, TradeStation Sim, or TradeStation Live
-… determination made at the TriSight Trading Terminal level" (line 658). *Known-unknown:* the current
+and his launch instruction routes every strategy to (verbatim, line 658) "TriSight sim, TradeStation Sim, TradeStation Live ... with the TradeStation determination made at the TriSight Trading Terminal level". *Known-unknown:* the current
 per-strategy venue value from the live config/code. *Unknown-known:* venue is a **per-strategy setting with
 a TriSight Sim default**, not a fleet constant — so WI-3 states it per strategy from config+code, and never
 asks Dick. *Unknown-unknown:* whether any strategy currently carries a TradeStation override at the terminal
@@ -265,19 +273,24 @@ only, after we've verified):* "We [confirmed identical / found divergence X]. Yo
 this — do you intend Auto re-validated on its own execution path, or inheriting Manual's validation?"
 
 **WI-5 · High 5 92.33%.** *Known-known:* 92.33% claim vs 45.08% realized (normalized-inputs). *Known-
-unknown:* whether the sealed benchmark's inputs reproduce. *Unknown-known (the estate already root-caused
-the gap — and it is NOT survivorship):* per DEFECT-REGISTRY D94 + SME-CHALLENGE-V2 #1 (director-verified
-firsthand), the sealed 92.33% was **graded through a 93.05% stop-driven path** (STOP_TRAIL exits scored
-100% winners) while High 5's sealed contract has **no stop at all** and production runs **127/127
-TIME_EXIT, zero stops ever** — the win rate is manufactured by a grading path the strategy cannot use.
-Compounding it, the headline used equity-linked sizing (`(equity/35)×2.0×slot_weight` → 194.81% CAGR) vs
-production's fixed $28,571.43/slot rule (→ 29.25% CAGR). So the honest answer to "find the evidence that
-supports the original" is: **our data shows the evidence does NOT support it.** (High 5 is separately named
-in the fleet frozen-universe finding at TQM line 49, but that is not the cause of this gap.) *Unknown-
-unknown:* whether the sealed benchmark artifact still exists to re-derive. *Draft elaboration (decision
-only):* "The sealed 92.33% was graded on stop exits your contract forbids, and sized on an equity-linked
-basis production doesn't use. Which do you hold as authoritative for High 5 going forward — the sealed
-grading, or production's no-stop / fixed-notional reality?"
+unknown:* whether the sealed benchmark's inputs reproduce. *Unknown-known — with a critical caveat we
+apply to our OWN data (Rule 8):* per DEFECT-REGISTRY D94 (2026-08-07, reconfirmed line 443 and PR #856
+line 512 — cited alone; the earlier SME-CHALLENGE-V2 #1 reported non-matching figures for a 2,107-trade
+population that appears to conflate High 5 with the Swing benchmark, and that entry records itself as later
+superseded/mis-framed), the sealed 92.33% was **graded through a 93.05% stop-driven path** while the sealed
+contract's *written text* says no stop and production runs **127/127 TIME_EXIT**; sizing used equity-linked
+`(equity/35)×2.0×slot_weight` (194.81% CAGR) vs production's fixed $28,571.43/slot (29.25% CAGR). **We do
+NOT present this as settled fact against Dick.** He already ruled on it as architect — TQM High5·E3,
+verbatim: *"DISPUTE — the stop IS the design; 2× is artifact; add stop to contract + re-measure at 1×"*
+(verdict RECONCILED-open→r2, never closed). So the "no-stop contract" is **an unexecuted edit, not evidence
+the strategy has no stop**: Dick ordered the stop written into the contract; it was never done, and D94
+measured against the unamended text. The sources do not conflict about what Dick WANTS (keep the stop, drop
+the 2× artifact, re-measure at 1×) — only about whether the paperwork matches. *Unknown-unknown:* whether
+the sealed benchmark artifact still exists to re-derive. *Draft elaboration (status/execution — his order
+was never carried out; NOT a re-ask of a settled question):* "Your round-1 ruling was to add the stop to
+High 5's written contract and re-measure at 1× — that edit was never made. Do you want it executed now
+(stop formalized, re-measured at 1× fixed-notional) before we report a number, or the sealed 92.33% /
+194.81% retired outright?"
 
 **WI-6 · Escalator Shadow.** *Known-known:* evidence exists in normalized-inputs (claim FOUND / realized
 FOUND); it never reached his dialog (round-1 saved zero rows). *Known-unknown:* none material. *Unknown-
