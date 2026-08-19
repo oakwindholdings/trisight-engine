@@ -159,7 +159,7 @@
    "strategy": "escalator-reclaimed-long-shadow",
    "element_id": "claim-window",
    "kind": "evidence",
-   "body": "Long Shadow's window is established from our own committed data — 2025-12-31 to 2026-03-24 (57 market dates, 264 trades), recovered from two independently-generated block-summary CSVs that cross-check and reconcile exactly to the claim. No re-run was needed, and nothing to confirm on your end.",
+   "body": "Long Shadow's window is established from our own committed data — 2025-12-31 to 2026-03-24 (57 market dates, 264 trades), recovered from two independently-generated committed CSVs (a block-summary and a rolling-summary) that cross-check and reconcile exactly to the claim. No re-run was needed, and nothing to confirm on your end.",
    "evidence": [
     {
      "source": "WI-2.4 evidence, verbatim (MEASURED)",
