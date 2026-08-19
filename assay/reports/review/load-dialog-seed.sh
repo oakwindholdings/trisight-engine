@@ -11,9 +11,13 @@ SEED="$(dirname "$0")/dialog-seed.json"
 FORCE="${1:-}"
 
 existing=$(curl -s "$BASE/api/review/dialog" -H "x-review-code: $CODE" | python3 -c "import json,sys; print(len(json.load(sys.stdin).get('data',[])))")
-if [ "$existing" != "0" ] && [ "$FORCE" != "--force" ]; then
-  echo "Refusing: $existing dialog rows already exist. Pass --force to append anyway." >&2
-  exit 1
+if [ "$existing" != "0" ]; then
+  if [ "$FORCE" != "--force" ]; then
+    echo "Refusing: $existing dialog rows already exist. Pass --force to retract unanswered study rows and reload." >&2
+    exit 1
+  fi
+  echo "Retracting unanswered study rows before reload (owner answers are preserved)..."
+  curl -s -X POST "$BASE/api/review/dialog/retract-unanswered" -H "x-review-code: $CODE" -H "x-review-admin: $ADMIN" | python3 -c "import json,sys; d=json.load(sys.stdin)['data']; print('  removed', d['removed'], 'study rows; kept', d['kept_owner_rows'], 'owner rows')"
 fi
 
 python3 - "$SEED" "$BASE" "$CODE" "$ADMIN" <<'PY'

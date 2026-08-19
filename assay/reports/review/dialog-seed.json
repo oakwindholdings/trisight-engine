@@ -1,125 +1,334 @@
 {
   "_meta": {
-    "purpose": "Round-2 dialog seed: evidence-first follow-ups drafted from Dick's round-1 answers (export 2026-08-18). Complies with the 2026-08-07 derivation bar (DEFECT-REGISTRY STANDING-ORDER-2): provenance per input, MEASURED/INFERRED labels, owner's counter anticipated.",
+    "purpose": "Round-2 dialog seed, v2 — rebuilt after a 5-lens peer+adversarial review (workflow wf_1ff15e69-7e3, 15 confirmed + 12 adjudicated findings). Complies with the 2026-08-07 derivation bar (DEFECT-REGISTRY STANDING-ORDER-2): provenance per input, MEASURED/INFERRED labels, arithmetic shown, owner's counter anticipated, no fabrication, no praise/handling of the owner.",
     "loaded_via": "POST /api/review/dialog with x-review-admin",
-    "authored": "2026-08-18"
+    "revised": "2026-08-19",
+    "review_fixes": "High-5 window (we had it, do not ask); Top-40 chain updated to verified -32.42%; dip-buy/severity overclaim corrected (Top 40 is worst, not Oakwind); Manual-Swing rows are contract-invalid not fabricated; venue not pre-committed fleet-wide; Oakwind-Investor ruling searched by us not Dick; ellipsis-splices unquoted; praise/defensive-asides removed; missing coverage added (Earnings claim side, Oakwind Investor window+phantom, Top-40 flag+realized)."
   },
   "messages": [
     {
-      "strategy": "oakwind-swing-trader", "element_id": "realized-ledger", "kind": "question",
-      "body": "You asked exactly the right question: which system do these 'real trades' come from — TriSight Sim, TradeStation Sim, or TradeStation Live? Our reading, labeled INFERRED: every ledger in this study is written by TriSight's own strategy runners, executing signals against market prices in simulation. No broker is involved anywhere. In your terms we believe that is TriSight Sim — not TradeStation anything. If you confirm, we will apply your answer to every strategy's ledger in this study (they are all written by the same engine) and say 'TriSight Sim' everywhere instead of 'paper' or 'real'. (Also: the link that failed for you with a 404 required a GitHub sign-in. Every file link in these questions is served by this site directly — no sign-in.)",
-      "options": ["TriSight Sim — applies to all of them", "TradeStation Sim", "TradeStation Live", "Mixed / it depends — I'll explain"],
+      "strategy": "oakwind-swing-trader",
+      "element_id": "realized-ledger",
+      "kind": "question",
+      "body": "You asked which system these trades come from — TriSight Sim, TradeStation Sim, or TradeStation Live. INFERRED: every ledger in this study is written by TriSight's own strategy runners, pricing signals against market data in simulation, with no broker involved. We read that as TriSight Sim, not TradeStation. If that is right for this strategy, say so; and if the venue differs for ANY specific strategy, name it there — we will not assume one answer covers all ten. (The link that 404'd for you needed a GitHub sign-in; every file link in these questions is served by this site directly, no sign-in.)",
+      "options": [
+        "TriSight Sim",
+        "TradeStation Sim",
+        "TradeStation Live",
+        "Differs by strategy — I'll specify"
+      ],
       "evidence": [
-        {"source": "Sealed realized record, Oakwind Swing (MEASURED)", "quote": "254 closed round-trip trades: WR 58.66% (95% CI 52.52%-64.54%) ... expectancy +0.466%/trade — supply_demand_hourly_paper_fills.csv, pulled read-only from the production volume 2026-08-07"}
+        {
+          "source": "Sealed realized record, Oakwind Swing — supply_demand_hourly_paper_fills.csv, read-only pull 2026-08-07 (MEASURED)",
+          "quote": "254 closed round-trip trades: WR 58.66% (95% CI 52.52%-64.54%) ... expectancy +0.466%/trade"
+        }
       ]
     },
     {
-      "strategy": "oakwind-swing-trader", "element_id": "claim-window", "kind": "question",
-      "body": "We asked about a window without showing you the artifact — fixing that here. MEASURED: the backtest artifact identifies itself as generated 2026-05-18T14:33:54 on commit lineage b5ffd4f, states 15,028 trades / 9,408 executed, and contains NO field naming the calendar period those trades span. We searched the artifact and its seal record; no start or end date exists anywhere in them. That absence is the single input blocking the return comparison. Do you know the calendar span this backtest covered?",
-      "options": ["I know the dates — typing them below", "I don't know the dates", "Re-run the backtest so the artifact declares its dates"],
+      "strategy": "oakwind-swing-trader",
+      "element_id": "claim-window",
+      "kind": "question",
+      "body": "MEASURED: the Oakwind Swing backtest artifact declares NO calendar window — it names 15,028 trades / 9,408 executed and a generation timestamp (2026-05-18T14:33:54), but no field states the start or end date of the period those trades span. We confirmed the absence in the artifact and its seal record. That missing window is the one input blocking the return comparison. Do you know the calendar span the backtest covered?",
+      "options": [
+        "I know the dates — typing them below",
+        "I don't know the dates",
+        "Re-run so the artifact declares its dates"
+      ],
       "evidence": [
-        {"source": "Sealed claim artifact, verbatim (MEASURED)", "quote": "Win% 67.65%, Net executed win% 62.85%, CAGR 1,851.41%, Max DD -1.65% — artifact generated 2026-05-18T14:33:54, seal 915248a6 signed Dick O'Leary 2026-07-12"}
+        {
+          "source": "Sealed claim artifact, verbatim (MEASURED)",
+          "quote": "Win% 67.65%, Net executed win% 62.85%, CAGR 1,851.41%, Max DD -1.65% — artifact generated 2026-05-18T14:33:54, seal 915248a6 signed Dick O'Leary 2026-07-12"
+        }
       ]
     },
     {
-      "strategy": "oakwind-swing-trader", "element_id": "claim-metric-0", "kind": "evidence",
-      "body": "You said 'modeled control ledger' means nothing to you — fair, so here is the definition with its label. INFERRED from the artifact's own terms: a 'modeled control ledger' is a list of simulated fills priced at modeled market prices with 5 basis points (0.05%) of friction charged per trade — a calculation, not executions. Nothing in it touched a broker or a live quote feed. Every number on the claim side of this strategy comes from that calculation.",
+      "strategy": "oakwind-swing-trader",
+      "element_id": "claim-metric-0",
+      "kind": "evidence",
+      "body": "You said 'modeled control ledger' means nothing to you. INFERRED from the artifact's own terms: it is a list of simulated fills priced at modeled market prices with 5 basis points (0.05%) of friction charged per trade — a calculation, not executed orders. Every number on the claim side of this strategy comes from that calculation.",
       "evidence": [
-        {"source": "Sealed claim artifact (MEASURED)", "quote": "Modeled control ledger, 5bps friction: Win% 67.65% ... 15,028 trades / 9,408 executed (15bps variant: win 55.12%, CAGR 430.61%)"}
+        {
+          "source": "Sealed claim artifact (MEASURED)",
+          "quote": "Modeled control ledger, 5bps friction: Win% 67.65% ... 15,028 trades / 9,408 executed (15bps variant: win 55.12%, CAGR 430.61%)"
+        }
       ]
     },
     {
-      "strategy": "oakwind-swing-trader", "element_id": "claim-flag-1", "kind": "evidence",
-      "body": "You asked what 'fleet-wide frozen survivor-biased universe; dip-buy amplification' is. Plain English: the backtest picked stocks from a list of companies as it exists TODAY. Companies that went broke or were delisted during the tested years are missing from that list, so the test could never buy them — it only ever saw the survivors. That can only make results look better. 'Dip-buy amplification' means it hits your Oakwind strategies hardest: a dip-buyer is exactly the strategy that would have bought the failing companies the frozen list deletes. This is a MEASURED finding from a three-lens audit that covered every sealed strategy in the estate, quoted below, and the full audit text is one click away — no sign-in.",
+      "strategy": "oakwind-swing-trader",
+      "element_id": "claim-flag-1",
+      "kind": "evidence",
+      "body": "You asked what 'fleet-wide frozen survivor-biased universe; dip-buy amplification' means. Two separate findings, labeled separately. FIRST, MEASURED (three-lens audit, workflow w4nfwu675): the backtest ranks stocks from a list of companies as it exists today; companies that died or delisted during the tested years are absent, so the test could only ever pick survivors — which can only flatter results. This was confirmed for every sealed strategy in the estate. SECOND, and more tentative — INFERRED (a separate single-lens equities analysis): dip-buying strategies feel this bias more than momentum-exit ones, because a dip-buyer is what would have bought the failing names the frozen list deletes. That analysis names the dip-buyers generically and rates the flagship Top 40 2.0 as the estate's SEVERE worst case — not Oakwind. Only Top 40 has since had the credentialed re-measurement that turns this from hypothesis into a hard number.",
       "evidence": [
-        {"source": "TOTAL-QUALITY-MATRIX.md line 49, verbatim (MEASURED, audit w4nfwu675)", "quote": "VERIFIED FLEET-WIDE (workflow w4nfwu675, 3 lenses). Refute-lens: CONFIRMED survivor-biased (no valid refutation). Fleet-lens: ALL sealed strategies AFFECTED — every committed backtest ranks within a frozen current-listed pool ... Oakwind (TS500_CSV present-day roster)", "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"}
+        {
+          "source": "TOTAL-QUALITY-MATRIX.md line 49, verbatim (MEASURED, 3-lens w4nfwu675)",
+          "quote": "VERIFIED FLEET-WIDE (workflow w4nfwu675, 3 lenses). Refute-lens: CONFIRMED survivor-biased (no valid refutation). Fleet-lens: ALL sealed strategies AFFECTED ... Oakwind (TS500_CSV present-day roster)",
+          "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"
+        },
+        {
+          "source": "TOTAL-QUALITY-MATRIX.md line 87, verbatim (INFERRED, single-lens lambda analysis)",
+          "quote": "momentum-exit lambdas (TS500, partly Shark-Fin) dampen the corruption; dip-buy lambdas (Oakwind, Sniper) amplify it; hyper-tactical concentrated momentum (Top 40 2.0) is severe",
+          "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"
+        }
       ]
     },
     {
-      "strategy": "top-40-2-0", "element_id": "claim-doc", "kind": "evidence",
-      "body": "You asked for validation instead of dialog. Here is the complete validation chain for the 213.07% figure, every step MEASURED and on record: (1) The sealed number rests on a 118MB score cache that no longer exists anywhere — you verified its absence from your own machine yourself, and you also found that the seal never recorded the SHA256 its own policy required, so even a found file could not be verified. (2) The closest honest analog — same sealed parameters, universe re-resolved 2026-07-23 — reproduces to 88.44% CAGR. (3) A full point-in-time rebuild, where the test may only buy what was actually eligible on each entry date, turns the number NEGATIVE: -7.52% CAGR / -61.58% max drawdown — and that is an optimistic bound. (4) On your ruling (c), the sealed figure is FROZEN from all external use until honest re-validation. The full defect record is one click away.",
+      "strategy": "top-40-2-0",
+      "element_id": "claim-doc",
+      "kind": "evidence",
+      "body": "You asked for the validation, not more dialog. Here is the full chain for the 213.07% figure, every step MEASURED: (1) The sealed number rests on a 118MB score cache that exists nowhere — you verified its absence from your own machine, and the seal never recorded the SHA256 its own policy required, so even a found file could not be verified. (2) The closest honest analog — same sealed parameters, universe re-resolved 2026-07-23 — reproduces to 88.44% CAGR. (3) A point-in-time rebuild that may only buy what was actually eligible on each entry date drops it to -7.55% CAGR / 61.59% max drawdown, and that is an OPTIMISTIC bound. (4) The credentialed survivorship correction — restoring the 2,399 delisted names — is the firm number: -32.42% CAGR / 76.68% max drawdown, VERIFIED by both adversarial lenses on 2026-08-10. (5) On your Round-61 ruling (c), the sealed 213.07% is frozen from all external use until honest re-validation. The full record is one click away.",
       "evidence": [
-        {"source": "DEFECT-REGISTRY.md, D58, verbatim (MEASURED)", "quote": "700 of 6,080 trade-slots (11.5%) fail point-in-time eligibility at their own entry date and contribute 67.5% of the non-compounded return ... FULL POINT-IN-TIME REBUILD TURNS IT NEGATIVE: -7.52% CAGR / -61.58% max DD — and that is explicitly an OPTIMISTIC BOUND", "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"}
+        {
+          "source": "DEFECT-REGISTRY.md, D58, verbatim (MEASURED)",
+          "quote": "the literal sealed 213.06656830114653% CANNOT BE REPRODUCED AT ALL: its 2026-05-15 score-matrix cache exists nowhere — director independently confirmed absent from the working tree, from ALL git refs ... and from the entire estate filesystem",
+          "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"
+        },
+        {
+          "source": "TOTAL-QUALITY-MATRIX.md, E4→E11 addendum, verbatim (MEASURED, VERIFIED both lenses wvu77ebio 2026-08-10)",
+          "quote": "baseline (survivor-only PIT rebuild) -7.55% CAGR / 61.59% DD -> survivorship-corrected -32.42% CAGR / 76.68% DD ... 2,399 delisted-liquid names",
+          "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"
+        }
       ]
     },
     {
-      "strategy": "top-40-2-0", "element_id": "verdict-0", "kind": "question",
-      "body": "Given the chain above, the study needs one ruling from you — an action call, not a fact: which number should stand as Top 40 2.0's claim-side comparator while the sealed 213.07% stays frozen? Your strongest counter, stated for you: the -7.52% rebuild can only promote candidates still in today's pool, so it understates reality; but the 88.44% analog still carries the survivor bias. There is no clean number — the question is which honest imperfection you want on the page.",
-      "options": ["88.44% — closest honest analog", "-7.52% — point-in-time bound", "Keep it REFUSED until re-validation completes"],
+      "strategy": "top-40-2-0",
+      "element_id": "claim-flag-2",
+      "kind": "evidence",
+      "body": "Same definition you asked for on Oakwind, applied here where you also asked it. MEASURED (three-lens audit w4nfwu675): 'fleet-wide frozen survivor-biased universe' means the backtest picked from today's list of live companies, so it never saw the ones that failed or delisted during the test — which only inflates results. For Top 40 specifically this is the estate's worst case: the credentialed correction (finding above, -32.42% CAGR) shows the damage is concentrated in the small-cap tail the frozen list deletes.",
       "evidence": [
-        {"source": "DEFECT-REGISTRY.md, D58 owner ruling, verbatim (MEASURED)", "quote": "OWNER RULING ROUND-61 = (c) RE-VALIDATE FIRST, RULE AFTER (verbatim: 'Part 2: c'). The Top 40 2.0 ... sealed CAGR figures are FROZEN FROM ALL EXTERNAL USE, effective immediately", "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"}
+        {
+          "source": "TOTAL-QUALITY-MATRIX.md line 49, verbatim (MEASURED)",
+          "quote": "ALL sealed strategies AFFECTED — every committed backtest ranks within a frozen current-listed pool: ... Top 40 2.0 + Top 10 (massive-trisight-universe matrix, 2026-05-15, ~3.1yr freeze",
+          "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"
+        }
       ]
     },
     {
-      "strategy": "oakwind-investor-daily", "element_id": "verdict-0", "kind": "question",
-      "body": "You said a prior ruling was to NOTE the CAGR calculation, not refuse it. We searched the full decisions log for that ruling and could not find it in those words — the closest entries we found are quoted below. We want to honor the real ruling, not our memory of it. Can you tell us roughly when it was made, or any words from it, so we can locate it and change the verdict from REFUSED to NOTED accordingly?",
-      "options": ["I'll describe when/what I said", "I may be thinking of a different strategy", "Treat this as a NEW ruling: note it, don't refuse"],
+      "strategy": "top-40-2-0",
+      "element_id": "realized-numbers",
+      "kind": "evidence",
+      "body": "Your round-1 point stands and we agree: MEASURED — this ledger carries 144 corrupted basis-reset rows and positions corrupted to 4.24e69 shares (CARD-99), with 32 of 72 still corrupted as of 2026-08-10. There is no honest realized number to comment on here, and we are not asking you to invent one. We are noting the corruption as the finding itself. Nothing for you to do on this card unless you know of an uncorrupted record elsewhere.",
       "evidence": [
-        {"source": "DECISIONS-INBOX.md, closest match found (MEASURED)", "quote": "the headline backtest numbers (win 51.18%, CAGR, maxDD -20.71%) are the DEDUPED figures — 738 duplicate rows suppressed", "url": "/api/review/source/evidence/DECISIONS-INBOX.md"},
-        {"source": "DECISIONS-INBOX.md, Oakwind Investor ruling, verbatim (MEASURED)", "quote": "no ruling fore me to make .. you have yet to validate it ... DON'T ASK ME TO DELAY .... JUST FIX IT!!!", "url": "/api/review/source/evidence/DECISIONS-INBOX.md"}
+        {
+          "source": "Sealed realized record, Top 40 (MEASURED)",
+          "quote": "144 corrupted basis-reset rows ... positions corrupted to 4.24e69 shares (CARD-99), 32/72 still corrupted as of 2026-08-10"
+        }
       ]
     },
     {
-      "strategy": "high-5", "element_id": "claim-window", "kind": "question",
-      "body": "The one input that unlocks High 5's return comparison: the calendar span its backtest covered. MEASURED: the claim states 92.3% wins over 5,321 trades; the realized ledger shows 45.1% over 122 closed trades (that ledger is one click away below, no sign-in). The claim artifact declares no dates. Do you know the span?",
-      "options": ["I know the dates — typing them below", "I don't know", "Re-run so the artifact declares its dates"],
+      "strategy": "top-40-2-0",
+      "element_id": "verdict-0",
+      "kind": "question",
+      "body": "One ruling from you — an action call, not a fact. While the sealed 213.07% stays frozen, which number should stand as Top 40's claim-side comparator? Your strongest counter, stated for you: the -32.42% correction restores delisted names but still runs them through the same scoring, and the 88.44% analog still carries the survivor bias — so none is clean. The question is which honest imperfection goes on the page.",
+      "options": [
+        "-32.42% — the verified survivorship-corrected figure",
+        "-7.55% — the point-in-time optimistic bound",
+        "88.44% — the closest honest analog",
+        "Keep it REFUSED until full re-validation completes"
+      ],
       "evidence": [
-        {"source": "Realized ledger snapshot, pulled 2026-08-18, hash-verified (MEASURED)", "quote": "high_5_paper_trade_log.csv — 181,691 bytes, sha256 2e6b1a19…", "url": "/api/review/source/evidence/high_5_paper_trade_log_SNAPSHOT_20260818.csv"}
+        {
+          "source": "DEFECT-REGISTRY.md, D58 owner ruling, verbatim (MEASURED)",
+          "quote": "OWNER RULING ROUND-61 = (c) RE-VALIDATE FIRST, RULE AFTER (verbatim: 'Part 2: c'). The Top 40 2.0 ... sealed CAGR figures are FROZEN FROM ALL EXTERNAL USE, effective immediately",
+          "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"
+        }
       ]
     },
     {
-      "strategy": "automated-swing-trading", "element_id": "realized-flag-0", "kind": "evidence",
-      "body": "Context for the flag you couldn't evaluate: 37 of this ledger's 104 completed trades were stop-exits that never actually happened — the runner wrote exits at prices the market never traded. YOU caught this and voided them by your own ruling on 2026-08-05. The 56.7% realized win rate on the card includes those fabricated exits, which is why the study marks even the realized side of this strategy unreliable. (Also: the 'not stated to not stated' wording you laughed at was our rendering bug — fixed.)",
+      "strategy": "oakwind-investor-daily",
+      "element_id": "verdict-0",
+      "kind": "question",
+      "body": "You said a prior ruling was to NOTE Oakwind Investor's CAGR, not refuse it — and you were right that we should be honoring your ruling, not our memory. We searched the full decisions log ourselves rather than send you looking. We could NOT find a ruling in those words. What we did find: component-wise ratifications were stopped at Round-25b, and the sealed headline is the deduped win 51.18% / maxDD -20.71%. So rather than overrule you or guess, we propose treating your instruction as a standing one now: NOTE the CAGR calculation with its caveats instead of refusing it. Confirm that and we apply it; or point us to the ruling and we'll match it exactly.",
+      "options": [
+        "Yes — note it, don't refuse (apply as a standing rule)",
+        "The ruling exists — here's roughly when/what",
+        "Leave it refused"
+      ],
       "evidence": [
-        {"source": "Sealed realized record, verbatim (MEASURED)", "quote": "realized WR 56.7% (59W/45L of 104 ... 37 were later ruled fabricated 'phantom' stop-exits and VOIDED) — owner ruling 2026-08-05"}
+        {
+          "source": "DECISIONS-INBOX.md, Round-25b, verbatim (MEASURED — closest located)",
+          "quote": "component-wise asks came from serving Bob's pipeline sequencing over the owner's standing order — STOPPED as of this sitting; no further component-level ratifications will be put to Dick",
+          "url": "/api/review/source/evidence/DECISIONS-INBOX.md"
+        }
       ]
     },
     {
-      "strategy": "automated-swing-trading", "element_id": "claim-window", "kind": "question",
-      "body": "MEASURED: this backtest's window is known only from its filename — no date field exists inside the artifact itself. Is the filename-implied window the real span of the test?",
-      "options": ["Yes — the filename dates are correct", "No — I know different dates", "I don't know"]
-    },
-    {
-      "strategy": "manual-swing-trading", "element_id": "realized-flag-0", "kind": "evidence",
-      "body": "You asked what a 'synthetic signature' is. Plain English: a fingerprint that fabricated rows leave behind. MEASURED: 104 of this ledger's 259 rows show EXACTLY +1.00% profit held EXACTLY 1 day — real trading never produces 104 identical outcomes like that; a row-generating script does. Those rows (defect D86), plus 48 rows marked BACKFILL, are why the study treats this ledger as partially synthetic and refuses to compute a realized rate from it.",
-      "evidence": [
-        {"source": "Sealed realized record, verbatim (MEASURED)", "quote": "The D86 signature (pnl_pct == +1.00 % AND days_held == 1) appears on 104 of 259 rows — swing_trade_log.csv"}
+      "strategy": "oakwind-investor-daily",
+      "element_id": "claim-window",
+      "kind": "question",
+      "body": "MEASURED: the Oakwind Investor claim artifact declares no calendar window (both start and end are absent in the sealed record). Same single blocking input as Oakwind Swing. If you know the span the backtest covered, that unlocks the return comparison.",
+      "options": [
+        "I know the dates — typing them below",
+        "I don't know",
+        "Re-run so the artifact declares its dates"
       ]
     },
     {
-      "strategy": "manual-swing-trading", "element_id": "realized-ledger", "kind": "question",
-      "body": "Because of the synthetic rows above, Manual Swing currently has NO trustworthy record of real execution. Does one exist anywhere else — a TriSight Sim lane we haven't seen, a TradeStation account, a spreadsheet of yours?",
-      "options": ["A better record exists — I'll say where", "This ledger is all there is", "I don't know"]
-    },
-    {
-      "strategy": "trisight-500-2-0", "element_id": "claim-flag-1", "kind": "evidence",
-      "body": "You asked what a '6yr frozen universe cache' is and why anything frozen would hold value. It wouldn't — that is exactly why it is flagged. Plain English: the backtest simulated 2020-2026 but picked stocks from ONE list resolved on 2026-04-05. For the whole simulated six years it could only ever choose companies that were still alive in April 2026. The fleet audit rates TS500's version of this the most severe in the estate. Verbatim finding and full audit one click below.",
+      "strategy": "oakwind-investor-daily",
+      "element_id": "realized-numbers",
+      "kind": "evidence",
+      "body": "You objected — rightly — to being asked to weigh 'phantom' vs 'real' when neither was defined. Definitions, MEASURED (defect D39): a 'phantom' entry is one where no market crossing occurred on the entry day — the strategy logged an entry the tape does not support. On the reconstructed backlog, 29 of 50 entries were phantom; the real-entry-only subset is n=21 with a 38.1% win rate, against the claim's 50.51%. 'Real' here just means the non-phantom subset — we'll drop the word if it's still unclear.",
       "evidence": [
-        {"source": "TOTAL-QUALITY-MATRIX.md line 49, verbatim (MEASURED, audit w4nfwu675)", "quote": "TS500 2.0 (trisight_16D_master_cache.json, 2026-04-05, ~6yr freeze — most severe)", "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"}
+        {
+          "source": "Sealed realized record, Oakwind Investor (MEASURED)",
+          "quote": "Reconstructed backlog (2026-07-30, 50 closed): aggregate WR 68.0% BUT 29/50 entries were phantom (no market crossing on entry day, D39); REAL-entry-only subset: n=21, WR 38.1%"
+        }
       ]
     },
     {
-      "strategy": "trisight-500-2-0", "element_id": "realized-ledger", "kind": "evidence",
-      "body": "You asked what a 'shadow paper fill' is versus TriSight Sim / TradeStation Sim / TradeStation Live. INFERRED: 'shadow' means the strategy runs silently alongside production — its signals are recorded and priced by TriSight's own engine, but no orders go anywhere, not even to a simulated broker account. So in your taxonomy it is a TriSight Sim lane, one step more detached than a normal sim. If your venue answer on the Oakwind Swing question says otherwise, that answer wins. Your four confirmations on this strategy's claim cards are recorded — thank you, they are the first four confirmed inputs in the study.",
+      "strategy": "high-5",
+      "element_id": "claim-window",
+      "kind": "question",
+      "body": "Correction on our part: High 5's window is NOT missing — we have it, and we should not have asked you to supply it. MEASURED (sealed record): the backtest covers 2021-04-01 to 2026-04-30. So the return comparison is not blocked on a window here. What IS worth your eye is the gap it exposes: claim win rate 92.33% over 5,321 trades vs realized 45.08% (95% CI 36.3%-53.9%) over 122 closed trades, all of them time-exits with no stops. Is 2021-04-01 to 2026-04-30 the correct span, and does that claim/realized gap match your understanding?",
+      "options": [
+        "Window and gap look right",
+        "Window is wrong — correct dates below",
+        "The gap needs explaining — comment below"
+      ],
       "evidence": [
-        {"source": "Realized ledger snapshot, pulled 2026-08-18, hash-verified (MEASURED)", "quote": "auto_ts500_lfr_shadow_paper_fill_log.csv — 495,505 bytes, sha256 3fa36741…", "url": "/api/review/source/evidence/auto_ts500_lfr_shadow_paper_fill_log_SNAPSHOT_20260818.csv"}
+        {
+          "source": "Sealed claim, High 5 — 2026-07-16 sealed benchmark (MEASURED)",
+          "quote": "5,321 trades, Win% 92.33%",
+          "url": "/api/review/source/evidence/high_5_paper_trade_log_SNAPSHOT_20260818.csv"
+        },
+        {
+          "source": "Sealed realized, High 5 — pulled 2026-08-07 (MEASURED)",
+          "quote": "122 closed paper round-trips (pulled 2026-08-07): win rate 45.08% [95% CI 36.3%-53.9%]"
+        }
       ]
     },
     {
-      "strategy": "escalator-reclaimed-shadow", "element_id": "claim-doc", "kind": "question",
-      "body": "Housekeeping: we received answers for nine strategies but NONE for this one (Escalator Reclaimed Shadow — the short-window one, distinct from Long Shadow which you did answer). Before we treat that as a skip: did its answers fail to save, or did you pass over it?",
-      "options": ["I missed it — I'll review it now", "I skipped it on purpose", "I answered it — my answers are lost"]
-    },
-    {
-      "strategy": "escalator-reclaimed-long-shadow", "element_id": "claim-window", "kind": "question",
-      "body": "Same single blocking input as the others: MEASURED, the claim artifact declares no calendar span. If you know the window this backtest covered, that one answer unlocks its return comparison.",
-      "options": ["I know the dates — typing them below", "I don't know", "Re-run so the artifact declares its dates"]
-    },
-    {
-      "strategy": "earnings-trader-locked-93", "element_id": "realized-ledger", "kind": "evidence",
-      "body": "For the cards you couldn't evaluate: the reason there is nothing to show is itself the finding, MEASURED twice. This strategy has never produced a single fill in production — its funnel was reproduced live: 472 candidates in, 0 out, with the sole survivor rejected on five named missing features. Three of its five gate features require rolling roster history the live pipeline structurally never builds. There is no realized record to present because none exists — that is the strategy's status, not a gap in our homework.",
+      "strategy": "automated-swing-trading",
+      "element_id": "realized-flag-0",
+      "kind": "evidence",
+      "body": "Context for the flag you couldn't evaluate, with the attribution kept straight. MEASURED: 37 of this ledger's 104 completed round-trips were stop-exits at prices the market never traded. The director's audit caught them (D77/D81, kill-shot-verified 2026-08-05); you then ruled the same day to VOID those 37 rows. The 56.7% realized win rate (59W/45L, n=104) on the card still includes the voided rows, which is why the study marks even the realized side of this strategy unreliable — the honest rate can't be stated until the ledger is recomputed without them.",
       "evidence": [
-        {"source": "DEFECT-REGISTRY.md D53/Q-EARN, verbatim (MEASURED)", "quote": "Real funnel: 472 → 77 → 59 → 1 → 0 — the sole survivor MMSI was rejected on 5 named missing entry features ... the strategy can never fire as built", "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"}
+        {
+          "source": "Sealed realized record, Automated Swing (MEASURED)",
+          "quote": "Since-inception realized WR 56.7% (59W/45L, n=104) — of which 37 were later ruled fabricated phantom stop-exits and VOIDED by owner 2026-08-05"
+        }
+      ]
+    },
+    {
+      "strategy": "automated-swing-trading",
+      "element_id": "claim-window",
+      "kind": "question",
+      "body": "MEASURED: this backtest's window is not stated inside the artifact — it is only implied by the filename. Is the filename-implied span the real period the test covered?",
+      "options": [
+        "Yes — the filename dates are correct",
+        "No — I know different dates",
+        "I don't know"
+      ]
+    },
+    {
+      "strategy": "manual-swing-trading",
+      "element_id": "realized-flag-0",
+      "kind": "evidence",
+      "body": "You asked what a 'synthetic signature' is — and the honest answer is narrower than 'fake trades,' so here it is precisely. MEASURED: 104 of this ledger's 259 rows show exactly +1.00% profit held exactly 1 day, a pattern the validated contract makes mathematically impossible; on replay against real bars, the covered trades diverge from their recorded outcomes (e.g. CNK: recorded +1.00%/1-day vs contract +14.58%/7-day). The director's own correction, on record: these were PRICE-REAL but CONTRACT-INVALID — the market did trade through those levels, but the levels were same-session stop-raises the contract forbids. So they are not invented trades; they are real fills booked under a stop rule the strategy isn't allowed to use. That is why the study won't compute a realized rate from this ledger as-is.",
+      "evidence": [
+        {
+          "source": "DEFECT-REGISTRY.md, D86, verbatim (MEASURED)",
+          "quote": "101 of 256 closed trades (54% of all STOP_TRAIL exits) carry the +1.00%/1-day/BE-triggered signature the validated contract makes mathematically impossible ... DIRECTOR CORRECTION owned: the ... '+1% trail-outs' I realism-verified were PRICE-REAL but CONTRACT-INVALID",
+          "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"
+        }
+      ]
+    },
+    {
+      "strategy": "manual-swing-trading",
+      "element_id": "realized-ledger",
+      "kind": "question",
+      "body": "Arithmetic on what's left: MEASURED — of 259 rows, 104 carry the contract-invalid +1.00%/1-day signature and 48 are BACKFILL-simulated (rows before ~2026-04-26). Even before counting any overlap, well over half the ledger is unusable, and no aggregate win rate is stated — so we can't compute an honest realized figure from this record. Does a cleaner record of real fills exist anywhere — a different TriSight Sim lane, a TradeStation account, a log of yours?",
+      "options": [
+        "A better record exists — I'll say where",
+        "This ledger is all there is",
+        "I don't know"
+      ]
+    },
+    {
+      "strategy": "trisight-500-2-0",
+      "element_id": "claim-flag-1",
+      "kind": "evidence",
+      "body": "You asked what a '6yr frozen universe cache' is and why anything frozen would matter in production — and you're right to be skeptical. Two distinct points, labeled. MEASURED (line 49): TS500's backtest simulated 2020-2026 but picked stocks from ONE list resolved 2026-04-05 — the longest frozen-cache DURATION in the estate (~6 years). That is a statement about freeze length, not yet about how much it distorts TS500's result. Separately, INFERRED (the lambda analysis): TS500's momentum-EXIT logic actually DAMPENS this bias rather than amplifying it, unlike the dip-buyers — so despite having the longest freeze, TS500 is not rated the worst-hit. Only a credentialed re-measurement (done for Top 40, not yet for TS500) would give the hard impact number.",
+      "evidence": [
+        {
+          "source": "TOTAL-QUALITY-MATRIX.md line 49, verbatim (MEASURED)",
+          "quote": "TS500 2.0 (trisight_16D_master_cache.json, 2026-04-05, ~6yr freeze — most severe)",
+          "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"
+        },
+        {
+          "source": "TOTAL-QUALITY-MATRIX.md line 87, verbatim (INFERRED)",
+          "quote": "momentum-exit lambdas (TS500, partly Shark-Fin) dampen the corruption; dip-buy lambdas (Oakwind, Sniper) amplify it",
+          "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"
+        }
+      ]
+    },
+    {
+      "strategy": "trisight-500-2-0",
+      "element_id": "realized-ledger",
+      "kind": "evidence",
+      "body": "You asked what a 'shadow paper fill' is versus TriSight Sim / TradeStation Sim / Live. INFERRED: 'shadow' means the strategy runs silently in parallel with production — its signals are recorded and priced by TriSight's own engine, but no orders are placed, not even into a simulated account. In your taxonomy that is a TriSight Sim lane, one step more detached than a normal sim. If your venue answer on the earlier question says otherwise, that answer governs.",
+      "evidence": [
+        {
+          "source": "Realized ledger snapshot, hash-verified (MEASURED)",
+          "quote": "auto_ts500_lfr_shadow_paper_fill_log.csv — 495,505 bytes, sha256 3fa36741…",
+          "url": "/api/review/source/evidence/auto_ts500_lfr_shadow_paper_fill_log_SNAPSHOT_20260818.csv"
+        }
+      ]
+    },
+    {
+      "strategy": "escalator-reclaimed-shadow",
+      "element_id": "claim-doc",
+      "kind": "question",
+      "body": "Housekeeping, and possibly on us: the review received no answers for this strategy (Escalator Reclaimed Shadow — the short-window one, distinct from Long Shadow, which you did answer). Given this same tool served you a broken 404 link and a rendering bug last round, we're not assuming you skipped it — it may be that its cards failed to save. Either way, its questions are here now. Did it save wrong on your end, or would you like to review it fresh?",
+      "options": [
+        "Its cards must have failed to save",
+        "I skipped it — I'll review it now",
+        "I'll come back to it"
+      ]
+    },
+    {
+      "strategy": "escalator-reclaimed-long-shadow",
+      "element_id": "claim-window",
+      "kind": "question",
+      "body": "MEASURED: the Long Shadow claim artifact declares no calendar window. If you know the span the backtest covered, that one input unlocks its return comparison.",
+      "options": [
+        "I know the dates — typing them below",
+        "I don't know",
+        "Re-run so the artifact declares its dates"
+      ]
+    },
+    {
+      "strategy": "earnings-trader-locked-93",
+      "element_id": "claim-metric-0",
+      "kind": "evidence",
+      "body": "You corrected every claim card here in round 1. The claim, MEASURED (sealed record): 93 events, 92.473% win rate, CAGR 419.481%, window 2022-03-31 to 2026-05-15. We can state the claim exactly — what we cannot do is compare it to reality, because this strategy has never produced a live trade (see the realized card). So the honest status is not 'refused because we didn't do the work'; it is 'unverifiable because there is nothing on the realized side to weigh it against.' Is 92.473% over 93 events the claim you intend to stand on?",
+      "options": [
+        "Yes — that's the claim",
+        "No — correct it below",
+        "It shouldn't be presented until it fires"
+      ],
+      "evidence": [
+        {
+          "source": "Sealed claim, Earnings Trader (MEASURED)",
+          "quote": "Events: 93 | Win rate: 92.473% | CAGR: 419.481% — window 2022-03-31..2026-05-15"
+        }
+      ]
+    },
+    {
+      "strategy": "earnings-trader-locked-93",
+      "element_id": "realized-ledger",
+      "kind": "evidence",
+      "body": "For the realized cards: the reason there's nothing to show is itself the finding, and it's measured, not an excuse. This strategy has never fired in production — the funnel was reproduced live at 472 candidates in, 0 out, with the sole survivor rejected on five named missing features. Three of its five gate features require rolling roster history the live pipeline structurally never builds. There is no realized record because none exists.",
+      "evidence": [
+        {
+          "source": "DEFECT-REGISTRY.md, Q-EARN, verbatim (MEASURED)",
+          "quote": "Real funnel: 472 → 77 → 59 → 1 → 0 — the sole survivor MMSI was rejected on 5 named missing entry features",
+          "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"
+        },
+        {
+          "source": "DEFECT-REGISTRY.md, D53, verbatim (MEASURED)",
+          "quote": "This is the sealed-backtest-validated-against-data-live-doesn't-have scenario, CONFIRMED TRUE — the strategy can never fire as built",
+          "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"
+        }
       ]
     }
   ]

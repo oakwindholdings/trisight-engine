@@ -108,6 +108,24 @@ router.post('/dialog', requireCode, async (req, res) => {
   res.status(201).json({ data: out.data });
 });
 
+// Admin-only: retract study-authored dialog rows that have NO owner answer attached.
+// Append-only for the OWNER's sake — this can only remove assay questions/evidence that
+// nobody has answered yet, so a reviewer's input can never be erased. Used to replace a
+// seed after the content is corrected. Requires the admin credential.
+router.post('/dialog/retract-unanswered', requireCode, async (req, res) => {
+  if (!isAdmin(req)) return res.status(401).json({ error: 'admin credential required' });
+  const all = await db('input_review_dialog').select('*').limit(10000);
+  if (all.error) return res.status(500).json({ error: all.error.message });
+  const answeredQids = new Set(all.data.filter((r) => r.author === 'owner' && r.question_id).map((r) => r.question_id));
+  const removable = all.data.filter((r) => r.author === 'assay' && !answeredQids.has(r.id));
+  let removed = 0;
+  for (const r of removable) {
+    const out = await db('input_review_dialog').delete().eq('id', r.id);
+    if (!out.error) removed += out.data.length;
+  }
+  res.json({ data: { removed, kept_owner_rows: all.data.filter((r) => r.author === 'owner').length } });
+});
+
 // Evidence proxy: serves whitelisted study files through the review site itself,
 // authenticated by the same access code — no GitHub sign-in, no 404s for the owner.
 const SOURCE_ROOTS = {
