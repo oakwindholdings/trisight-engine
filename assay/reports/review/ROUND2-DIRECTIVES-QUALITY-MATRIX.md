@@ -324,3 +324,28 @@ objective acceptance criteria and a named un-fakeable evidence artifact requirin
 quoted excerpts. ✅ Executor and Verifier are distinct and named on every row. ✅ Every
 irreversible/estate-compute step and every owner ruling is an explicit escalation with
 out-of-band evidence, never an assumed or agent-authored action. Pending: **Bob's approval.**
+
+
+---
+
+## Execution Status Ledger (updated as work proceeds)
+
+First execution wave 2026-08-19 (workflows wf_4fdb523f execute + wf_4fe4b573 rework), each
+item executor≠verifier. Evidence artifacts committed under `evidence/wi*.{md,txt}`.
+
+| WI | What it established | Verify status |
+|----|--------------------|---------------|
+| WI-1 | Sealed 213% cache CONFIRMED absent (volume near-twin is 112,428,132 B, not sealed 118,501,504); unverifiable by construction (no SHA256, D58) | ✅ VERIFIED |
+| WI-2 | 9,408-executed coherence shown; 3 generators located; Oakwind Swing+Investor windows recoverable from committed CSVs (no fresh run needed); Long Shadow needs a re-run | ✅ VERIFIED |
+| WI-3 | All 10 strategies price/write fills via sim/paper today; venue = TriSight Sim per strategy (config default + code gate); no strategy routes to a broker now | ✅ VERIFIED (citations reworked) |
+| WI-4 | Dick's assertion CONFIRMED: 18 locked params value-for-value identical Auto vs Manual; NO separate Auto backtest exists — Auto reused Manual's manual_swing_phase6 ledger | ✅ VERIFIED |
+| WI-5 | High 5: Dick already ruled (Round-74, 2026-08-07) the 92.33% "never validly backtested", no-stop contract stands; measured 25.12% presented but re-seal OPEN/parked with Dick (unsigned through 2026-08-17) | 🔄 corrected, final verify in progress |
+| WI-6 | Escalator Reclaimed Shadow evidence EXISTS (349 trades / 215.97%); pre-built guide ready; pure delivery failure — present it in round 3 | ✅ VERIFIED |
+| WI-7 | (Oakwind Investor note-not-refuse) | ⛔ BLOCKED on WI-2.4 window |
+| WI-8 | Manual Swing live ledger grew 259→291 since study pull; provenance reconciled; RULING 3 (backfill-distrust) cited, disposed only the committed file | ✅ VERIFIED |
+| WI-9 | Round-1 zero-save NOT systemic — only escalator-reclaimed-shadow lost rows; 6/10 saved every element; Dick's other round-1 input intact | ✅ VERIFIED |
+
+**Heavy estate-compute (E-1/E-2), feasibility recorded:** WI-1.3a (Top-40 re-validation) and
+WI-2.2/2.4 (backtest re-runs) — feasibility findings in `evidence/wi1.3a-feasibility.md` and
+`evidence/wi2.2-generators.md`; next step is the feasibility-gated execution of the runs that
+are runnable from here, escalating any that need the trader estate.
