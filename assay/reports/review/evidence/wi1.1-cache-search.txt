@@ -1,0 +1,677 @@
+=== WI 1.1 — Sealed Cache Search ===
+Timestamp: 2026-08-19T16:03:26Z
+Sealed identity target: top40_scored_matrix_massive-trisight-universe_3317_2023-04-10_2026-04-17_v1.pkl (118,501,504 bytes / 3317 symbols)
+Known DECOY 1: *massive-trisight-universe_3317* on Railway volume, 112,428,132 bytes
+Known DECOY 2: *top40-2-authority-universe_2666* / 2,666 symbols, 92,743,878 bytes
+
+--- SEARCH A: find *top40*scored*matrix* anywhere under trisight-trader (relevant hits) ---
+/Users/bobstewart/dev/trisight/trisight-trader/backtest_results/top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+/Users/bobstewart/dev/trisight/trisight-trader/backtest_results/top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/docs_output/top10_rebuild_unblock_20260808/mechanical_smoke_micro/top40_scored_matrix_mechanical-smoke-local-cache_50_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2026-04-18_2026-07-23_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2021-01-01_2023-04-09_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2023-04-10_2026-04-17_v1.pkl.gz
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_pre_fit_20210101_20230409_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_post_fit_20260418_20260721_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/backtest_results/top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/backtest_results/top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2026-04-18_2026-07-23_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2021-01-01_2023-04-09_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2023-04-10_2026-04-17_v1.pkl.gz
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_pre_fit_20210101_20230409_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_post_fit_20260418_20260721_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/docs_output/top10_rebuild_unblock_20260808/mechanical_smoke_micro/top40_scored_matrix_mechanical-smoke-local-cache_50_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+
+--- SEARCH A2: byte sizes of each hit above ---
+-rw-r--r--@ 1 bobstewart  staff  3149 Aug 14 07:35 /Users/bobstewart/dev/trisight/trisight-trader/backtest_results/top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+-rw-r--r--@ 1 bobstewart  staff  92743878 Jun 23 12:14 /Users/bobstewart/dev/trisight/trisight-trader/backtest_results/top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  3109 Aug 14 07:35 /Users/bobstewart/dev/trisight/trisight-trader/docs_output/top10_rebuild_unblock_20260808/mechanical_smoke_micro/top40_scored_matrix_mechanical-smoke-local-cache_50_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+-rw-r--r--@ 1 bobstewart  staff  41054515 Jul 24 10:21 /Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2026-04-18_2026-07-23_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  85458410 Jul 24 10:21 /Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2021-01-01_2023-04-09_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  78934767 Jul 24 10:21 /Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2023-04-10_2026-04-17_v1.pkl.gz
+-rw-r--r--@ 1 bobstewart  staff  70725217 Jul 24 10:21 /Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_pre_fit_20210101_20230409_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  33175753 Jul 24 10:21 /Users/bobstewart/dev/trisight/trisight-trader/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_post_fit_20260418_20260721_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  3149 Aug 17 13:22 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/backtest_results/top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+-rw-r--r--@ 1 bobstewart  staff  92743878 Aug 12 10:17 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/backtest_results/top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  70725217 Aug 12 10:17 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_pre_fit_20210101_20230409_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  33175753 Aug 12 10:17 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_post_fit_20260418_20260721_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  41054515 Aug 12 10:17 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2026-04-18_2026-07-23_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  85458410 Aug 12 10:17 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2021-01-01_2023-04-09_v1.pkl
+-rw-r--r--@ 1 bobstewart  staff  78934767 Aug 12 10:17 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2023-04-10_2026-04-17_v1.pkl.gz
+-rw-r--r--@ 1 bobstewart  staff  3109 Aug 17 13:22 /Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/docs_output/top10_rebuild_unblock_20260808/mechanical_smoke_micro/top40_scored_matrix_mechanical-smoke-local-cache_50_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+
+--- SEARCH B: find *massive-trisight-universe_3317* anywhere under trisight-trader ---
+
+--- SEARCH C: find *top40-2-authority-universe_2666* anywhere under trisight-trader ---
+/Users/bobstewart/dev/trisight/trisight-trader/backtest_results/top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/backtest_results/top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl
+
+--- SEARCH D: grep filenames in .git for '3317' anywhere (non-pack objects, loose refs, filenames) ---
+/Users/bobstewart/dev/trisight/trisight-trader/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.data_cache/CACC_daily_d331761add9c.pkl
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_authority/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_authority/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_Consolidation/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_Consolidation/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_final/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_final/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_fix_hydration/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_fix_hydration/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_final/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_final/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_fix_hydration/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_fix_hydration/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_Consolidation/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_Consolidation/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_authority/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+/Users/bobstewart/dev/trisight/trisight-trader/.claude/worktrees/unruffled-bhabha-aec6eb/recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_authority/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+
+=== END FILESYSTEM SEARCHES (non-git) ===
+
+--- SEARCH E: git -C trisight-trader log --all --source -- '*.pkl' ---
+commit 534fa33315f1ae6a728b5e93375d072c93fb7c7c	refs/heads/worktree-wf_1b811480-2f0-1
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Sat Aug 8 21:50:40 2026 -0400
+
+    evidence: pin the daily-bar snapshot + stop gitignoring the evidence the rulebook mandates (#846)
+    
+    * evidence: commit the pinned daily-bar snapshot so sealed runs are reproducible by anyone
+    
+    The 2,113-file daily-bar cache is the INPUT side of the 2026-07-16 High 5
+    Strategy benchmark. scripts/validate_high_5_strategy.py reproduces that
+    benchmark byte-for-byte from these bars, offline, with no MASSIVE_API_KEY --
+    but the files were gitignored, so nobody without a pre-existing copy could
+    re-run it. That is how six owner-ordered validations came to be reported as
+    'blocked' when at least two of them run in seconds.
+    
+    Pin the inputs, not just the outputs.
+    
+    - .gitignore: .data_cache/ -> .data_cache/* plus a scoped negation for
+      *_daily_*.pkl and the manifest. Intraday pickles and every other .pkl
+      (incl. the 92MB Top 10 score matrix) stay ignored -- deliberately narrow.
+    - .data_cache/SNAPSHOT_MANIFEST.txt: per-file sha256 + byte size for all
+      2,113 files, aggregate sha256 5a7544e0a8b2089cf7e6f9d5f9701ced59669916311872d59586599e0453f30a,
+      145,841,888 bytes total, AAPL frame spanning 2021-05-13 -> 2026-07-16.
+    
+    Owner impact: the High 5 validation becomes re-runnable on his own machine.
+    Ops note: adds ~146MB to the deployed image; largest single file is 72KB so
+    no file approaches GitHub's 100MB limit.
+    
+    * evidence: stop gitignoring the evidence the rulebook mandates (logs + per-trade pickles) + full inventory
+    
+    AGENTS.md rules 7, 8 and 9 all require research evidence -- run logs, stdout,
+    stderr, PID files, partial scorecards -- be written to .txt/.log under
+    docs_output/. Rule 8 is explicit: 'Terminal-only progress is not evidence.'
+    .gitignore:39 was a bare *.log, so the mandated format was un-committable and
+    retention depended on whoever remembered 'git add -f': 14 logs tracked, 4
+    discarded -- including high5_replay_restored_20260716.log, the disk log of the
+    very High 5 Strategy benchmark our validation reproduces.
+    
+    Also un-ignores backtest_results/*_trades_*.pkl. That class is why the Intraday
+    Pivot Sniper's regular-session edge could only be DERIVED from aggregates: its
+    own per-trade log, named by the committed walk-forward artifact as its source,
+    was gitignored and is gone. Unrecoverable; only a re-run brings it back.
+    
+    Scoped narrowly -- logs outside docs_output/ stay ignored, and credentials
+    (.env, gateway/.ts_tokens.json, trisight_config_*.json) stay ignored forever.
+    
+    Full line-by-line audit of every pattern against what it hides on disk:
+    docs_output/gitignore_evidence_inventory_20260808/00_INVENTORY.md
+
+commit 05680759c29f05e603afb6b8735b3c3b44cb561a	refs/heads/worktree-wf_1b811480-2f0-1
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Sat Aug 8 21:13:46 2026 -0400
+
+    evidence: Intraday Pivot Sniper 15m benchmark dataset refetch (2026-08-08) (#852)
+    
+    * evidence: sniper 15m benchmark dataset refetch 20260808 -- dated-window fetch runner, universe recovery from committed blob b4d56536 (1,987 tier2 + SPY), manifest aggregate fee77ad8, 00_FETCH report (no pickles; dataset identity = manifest)
+    
+    * evidence: guardrails run log for sniper 15m refetch lane (exit 0)
+    
+    * evidence: refresh leak-check verdict over final artifact set (PASS)
+    
+    * evidence: THE MEASUREMENT -- Intraday Pivot Sniper parity rerun on the refetched benchmark dataset, per-trade log PRESERVED this time
+    
+    Benchmark gate PASS on all 5 fields against pre-stated tolerances (21,828 vs
+    sealed 21,777 trades, +0.23%; WR delta +0.04pp; avg deltas <=0.004pp). Same
+    backtest code, zero parameter changes, dataset identity fee77ad8 re-verified.
+    
+    Session split from ACTUAL entry timestamps (ends the hour-09 ambiguity and
+    the lattice inference permanently):
+      regular session 09:45-16:00  N=8,043  -0.0076%/trade AT ZERO FRICTION,
+        break-even NONE; -$1.67M of the +$6.19M book at the spec's own 10bp
+      pre-market  N=7,945  +0.674%   post-market  N=5,840  +0.901%
+      severity>=3.0 conditional: slightly WORSE, not better
+    Prior NOT VALIDATED derivation: CONFIRMED on the floor to a thousandth of a
+    percent; its ceiling scenario DISSOLVED by real timestamps.
+    
+    The per-trade pickle (8.8MB, sha 55cf4ffd) is committed via git add -f: the
+    un-ignore for *_trades_*.pkl lives on unmerged evidence/pin-high5-bar-snapshot
+    branch; force-added here so THIS run's evidence cannot be lost the way the
+    sealed run's was. guardrails exit 0 unmasked (5400 passed).
+
+commit 83c47e43e6a7d9a457d588559889033e348d3056	refs/heads/evidence/sniper-15m-refetch-20260808
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Sat Aug 8 17:28:48 2026 -0400
+
+    evidence: THE MEASUREMENT -- Intraday Pivot Sniper parity rerun on the refetched benchmark dataset, per-trade log PRESERVED this time
+    
+    Benchmark gate PASS on all 5 fields against pre-stated tolerances (21,828 vs
+    sealed 21,777 trades, +0.23%; WR delta +0.04pp; avg deltas <=0.004pp). Same
+    backtest code, zero parameter changes, dataset identity fee77ad8 re-verified.
+    
+    Session split from ACTUAL entry timestamps (ends the hour-09 ambiguity and
+    the lattice inference permanently):
+      regular session 09:45-16:00  N=8,043  -0.0076%/trade AT ZERO FRICTION,
+        break-even NONE; -$1.67M of the +$6.19M book at the spec's own 10bp
+      pre-market  N=7,945  +0.674%   post-market  N=5,840  +0.901%
+      severity>=3.0 conditional: slightly WORSE, not better
+    Prior NOT VALIDATED derivation: CONFIRMED on the floor to a thousandth of a
+    percent; its ceiling scenario DISSOLVED by real timestamps.
+    
+    The per-trade pickle (8.8MB, sha 55cf4ffd) is committed via git add -f: the
+    un-ignore for *_trades_*.pkl lives on unmerged evidence/pin-high5-bar-snapshot
+    branch; force-added here so THIS run's evidence cannot be lost the way the
+    sealed run's was. guardrails exit 0 unmasked (5400 passed).
+
+commit de636fbd69b55d9481ccde06515552c4a21e3f5b	refs/heads/evidence/pin-high5-bar-snapshot-20260808
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Sat Aug 8 07:28:02 2026 -0400
+
+    evidence: commit the pinned daily-bar snapshot so sealed runs are reproducible by anyone
+    
+    The 2,113-file daily-bar cache is the INPUT side of the 2026-07-16 High 5
+    Strategy benchmark. scripts/validate_high_5_strategy.py reproduces that
+    benchmark byte-for-byte from these bars, offline, with no MASSIVE_API_KEY --
+    but the files were gitignored, so nobody without a pre-existing copy could
+    re-run it. That is how six owner-ordered validations came to be reported as
+    'blocked' when at least two of them run in seconds.
+    
+    Pin the inputs, not just the outputs.
+    
+    - .gitignore: .data_cache/ -> .data_cache/* plus a scoped negation for
+      *_daily_*.pkl and the manifest. Intraday pickles and every other .pkl
+      (incl. the 92MB Top 10 score matrix) stay ignored -- deliberately narrow.
+    - .data_cache/SNAPSHOT_MANIFEST.txt: per-file sha256 + byte size for all
+      2,113 files, aggregate sha256 5a7544e0a8b2089cf7e6f9d5f9701ced59669916311872d59586599e0453f30a,
+      145,841,888 bytes total, AAPL frame spanning 2021-05-13 -> 2026-07-16.
+    
+    Owner impact: the High 5 validation becomes re-runnable on his own machine.
+    Ops note: adds ~146MB to the deployed image; largest single file is 72KB so
+    no file approaches GitHub's 100MB limit.
+
+commit 20f907b0bd082d16e58b0d5767635e563f946bd1	refs/heads/worktree-agent-ad6d120c4dc682caa
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Thu Jul 23 07:40:13 2026 -0400
+
+    evidence: Top 40 2.0 validated-universe (massive-trisight-universe) rerun, resolved 2026-07-23 (round-36 owner order) (#682)
+    
+    * evidence: Top 40 2.0 validated-universe (massive-trisight-universe) rerun, resolved 2026-07-23 (round-36 owner order)
+    
+    Owner order source: orchestration/reports/DECISIONS-INBOX.md round-36
+    ("TOP 40 2.0 UNIVERSE -- SESSION CORRECTION" and "SESSION FRAMING
+    CORRECTION").
+    
+    Resolves massive-trisight-universe TODAY via its own live preset
+    definition (database.py, cross-checked byte-for-byte before use):
+    3,324 usable symbols (vs the unrecoverable 2026-05-15 snapshot's
+    3,317 requested / 3,242 usable -- stated plainly as a different,
+    not-reproduced count). Builds scored-matrix caches for the fit window
+    (2023-04-10->2026-04-17) and both OOS windows (2021-01-01->2023-04-09;
+    2026-04-18->2026-07-23) via the strategy's own unmodified scoring
+    pipeline (compute_rnd_gpa/compute_xgb_score/calc_pivot_z, CFG_0420,
+    61-bar lookback, 5-day rotation cadence -- Rule 6, no re-fitting, no
+    universe expansion beyond the preset swap itself). Runs the locked
+    baseline_aggressive_8_linear configuration plus the same two PR #681
+    comparators (aggressive_5_benchmark_blend50, baseline_benchmark_8_linear)
+    on all three windows, unmodified machinery.
+    
+    Rule 9 discipline: smoke-tested at 400 then 2,000 symbols before full
+    launch, ETA reported in Eastern Time (fit ~6-7min, pre-fit ~5.3min,
+    post-fit ~1min), decision-critical fit-window shard launched first,
+    all three windows launched as separate detached processes with PID/
+    log/stdout/stderr/status files under docs_output/. Actual wall times:
+    fit_window 6.15min, pre_fit 4.38min, post_fit 0.61min (cache-shared
+    with fit_window) -- within estimate.
+    
+    Six-cell headline (locked config, validated universe vs PR #681's
+    production universe top40-2-authority-universe):
+      Pre-fit OOS:   -14.67% CAGR / 60.22% DD  vs  -22.85% / 53.35%
+      Fit window:     88.44% CAGR / 37.26% DD  vs   24.03% / 32.46%
+      Post-fit OOS:  154.25% CAGR / 11.54% DD  vs  -13.60% /  8.23%
+    
+    Neither figure is 213.07% -- that snapshot's cache was never
+    version-controlled and remains unrecoverable (restated plainly, per
+    owner's direct question on the process failure). This report gives
+    the current-state numbers for both re-bind and revalidate options;
+    it recommends the decision structure and decides nothing (owner
+    ruling).
+    
+    Deliverable: docs_output/TOP40_2_0_VALIDATED_UNIVERSE_RERUN_20260723.md.
+    Full evidence with SHA256SUMS: recovered/top40_validated_universe_20260723/
+    (fit-window score-matrix cache gzip-compressed to stay under GitHub's
+    100 MiB push limit; raw-file SHA256 recorded for verification after
+    gunzip). No production files modified. Full pytest: 4077 passed, 2
+    skipped, 18 xfailed, 0 failed in 143.19s.
+    
+    * docs: retract Top 40 2.0 validated-universe post-fit headline -- verifier FAIL (round-36 follow-up)
+    
+    Adversarial verification returned FAIL on the +154.25% post-fit CAGR
+    headline in docs_output/TOP40_2_0_VALIDATED_UNIVERSE_RERUN_20260723.md.
+    The figure is a membership-hindsight artifact: massive-trisight-universe
+    was resolved on 2026-07-23, the post-fit window's own last trading day,
+    and that single resolution was reused verbatim for all three windows
+    (load_resolved_universe, scripts/top40_2_0_universe_rerun_20260723.py:83-92).
+    
+    Decomposition (reproduced this session from the committed post-fit
+    score-matrix cache, no re-fit): of the 520 trade-slots in the post-fit
+    window, 95 sit on tickers absent from the production universe's own
+    frozen 2026-05-26 snapshot (git-verified: commits 4899a744/c136365f).
+    Those 95 non-overlap slots contribute 27.9517 of 28.8322 total
+    percentage-points (96.9%). APPS alone is +22.48pp (78%, one rotation,
+    2026-05-26->06-02, $4.81->$8.55); HQ is +14.99pp. The 425 overlap
+    trade-slots net only +0.88pp -- flat. Counterfactual reruns (exclude
+    tickers from the candidate pool before ranking, unmodified
+    evaluate_variant): ex-APPS +25.92%, ex-APPS+HQ -23.92% (sign flip,
+    worse than production's own -13.60%), ex-top10-non-overlap -58.36%
+    (an earlier verification pass reported -82.00% for this scenario;
+    this reproduction could not reconstruct the exact exclusion set that
+    produced that figure and reports its own tool-verified number instead,
+    with the discrepancy disclosed in Section 3.5.4).
+    
+    Report rewrite:
+    - New Section 3.5: full refutation, per-cell hindsight-contamination
+      validity map (post-fit maximally contaminated / fit moderate /
+      pre-fit weakest), decomposition, and counterfactual evidence.
+    - New Section 9: point-in-time universe reconstruction feasibility --
+      20-day dollar-volume floor is reconstructible from already-cached
+      historical bars (gateway/polygon_data.py); market-cap floor is NOT
+      available with the current data layer (gateway/massive_universe.py's
+      ticker-detail call carries no historical Thu Jul 23 07:33:20 EDT 2026 param, and no
+      historical shares-outstanding cache exists anywhere in this repo).
+    - Section 10 bottom line rewritten: (a) the validated-vs-deployed
+      universe binding mismatch remains a real defect, independent of the
+      retraction; (b) there is no defensible evidence re-binding improves
+      performance -- the honest overlap-only comparison is flat; (c) the
+      correct next step is a point-in-time rerun, scoped per the Section 9
+      feasibility split. Decides nothing.
+    
+    Evidence-manifest fix: 8 files listed and hashed in SHA256SUMS
+    (build_logs/*.log x7, universe_resolution/*.log x1) were never pushed
+    -- caught by this repo's blanket *.log .gitignore rule biting on the
+    original evidence commit. Byte-verified against the manifest's
+    recorded hashes before force-adding (git add -f); shasum -a 256 -c
+    SHA256SUMS now passes clean on the full 24-file committed tree.
+    
+    New evidence: recovered/top40_validated_universe_20260723/counterfactuals/
+    (trade-level CSV, per-ticker rollup, counterfactual-exclusion reruns).
+    
+    Full pytest: 4077 passed, 2 skipped, 18 xfailed, 1 warning in 136.09s
+    (docs_output/pytest_run_20260723_verifier_followup.stdout). No
+    production file modified; evidence/docs only.
+
+commit eba44ce4007877311288a3a2baf0466c9b9b9358	refs/heads/evidence/top40-validated-universe-rerun
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Thu Jul 23 07:02:57 2026 -0400
+
+    evidence: Top 40 2.0 validated-universe (massive-trisight-universe) rerun, resolved 2026-07-23 (round-36 owner order)
+    
+    Owner order source: orchestration/reports/DECISIONS-INBOX.md round-36
+    ("TOP 40 2.0 UNIVERSE -- SESSION CORRECTION" and "SESSION FRAMING
+    CORRECTION").
+    
+    Resolves massive-trisight-universe TODAY via its own live preset
+    definition (database.py, cross-checked byte-for-byte before use):
+    3,324 usable symbols (vs the unrecoverable 2026-05-15 snapshot's
+    3,317 requested / 3,242 usable -- stated plainly as a different,
+    not-reproduced count). Builds scored-matrix caches for the fit window
+    (2023-04-10->2026-04-17) and both OOS windows (2021-01-01->2023-04-09;
+    2026-04-18->2026-07-23) via the strategy's own unmodified scoring
+    pipeline (compute_rnd_gpa/compute_xgb_score/calc_pivot_z, CFG_0420,
+    61-bar lookback, 5-day rotation cadence -- Rule 6, no re-fitting, no
+    universe expansion beyond the preset swap itself). Runs the locked
+    baseline_aggressive_8_linear configuration plus the same two PR #681
+    comparators (aggressive_5_benchmark_blend50, baseline_benchmark_8_linear)
+    on all three windows, unmodified machinery.
+    
+    Rule 9 discipline: smoke-tested at 400 then 2,000 symbols before full
+    launch, ETA reported in Eastern Time (fit ~6-7min, pre-fit ~5.3min,
+    post-fit ~1min), decision-critical fit-window shard launched first,
+    all three windows launched as separate detached processes with PID/
+    log/stdout/stderr/status files under docs_output/. Actual wall times:
+    fit_window 6.15min, pre_fit 4.38min, post_fit 0.61min (cache-shared
+    with fit_window) -- within estimate.
+    
+    Six-cell headline (locked config, validated universe vs PR #681's
+    production universe top40-2-authority-universe):
+      Pre-fit OOS:   -14.67% CAGR / 60.22% DD  vs  -22.85% / 53.35%
+      Fit window:     88.44% CAGR / 37.26% DD  vs   24.03% / 32.46%
+      Post-fit OOS:  154.25% CAGR / 11.54% DD  vs  -13.60% /  8.23%
+    
+    Neither figure is 213.07% -- that snapshot's cache was never
+    version-controlled and remains unrecoverable (restated plainly, per
+    owner's direct question on the process failure). This report gives
+    the current-state numbers for both re-bind and revalidate options;
+    it recommends the decision structure and decides nothing (owner
+    ruling).
+    
+    Deliverable: docs_output/TOP40_2_0_VALIDATED_UNIVERSE_RERUN_20260723.md.
+    Full evidence with SHA256SUMS: recovered/top40_validated_universe_20260723/
+    (fit-window score-matrix cache gzip-compressed to stay under GitHub's
+    100 MiB push limit; raw-file SHA256 recorded for verification after
+    gunzip). No production files modified. Full pytest: 4077 passed, 2
+    skipped, 18 xfailed, 0 failed in 143.19s.
+
+commit f06a349145775e75f3453a6558a3b1ca0b57f83a	refs/heads/evidence/top40-2-0-oos-validation
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Wed Jul 22 20:54:18 2026 -0400
+
+    evidence: Top 40 2.0 OOS validation + XGBoost window forensics + rank-8.5 rationale (round-35 owner order) (#681)
+    
+    * evidence: Top 40 2.0 out-of-sample validation + XGBoost window forensics + rank-8.5 rationale search (round-35 owner order)
+    
+    Owner order source: orchestration/reports/DECISIONS-INBOX.md round-35
+    ("Top 40 2.0 OVERFITTING INVESTIGATION" and preceding entries).
+    
+    1. TRUE OUT-OF-SAMPLE TEST: ran the locked configuration
+       (baseline_aggressive_8_linear, HUMP_CENTER 8.5 / HUMP_SIGMA 1.0 /
+       TOP_SLEEVE_ALLOCATION 0.825) plus the two owner-named comparators
+       (aggressive_5_benchmark_blend50, baseline_benchmark_8_linear) through
+       the strategy's own unmodified evaluate_variant()/build_roster_cache()
+       machinery, against two new out-of-sample windows built with the exact
+       same universe (2,603-ticker production candidate set) and exact same
+       scoring pipeline (compute_rnd_gpa/compute_xgb_score/calc_pivot_z), only
+       the calendar window changes -- no re-fitting, no parameter search
+       (Rule 6). Locked config: -22.85% CAGR / 53.35% DD pre-fit
+       (2021-01-01->2023-04-09), +24.03% CAGR / 32.46% DD in-sample
+       (2023-04-10->2026-04-17, production-bound universe), -13.60% CAGR /
+       8.23% DD post-fit (2026-04-18->2026-07-21). Also found, and
+       documented: the currently-committed production score-matrix cache does
+       NOT reproduce the sealed 213.07% CAGR figure when run through the
+       committed grid script (produces 24.03%) -- the original 2026-05-15
+       selection event used a different, wider universe preset
+       (massive-trisight-universe, 3317 symbols) whose cache file is not
+       present anywhere in this repository or its worktrees.
+    
+    2. XGBOOST WINDOW FORENSICS: traced the training pipeline
+       (train_xgboost_ranker.py -> universe_cache.pkl via
+       rebuild_universe_cache.py). Verdict: exact training window NOT IN
+       RECORD (universe_cache.pkl is a rolling, self-overwriting 60-day
+       window with no versioned snapshots), but bounded -- the deployed model
+       has exactly one content commit (a9c1f379, 2026-03-30), never retrained
+       since (confirmed via git history + byte-identical content hash across
+       its two commits). 2026-03-30 falls inside the fit window
+       (2023-04-10->2026-04-17), so overlap is confirmed to the extent the
+       available bound allows.
+    
+    3. RANK-8.5 RATIONALE: independently re-verified round-35's
+       NOT-IN-RECORD finding via three additional sources -- the origin
+       commit of the hump concept (f012aab5, 2026-05-11, one sprint earlier),
+       the 2026-05-15 robustness-ladder design doc's own unmet
+       reproduction-gate requirement, and the 2026-05-12/2026-07-11 PROOF.md
+       seal documents. No economic or structural rationale found anywhere for
+       concentrating conviction at rank ~8-9.
+    
+    Deliverable: docs_output/TOP40_2_0_OOS_VALIDATION_20260722.md. Full
+    evidence with SHA256SUMS: recovered/top40_oos_20260722/. No production
+    files modified; no parameters re-fit; only the calendar window differs
+    from the strategy's own committed configuration.
+    
+    * evidence: add full pytest-green confirmation to Top 40 2.0 OOS validation report (4058 passed / 0 failed)
+    
+    * fix: address verifier findings on Top 40 2.0 OOS validation report
+    
+    - force-add benchmark_reproduction/committed_cache_reproduction_attempt.log
+      past the *.log gitignore rule so shasum -c passes on the committed tree
+    - add survivorship caveat (Sec 1 + Sec 2.5 combined OOS picture) noting the
+      current production universe applied retroactively cannot make the
+      negative OOS windows look artificially worse
+    - add sealed-figure caveat (Sec 1 + Sec 2.5) clarifying 213.07% came from an
+      unrecoverable 3,317-symbol universe and is not directly comparable to the
+      24.03%/-13.60%/-22.85% figures, which all share the 2,603-symbol
+      production universe
+    - delete the unsupported leverage-ruled-out aside (2.0x -> 19.87%/55.25%)
+      from Sec 1; no committed evidence artifact exists for that specific test
+    - correct Sec 2.4 label: n=2,030 occurs at rotation 5 in the raw pre-fit
+      build log, not rotation 1 (log records every 5th rotation)
+    - regenerate SHA256SUMS entry for the edited report; shasum -c passes clean
+      across all 24 evidence files
+
+commit c136365fcc8b7ced5639dfcb46214d7036c74097	refs/remotes/origin/codex-rfo/top40-top10-production-verification
+Author: oakwindholdings <dick.oleary@gmail.com>
+Date:   Tue May 26 10:52:11 2026 -0400
+
+    Validate Top 40 2.0 Top 10 (#184)
+    
+    * Validate Top 40 2.0 Top 10
+    
+    * Refresh Top 40 manifest hash after main sync
+    
+    * Trigger PR CI
+    
+    * Trigger guardrails on codex branch
+    
+    * Use checkout token for CI guardrails
+    
+    * Fix CI workflow indentation after main sync
+    
+    ---------
+    
+    Co-authored-by: Codex <codex@openai.com>
+
+commit 4899a7448eb66f6461c46ad5b9897f1b2a98bd06	refs/remotes/origin/codex/top40-2-top10-validation
+Author: Codex <codex@openai.com>
+Date:   Tue May 26 06:15:50 2026 -0400
+
+    Validate Top 40 2.0 Top 10
+
+commit 9665acc9b15c5ecb8568dbb8ab493d8c4df788bc	refs/remotes/origin/railway/code-change-PmfZq8
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Tue Apr 14 10:36:13 2026 -0400
+
+    chore: remove 17k+ cached .pkl/.ubj/.pptx files from git tracking (1.7GB)
+    
+    These data caches are now in .gitignore and .railwayignore.
+    They are not needed for the web server and were causing Railway builds
+    to timeout during the snapshot phase.
+
+commit deff9b5158b9ae2994a4f090ff3fd85538070034	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Tue Apr 14 09:40:26 2026 -0400
+
+    chore: initialize and populate data cache with stock market historical data files
+
+commit f5b04a86c97c3b44baf2b2fe8ea0a1c9aeee7d1e	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Mon Apr 13 10:23:39 2026 -0400
+
+    feat: initialize data cache with initial set of ticker pickle files
+
+commit 5d6da541eecb127999db96e6668ca345929ba3e9	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Sun Apr 12 16:40:32 2026 -0400
+
+    feat: add intraday pivot test script and initialize data cache with stock price pickles
+
+commit 6ac0c418b6540146f523b256ba5b74698483b26d	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Sun Apr 12 13:50:06 2026 -0400
+
+    feat: implement bidirectional 365-day backtest pipeline and generate annual performance report
+
+commit daccb9f80cdabe2fa763e515738d6cffea3e5118	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Sun Apr 12 13:49:35 2026 -0400
+
+    feat: add backtest and optimization scripts along with extensive fundamental and daily data caches
+
+commit 70103a47cf3789cc2249429fbcffd5f2e951c1a9	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Sat Apr 11 15:29:50 2026 -0400
+
+    Deploy Top Gun Strategy Suite (Long, Short, Bidirectional)
+
+commit d586e4202a9bc14df4d35651950282ca4485a1be	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Fri Apr 10 09:04:07 2026 -0400
+
+    feat: implement manual day trading strategy with VWAP recoil logic, backtesting tools, and documentation
+
+commit 68a7239f9756ce1b79817c8205c68b09d8a934bc	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Fri Apr 10 06:56:26 2026 -0400
+
+    feat: implement swing trading optimization suite and expand market data caching infrastructure
+
+commit d0c7c7dedfb2252c95286f644c40953eb5d81f9b	refs/remotes/origin/railway/code-change-PmfZq8
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Wed Apr 8 13:03:48 2026 -0400
+
+    refactor: implement inline editing and management for admin user levels and navigation builder
+
+commit 776e6754ab3c76b6f849fd5a7740bc87545bb7d1	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Wed Apr 8 08:18:28 2026 -0400
+
+    Implement immutable engine math and dual automated daemon pipelines
+
+commit 458c227e87dbdd8a49b900828112185c61072bc2	refs/remotes/origin/railway/code-change-PmfZq8
+Author: Bob Stewart <bob@bobstewart.com>
+Date:   Tue Apr 7 15:14:20 2026 -0400
+
+    feat: implement multi-day signal pipeline, auto-select active strategies, and improve dashboard signal rendering.
+
+commit 832680b6611d87dfecdd6d4ded2f72dedf82a5cb	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Sun Apr 5 19:39:33 2026 -0400
+
+    Finalized TriSight Core 40, TriSight 100, and TriSight 500 Strategy Generation Modules and Big Dog / Asymmetric Bracket Monte Carlo Optimization Suites
+
+commit 8b2db1c1dba9ae148ead3377fe2a7b69c40f3577	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Tue Mar 31 17:08:55 2026 -0400
+
+    feat: multi-horizon AutoQuant valuation engine architecture and unconstrained live data pipeline
+
+commit a9c1f3790544dbcdc683c22b0f2dca73021dfa49	refs/remotes/origin/railway/code-change-PmfZq8
+Author: TriSight Trader <trader@trisight.com>
+Date:   Mon Mar 30 10:51:27 2026 -0400
+
+    Automated commit of current state
+
+--- SEARCH F: git -C trisight-trader log --all --source --diff-filter=A -- '*top40*scored*matrix*3317*' ---
+
+--- SEARCH G: git -C trisight-trader log --all --source -- '*3317*' (any file with 3317 in name, any history) ---
+COMMIT 5604d79946d1fcf5e125a6d951797cf8099b5012 2026-07-15
+recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_fix_hydration/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_fix_hydration/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_authority/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_authority/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_final/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+recovered/old_pc_sweep_20260714/C/TriSight_BlackBox_top40_final/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+recovered/old_pc_sweep_20260714/C/TriSight_Consolidation/docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+recovered/old_pc_sweep_20260714/C/TriSight_Consolidation/docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+
+COMMIT 2c5b3ca123e34644c0db9babc21688081279c755 2026-05-11
+docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+
+COMMIT 9665acc9b15c5ecb8568dbb8ab493d8c4df788bc 2026-04-14
+.data_cache/HTBK_15m_cb8c331763e2.pkl
+
+COMMIT deff9b5158b9ae2994a4f090ff3fd85538070034 2026-04-14
+.data_cache/HTBK_15m_cb8c331763e2.pkl
+
+COMMIT daccb9f80cdabe2fa763e515738d6cffea3e5118 2026-04-12
+.data_cache/HL_daily_846e0533179c.pkl
+
+COMMIT 70103a47cf3789cc2249429fbcffd5f2e951c1a9 2026-04-11
+.data_cache/HL_daily_846e0533179c.pkl
+
+--- SEARCH H: git -C trisight-trader log --all --source -- '*massive-trisight-universe*' ---
+COMMIT 00f9ab0cdad08d1dc785af280e3f59a61b760810 2026-08-08
+backtest_results/top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+
+COMMIT 31a37519b16c333c69dc1139cefff243fac9ca95 2026-08-08
+backtest_results/top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+
+COMMIT 20f907b0bd082d16e58b0d5767635e563f946bd1 2026-07-23
+recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2021-01-01_2023-04-09_v1.pkl
+recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2023-04-10_2026-04-17_v1.pkl.gz
+recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2026-04-18_2026-07-23_v1.pkl
+
+COMMIT eba44ce4007877311288a3a2baf0466c9b9b9358 2026-07-23
+recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2021-01-01_2023-04-09_v1.pkl
+recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2023-04-10_2026-04-17_v1.pkl.gz
+recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2026-04-18_2026-07-23_v1.pkl
+
+=== END GIT SEARCHES ===
+
+--- SEARCH I: exact sealed filename search across all git history (all refs, all objects incl trees) ---
+(exit code: 0, empty = no match found in any git object across all refs)
+
+--- SEARCH J: any object matching '_3317_' pattern in git history (all refs) ---
+26f9b6e8a5c265df2e0836a4c72eee0ce6a8343e docs_output/top40_trisight_universe_3317_parity_20260509_122232.txt
+8dfb3555c3e61c5bda560d55c4018c79a219b739 docs_output/top40_trisight_universe_3317_parity_20260509_122536.txt
+
+--- SEARCH K: count of distinct filenames ever committed matching 'top40*scored*matrix' ---
+e32282cc497fa0f4396f09018e623e24f0c1de68 backtest_results/top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+ad639f54782715e9111675f30447483db0f7f302 backtest_results/top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl
+c86e30833143e100d4d765304ecd1f206e37245d docs_output/top10_rebuild_unblock_20260808/mechanical_smoke_micro/top40_scored_matrix_mechanical-smoke-local-cache_50_2023-04-10_2026-08-07_build20260808_v1.pkl.manifest.json
+01f47fd939d97f85a1676c9c0dae50b7ff45c78f recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_post_fit_20260418_20260721_v1.pkl
+46edae6c65f49534ab9f5eb85774fbf87230ecbc recovered/top40_oos_20260722/oos_score_matrices/top40_scored_matrix_top40-2-authority-universe_oos_pre_fit_20210101_20230409_v1.pkl
+e798eb531321a6475d732096f8f6787e9cddfee8 recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2021-01-01_2023-04-09_v1.pkl
+482e79dade09ae26113f9be1e09bfc4db7f0c1e9 recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2023-04-10_2026-04-17_v1.pkl.gz
+c3bdfbc1cdbd9f90d7b32bd7cfd627a163560a7e recovered/top40_validated_universe_20260723/score_matrices/top40_scored_matrix_massive-trisight-universe_20260723_2026-04-18_2026-07-23_v1.pkl
+
+=== END SEARCH I/J/K ===
+
+--- SEARCH L: Railway volume /trisight-volume/backtest_results/ (via railway ssh from trisight-trader) ---
+Using SSH key from file /Users/bobstewart/.ssh/spark.pub: bobstewart@Mac.lan
+-rw-r--r--  1 root root 112428132 May 20 14:56 top40_scored_matrix_massive-trisight-universe_3317_2023-04-10_2026-04-17_v1.pkl
+-rw-r--r--  1 root root 124347964 Aug  8 16:46 top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl
+(railway ssh exit code: 0)
+
+
+--- SEARCH M: full listing of Railway volume /trisight-volume/backtest_results/ ---
+Using SSH key from file /Users/bobstewart/.ssh/spark.pub: bobstewart@Mac.lan
+total 231248
+drwxr-xr-x  2 root root      4096 Aug  8 16:46 .
+drwxr-xr-x 17 root root      4096 Aug 19 16:03 ..
+-rw-r--r--  1 root root 112428132 May 20 14:56 top40_scored_matrix_massive-trisight-universe_3317_2023-04-10_2026-04-17_v1.pkl
+-rw-r--r--  1 root root 124347964 Aug  8 16:46 top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl
+
+--- SEARCH N: search entire Railway volume for exact byte size 118501504 (sealed) ---
+Using SSH key from file /Users/bobstewart/.ssh/spark.pub: bobstewart@Mac.lan
+(empty above = no file of the sealed exact byte size exists anywhere on the volume)
+
+--- SEARCH O: search entire Railway volume for any file with '3317' in name (not just backtest_results/) ---
+Using SSH key from file /Users/bobstewart/.ssh/spark.pub: bobstewart@Mac.lan
+/trisight-volume/backtest_results/top40_scored_matrix_massive-trisight-universe_3317_2023-04-10_2026-04-17_v1.pkl
+/trisight-volume/.data_cache/CFR_15m_3317d04ae91a.pkl
+/trisight-volume/.data_cache/CACC_daily_d331761add9c.pkl
+/trisight-volume/.data_cache/CRDO_daily_97b3f0153317.pkl
+/trisight-volume/.data_cache/CFR_15m_3317d04ae91a.pkl.2.139684153335888.tmp
+/trisight-volume/.data_cache/DRS_daily_898331703881.pkl
+/trisight-volume/.data_cache/AMLX_daily_f33317fb18dc.pkl
+
+=== END RAILWAY SEARCHES ===
+
+=== IDENTITY RECONCILIATION TABLE ===
+
+| Candidate found | Location | Bytes | Symbols (from filename) | Matches SEALED identity (118,501,504 B / 3317 symbols)? |
+|---|---|---|---|---|
+| top40_scored_matrix_massive-trisight-universe_3317_2023-04-10_2026-04-17_v1.pkl | Railway volume /trisight-volume/backtest_results/ (May 20 14:56) | 112,428,132 | 3317 (filename) | NO — filename token "3317" matches, byte count does NOT (112,428,132 vs sealed 118,501,504, delta 6,073,372 bytes). This is the documented DECOY. Also absent from local trader working tree entirely (find returned nothing under trisight-trader for this exact filename) and absent from all git history/all refs (rev-list --objects --all, zero hits). |
+| top40_scored_matrix_top40-2-authority-universe_2666_2023-04-10_2026-04-17_v1.pkl | Local: backtest_results/ AND .claude/worktrees/unruffled-bhabha-aec6eb/backtest_results/ | 92,743,878 | 2666 (filename) | NO — this is the documented DECOY 2, exact byte match (92,743,878) and exact symbol-count match (2666) to the known-decoy spec. Present in git history (multiple commits, e.g. commit touching backtest_results/). |
+| top40_scored_matrix_massive-trisight-universe_3367_2023-04-10_2026-08-07_build20260808_v1.pkl | Railway volume (Aug 8 16:46); only .manifest.json committed to git locally, the .pkl itself not found locally | 124,347,964 | 3367 (filename) | NO — different symbol count (3367 not 3317), different date-window build tag (build20260808), different byte size entirely. A later/different rebuild, not the sealed artifact. |
+| top40_scored_matrix_massive-trisight-universe_20260723_{2021-01-01_2023-04-09 / 2023-04-10_2026-04-17.gz / 2026-04-18_2026-07-23}_v1.pkl(.gz) | Local: recovered/top40_validated_universe_20260723/score_matrices/ | 85,458,410 / 78,934,767 (gz) / 41,054,515 | Not stated in filename (universe tag is a date "20260723", not a symbol count) | NO — these are the three-window split from the 2026-07-23 DECOMPOSITION rebuild (per D58 registry entry), a *different* universe resolution date (2026-07-23, not 2026-05-15) and a different file-splitting scheme (3 windows vs 1 file). Not the sealed single-file 3.1-year-span artifact. |
+| top40_scored_matrix_top40-2-authority-universe_oos_{pre_fit_20210101_20230409 / post_fit_20260418_20260721}_v1.pkl | Local: recovered/top40_oos_20260722/oos_score_matrices/ | 70,725,217 / 33,175,753 | N/A (OOS split, "authority-universe" tag = 2666-symbol family) | NO — out-of-sample split files from the 2666-symbol authority-universe family, unrelated to the sealed 3317-symbol massive-universe artifact. |
+
+**EXACT BYTE-SIZE SWEEP (most authoritative check):** `find /trisight-volume -type f -size 118501504c` on the Railway production volume returned ZERO results — no file of the sealed exact byte size exists anywhere on the volume, under any filename.
+
+**EXACT FILENAME SWEEP ACROSS ALL GIT HISTORY:** `git rev-list --objects --all | grep -i "top40_scored_matrix_massive-trisight-universe_3317"` returned ZERO results across every commit on every ref (local branches, worktree branches, and remote-tracking refs) in the trader repository — the sealed filename was never committed to git, ever.
+
+**CONCLUSION:** The sealed cache identity (118,501,504 bytes / 3317 symbols, `top40_scored_matrix_massive-trisight-universe_3317_2023-04-10_2026-04-17_v1.pkl`) is CONFIRMED ABSENT from: (1) the trader working tree (including its .claude worktree copy), (2) all git history across all refs, and (3) the Railway production volume's /trisight-volume/backtest_results/ directory and the volume at large (exact-byte-size sweep). The only filename-collision candidate on the Railway volume carries the same name but a different, smaller byte count (112,428,132) — this is the pre-identified DECOY, not the sealed artifact. This corroborates the D58 registry finding verbatim: "its 2026-05-15 score-matrix cache exists nowhere — director independently confirmed absent from the working tree, from ALL git refs (`git log --all`), and from the entire estate filesystem."
