@@ -272,24 +272,25 @@ make "identical" false. *Unknown-unknown:* a divergence hidden in inheritance. *
 only, after we've verified):* "We [confirmed identical / found divergence X]. Your directive was to FIX
 this — do you intend Auto re-validated on its own execution path, or inheriting Manual's validation?"
 
-**WI-5 · High 5 92.33%.** *Known-known:* 92.33% claim vs 45.08% realized (normalized-inputs). *Known-
-unknown:* whether the sealed benchmark's inputs reproduce. *Unknown-known — with a critical caveat we
-apply to our OWN data (Rule 8):* per DEFECT-REGISTRY D94 (2026-08-07, reconfirmed line 443 and PR #856 line 583 — cited alone; the earlier SME-CHALLENGE-V2 #1 reported non-matching figures for a 2,107-trade
-population that appears to conflate High 5 with the Swing benchmark, and that entry records itself as later
-superseded/mis-framed), the sealed 92.33% was **graded through a 93.05% stop-driven path** while the sealed
-contract's *written text* says no stop and production runs **127/127 TIME_EXIT**; sizing used equity-linked
-`(equity/35)×2.0×slot_weight` (194.81% CAGR) vs production's fixed $28,571.43/slot (29.25% CAGR). **We do
-NOT present this as settled fact against Dick.** He already ruled on it as architect — TQM High5·E3,
-verbatim: *"DISPUTE — the stop IS the design; 2× is artifact; add stop to contract + re-measure at 1×"*
-(verdict RECONCILED-open→r2, never closed). So the "no-stop contract" is **an unexecuted edit, not evidence
-the strategy has no stop**: Dick ordered the stop written into the contract; it was never done, and D94
-measured against the unamended text. The sources do not conflict about what Dick WANTS (keep the stop, drop
-the 2× artifact, re-measure at 1×) — only about whether the paperwork matches. *Unknown-unknown:* whether
-the sealed benchmark artifact still exists to re-derive. *Draft elaboration (status/execution — his order
-was never carried out; NOT a re-ask of a settled question):* "Your round-1 ruling was to add the stop to
-High 5's written contract and re-measure at 1× — that edit was never made. Do you want it executed now
-(stop formalized, re-measured at 1× fixed-notional) before we report a number, or the sealed 92.33% /
-194.81% retired outright?"
+**WI-5 · High 5 92.33% — CORRECTED after execution surfaced a superseding ruling.** *Known-known:* 92.33%
+claim vs 45.08% realized (normalized-inputs). *Unknown-known — DICK HAS ALREADY RULED ON THIS, more recently
+than any framing we'd reached:* an earlier July architect ruling (TQM High5·E3: *"the stop IS the design;
+add stop to contract; re-measure at 1×"*) was **SUPERSEDED** at Round-74. Owner, verbatim, DEFECT-REGISTRY
+line 128 (2026-08-07): *"High 5: the record-assembled answer stands — sealed contract is the no-stop 7-day
+hold, production is ALIGNED with it, and its performance was never validly backtested."* His own words,
+DECISIONS-INBOX line 2233: *"i only 'sealed parameter' because i was TOLD the strategy was validated…
+this current revelation indicates we need to actually validate the strategy before considering anything
+else."* And the seal in progress (DEFECT-REGISTRY lines 583/774/781, 2026-08-10, PR #856) validates
+production at **25.12% CAGR / 50.76% WR / 100% TIME_EXIT** and frames the seal decision as *"ratify 25.12%
+vs manufactured 92.33%"* — the seal prompt to Dick states the 92.33% *"was not edge — it was a stop
+artifact… replaces the manufactured number with the measured one."* So the honest answer to his round-2
+"find the evidence that supports the original 92.33%" is: **there is none, and Dick himself already ruled
+so** — the no-stop contract stands, the 92.33% was never validly backtested, and the measured 25.12% is his
+pending re-seal. *Balance lesson (recorded):* our v4 called it "manufactured" (right conclusion, wrong basis
+— took D94 at face value); v5 called it an "unexecuted edit" (wrong — took the stale E3 ruling at face
+value); only checking the FULL record found Round-74. *Draft elaboration — NOT a new question (his round-15
+rule: check the decision record before asking):* none. Round 3 shows Dick his own Round-74 ruling + the
+pending 25.12% seal, and asks nothing new about High 5.
 
 **WI-6 · Escalator Shadow.** *Known-known:* evidence exists in normalized-inputs (claim FOUND / realized
 FOUND); it never reached his dialog (round-1 saved zero rows). *Known-unknown:* none material. *Unknown-
