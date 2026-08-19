@@ -228,6 +228,8 @@ async function save(slug, elId) {
   card.classList.add(dec.value === 'confirmed' ? 'answered-confirmed' : 'answered-correction');
 }
 
+function evUrl(u) { return u && u.startsWith('/') ? u + '?code=' + encodeURIComponent(CODE) : u; }
+
 function renderThread(slug, elId) {
   const msgs = DIALOG[slug + '::' + elId] || [];
   if (!msgs.length) return '';
