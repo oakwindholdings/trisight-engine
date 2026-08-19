@@ -47,6 +47,13 @@ function ident(name) {
  *  select(cols).eq/gte/lte/in/ilike().order().limit().single()
  *  insert(row|rows).select()   update(patch).eq()   upsert(row,{onConflict}).select()   delete().eq()
  *  Resolves to { data, error } — error.code 'PGRST116' on empty single() for handler compatibility. */
+// node-pg encodes a JS array as a Postgres array literal ({...}), which a jsonb
+// column rejects. Objects/arrays in this schema only ever map to jsonb columns,
+// so serialize any non-null object value to a JSON string before binding.
+function coerce(v) {
+  return v !== null && typeof v === 'object' ? JSON.stringify(v) : v;
+}
+
 function db(table) {
   const t = ident(table);
   const state = { op: 'select', cols: '*', wheres: [], params: [], order: null, limit: null, single: false, payload: null, onConflict: null, returning: false };
@@ -100,7 +107,7 @@ function db(table) {
         const colSql = cols.map(ident).join(', ');
         params = [];
         const valuesSql = rows
-          .map((r) => `(${cols.map((c) => { params.push(r[c] === undefined ? null : r[c]); return `$${params.length}`; }).join(', ')})`)
+          .map((r) => `(${cols.map((c) => { params.push(coerce(r[c] === undefined ? null : r[c])); return `$${params.length}`; }).join(', ')})`)
           .join(', ');
         sql = `INSERT INTO ${t} (${colSql}) VALUES ${valuesSql}`;
         if (state.op === 'upsert' && state.onConflict) {
@@ -115,7 +122,7 @@ function db(table) {
         params = [];
         const sets = Object.entries(state.payload)
           .filter(([, v]) => v !== undefined)
-          .map(([k, v]) => { params.push(v); return `${ident(k)} = $${params.length}`; });
+          .map(([k, v]) => { params.push(coerce(v)); return `${ident(k)} = $${params.length}`; });
         const whereAdj = state.wheres.map((w, i) => w.replace(/\$\d+/, () => `$${sets.length + i + 1}`));
         params = params.concat(state.params);
         sql = `UPDATE ${t} SET ${sets.join(', ')}${whereAdj.length ? ` WHERE ${whereAdj.join(' AND ')}` : ''} RETURNING *`;
