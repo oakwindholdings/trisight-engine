@@ -1,8 +1,9 @@
 # Round-2 Directives — Quality Matrix & Evidence Ledger
 
 *Prepared for Bob Stewart · Oakwind strategy estate · 2026-08-19*
-*Status: PLAN v3 — Bob rulings E-1/E-2/E-4 recorded (2026-08-19); balancing principle (Rule 8) +
-directive-vs-data reconciliation added. Pending Gate-A review before execution.*
+*Status: PLAN v4 — Gate-A reviewed (wf_f31c958f, 16 findings applied) + Bob rulings E-1/E-2/E-4.
+Reconciliation facts corrected against source (venue, High 5); dependencies encoded; feasibility
+gates added; WI-9 + Gate D added. Ready for execution of read-only steps on Bob's go.*
 
 This matrix converts Dick's round-2 answers into a mapped, evidence-gated work plan. Its
 purpose is anti-hallucination: **no step may be marked done without a checkable evidence
@@ -52,7 +53,9 @@ produce the artifact, and a different party must independently re-derive it.
    probing). Where a fix needs inputs or definitions we lack, we DRAFT a specific elaboration
    question about Dick's INTENDED approach — held for the Gate-C review, never sent unreviewed.
 
-Status legend: 🔲 NOT STARTED · 🔄 IN PROGRESS · 📝 DONE-UNVERIFIED · ✅ VERIFIED · ⛔ BLOCKED · ⤴️ ESCALATED
+Status legend: 🔲 NOT STARTED · 🔄 IN PROGRESS · 📝 DONE-UNVERIFIED · ✅ VERIFIED · ⛔ BLOCKED · ⤴️ ESCALATED · 🟢 RULED (owner decision recorded per Rule 7)
+
+*Rule-7 note on the E-1/E-2/E-4 rulings below: they are recorded from Bob's 2026-08-19 conversation message, quoted verbatim in the Escalations section. That message is the source; the gold-standard Rule-7 artifact is a Bob-authored commit or reply ratifying it. Bob may ratify by replying; until then these read 🟢 RULED (genuine, conversation-sourced), not ✅ VERIFIED.*
 
 ---
 
@@ -89,7 +92,9 @@ against the known cache-name trap.
 |---|------|--------------------|-------------------|----------|----------|--------|
 | 1.1 | Confirm the sealed cache is not present in any real form, guarding the near-twin trap | Search names EXACT targets: working tree; `git log --all --source`; AND the production mount `/trisight-volume/backtest_results/`. ANY filename hit must be reconciled against the sealed identity (**118,501,504 bytes / 3,317 symbols**) and against the two known decoys (`…massive-trisight-universe_3317…` at 112,428,132 B on the volume; `…top40-2-authority-universe_2666…` at 92,743,878 B / 2,666 symbols in 11+ locations) — a hit is NOT the sealed artifact unless byte count and symbol count both match | `evidence/wi1.1-cache-search.txt`: raw unedited stdout of every command incl. the volume mount; plus an identity-reconciliation table showing each hit's bytes/symbols vs the sealed identity and both decoys | agent | 2nd agent re-runs identical commands from a clean shell incl. the volume mount, attaches own output; packet then reviewed by Bob at 1.3 | 🔲 |
 | 1.2 | Record that the cache is unverifiable even if a candidate surfaces | State, quoting D58 verbatim, that the seal recorded path+size but never a SHA256, so no candidate can be proven to be the sealed artifact | `evidence/wi1.2-unverifiable.md` with the verbatim D58 excerpt quoted inline | agent | 2nd agent opens D58, confirms the quote is exact and dispositive | ✅ (already established in D58; step is to record it, not discover it) |
-| 1.3 | **RULED — E-1 GO** (Bob 2026-08-19): fund a full point-in-time re-validation run producing a NEW verifiable number; retraction is the fallback if the run proves infeasible | Bob's ruling recorded | Bob's verbatim ruling quoted in the Escalations section above (Protocol Rule 7) | Bob | — | ✅ GO |
+| 1.3 | **E-1 RULED GO** (Bob 2026-08-19): fund a full point-in-time re-validation run producing a NEW verifiable number; retraction is the fallback if the run proves infeasible | Bob's ruling recorded | Bob's verbatim ruling quoted in the Escalations section (Rule 7; conversation-sourced) | Bob | — | 🟢 RULED |
+| 1.3a | Feasibility pre-check BEFORE any compute: are the required inputs present (MASSIVE key, universe-resolution pipeline, the original run's parameter set) and is this not a duplicate of a run already done? | A go/no-go: every required input's presence confirmed with a quoted check; if any is absent the run is infeasible and the fallback is retraction | `evidence/wi1.3a-feasibility.md` with each input's presence quoted inline | agent | 2nd agent re-checks each input | 🔲 |
+| 1.3b | (If 1.3a = go) Execute the re-validation run | Run completes; produces a NEW number with a reproducible artifact | New artifact path + `sha256` + the run command captured | agent | 2nd agent re-runs or independently checks the artifact | ⛔ BLOCKED on 1.3a |
 
 ### WI-2 · Re-run the date-less backtests so the artifacts declare their windows
 **Directives (verbatim):** Oakwind Swing — *"Re-run so the artifact declares its dates … the
@@ -100,8 +105,8 @@ before presenting such nonsense to me."* Same for Oakwind Investor and Long Shad
 |---|------|--------------------|-------------------|----------|----------|--------|
 | 2.1 | Reproduce the "9,408 executed" coherence problem | First cite the artifact's own trade-count/executed field verbatim, THEN show the arithmetic for why it can't be one day | `evidence/wi2.1-coherence.md` with the artifact excerpt quoted inline + the calculation | agent | 2nd agent opens the artifact, confirms the quoted field and re-derives the arithmetic | 🔲 |
 | 2.2 | Locate the three backtest generators; confirm whether each can emit a window | Per strategy: generator script path + the exact code line that would (or would not) record span, quoted inline | `evidence/wi2.2-generators.md`, file:line + verbatim line per strategy | agent | 2nd agent opens each file:line, confirms | 🔲 |
-| 2.3 | **RULED — E-2 GO** (Bob 2026-08-19): re-run the three date-less backtests so artifacts declare windows | Bob's ruling recorded | Bob's verbatim ruling quoted in the Escalations section above | Bob | — | ✅ GO |
-| 2.4 | Re-run each; artifact embeds `window_from`/`window_to`, trade count reconciles to the window | New artifact declares dates and the count is coherent with the span | New artifact path + `sha256` + reconciliation note, per strategy | agent | 2nd agent | 🔲 (unblocked by E-2 GO; feasibility-check first) |
+| 2.3 | **E-2 RULED GO** (Bob 2026-08-19): re-run the three date-less backtests so artifacts declare windows | Bob's ruling recorded | Bob's verbatim ruling quoted in the Escalations section (Rule 7; conversation-sourced) | Bob | — | 🟢 RULED |
+| 2.4 | Re-run each; artifact embeds `window_from`/`window_to`, trade count reconciles to the window | WI-2.2 must first confirm the generator CAN emit a window for that strategy (quoted); only then re-run. New artifact declares dates and the count is coherent with the span | New artifact path + `sha256` + reconciliation note citing WI-2.2's finding, per strategy | agent | 2nd agent | ⛔ BLOCKED on WI-2.2 per strategy |
 
 ### WI-3 · Determine execution venue definitively — do not ask Dick to bless a guess
 **Directive (verbatim):** *"LOL — you are asking me to validate if your 'guess' is right. NFW."*
@@ -154,7 +159,7 @@ CLOSE, not to rework. Apply it.
 
 | # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
 |---|------|--------------------|-------------------|----------|----------|--------|
-| 7.1 | Change Oakwind Investor's CAGR verdict from REFUSED to NOTED-with-caveats | The verdict updated in the study data | git commit SHA of the change + before/after quote inline | agent | 2nd agent opens the commit, confirms | 🔲 |
+| 7.1 | Change Oakwind Investor's CAGR verdict from REFUSED to NOTED-with-caveats | The verdict updated in the study data, AND the caveat text must cite the reconciled `window_from`/`window_to` from WI-2.4's Oakwind Investor artifact — a verdict committed before that window exists is non-compliant (an undefined-annualization CAGR cannot be honestly "noted") | git commit SHA of the change + before/after quote inline | agent | 2nd agent opens the commit, confirms the window is cited | ⛔ BLOCKED on WI-2.4 |
 | 7.2 | Record "note computable-but-caveated returns, don't refuse" as a standing study rule | The rule written into the study methodology doc | Committed rule text + path | agent | Bob | 🔲 |
 
 ### WI-8 · Answer Dick's dispute that Manual Swing's realized ledger reflects any real trades
@@ -197,6 +202,17 @@ known-unknowns, unknown-knowns, and unknown-unknowns."*
   any execution**.
 - **Gate B** — reviewed again **before creating the round-3 return approach**.
 - **Gate C** — reviewed again **before any expanded-scope interface or package reaches Dick**.
+- **Gate D** — reviewed again **before any remediation change (a "FIXING" PR under E-4) merges into estate/production code**. Verification-only evidence gathering does not trigger Gate D; any change to strategy code, ledgers, or seals does.
+
+### WI-9 · Check whether round-1's zero-save was systemic (fleet-wide integrity)
+**Source:** surfaced by WI-6's reconciliation (Escalator Reclaimed Shadow saved zero round-1 rows).
+**Reading:** If the round-1 save failure touched other strategies, some of Dick's round-1 input may
+be silently missing — a fleet-wide data-integrity risk, not one strategy's gap.
+
+| # | Step | Acceptance criteria | Evidence required | Executor | Verifier | Status |
+|---|------|--------------------|-------------------|----------|----------|--------|
+| 9.1 | Compare round-1 saved rows per strategy against the elements each strategy should have | A per-strategy expected-vs-saved count; any strategy with a shortfall flagged | `evidence/wi9.1-save-integrity.md` with the counts (query output quoted) | agent | 2nd agent re-queries, confirms | 🔲 |
+| 9.2 | If a shortfall exists, determine cause (save bug vs Dick skipped) and whether input was lost | A sourced cause + whether any Dick input is unrecoverable | `evidence/wi9.2-cause.md` | agent | 2nd agent | ⛔ BLOCKED on 9.1 |
 
 ## Directive-vs-Data Reconciliation (Protocol Rule 8 — never at face value)
 
@@ -205,67 +221,84 @@ our data shows that the directive does not account for (unknown-known), and the 
 (unknown-unknown). Elaboration questions are **drafted, not sent** — they go to Dick only after
 the Gate-C review.
 
-**WI-1 · Top 40 213%.** *Known-known:* the sealed 213.06656830114653% and its frozen status are
-real; cache absent, no SHA256 (D58) — Dick agrees (Round-61 c). *Known-unknown:* the original
-score-matrix inputs to reproduce 213% exactly. *Unknown-known (data the directive ignores):* the
-PIT-corrected number is **−32.42% (verified)** — a re-validation run will almost certainly land
-far from 213%, not vindicate it. *Unknown-unknown:* whether today's pipeline (MASSIVE key,
-universe resolution) can even reproduce the run. *Draft elaboration:* "The re-validation will
-produce a NEW number, and our best estimate is it is deeply negative, not near 213%. When it
-lands, do you want it presented as the corrected claim or the strategy retired — and is there an
-original artifact you believe still exists that we have not found?"
+Every quadrant claim carries an inline source (Rule 2a). Elaboration questions are **drafted, not
+sent** — they go to Dick only after the Gate-C review, and none may ask him to do our lookup work
+or pre-commit him to a number.
 
-**WI-2 · Re-run date-less backtests.** *Known-known:* the three artifacts declare no window;
-re-run to embed dates. *Known-unknown:* whether the current generators reproduce the original
-runs. *Unknown-known:* Dick's "9,408 in one day is unlikely" **rests on the missing window** —
-9,408 executed is almost certainly cumulative over the unstated span, not one day; his inference
-of absurdity may resolve once the window is known, so we verify the count-vs-span before agreeing
-the artifact is "nonsense." *Unknown-unknown:* whether a re-run reproduces the SEALED headline
-numbers (if not, the seal is invalid regardless of window). *Draft elaboration:* "If the re-run's
-headline numbers differ from the sealed values, which governs — the re-run or the seal? And do
-your records hold the original date range to validate our re-run against?"
+**WI-1 · Top 40 213%.** *Known-known:* the sealed 213.06656830114653% is frozen; cache absent, no
+SHA256 recorded (DEFECT-REGISTRY D58) — Dick agrees (D58, Round-61 ruling "Part 2: c"). *Known-
+unknown:* the original score-matrix inputs to reproduce 213% exactly. *Unknown-known (data the
+directive does not account for):* the PIT-corrected number is **−32.42% CAGR, VERIFIED both lenses**
+(TOTAL-QUALITY-MATRIX E4→E11 addendum, wvu77ebio) — a re-validation will produce a real number, and
+the estate's own evidence points far from 213%. *Unknown-unknown:* whether today's pipeline (MASSIVE
+key, universe resolution) can reproduce the run at all — surfaced only by WI-1.3a. *Draft elaboration
+(decision only, no prejudged number, no lookup ask):* "The re-validation will produce a NEW verified
+number. When it lands, how do you want it handled — presented as the corrected claim, or the strategy
+retired? (If you personally hold a copy of the original validation outside the systems we searched,
+tell us and we'll validate against it; but we will not ask you to hunt for it.)"
 
-**WI-3 · Venue.** *Known-known:* all ledgers are TriSight-runner output (our inference); Dick
-won't bless a guess. *Known-unknown:* the definitive per-strategy venue from code. *Unknown-known:*
-the estate record (e.g. D23) already characterizes these as paper/sim with specific fill mechanics
-— our own data likely settles this **without** asking Dick. *Unknown-unknown:* whether any strategy
-actually routes to TradeStation (he listed it as an option). *Draft elaboration (only if the code
-trace is ambiguous):* "Our code trace shows [X]; does any strategy route to TradeStation Sim/Live
-that we've mis-traced?"
+**WI-2 · Re-run date-less backtests.** *Known-known:* Oakwind Swing / Investor / Long Shadow artifacts
+declare no window (normalized-inputs: `window_from`/`window_to` null for all three); Dick wants re-runs
+that embed dates. *Known-unknown:* whether the current generators reproduce the original runs. *Unknown-
+known:* Dick's "9,408 in one day is unlikely" **rests on the very window that's missing** — the artifact
+states 15,028 trades / 9,408 executed with no span (normalized-inputs, Oakwind Swing claim), so 9,408 is
+almost certainly cumulative; we verify count-vs-span before conceding "nonsense." *Unknown-unknown:*
+whether a re-run reproduces the SEALED headline numbers (if not, the seal is invalid regardless of window).
+*Draft elaboration (decision only):* "If the re-run's headline numbers differ from the sealed values,
+which governs going forward — the re-run or the seal?"
 
-**WI-4 · Auto = Manual params.** *Known-known:* Dick asserts identical params, different execution.
-*Known-unknown:* whether Auto was validated on its own path. *Unknown-known:* his assertion is a
-FACT claim we must verify against the two strategy files, not accept — a shared config with an
-override could make "identical" false. *Unknown-unknown:* a subtle divergence hidden in inheritance.
-*Draft elaboration:* "We [confirmed / found divergence X]. Your directive was to FIX this — do you
-intend Auto to be re-validated on its own execution path, or to inherit Manual's validation?"
+**WI-3 · Venue.** *Known-known:* Dick won't bless our guess (his directive). Estate data already largely
+settles venue: his ratified three-term standard **"TriSight Sim / Broker Sim / Broker Live"** is the
+platform-wide convention (DECISIONS-INBOX line 202), oakwind_swing is tagged TriSight Sim today (line 119),
+and his launch instruction routes every strategy to "TriSight Sim, TradeStation Sim, or TradeStation Live
+… determination made at the TriSight Trading Terminal level" (line 658). *Known-unknown:* the current
+per-strategy venue value from the live config/code. *Unknown-known:* venue is a **per-strategy setting with
+a TriSight Sim default**, not a fleet constant — so WI-3 states it per strategy from config+code, and never
+asks Dick. *Unknown-unknown:* whether any strategy currently carries a TradeStation override at the terminal
+level. *Draft elaboration:* none — this is answerable from our own data; do not ask Dick.
 
-**WI-5 · High 5 92.33%.** *Known-known:* 92.33% claim vs 45.08% realized. *Known-unknown:* whether
-the benchmark's inputs are reproducible. *Unknown-known:* High 5 shares the fleet frozen-universe
-survivorship defect — the 92% likely inherits it, so "the evidence that supports the original" may
-itself be compromised. *Unknown-unknown:* whether the benchmark artifact still exists to re-derive.
-*Draft elaboration:* "The 92.33% benchmark carries the same survivorship-cache issue as Top 40. Do
-you want it re-validated point-in-time, or is there a different validation you hold as authoritative?"
+**WI-4 · Auto = Manual params.** *Known-known:* Dick asserts identical params, different execution (his
+directive). *Known-unknown:* whether Auto was validated on its own path. *Unknown-known:* his assertion is
+a FACT claim to verify against the two strategy files, not accept — a shared config with an override could
+make "identical" false. *Unknown-unknown:* a divergence hidden in inheritance. *Draft elaboration (decision
+only, after we've verified):* "We [confirmed identical / found divergence X]. Your directive was to FIX
+this — do you intend Auto re-validated on its own execution path, or inheriting Manual's validation?"
 
-**WI-6 · Escalator Shadow.** *Known-known:* evidence exists in normalized-inputs; it never reached
-his dialog. *Known-unknown:* none material. *Unknown-known:* claim FOUND / realized FOUND already.
-*Unknown-unknown:* whether the round-1 zero-save was systemic (could touch other strategies) — worth
-a check. *No elaboration needed — present the existing evidence.*
+**WI-5 · High 5 92.33%.** *Known-known:* 92.33% claim vs 45.08% realized (normalized-inputs). *Known-
+unknown:* whether the sealed benchmark's inputs reproduce. *Unknown-known (the estate already root-caused
+the gap — and it is NOT survivorship):* per DEFECT-REGISTRY D94 + SME-CHALLENGE-V2 #1 (director-verified
+firsthand), the sealed 92.33% was **graded through a 93.05% stop-driven path** (STOP_TRAIL exits scored
+100% winners) while High 5's sealed contract has **no stop at all** and production runs **127/127
+TIME_EXIT, zero stops ever** — the win rate is manufactured by a grading path the strategy cannot use.
+Compounding it, the headline used equity-linked sizing (`(equity/35)×2.0×slot_weight` → 194.81% CAGR) vs
+production's fixed $28,571.43/slot rule (→ 29.25% CAGR). So the honest answer to "find the evidence that
+supports the original" is: **our data shows the evidence does NOT support it.** (High 5 is separately named
+in the fleet frozen-universe finding at TQM line 49, but that is not the cause of this gap.) *Unknown-
+unknown:* whether the sealed benchmark artifact still exists to re-derive. *Draft elaboration (decision
+only):* "The sealed 92.33% was graded on stop exits your contract forbids, and sized on an equity-linked
+basis production doesn't use. Which do you hold as authoritative for High 5 going forward — the sealed
+grading, or production's no-stop / fixed-notional reality?"
 
-**WI-7 · Oakwind Investor note-not-refuse.** *Known-known:* clean ruling, apply it. *Balance check:*
-its claim CAGR (8,728.89%) is annualization-undefined while the window is unknown — so "note it"
-**depends on WI-2** delivering a window first; we cannot honestly NOTE a CAGR whose span we don't
-have. *Interdependency flagged; no elaboration.*
+**WI-6 · Escalator Shadow.** *Known-known:* evidence exists in normalized-inputs (claim FOUND / realized
+FOUND); it never reached his dialog (round-1 saved zero rows). *Known-unknown:* none material. *Unknown-
+known:* the entry is already extracted — this is a presentation gap, not a data gap. *Unknown-unknown:*
+whether the round-1 zero-save was **systemic** across strategies — escalated to WI-9. *No elaboration —
+present the existing evidence.*
 
-**WI-8 · Manual Swing "no real trades".** *Known-known:* Dick says none real; our data (D86) shows
-104/259 contract-invalid + 48 backfill. *Known-unknown:* whether ANY of the 259 are clean. *Unknown-
-known (directly contradicts the directive at face value):* the D86 director correction says some
-fills were **PRICE-REAL but contract-invalid** — not fabricated. So "no real trades" is not literally
-true; real fills exist, booked under a forbidden stop rule. This is the balance in action — we do
-NOT encode "no real trades" as fact. *Unknown-unknown:* whether the ~107 unflagged rows are clean.
-*Draft elaboration:* "Our data shows some fills were real but contract-invalid, not fabricated. By
-'no real trades' do you mean none executed, or none under a valid contract? That distinction decides
-whether we void or re-book them."
+**WI-7 · Oakwind Investor note-not-refuse.** *Known-known:* clean ruling, apply it. *Unknown-known (blocks
+naive execution):* its claim CAGR (8,728.89%, normalized-inputs) is annualization-undefined while the
+window is null — so "note it" **depends on WI-2 delivering the window first**; WI-7.1 is BLOCKED on WI-2.4.
+We cannot honestly NOTE a CAGR whose span we don't have. *No elaboration.*
+
+**WI-8 · Manual Swing "no real trades".** *Known-known:* Dick says none real (his directive); our data
+(DEFECT-REGISTRY D86) shows 104/259 contract-invalid + 48 backfill. *Known-unknown:* whether ANY of the
+259 are clean. *Unknown-known (directly contradicts the directive at face value):* D86's director
+correction says some fills were **"PRICE-REAL but CONTRACT-INVALID — the market traded through those
+levels"** — not fabricated. "No real trades" is therefore not literally true: real fills exist, booked
+under a forbidden same-session stop rule. We do NOT encode "no real trades" as fact. *Unknown-unknown:*
+whether the ~107 unflagged rows are clean. *Draft elaboration (decision only):* "Our data shows some fills
+were real but contract-invalid, not fabricated. By 'no real trades' do you mean none executed, or none
+under a valid contract? That decides whether we void or re-book them."
 
 ## What this plan deliberately does NOT do yet
 - No work item is executed — execution is gated on Bob's approval of this plan and on the
