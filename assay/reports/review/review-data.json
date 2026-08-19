@@ -562,7 +562,7 @@
      "id": "verdict-0",
      "step": 6,
      "title": "What we computed \u2014 Return inflation",
-     "body": "REFUSED (invalid_params) Oakwind Investor Daily: side not normalizable to annualized return (claim: stated CAGR fraction; scenario window not declared in calendar terms \u2014 return dimension will refuse on window; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
+     "body": "NOTED with caveats (was REFUSED). Per Dick's round-2 standing ruling ('note it, don't refuse'), and now that the backtest window is recovered \u2014 2025-01-02 to 2026-05-15 (2,055 executed trades, WI-2.4, verified) \u2014 the claim CAGR of 8,728.89% is NOTED over that ~16.4-month span rather than refused. Caveats that travel with it: the claim shares the fleet frozen-universe survivorship bias, and the realized side shows 29/50 phantom entries (no market crossing on entry day, D39). The number is recorded, not endorsed.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     },
