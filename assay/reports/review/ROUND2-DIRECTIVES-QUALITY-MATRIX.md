@@ -341,7 +341,7 @@ item executor≠verifier. Evidence artifacts committed under `evidence/wi*.{md,t
 | WI-4 | Dick's assertion CONFIRMED: 18 locked params value-for-value identical Auto vs Manual; NO separate Auto backtest exists — Auto reused Manual's manual_swing_phase6 ledger | ✅ VERIFIED |
 | WI-5 | High 5: Dick already ruled (Round-74, 2026-08-07) the 92.33% "never validly backtested", no-stop contract stands; measured 25.12% presented but re-seal OPEN/parked with Dick (unsigned through 2026-08-17) | ✅ VERIFIED |
 | WI-6 | Escalator Reclaimed Shadow evidence EXISTS (349 trades / 215.97%); pre-built guide ready; pure delivery failure — present it in round 3 | ✅ VERIFIED |
-| WI-7 | (Oakwind Investor note-not-refuse) | ⛔ BLOCKED on WI-2.4 window |
+| WI-7 | Oakwind Investor window now known (2025-01-02..2026-05-15) — note-not-refuse applicable in round-3 build | ✅ UNBLOCKED |
 | WI-8 | Manual Swing live ledger grew 259→291 since study pull; provenance reconciled; RULING 3 (backfill-distrust) cited, disposed only the committed file | ✅ VERIFIED |
 | WI-9 | Round-1 zero-save NOT systemic — only escalator-reclaimed-shadow lost rows; 6/10 saved every element; Dick's other round-1 input intact | ✅ VERIFIED |
 
