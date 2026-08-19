@@ -1,56 +1,75 @@
-# WI-5.2 — Reconcile High 5's 92.33% benchmark against Dick's own architect ruling
+# WI-5.2 — High 5 92.33%: reconciliation against the full decision record
 
-## 1. Dick's ruling, quoted verbatim
+**Purpose:** answer Dick's round-2 directive *"THERE IS NO GAP — YOU NEED TO FIND THE
+EVIDENCE THAT SUPPORTS THE ORIGINAL"* by stating what our own record actually shows —
+and to correct two earlier plan framings that took partial evidence at face value.
 
-`TOTAL-QUALITY-MATRIX.md:56`:
+**Evidence discipline:** every quote below is verbatim at its cited `file:line`
+(orchestration/reports/), independently re-derived. Where finality is NOT established, this
+file says so — it does NOT assert a seal the record does not show.
 
-> **High5·E3** — [{r1, agent: derive:edge-contract + verify:edge-contract, effort: "found stop+2× not in written contract; posed neutral intent question", evidence: "swing_phase6_parity.py stop consts; HIGH_5_LOCKDOWN", verdict: PARTIAL}, {r1, agent: Dick (architect), effort: "**DISPUTE — the stop IS the design; 2× is artifact; add stop to contract + re-measure at 1×**", verdict: RECONCILED-open→r2}]
+## 1. The SUPERSEDED July ruling (do not build on it)
 
-`TOTAL-QUALITY-MATRIX.md:60` (the round-closing ruling that references E3):
+`TOTAL-QUALITY-MATRIX.md:56` — High5·E3, verbatim:
+> "DISPUTE — the stop IS the design; 2× is artifact; add stop to contract + re-measure at 1×"
 
-> **High5·E9** — [{r1, agent: Dick (architect), effort: "ruled all 5: **E3 DISPUTE**, leverage ACCEPT, E-settled DISPUTE (#887 revisit), display ACCEPT, provenance GATE", evidence: "HIGH5_RECON_ROUND1_RULINGS.md", verdict: PASS(round complete)}]
+This was a July architect ruling (verdict `RECONCILED-open→r2`). **It was superseded** — see §2.
+Plan v5's framing ("the no-stop contract is just an unexecuted edit; Dick wants the stop
+added") rests on this stale entry and is WRONG.
 
-So Dick's own architect ruling on the record is: the stop belongs in the strategy by design; the 2× leverage figure is the artifact to fix (not the stop); and the action item is **"add stop to contract + re-measure at 1×"**.
+## 2. Dick's superseding ruling — Round-74 (2026-08-07)
 
-## 2. D94's finding, quoted verbatim
+`DEFECT-REGISTRY.md:128` (ROUND-74-RULED, owner), verbatim:
+> "High 5: the record-assembled answer stands — sealed contract is the no-stop 7-day hold,
+> production is ALIGNED with it, and its performance was never validly backtested"
 
-`DEFECT-REGISTRY.md:407`:
+`DECISIONS-INBOX.md:2233` (Dick's own words, Round-74), verbatim:
+> "i only 'sealed parameter' because i was TOLD the strategy was validated and aligned with
+> the md and back test documents. This current revelation indicates we need to actually
+> validate the strategy before considering anything else."
 
-> "**AND EVEN 29.25% IS INVALID.** The replay producing all three numbers is **93.05% stop-driven** — `STOP_TRAIL` 4,662 trades at **100% winners**, `STOP` 289 at 0 winners — with only 6.95% reaching the 7-day forced exit. **High 5's sealed contract has no stop at all:** `scripts/high_5_exit_check_runner.py` states verbatim that *"the 7-trading-day forced exit is High 5's ONLY locked exit condition (no stop-loss/trailing-stop exit is part of its sealed contract)."* **Production confirms it, read firsthand: 127 of 127 realized exits are `TIME_EXIT`. Zero stop exits, ever.**"
+**What this settles:** the no-stop 7-day-hold contract STANDS; production is ALIGNED with it;
+and the sealed 92.33% *"was never validly backtested."* So the honest answer to "find the
+evidence that supports the original 92.33%" is: **there is none — Dick himself ruled so.**
 
-`DEFECT-REGISTRY.md:408`:
+## 3. The measured replacement number — PRODUCED and PRESENTED, but NOT yet sealed
 
-> "**Therefore the 92.33% win rate is manufactured by a trailing stop that neither the contract nor production has.** High 5 Strategy has **no valid performance number** — the owner's Round-74 statement was exactly right, and this is the evidence for it."
+`DEFECT-REGISTRY.md:583` (PR #856, 2026-08-10), verbatim:
+> "CAGR 25.12% · WR 50.76% Wilson [49.42, 52.10] · MaxDD 27.77% · N 5,321 · 100% TIME_EXIT."
+> … "Framed as an owner question, not a verdict."
 
-`DEFECT-REGISTRY.md:406` (equity-linked vs. fixed-notional):
+The 92.33% was graded through a 93.05% stop-driven path the no-stop contract doesn't have
+(`DEFECT-REGISTRY.md:407-408`); the honest, production-faithful number is 25.12%.
 
-> "**The applicable figure is 29.25%, not 194.81% — a 6.66× overstatement** against what production's own sizing rule produces."
+**But the re-seal is OPEN — this is the correction to my own rework's overclaim.** The record
+does NOT show Dick ratifying it:
+- `DEFECT-REGISTRY.md:786-787` (the file's LAST entry, 2026-08-10): the lockdown spec
+  *"has NOT been rewritten to the 1x/no-stop/25.12% reality"*; to seal it requires
+  *"(a) rewrite the lockdown spec… (b) /validate, (c) audit_session.py… → Dick signs →
+  supersedes July seals."* Dick has not signed.
+- `DECISIONS-INBOX.md:2421` (2026-08-14 call agenda) — still an OPEN question to put to Dick:
+  *"Which of Top 40 2.0, High 5, Manual Swing and Automated Swing are ratified, and which
+  still need my word?"*
+- `DECISIONS-INBOX.md:2431` (2026-08-14): High 5's basis is *"parked with Dick… it is his
+  call whenever he wants it."*
+- No entry after 2026-08-10 (latest record 2026-08-17) shows Dick ratifying the 25.12% seal.
 
-(Table at `DEFECT-REGISTRY.md:400-404`: `high_5_automated_grading` — equity-linked `(equity/35) × 2.0 × slot_weight` — **194.81%** CAGR headline, vs. `high_5_fixed_slot` — fixed $28,571.43, 1× — **29.25%** CAGR, "the only model matching production's locked rule.")
+## 4. Net for round 3
 
-## 3. Reconciliation — these two documents are describing the same fact, not contradicting each other
+Dick's round-2 "find the evidence" directive is answered by **his own Round-74 ruling**: the
+92.33% was never validly backtested. The measured, production-faithful number is **25.12%**,
+which has been run and reproduced but sits as an **owner question awaiting his seal** — open
+since 2026-08-10, unresolved through 2026-08-17. Round 3 therefore does NOT ask Dick a new
+question about High 5; it surfaces his own ruling plus the pending 25.12% re-seal decision
+that has been parked with him, for him to close whenever he chooses.
 
-Both sources agree on the underlying mechanics: **93.05%–93.2% of the sealed replay's trades exit via a trailing stop (`STOP_TRAIL`), that stop is not written into the sealed contract text, and production has run 127/127 (also cited elsewhere as 122/122) realized exits as `TIME_EXIT` with zero stop exits.** Neither document disputes any of those measured facts. What differs is the **prescriptive conclusion** drawn from them:
+## 5. The balance lesson (recorded per Rule 8)
 
-- **Dick's E3 ruling** treats the absence of the stop from the written contract as a **documentation gap**, not a strategy defect: *"the stop IS the design"* — i.e., the stop was always intended to be part of High 5, the contract text simply never caught up to reflect it. His remedy is an **edit**: *"add stop to contract + re-measure at 1×."*
-- **D94's framing**, read in isolation, states flatly that *"High 5's sealed contract has no stop at all"* and that the 92.33% win rate is "manufactured" by a mechanism "neither the contract nor production has" — which, without Dick's ruling attached, reads as though the no-stop contract were a settled, final fact establishing the strategy has no stop, rather than a **known, disputed gap Dick had already ruled on and ordered fixed.**
-
-## 4. The "no-stop contract" is an UNEXECUTED edit — not proof the strategy has no stop
-
-Verified firsthand against the actual sealed contract file, `/Users/bobstewart/dev/trisight/trisight-trader/HIGH_5_STRATEGY_LOCKDOWN.md`:
-
-- `grep -n -i "stop" HIGH_5_STRATEGY_LOCKDOWN.md` returns **zero matches** — the word "stop" does not appear anywhere in the sealed lockdown document today.
-- Its git history (`git log --oneline -- HIGH_5_STRATEGY_LOCKDOWN.md`) shows the file's last substantive touch was commit `f149a8a4`, dated **2026-07-21** ("fix: relabel High 5 headline evidence at 2x/1x + pin Oakwind Swing evidence to sealed module (#665)") — **more than two weeks before** the D94 finding (dated 2026-08-07) and before Dick's E3 ruling was recorded in `TOTAL-QUALITY-MATRIX.md`. No commit after that date touches the file.
-- D94 itself confirms, in its own closing line (`DEFECT-REGISTRY.md:412`): **"Nothing re-sealed. No lockdown document or module edited. No strategy parameter changed."**
-- The D1-execution follow-up (`DEFECT-REGISTRY.md:514`) likewise closes with: **"Conforming production is his decision; no code changed."**
-
-So: Dick ordered the stop **added to the contract** (E3: "add stop to contract + re-measure at 1×"). That edit was never made — the lockdown document has no stop clause today, has not been touched since before the ruling, and every downstream evidence entry explicitly confirms no lockdown document, module, or strategy parameter was ever changed as a result.
-
-**This means the correct statement is: the "no-stop sealed contract" is a stale, unexecuted document — an open task item, not a considered architectural fact.** It is not evidence that High 5 "has no stop" as a matter of design; it is evidence that a specific, already-ordered documentation fix has not yet been carried out. Dick's own ruling establishes the opposite premise — that the stop *is* the intended design and belongs in the contract — and that ruling has simply not been executed as code/doc changes.
-
-## 5. What is and is not settled, stated plainly
-
-- **Settled, verified, and undisputed by either source:** the 92.33% win rate / 5,321-trade sealed benchmark is 93.05% stop-driven (`STOP_TRAIL` 4,662 trades, 100% winners); production has run 127/127 realized exits as `TIME_EXIT` with zero stop exits ever; the equity-linked headline model (194.81% CAGR) overstates the fixed-notional model that matches production's actual sizing rule (29.25% CAGR) by 6.66×.
-- **Unsettled / owner-only, per the record itself:** whether High 5 in production should be *changed* to include the stop mechanism Dick says is "the design" (E3: RECONCILED-open→r2 — explicitly still open, not closed), and whether the 92.33% number can be validly quoted for a strategy whose written contract and whose live 127/127 execution record currently show no stop at all. D1's contract-faithful re-run (no stop, 7-day exit only, cash-rotation basis Dick chose) measured **N 5,321 · WR 50.12% Wilson [48.78%, 51.47%] · CAGR 35.28% · max DD 25.56%** (`DEFECT-REGISTRY.md:510`) — the number that actually describes what the sealed contract text and production both currently implement, pending Dick's still-open E3 edit.
-
-**Bottom line:** D94's "no stop in the sealed contract" finding is factually accurate as a read of the document *as it exists today*, and is corroborated firsthand (grep of the actual file, zero "stop" mentions, no commits since before the ruling). But it must not be read as Dick's final word on whether High 5 *should* have a stop — his own architect ruling (E3, DISPUTE) says the stop is intended design and ordered it written into the contract. That order is simply unexecuted. The 92.33% figure remains unusable as a valid performance number for High 5 as currently documented and as currently run in production (zero stops, 127/127 `TIME_EXIT`) — but the reason it is unusable is an open, ordered-but-undone documentation/contract edit, not a closed finding that the strategy was never meant to have a stop.
+Three successive framings of this one item, each corrected by the next independent check:
+- **v4:** "92.33% is manufactured" — right conclusion, wrong basis (took D94 at face value).
+- **v5:** "no-stop is an unexecuted edit; Dick wants the stop" — wrong (took the stale E3
+  ruling at face value).
+- **rework v1:** "Dick accepted the 25.12%, sealed" — wrong (overclaimed a seal the record
+  shows is still open).
+- **This version:** ruled-invalid (Round-74, solid) + measured-25.12%-presented-but-unsealed
+  (open, parked with Dick). Only checking the FULL record, to the latest entry, got here.

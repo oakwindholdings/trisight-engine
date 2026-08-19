@@ -36,22 +36,22 @@ below states the code-default posture instead, which is the only thing 3.1 asked
 ### 3. Oakwind Swing Trader (`supply_demand_hourly_paper_locked`)
 
 - Module docstring: `"This module does not detect zones, fetch market data, optimize triggers, or\nroute broker orders. It publishes validated paper ledger rows and blocks live\nTradeStation routing until the authority contract is explicitly updated."` — `Target_Strategies/supply_demand_hourly_paper_common.py:4-6`
-- Broker scaffold explicitly removed: `"CARD-10: the dormant TradeStation order-routing scaffold -- the internal\nlive-route helpers and the hardcoded paper-only gate -- was removed\nentirely. ... Broker routing\nstays locked off via strategy_order_governance."` — `Target_Strategies/supply_demand_hourly_paper_common.py:721-730`
-- **Fill-producing line:** `route_result = _order_result("PAPER", "PAPER", auto_error=LIVE_ROUTE_BLOCK_REASON)` — `Target_Strategies/supply_demand_hourly_paper_common.py:739`, feeding `"entry_price": entry,` — `Target_Strategies/supply_demand_hourly_paper_common.py:756`, where `entry = _as_float(row.get("modeled_entry_price"), "modeled_entry_price")` — `Target_Strategies/supply_demand_hourly_paper_common.py:726` (the field is literally named "modeled").
+- Broker scaffold explicitly removed: `"CARD-10: the dormant TradeStation order-routing scaffold -- the internal\nlive-route helpers and the hardcoded paper-only gate -- was removed\nentirely. ... Broker routing\nstays locked off via strategy_order_governance."` — `Target_Strategies/supply_demand_hourly_paper_common.py:731-738`
+- **Fill-producing line:** `route_result = _order_result("PAPER", "PAPER", auto_error=LIVE_ROUTE_BLOCK_REASON)` — `Target_Strategies/supply_demand_hourly_paper_common.py:740`, feeding `"entry_price": entry,` — `Target_Strategies/supply_demand_hourly_paper_common.py:756`, where `entry = _as_float(row.get("modeled_entry_price"), "modeled_entry_price")` — `Target_Strategies/supply_demand_hourly_paper_common.py:726` (the field is literally named "modeled").
 - No `ts_gw.place_order` call exists anywhere in this module (confirmed by the same grep as above — zero matches for `ts_gw\.` in `supply_demand_hourly_paper_common.py` and `supply_demand_hourly_paper_locked.py`).
 
 ### 4. Oakwind Investor Daily (`oakwind_investor_daily_paper_locked`)
 
 - Module docstring: `"This module does not detect zones, fetch market data, optimize filters, or\nroute broker orders. It publishes operator-maintained paper ledger rows after\nvalidating the paper-lock contract produced by the audit pack."` — `Target_Strategies/oakwind_investor_daily_paper_common.py:4-6`
-- **Fill-producing line:** `"entry_price": limit_price,` — `Target_Strategies/oakwind_investor_daily_paper_common.py:612`, where `limit_price = _as_float(row.get("limit_price"), "limit_price")` — `Target_Strategies/oakwind_investor_daily_paper_common.py:599`, sourced from the strategy's own order-plan CSV, not a broker.
+- **Fill-producing line:** `"entry_price": limit_price,` — `Target_Strategies/oakwind_investor_daily_paper_common.py:612`, where `limit_price = _as_float(row.get("limit_price"), "limit_price")` — `Target_Strategies/oakwind_investor_daily_paper_common.py:600`, sourced from the strategy's own order-plan CSV, not a broker.
 - No broker call exists in this module (grep for `ts_gw\.|place_order` on `oakwind_investor_daily_paper_common.py` / `oakwind_investor_daily_paper_locked.py` returned zero matches).
 
 ### 5. Escalator Reclaimed Shadow (`escalator_reclaimed_shadow`)
 
-- Comment names it explicitly as the broker-routable twin: `"escalator_reclaimed_shadow (broker-routable)\nand escalator_reclaimed_long_shadow (PAPER-locked by strategy_order_governance)"` — `Target_Strategies/escalator_reclaimed_executor.py:38-39`
-- Live-trading flag, default OFF: `AUTO_ESCALATOR_LIVE_TRADING = os.getenv("AUTO_ESCALATOR_LIVE_TRADING", "false").lower() == "true"` — `Target_Strategies/escalator_reclaimed_executor.py:28`
+- Comment names it explicitly as the broker-routable twin: `"escalator_reclaimed_shadow (broker-routable)\nand escalator_reclaimed_long_shadow (PAPER-locked by strategy_order_governance)"` — `Target_Strategies/escalator_reclaimed_executor.py:42-43`
+- Live-trading flag, default OFF: `AUTO_ESCALATOR_LIVE_TRADING = os.getenv("AUTO_ESCALATOR_LIVE_TRADING", "false").lower() == "true"` — `Target_Strategies/escalator_reclaimed_executor.py:31`
 - Mode resolution: `def _mode_for_strategy(strategy_id: str) -> str:\n    if is_order_routing_disabled_strategy(strategy_id):\n        return "PAPER"\n    return "LIVE" if AUTO_ESCALATOR_LIVE_TRADING else "PAPER"` — `Target_Strategies/escalator_reclaimed_executor.py:439-442`. `escalator_reclaimed_shadow` is **not** in `ORDER_ROUTING_DISABLED_STRATEGY_REASONS` (verified: absent from `strategy_order_governance.py:6-190`), so its mode today resolves via the flag alone → PAPER.
-- **Fill-producing line (PAPER path):** `price = float(signal.get("current_price") or signal.get("entry_price") or 0)` — `Target_Strategies/escalator_reclaimed_executor.py:999`, written straight through at `"entry_price": price,` — `Target_Strategies/escalator_reclaimed_executor.py:1036`; the order call itself is a no-op for PAPER: `if mode == "PAPER":\n        return True, "PAPER"` — `Target_Strategies/escalator_reclaimed_executor.py:466-467`.
+- **Fill-producing line (PAPER path):** `price = float(signal.get("current_price") or signal.get("entry_price") or 0)` — `Target_Strategies/escalator_reclaimed_executor.py:999`, written straight through at `"entry_price": price,` — `Target_Strategies/escalator_reclaimed_executor.py:1036`; the order call itself is a no-op for PAPER: `if mode == "PAPER":\n        return True, "PAPER"` — `Target_Strategies/escalator_reclaimed_executor.py:468-469`.
 - **Broker-call line (present in code, gated off today):** `ts_gw.place_order(` — `Target_Strategies/escalator_reclaimed_executor.py:471`
 
 ### 6. Escalator Reclaimed Long Shadow (`escalator_reclaimed_long_shadow`)
@@ -103,8 +103,9 @@ if not is_execution_venue_authorized_for_tradestation_routing(execution_venue):
 — `gateway/tradestation_client.py:677-689`
 
 `_read_execution_venue()` reads the DB setting via `database.get_execution_venue(strategy_id)`,
-which `"return[s] the platform default (EXECUTION_VENUE_DEFAULT) for every strategy with no
-explicit setting"` — `database.py:2482-2487` — and `EXECUTION_VENUE_DEFAULT =
+whose docstring reads: `"Defaults to trisight_sim (EXECUTION_VENUE_DEFAULT) for every strategy with
+no explicit setting -- the owner's fail-safe default."` — `database.py:2482-2484` — and
+`EXECUTION_VENUE_DEFAULT =
 EXECUTION_VENUE_TRISIGHT_SIM` / `EXECUTION_VENUE_TRISIGHT_SIM = "trisight_sim"` — `strategy_order_governance.py:343-354`.
 So absent an explicit terminal-side override, every strategy's venue is TriSight Sim by code
 default — this is the runtime-DB value referenced in the scope note above and is what NOT
@@ -131,7 +132,7 @@ Code and record describe the same three-slot venue model; "Broker Sim/Live" (rec
 "TradeStation Sim/Live" (code) is a naming substitution, not a behavioral disagreement.
 
 **oakwind_swing (`supply_demand_hourly_paper_locked`) agreement, confirmed:** code shows this
-strategy's broker-routing scaffold was removed entirely (`supply_demand_hourly_paper_common.py:721-730`,
+strategy's broker-routing scaffold was removed entirely (`supply_demand_hourly_paper_common.py:731-738`,
 quoted in 3.1 §3 above) — i.e. it cannot reach TradeStation at all, which is a *stronger* form of
 "TriSight Sim" than a flag default — and the estate record independently states `"oakwind_swing
 today = TriSight Sim"` (`DECISIONS-INBOX.md:119`). Code and record **agree**.
@@ -149,9 +150,9 @@ disagree or where no estate record could be found to check the code against.
 |---|---|---|---|---|---|---|---|---|
 | 1 | Top 40 2.0 | `top_40_2_0` | `top40_2_0_rotator.py:1782` (`_paper_fill_price`) | Yes, gated — `:1804` (env flag default false) | No (governed by its own `AUTO_TOP40_2_LIVE_TRADING` flag + shared execution-venue gate) | Covered generically by Dick's launch instruction (`DECISIONS-INBOX.md:658`) and the three-term standard (`:202`); no strategy-specific "today" statement found | TriSight Sim | MEASURED |
 | 2 | High 5 | `high_5_strategy` | `live_paper_strategy_publishers.py:1275` | No — zero `ts_gw`/`place_order` references in module | Yes — `strategy_order_governance.py:20-23` | Not named by id in the excerpts reviewed; covered by the platform-wide three-term standard | TriSight Sim | MEASURED |
-| 3 | Oakwind Swing Trader | `supply_demand_hourly_paper_locked` | `supply_demand_hourly_paper_common.py:756` (`modeled_entry_price`) | No — scaffold "removed entirely" per `:721-730` | Yes — `strategy_order_governance.py:32-35` | **Named explicitly:** `"oakwind_swing today = TriSight Sim"` — `DECISIONS-INBOX.md:119` | TriSight Sim | **MEASURED** (explicit code+record agreement) |
+| 3 | Oakwind Swing Trader | `supply_demand_hourly_paper_locked` | `supply_demand_hourly_paper_common.py:756` (`modeled_entry_price`) | No — scaffold "removed entirely" per `:731-738` | Yes — `strategy_order_governance.py:32-35` | **Named explicitly:** `"oakwind_swing today = TriSight Sim"` — `DECISIONS-INBOX.md:119` | TriSight Sim | **MEASURED** (explicit code+record agreement) |
 | 4 | Oakwind Investor Daily | `oakwind_investor_daily_paper_locked` | `oakwind_investor_daily_paper_common.py:612` (`limit_price`) | No — zero `ts_gw`/`place_order` references in module | Yes — `strategy_order_governance.py:28-31` | Not named by id in the excerpts reviewed; covered by the platform-wide standard | TriSight Sim | MEASURED |
-| 5 | Escalator Reclaimed Shadow | `escalator_reclaimed_shadow` | `escalator_reclaimed_executor.py:1036` (`price` at `:999`) | Yes, gated — `:471` (env flag default false; explicitly called "broker-routable" at `:38-39`) | No — absent from the denylist, governed by its own flag | Escalator pair covered generically at `DECISIONS-INBOX.md:189-194` (Rule 21 envelope walkthrough), no live-routing statement found | TriSight Sim | MEASURED |
+| 5 | Escalator Reclaimed Shadow | `escalator_reclaimed_shadow` | `escalator_reclaimed_executor.py:1036` (`price` at `:999`) | Yes, gated — `:471` (env flag default false; explicitly called "broker-routable" at `:42-43`) | No — absent from the denylist, governed by its own flag | Escalator pair covered generically at `DECISIONS-INBOX.md:189-194` (Rule 21 envelope walkthrough), no live-routing statement found | TriSight Sim | MEASURED |
 | 6 | Escalator Reclaimed Long Shadow | `escalator_reclaimed_long_shadow` | Same code path as #5 — `escalator_reclaimed_executor.py:1036` | Structurally unreachable regardless of the flag | **Yes — explicit id-level denylist**, `strategy_order_governance.py:11-14` | Escalator pair covered generically at `DECISIONS-INBOX.md:189-194` | TriSight Sim | MEASURED |
 | 7 | Earnings Trader Locked 93 | `earnings_trader_locked_93` | `earnings_trader_locked_93.py:477` (`regular_open`) | No — zero `ts_gw`/`place_order` references in module | Yes — `strategy_order_governance.py:15-19` | Not named by id in the excerpts reviewed | TriSight Sim | MEASURED |
 | 8 | TriSight 500 2.0 | `trisight_500_late_failed_recovery_shadow` | `trisight_500_late_failed_recovery_shadow.py:2090` (`LOT_ENTRY_PRICE_COLUMN`) | No — zero `ts_gw`/`place_order` references in module | Yes — `strategy_order_governance.py:36-40` | Not named by id in the excerpts reviewed | TriSight Sim | MEASURED |
@@ -161,11 +162,12 @@ disagree or where no estate record could be found to check the code against.
 **Summary:** all 10 strategies price and write fills through sim/paper code paths today — none
 reach a broker execution report. Three strategies (Top 40 2.0, Escalator Reclaimed Shadow,
 Automated Swing Trading) carry a real `ts_gw.place_order()` call gated by an env flag that
-defaults `false`; two of those three additionally require an explicit `execution_venue` DB
-override to `tradestation_sim`/`tradestation_live` before `place_order()` will even attempt
-routing (`gateway/tradestation_client.py:677-690`) — no cell in this table required marking
-CONFLICT; every strategy's code-derived venue matched every applicable estate-record statement
-found.
+defaults `false`; all three additionally require an explicit `execution_venue` DB override to
+`tradestation_sim`/`tradestation_live` before `place_order()` will even attempt routing, since the
+execution-venue gate at `gateway/tradestation_client.py:677-689` sits inside the single shared
+`place_order()` function (`gateway/tradestation_client.py:619`) that all three callers invoke — no
+cell in this table required marking CONFLICT; every strategy's code-derived venue matched every
+applicable estate-record statement found.
 
 **NOT ESTABLISHED (runtime, not code):**
 - The current Railway-production DB value of `execution_venue` per strategy (I did not query the
