@@ -79,6 +79,10 @@ Status legend: 🔲 NOT STARTED · 🔄 IN PROGRESS · 📝 DONE-UNVERIFIED · �
 
 ## Work Items
 
+> **Authoritative current status = the Execution Status Ledger at the end of this document.**
+> The per-step 🔲 markers in the tables below were the *pre-execution plan*; after the
+> 2026-08-19 execution wave (executor≠verifier), the ledger holds the verified current state.
+
 ### WI-1 · Compile the established Top 40 2.0 "213.07%" validation facts and escalate
 **Directive (verbatim):** *"You need to find the missing details from the original validation
 for 213% CAGR … your 'efforts' instead of that remain a DISMAL FAILURE."*
