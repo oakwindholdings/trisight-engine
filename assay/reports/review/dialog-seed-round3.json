@@ -1,0 +1,167 @@
+{
+ "_meta": {
+  "purpose": "Round-3 dialog: presents the VERIFIED answers to Dick's round-2 directives (work done, executor≠verifier) and puts back only the genuinely-open owner decisions. Built from the Gate-B-reviewed ROUND3-APPROACH.md; every quote traces to a committed evidence/wi*.md artifact or the sealed record. Pending Gate-C review before it reaches Dick.",
+  "loaded_via": "POST /api/review/dialog with x-review-admin (retract-unanswered first)",
+  "built": "2026-08-19"
+ },
+ "messages": [
+  {
+   "strategy": "top-40-2-0",
+   "element_id": "verdict-0",
+   "kind": "evidence",
+   "body": "You told us to find the original 213% validation, not substitutes. We did the work. The original is gone and cannot be rebuilt: its score-matrix cache exists nowhere, and its seal never recorded a SHA256, so even a file with the exact name can't be proven to be it. What DOES exist is three honestly-computed numbers, each dated and each worse as more survivorship bias is corrected out: 88.44% (closest analog, 2026-07-23), -7.52% CAGR (full point-in-time rebuild, 2026-07-31, an optimistic bound), and -32.42% CAGR (delisted-augmented correction, 2026-08-10, verified by both adversarial lenses). None of these is 213%, and the original that was can't be reproduced.",
+   "evidence": [
+    {
+     "source": "DEFECT-REGISTRY.md, D58, verbatim (MEASURED)",
+     "quote": "its 2026-05-15 score-matrix cache exists nowhere ... No SHA256 exists, so the sealed artifact is UNVERIFIABLE even if a candidate file surfaces",
+     "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"
+    },
+    {
+     "source": "TOTAL-QUALITY-MATRIX.md, E4→E11 addendum, verbatim (MEASURED, verified both lenses 2026-08-10)",
+     "quote": "-32.42% CAGR / 76.68% DD",
+     "url": "/api/review/source/evidence/TOTAL-QUALITY-MATRIX.md"
+    }
+   ]
+  },
+  {
+   "strategy": "top-40-2-0",
+   "element_id": "verdict-1",
+   "kind": "question",
+   "body": "Your Round-61 ruling was 're-validate first, rule after.' The re-validation is done (above). The remaining decision is yours as owner: present an honest number with full disclosure that it's far below the sealed 213%, or retire the strategy. (We are NOT re-asking the external-quotation question — you closed that 2026-07-31.)",
+   "options": [
+    "Present the honest number (-32.42%, verified) with full disclosure",
+    "Present the optimistic bound (-7.52%) with disclosure",
+    "Retire Top 40 2.0",
+    "I'll rule differently — explaining below"
+   ]
+  },
+  {
+   "strategy": "oakwind-swing-trader",
+   "element_id": "claim-window",
+   "kind": "evidence",
+   "body": "You were right to push back, and your instinct on the '9,408 in one day' was correct — so we went and established the actual window from our own data rather than ask you. Oakwind Swing's backtest covers 2025-01-02 to 2026-05-14 — about 16 months. Over that span 9,408 executed trades is entirely coherent; it was never one day. The window is cross-confirmed against two independently-generated committed CSVs, hash-verified, and the trading-day count (356 weekdays) matches the artifact's own market_days (355) to within a day. Nothing for you to confirm — this is settled from the record. And the venue question is likewise answered from our code: this is TriSight Sim.",
+   "evidence": [
+    {
+     "source": "WI-2.4 evidence (MEASURED; from committed baseline_capital.csv, hash-verified)",
+     "quote": "first_entry = 2025-01-02 09:30:00`, `last_exit = 2026-05-14 12:30:00",
+     "url": "/api/review/source/evidence/wi2.4-oakwind-swing-window.md"
+    }
+   ]
+  },
+  {
+   "strategy": "oakwind-investor-daily",
+   "element_id": "verdict-0",
+   "kind": "evidence",
+   "body": "You ruled 'note it, don't refuse' as a standing rule — we applied it, we didn't re-ask. The window is now established (2025-01-02 to 2026-05-15, 2,055 executed trades, from the committed ledger), which was the only reason it had been refused. So Oakwind Investor's CAGR verdict is now NOTED-with-caveats, not refused. The caveats that travel with the number: it carries the fleet survivorship bias, and the realized side shows 29 of 50 entries were phantom (no market crossing on the entry day). The number is recorded, not endorsed.",
+   "evidence": [
+    {
+     "source": "WI-2.4 evidence (MEASURED; from committed oakwind_investor ledger)",
+     "quote": "2025-01-02 05:00:00` → `2026-05-15",
+     "url": "/api/review/source/evidence/wi2.4-oakwind-investor-window.md"
+    }
+   ]
+  },
+  {
+   "strategy": "high-5",
+   "element_id": "verdict-0",
+   "kind": "evidence",
+   "body": "On High 5 we don't have a new question for you — you already answered it. At Round-74 (2026-08-07) you ruled, verbatim, that the sealed contract is the no-stop 7-day hold, production is aligned with it, and its performance 'was never validly backtested.' So the answer to 'find the evidence that supports the 92.33%' is: there is none, by your own ruling — it was graded on a stop the contract doesn't have. The honest, production-faithful number is 25.12%, which has been run and reproduced.",
+   "evidence": [
+    {
+     "source": "DEFECT-REGISTRY.md, ROUND-74-RULED, verbatim (MEASURED)",
+     "quote": "High 5: the record-assembled answer stands — sealed contract is the no-stop 7-day hold, production is ALIGNED with it, and its performance was never validly backtested",
+     "url": "/api/review/source/evidence/DEFECT-REGISTRY.md"
+    }
+   ]
+  },
+  {
+   "strategy": "high-5",
+   "element_id": "verdict-1",
+   "kind": "question",
+   "body": "The one thing still open on High 5 is a decision that's been parked with you since 2026-08-10: the re-seal that replaces the manufactured 92.33% with the measured 25.12% has never been signed. It's waiting on your word.",
+   "options": [
+    "Close it now — ratify the measured 25.12%",
+    "Keep it open — I'm not ready to seal",
+    "Something else — explaining below"
+   ]
+  },
+  {
+   "strategy": "automated-swing-trading",
+   "element_id": "verdict-0",
+   "kind": "evidence",
+   "body": "You said the params are identical and only the execution differs, and that we should be fixing it, not asking you. Both halves check out. We verified against the code: all 18 locked production parameters are value-for-value identical between Automated and Manual Swing, and there is NO separate Automated Swing backtest anywhere — its claim reused Manual's manual_swing_phase6 ledger. The only real difference is an execution-layer entry-window cutoff. We are addressing the fix: our recommendation is to formally record Automated Swing as inheriting Manual's validated backtest (the params are the same strategy), with the execution difference documented — and we'll execute that unless you redirect.",
+   "evidence": [
+    {
+     "source": "WI-4 evidence, verbatim (MEASURED)",
+     "quote": "identical, value-for-value, in both files",
+     "url": "/api/review/source/evidence/wi4.1-param-diff.md"
+    },
+    {
+     "source": "WI-4 evidence, verbatim (MEASURED)",
+     "quote": "No distinct Automated-Swing-specific backtest artifact exists anywhere in the trader repo",
+     "url": "/api/review/source/evidence/wi4.2-validation-provenance.md"
+    }
+   ],
+   "options": [
+    "Inherit Manual's validation (our recommendation) — proceed",
+    "No — re-validate Automated Swing on its own separate backtest",
+    "Explaining below"
+   ]
+  },
+  {
+   "strategy": "manual-swing-trading",
+   "element_id": "realized-ledger",
+   "kind": "evidence",
+   "body": "We re-pulled your live Manual Swing ledger fresh today (not the stale study snapshot). It now holds 291 rows: 48 tagged BACKFILL, 134 carrying the +1.00%/1-day signature the validated contract makes impossible, and 109 others. Two honest points: (1) those flagged fills were PRICE-REAL but contract-invalid — the market did trade through those levels, but under a stop rule the contract forbids; they are not fabricated trades. (2) Your RULING 3 ('I do not trust ANY of your backfilled data') reset only the committed seed file to empty — the live volume ledger these numbers come from was left untouched.",
+   "evidence": [
+    {
+     "source": "WI-8 evidence, verbatim (MEASURED, live pull 2026-08-19)",
+     "quote": "291/48/134/109",
+     "url": "/api/review/source/evidence/wi8.2-ledger-provenance.md"
+    },
+    {
+     "source": "WI-8 evidence — D86 signature rule (MEASURED)",
+     "quote": "pnl_pct==+1.00% AND days_held==1",
+     "url": "/api/review/source/evidence/wi8.2-ledger-provenance.md"
+    }
+   ]
+  },
+  {
+   "strategy": "manual-swing-trading",
+   "element_id": "realized-numbers",
+   "kind": "question",
+   "body": "So when you say Manual Swing had 'no real trades,' which do you mean — that none executed at all, or that none executed under a valid contract? Our data shows real fills that violated the stop rule. The distinction decides whether we void those rows or re-book them.",
+   "options": [
+    "None executed under a valid contract (void the contract-invalid rows)",
+    "None executed at all",
+    "Explaining below"
+   ]
+  },
+  {
+   "strategy": "escalator-reclaimed-shadow",
+   "element_id": "claim-doc",
+   "kind": "evidence",
+   "body": "You said we'd given you nothing to review on this strategy — and you were right, but not because there's no evidence. There is: 349 trades, 215.97% total return, a full claim and realized record. It simply never reached your dialog in round 1 (an isolated save failure on this one strategy — we checked, it was not systemic). Here it is now, in full, for your review of the inputs.",
+   "evidence": [
+    {
+     "source": "WI-6 evidence, verbatim (MEASURED)",
+     "quote": "349 trades, total return 215.97%, CAGR 16,079",
+     "url": "/api/review/source/evidence/wi6.1-escalator-shadow-present.md"
+    }
+   ]
+  },
+  {
+   "strategy": "escalator-reclaimed-long-shadow",
+   "element_id": "claim-window",
+   "kind": "evidence",
+   "body": "Long Shadow's window is established from our own committed data — 2025-12-31 to 2026-03-24 (57 market dates, 264 trades), recovered from two independently-generated block-summary CSVs that cross-check and reconcile exactly to the claim. No re-run was needed, and nothing to confirm on your end.",
+   "evidence": [
+    {
+     "source": "WI-2.4 evidence, verbatim (MEASURED)",
+     "quote": "2025-12-31` and the latest `end_date` value is `2026-03-24",
+     "url": "/api/review/source/evidence/wi2.4-long-shadow-window.md"
+    }
+   ]
+  }
+ ]
+}
