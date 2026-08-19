@@ -25,6 +25,8 @@ the volume near-twin is 112,428,132 B, not the sealed 118,501,504.)
 > is explicitly an OPTIMISTIC BOUND (the rebuild can only promote candidates still in
 > today's pool; names that fell out entirely can never be restored)."
 
+*(Note: D58 records the PIT baseline as -7.52%/-61.58% and the TQM addendum as -7.55%/61.59% — two reproductions 0.03pp apart, both far below the sealed 213%; neither is material to the conclusion.)*
+
 ## 4. Delisted-augmented survivorship correction — 2026-08-10 — VERIFIED, the firm bound
 `TOTAL-QUALITY-MATRIX.md:90-91` (E4→E11 addendum, "VERIFIED — both adversarial lenses
 CONFIRMED, could not break it, wf wvu77ebio"), verbatim:

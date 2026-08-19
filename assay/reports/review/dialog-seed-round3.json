@@ -25,7 +25,7 @@
   },
   {
    "strategy": "top-40-2-0",
-   "element_id": "verdict-1",
+   "element_id": "verdict-0",
    "kind": "question",
    "body": "Your Round-61 ruling was 're-validate first, rule after.' The re-validation is done (above). The remaining decision is yours as owner: present an honest number with full disclosure that it's far below the sealed 213%, or retire the strategy. (We are NOT re-asking the external-quotation question — you closed that 2026-07-31.)",
    "options": [
@@ -39,11 +39,11 @@
    "strategy": "oakwind-swing-trader",
    "element_id": "claim-window",
    "kind": "evidence",
-   "body": "You were right to push back, and your instinct on the '9,408 in one day' was correct — so we went and established the actual window from our own data rather than ask you. Oakwind Swing's backtest covers 2025-01-02 to 2026-05-14 — about 16 months. Over that span 9,408 executed trades is entirely coherent; it was never one day. The window is cross-confirmed against two independently-generated committed CSVs, hash-verified, and the trading-day count (356 weekdays) matches the artifact's own market_days (355) to within a day. Nothing for you to confirm — this is settled from the record. And the venue question is likewise answered from our code: this is TriSight Sim.",
+   "body": "You were right to push back, and your instinct on the '9,408 in one day' was correct — so we established the actual window from our own committed data rather than ask you. Oakwind Swing's backtest covers 2025-01-02 to 2026-05-14 — about 16 months — so 9,408 executed trades over that span is coherent, not one day. The dates come from the committed baseline-capital CSV (git-tracked), corroborated by a separate coverage file confirming 2025 as the entry-start year. The venue question is likewise answered from our own code: this is TriSight Sim.",
    "evidence": [
     {
-     "source": "WI-2.4 evidence (MEASURED; from committed baseline_capital.csv, hash-verified)",
-     "quote": "first_entry = 2025-01-02 09:30:00`, `last_exit = 2026-05-14 12:30:00",
+     "source": "WI-2.4 evidence (MEASURED; committed baseline_capital.csv, single source)",
+     "quote": "first_entry = 2025-01-02 09:30:00, last_exit = 2026-05-14 12:30:00",
      "url": "/api/review/source/evidence/wi2.4-oakwind-swing-window.md"
     }
    ]
@@ -56,14 +56,14 @@
    "evidence": [
     {
      "source": "WI-2.4 evidence (MEASURED; from committed oakwind_investor ledger)",
-     "quote": "2025-01-02 05:00:00` → `2026-05-15",
+     "quote": "2025-01-02 05:00:00 → 2026-05-15",
      "url": "/api/review/source/evidence/wi2.4-oakwind-investor-window.md"
     }
    ]
   },
   {
    "strategy": "high-5",
-   "element_id": "verdict-0",
+   "element_id": "verdict-1",
    "kind": "evidence",
    "body": "On High 5 we don't have a new question for you — you already answered it. At Round-74 (2026-08-07) you ruled, verbatim, that the sealed contract is the no-stop 7-day hold, production is aligned with it, and its performance 'was never validly backtested.' So the answer to 'find the evidence that supports the 92.33%' is: there is none, by your own ruling — it was graded on a stop the contract doesn't have. The honest, production-faithful number is 25.12%, which has been run and reproduced.",
    "evidence": [
@@ -103,8 +103,8 @@
     }
    ],
    "options": [
-    "Inherit Manual's validation (our recommendation) — proceed",
-    "No — re-validate Automated Swing on its own separate backtest",
+    "Proceed — record Auto as inheriting Manual's validation (our recommendation)",
+    "Redirect — re-validate Auto on its own separate backtest instead",
     "Explaining below"
    ]
   },
@@ -112,7 +112,7 @@
    "strategy": "manual-swing-trading",
    "element_id": "realized-ledger",
    "kind": "evidence",
-   "body": "We re-pulled your live Manual Swing ledger fresh today (not the stale study snapshot). It now holds 291 rows: 48 tagged BACKFILL, 134 carrying the +1.00%/1-day signature the validated contract makes impossible, and 109 others. Two honest points: (1) those flagged fills were PRICE-REAL but contract-invalid — the market did trade through those levels, but under a stop rule the contract forbids; they are not fabricated trades. (2) Your RULING 3 ('I do not trust ANY of your backfilled data') reset only the committed seed file to empty — the live volume ledger these numbers come from was left untouched.",
+   "body": "We re-pulled your live Manual Swing ledger fresh today (not the stale study snapshot). It now holds 291 rows: 48 tagged BACKFILL, 134 carrying the +1.00%/1-day signature the validated contract makes impossible, and 109 others. Two honest points: (1) those flagged fills were PRICE-REAL but contract-invalid — the market did trade through those levels, but under a stop rule the contract forbids; they are not fabricated trades. (2) Your RULING 3 ('I do not trust ANY of your backfilled data') reset only the committed seed file to empty — the live volume ledger these numbers come from was left untouched. Note: this signature is not a stale historical artifact — it is still actively appearing in the live production ledger.",
    "evidence": [
     {
      "source": "WI-8 evidence, verbatim (MEASURED, live pull 2026-08-19)",
@@ -132,8 +132,8 @@
    "kind": "question",
    "body": "So when you say Manual Swing had 'no real trades,' which do you mean — that none executed at all, or that none executed under a valid contract? Our data shows real fills that violated the stop rule. The distinction decides whether we void those rows or re-book them.",
    "options": [
-    "None executed under a valid contract (void the contract-invalid rows)",
-    "None executed at all",
+    "None executed under a valid contract — void the contract-invalid rows",
+    "None executed at all — treat the whole ledger as unusable",
     "Explaining below"
    ]
   },
@@ -141,11 +141,16 @@
    "strategy": "escalator-reclaimed-shadow",
    "element_id": "claim-doc",
    "kind": "evidence",
-   "body": "You said we'd given you nothing to review on this strategy — and you were right, but not because there's no evidence. There is: 349 trades, 215.97% total return, a full claim and realized record. It simply never reached your dialog in round 1 (an isolated save failure on this one strategy — we checked, it was not systemic). Here it is now, in full, for your review of the inputs.",
+   "body": "You said we'd given you nothing to review on this strategy — you were right that it never reached you, but the evidence exists. Here is the full picture, both sides. CLAIM: 349 trades, total return 215.97%, win rate 63.04%. REALIZED (production paper): 150 closed trades, 68 wins / 82 losses = 45.33% win rate, net +$370.59 (+0.05%) over 2026-05-15 to 2026-08-04 — a win-rate inflation of about 1.39×. It simply never reached your dialog in round 1 (an isolated save failure on this one strategy; we checked — not systemic).",
    "evidence": [
     {
-     "source": "WI-6 evidence, verbatim (MEASURED)",
-     "quote": "349 trades, total return 215.97%, CAGR 16,079",
+     "source": "WI-6 evidence — CLAIM side (MEASURED, from normalized-inputs)",
+     "quote": "349 trades, total return 215.969323%, CAGR 16079.179",
+     "url": "/api/review/source/evidence/wi6.1-escalator-shadow-present.md"
+    },
+    {
+     "source": "WI-6 evidence — REALIZED side (MEASURED)",
+     "quote": "150 closed trades (68W/82L = 45.33%",
      "url": "/api/review/source/evidence/wi6.1-escalator-shadow-present.md"
     }
    ]
@@ -158,7 +163,7 @@
    "evidence": [
     {
      "source": "WI-2.4 evidence, verbatim (MEASURED)",
-     "quote": "2025-12-31` and the latest `end_date` value is `2026-03-24",
+     "quote": "2025-12-31 and the latest end_date value is 2026-03-24",
      "url": "/api/review/source/evidence/wi2.4-long-shadow-window.md"
     }
    ]

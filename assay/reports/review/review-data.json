@@ -1,5 +1,5 @@
 {
- "title": "Strategy Input Review \u2014 Dick O'Leary",
+ "title": "Strategy Input Review — Dick O'Leary",
  "generated": "2026-08-18",
  "strategies": [
   {
@@ -14,7 +14,7 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cTOP40_2_VALIDATION_CAGR_PCT = 213.06656830114653 ... FROZEN FROM ALL EXTERNAL USE, effective 2026-07-31\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “TOP40_2_VALIDATION_CAGR_PCT = 213.06656830114653 ... FROZEN FROM ALL EXTERNAL USE, effective 2026-07-31”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
@@ -55,7 +55,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR used directly as annual fraction; FROZEN status and irreproducibility carried as integrity flags",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -63,14 +63,14 @@
      "step": 3,
      "title": "The time window of the claim",
      "body": "Window as stated by the claim source: 2023-04-10 to 2026-04-17.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
      "id": "claim-flag-0",
      "step": 3,
      "title": "Known issue with the claim record #1",
-     "body": "D58: irreproducible \u2014 backing cache absent everywhere, no hash recorded",
+     "body": "D58: irreproducible — backing cache absent everywhere, no hash recorded",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
@@ -94,7 +94,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: PARTIAL. paper fills ledger, 11,355 rows, all PAPER. Verbatim: \u201cthe owner's 'appears fine' number was wrong: 36/55 positions ... crediting $118,619 of pre-entry movement; entry-clamped truth = +8.03%\u201d",
+     "body": "Status: PARTIAL. paper fills ledger, 11,355 rows, all PAPER. Verbatim: “the owner's 'appears fine' number was wrong: 36/55 positions ... crediting $118,619 of pre-entry movement; entry-clamped truth = +8.03%”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -134,7 +134,7 @@
      "id": "realized-flag-0",
      "step": 5,
      "title": "Known issue with the realized record #1",
-     "body": "D77 calc artifact (+22%\u2192+8.03%)",
+     "body": "D77 calc artifact (+22%→+8.03%)",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
@@ -165,7 +165,7 @@
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
+     "title": "What we computed — Return inflation",
      "body": "REFUSED (invalid_params) Top 40 2.0: side not normalizable to annualized return (claim: stated CAGR used directly as annual fraction; FROZEN status and irreproducibility carried as integrity flags; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -173,7 +173,7 @@
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
+     "title": "What we computed — Win-rate inflation",
      "body": "not computed NOT COMPUTED: a side lacks a stated win rate.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -192,7 +192,7 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cCanonical (2026-07-16 run, cited as 'the sealed benchmark'): 5,321 trades, Win% 92.33%\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “Canonical (2026-07-16 run, cited as 'the sealed benchmark'): 5,321 trades, Win% 92.33%”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
@@ -228,7 +228,7 @@
      "step": 3,
      "title": "The time window of the claim",
      "body": "Window as stated by the claim source: 2021-04-01 to 2026-04-30.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
@@ -243,7 +243,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: FOUND. production paper fills ledger. Verbatim: \u201cWin rate 45.0820% [Wald 95% CI 36.2525%-53.9114%] ... mean per trade -0.6380%\u201d",
+     "body": "Status: FOUND. production paper fills ledger. Verbatim: “Win rate 45.0820% [Wald 95% CI 36.2525%-53.9114%] ... mean per trade -0.6380%”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -273,7 +273,7 @@
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
+     "title": "What we computed — Return inflation",
      "body": "REFUSED (invalid_params) High 5: side not normalizable to annualized return (claim: none; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -281,8 +281,8 @@
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
-     "body": "2.05\u00d7 claimed 92.3% vs realized 45.1% over 122 closed trades.",
+     "title": "What we computed — Win-rate inflation",
+     "body": "2.05× claimed 92.3% vs realized 45.1% over 122 closed trades.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     }
@@ -300,12 +300,12 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cWin% 67.65%, Net executed win% 62.85%, CAGR 1,851.41%, Max DD -1.65%\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “Win% 67.65%, Net executed win% 62.85%, CAGR 1,851.41%, Max DD -1.65%”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
        "citation": "Oakwind Swing lockdown/backtest artifact (commit b5ffd4f lineage, generated 2026-05-18T14:33:54)",
-       "target": "Sealed lockdown artifact recorded in the estate audit trail \u2014 the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
+       "target": "Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
        "is_link": false
       },
       {
@@ -343,16 +343,16 @@
      "id": "claim-metric-3",
      "step": 2,
      "title": "How we normalized it",
-     "body": "stated CAGR fraction; window NOT stated by the source (artifact generated 2026-05-18, no historical span declared) \u2014 return dimension will refuse on window",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "body": "stated CAGR fraction; window NOT stated by the source (artifact generated 2026-05-18, no historical span declared) — return dimension will refuse on window",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "body": "UPDATE (WI-2.4): the window IS now established from the committed backtest CSV — 2025-01-02 to 2026-05-14. The 9,408 executed trades span those ~16 months, not one day. Earlier this card said 'no window'; that is superseded.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
@@ -375,7 +375,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: FOUND. production paper fills ledger (supply_demand_hourly_paper_fills.csv). Verbatim: \u201c254 closed round-trip trades: WR 58.66% (95% CI 52.52%-64.54%) ... expectancy +0.466%/trade\u201d",
+     "body": "Status: FOUND. production paper fills ledger (supply_demand_hourly_paper_fills.csv). Verbatim: “254 closed round-trip trades: WR 58.66% (95% CI 52.52%-64.54%) ... expectancy +0.466%/trade”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -404,16 +404,16 @@
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
-     "body": "REFUSED (invalid_params) Oakwind Swing Trader: side not normalizable to annualized return (claim: stated CAGR fraction; window NOT stated by the source (artifact generated 2026-05-18, no historical span declared) \u2014 return dimension will refuse on window; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
+     "title": "What we computed — Return inflation",
+     "body": "REFUSED (invalid_params) Oakwind Swing Trader: side not normalizable to annualized return (claim: stated CAGR fraction; window NOT stated by the source (artifact generated 2026-05-18, no historical span declared) — return dimension will refuse on window; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     },
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
-     "body": "1.15\u00d7 claimed 67.7% vs realized 58.7% over 254 closed trades.",
+     "title": "What we computed — Win-rate inflation",
+     "body": "1.15× claimed 67.7% vs realized 58.7% over 254 closed trades.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     }
@@ -431,12 +431,12 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cWin 50.51%, CAGR 8,728.89%, Max DD -10.53%\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “Win 50.51%, CAGR 8,728.89%, Max DD -10.53%”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
        "citation": "Oakwind Investor lockdown doc (locked benchmark)",
-       "target": "Sealed lockdown artifact recorded in the estate audit trail \u2014 the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
+       "target": "Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
        "is_link": false
       },
       {
@@ -455,7 +455,7 @@
      "id": "claim-metric-0",
      "step": 2,
      "title": "Raw claim statement",
-     "body": "Locked benchmark: Win 50.51%, CAGR 8,728.89%, MaxDD -10.53% \u2014 shown to collapse to 673%-891% CAGR when the sibling Swing strategy's own capacity controls are applied to the identical event set",
+     "body": "Locked benchmark: Win 50.51%, CAGR 8,728.89%, MaxDD -10.53% — shown to collapse to 673%-891% CAGR when the sibling Swing strategy's own capacity controls are applied to the identical event set",
      "question": "Is this number / reading correct?",
      "links": []
     },
@@ -479,23 +479,23 @@
      "id": "claim-metric-3",
      "step": 2,
      "title": "How we normalized it",
-     "body": "stated CAGR fraction; scenario window not declared in calendar terms \u2014 return dimension will refuse on window",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "body": "stated CAGR fraction; scenario window not declared in calendar terms — return dimension will refuse on window",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "body": "The claim source states NO calendar window at all — neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
      "id": "claim-flag-0",
      "step": 3,
      "title": "Known issue with the claim record #1",
-     "body": "headline depends on ABSENT capacity controls (collapses 8728.89%\u2192673-891% under sibling's own caps: oakwind_capped_validation_20260809/00_VALIDATION.md)",
+     "body": "headline depends on ABSENT capacity controls (collapses 8728.89%→673-891% under sibling's own caps: oakwind_capped_validation_20260809/00_VALIDATION.md)",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
@@ -511,7 +511,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: PARTIAL. reconstructed backlog over CARD-93 fills ledger. Verbatim: \u201cREAL-entry trades (market actually touched the recorded price) n=21, wins=8 (38.1%)\u201d",
+     "body": "Status: PARTIAL. reconstructed backlog over CARD-93 fills ledger. Verbatim: “REAL-entry trades (market actually touched the recorded price) n=21, wins=8 (38.1%)”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -554,22 +554,22 @@
      "id": "realized-flag-1",
      "step": 5,
      "title": "Known issue with the realized record #2",
-     "body": "aggregate 68% WR contaminated by phantom entries \u2014 REAL-only subset used, which falls below the n>=30 floor",
+     "body": "aggregate 68% WR contaminated by phantom entries — REAL-only subset used, which falls below the n>=30 floor",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
-     "body": "NOTED with caveats (was REFUSED). Per Dick's round-2 standing ruling ('note it, don't refuse'), and now that the backtest window is recovered \u2014 2025-01-02 to 2026-05-15 (2,055 executed trades, WI-2.4, verified) \u2014 the claim CAGR of 8,728.89% is NOTED over that ~16.4-month span rather than refused. Caveats that travel with it: the claim shares the fleet frozen-universe survivorship bias, and the realized side shows 29/50 phantom entries (no market crossing on entry day, D39). The number is recorded, not endorsed.",
+     "title": "What we computed — Return inflation",
+     "body": "NOTED with caveats (was REFUSED). Per Dick's round-2 standing ruling ('note it, don't refuse'), and now that the backtest window is recovered — 2025-01-02 to 2026-05-15 (2,055 executed trades, WI-2.4, verified) — the claim CAGR of 8,728.89% is NOTED over that ~16.4-month span rather than refused. Caveats that travel with it: the claim shares the fleet frozen-universe survivorship bias, and the realized side shows 29/50 phantom entries (no market crossing on entry day, D39). The number is recorded, not endorsed.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     },
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
+     "title": "What we computed — Win-rate inflation",
      "body": "not computed NOT COMPUTED: realized population 21 < declared 30 floor.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -588,12 +588,12 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201c349 trades, total return 215.969323%, CAGR 16079.179 ... win rate 63.037249%\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “349 trades, total return 215.969323%, CAGR 16079.179 ... win rate 63.037249%”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
        "citation": "escalator_reclaimed_shadow lockdown/golden replay (profile escalator_reclaimed_bidirectional_v1_20260510)",
-       "target": "Sealed lockdown artifact recorded in the estate audit trail \u2014 the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
+       "target": "Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
        "is_link": false
       },
       {
@@ -607,7 +607,7 @@
      "id": "claim-metric-0",
      "step": 2,
      "title": "Raw claim statement",
-     "body": "349 trades, total return 215.97%, CAGR 16,079.18%, MaxDD 1.10%, win rate 63.04% over 57 market dates \u2014 source doc states 'No calendar-day span is claimed'",
+     "body": "349 trades, total return 215.97%, CAGR 16,079.18%, MaxDD 1.10%, win rate 63.04% over 57 market dates — source doc states 'No calendar-day span is claimed'",
      "question": "Is this number / reading correct?",
      "links": []
     },
@@ -631,16 +631,16 @@
      "id": "claim-metric-3",
      "step": 2,
      "title": "How we normalized it",
-     "body": "stated CAGR fraction; the claim EXPLICITLY declines to anchor a calendar window \u2014 return dimension will refuse on window",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "body": "stated CAGR fraction; the claim EXPLICITLY declines to anchor a calendar window — return dimension will refuse on window",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "body": "The claim source states NO calendar window at all — neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
@@ -663,7 +663,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: FOUND. shadow paper ledger roll-up. Verbatim: \u201c150 closed trades (68 wins / 82 losses) \u00b7 Realized P&L +$370.59 (+0.05%)\u201d",
+     "body": "Status: FOUND. shadow paper ledger roll-up. Verbatim: “150 closed trades (68 wins / 82 losses) · Realized P&L +$370.59 (+0.05%)”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -706,7 +706,7 @@
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
+     "title": "What we computed — Return inflation",
      "body": "REFUSED (invalid_params) Escalator Reclaimed Shadow: side window incomplete. A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -714,8 +714,8 @@
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
-     "body": "1.39\u00d7 claimed 63.0% vs realized 45.3% over 150 closed trades.",
+     "title": "What we computed — Win-rate inflation",
+     "body": "1.39× claimed 63.0% vs realized 45.3% over 150 closed trades.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     }
@@ -733,12 +733,12 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cTotal return 101.6130% | CAGR 2119.6892% | Win rate 62.50% | 264 trades\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “Total return 101.6130% | CAGR 2119.6892% | Win rate 62.50% | 264 trades”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
        "citation": "escalator_reclaimed_long_shadow lockdown (audit AUD-20260712121726-59f366, git b5ffd4f)",
-       "target": "Sealed lockdown artifact recorded in the estate audit trail \u2014 the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
+       "target": "Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
        "is_link": false
       }
      ]
@@ -747,7 +747,7 @@
      "id": "claim-metric-0",
      "step": 2,
      "title": "Raw claim statement",
-     "body": "Total return 101.61%, CAGR 2,119.69%, win rate 62.50%, 264 trades, MaxDD 0.75% over 57 market dates \u2014 no calendar span claimed",
+     "body": "Total return 101.61%, CAGR 2,119.69%, win rate 62.50%, 264 trades, MaxDD 0.75% over 57 market dates — no calendar span claimed",
      "question": "Is this number / reading correct?",
      "links": []
     },
@@ -771,16 +771,16 @@
      "id": "claim-metric-3",
      "step": 2,
      "title": "How we normalized it",
-     "body": "stated CAGR fraction; no calendar window declared \u2014 return dimension will refuse on window",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "body": "stated CAGR fraction; no calendar window declared — return dimension will refuse on window",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "body": "UPDATE (WI-2.4): the window IS now established from committed block-summary CSVs — 2025-12-31 to 2026-03-24 (57 market dates, 264 trades). Earlier this card said 'no window'; that is superseded.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
@@ -795,12 +795,12 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: PARTIAL. shadow paper ledger, partially repaired. Verbatim: \u201conly a partial subset (62 of the 66 closed trades ...) sums to -$1,062.3354 in the repair ledger\u201d",
+     "body": "Status: PARTIAL. shadow paper ledger, partially repaired. Verbatim: “only a partial subset (62 of the 66 closed trades ...) sums to -$1,062.3354 in the repair ledger”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
        "citation": "long-shadow production ledger + repair ledger (fake exit price defect)",
-       "target": "Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy \u2014 pulls are read-only and dated.",
+       "target": "Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.",
        "is_link": false
       }
      ]
@@ -809,7 +809,7 @@
      "id": "realized-numbers",
      "step": 5,
      "title": "The realized numbers",
-     "body": "66 closed shadow round-trips; NO complete aggregate figure exists \u2014 only a 62-trade repaired subset (-$1,062.34) from the fake-exit-price defect repair; win rate not stated as an aggregate",
+     "body": "66 closed shadow round-trips; NO complete aggregate figure exists — only a 62-trade repaired subset (-$1,062.34) from the fake-exit-price defect repair; win rate not stated as an aggregate",
      "question": "Do these realized figures match your understanding of what this strategy actually did?",
      "links": []
     },
@@ -832,15 +832,15 @@
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
-     "body": "REFUSED (invalid_params) Escalator Reclaimed Long Shadow: side not normalizable to annualized return (claim: stated CAGR fraction; no calendar window declared \u2014 return dimension will refuse on window; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
+     "title": "What we computed — Return inflation",
+     "body": "REFUSED (invalid_params) Escalator Reclaimed Long Shadow: side not normalizable to annualized return (claim: stated CAGR fraction; no calendar window declared — return dimension will refuse on window; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     },
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
+     "title": "What we computed — Win-rate inflation",
      "body": "not computed NOT COMPUTED: a side lacks a stated win rate.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -859,7 +859,7 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cEvents: 93 | Win rate: 92.473% | CAGR: 419.481%\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “Events: 93 | Win rate: 92.473% | CAGR: 419.481%”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
@@ -903,7 +903,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction; note the 93 events are a SELECTED trade set",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -911,14 +911,14 @@
      "step": 3,
      "title": "The time window of the claim",
      "body": "Window as stated by the claim source: 2022-03-31 to 2026-05-15.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
      "id": "claim-flag-0",
      "step": 3,
      "title": "Known issue with the claim record #1",
-     "body": "93 selected events \u2014 selection process undocumented in the claim itself",
+     "body": "93 selected events — selection process undocumented in the claim itself",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
@@ -934,7 +934,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: NOT_FOUND. None. Verbatim: \u201cno fills ledger, paper P&L file, or physical log exists for this strategy anywhere in the estate\u201d",
+     "body": "Status: NOT_FOUND. None. Verbatim: “no fills ledger, paper P&L file, or physical log exists for this strategy anywhere in the estate”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -956,7 +956,7 @@
      "id": "realized-flag-0",
      "step": 5,
      "title": "Known issue with the realized record #1",
-     "body": "ZERO fills have ever occurred since sealing \u2014 investigated and confirmed 2026-07-31",
+     "body": "ZERO fills have ever occurred since sealing — investigated and confirmed 2026-07-31",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     }
@@ -974,12 +974,12 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cCAGR 30.618321% (restated 2026-08-13; originally sealed as 29.955846%)\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “CAGR 30.618321% (restated 2026-08-13; originally sealed as 29.955846%)”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
        "citation": "trisight_500 lockdown (registry trisight_500_late_failed_recovery_shadow)",
-       "target": "Sealed lockdown artifact recorded in the estate audit trail \u2014 the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
+       "target": "Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
        "is_link": false
       },
       {
@@ -1018,7 +1018,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "stated CAGR fraction (post-restatement value; restatement disclosed)",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -1026,14 +1026,14 @@
      "step": 3,
      "title": "The time window of the claim",
      "body": "Window as stated by the claim source: 2020-03-03 to 2026-02-20.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
      "id": "claim-flag-0",
      "step": 3,
      "title": "Known issue with the claim record #1",
-     "body": "restated after sealing (29.96%\u219230.62%)",
+     "body": "restated after sealing (29.96%→30.62%)",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
@@ -1041,7 +1041,7 @@
      "id": "claim-flag-1",
      "step": 3,
      "title": "Known issue with the claim record #2",
-     "body": "~6yr frozen universe cache \u2014 most severe survivorship case per w4nfwu675",
+     "body": "~6yr frozen universe cache — most severe survivorship case per w4nfwu675",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
@@ -1049,7 +1049,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: PARTIAL. shadow paper fill log. Verbatim: \u201cAcross all 500 rows: $4,478.64 (ledger basis) vs $1,954.63 (restamped basis)\u201d",
+     "body": "Status: PARTIAL. shadow paper fill log. Verbatim: “Across all 500 rows: $4,478.64 (ledger basis) vs $1,954.63 (restamped basis)”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -1092,7 +1092,7 @@
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
+     "title": "What we computed — Return inflation",
      "body": "REFUSED (invalid_params) TriSight 500 2.0: side not normalizable to annualized return (claim: stated CAGR fraction (post-restatement value; restatement disclosed); realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -1100,7 +1100,7 @@
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
+     "title": "What we computed — Win-rate inflation",
      "body": "not computed NOT COMPUTED: a side lacks a stated win rate.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -1119,12 +1119,12 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cN=2,107 trades, WR=92.22%. Production leverage (1x): CAGR +342.39% (realistic 10bps)\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “N=2,107 trades, WR=92.22%. Production leverage (1x): CAGR +342.39% (realistic 10bps)”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
        "citation": "manual_swing governed backtest artifact (5yr, 2021-05-18..2026-04-24)",
-       "target": "Sealed lockdown artifact recorded in the estate audit trail \u2014 the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
+       "target": "Sealed lockdown artifact recorded in the estate audit trail — the seal line is in the Decisions snapshot: https://github.com/oakwindholdings/trisight-engine/blob/main/assay/reports/review/evidence/DECISIONS-INBOX.md",
        "is_link": false
       },
       {
@@ -1163,7 +1163,7 @@
      "step": 2,
      "title": "How we normalized it",
      "body": "realistic-10bps variant used (more favorable to the claim than ASSAY frictions would be)",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
@@ -1171,7 +1171,7 @@
      "step": 3,
      "title": "The time window of the claim",
      "body": "Window as stated by the claim source: 2021-05-18 to 2026-04-24.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
@@ -1186,7 +1186,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: PARTIAL. production paper ledger (swing_trade_log.csv). Verbatim: \u201cThe D86 signature (pnl_pct == +1.00 % AND days_held == 1) appears on 104 of 259 rows\u201d",
+     "body": "Status: PARTIAL. production paper ledger (swing_trade_log.csv). Verbatim: “The D86 signature (pnl_pct == +1.00 % AND days_held == 1) appears on 104 of 259 rows”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -1205,7 +1205,7 @@
      "id": "realized-numbers",
      "step": 5,
      "title": "The realized numbers",
-     "body": "259 closed paper trades: mean +0.517%/trade, median +1.000% \u2014 but the D86 synthetic signature (pnl_pct == +1.00% AND days_held == 1) sits on 104/259 rows, and 48 rows are BACKFILL-simulated; no aggregate win rate stated",
+     "body": "259 closed paper trades: mean +0.517%/trade, median +1.000% — but the D86 synthetic signature (pnl_pct == +1.00% AND days_held == 1) sits on 104/259 rows, and 48 rows are BACKFILL-simulated; no aggregate win rate stated",
      "question": "Do these realized figures match your understanding of what this strategy actually did?",
      "links": []
     },
@@ -1244,7 +1244,7 @@
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
+     "title": "What we computed — Return inflation",
      "body": "REFUSED (invalid_params) Manual Swing Trading: side not normalizable to annualized return (claim: realistic-10bps variant used (more favorable to the claim than ASSAY frictions would be); realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -1252,7 +1252,7 @@
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
+     "title": "What we computed — Win-rate inflation",
      "body": "not computed NOT COMPUTED: a side lacks a stated win rate.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
@@ -1271,12 +1271,12 @@
      "id": "claim-doc",
      "step": 1,
      "title": "The claim document we used",
-     "body": "Status: FOUND. Verbatim excerpt from the claim source: \u201cN=2,107 trades, WR=92.22% | CAGR 1x=+420.85%\u201d",
+     "body": "Status: FOUND. Verbatim excerpt from the claim source: “N=2,107 trades, WR=92.22% | CAGR 1x=+420.85%”",
      "question": "Is this the right / best statement of what this strategy claims? If a better or newer claim document exists, say where it is.",
      "links": [
       {
        "citation": "backtest_results/manual_swing_phase6* ledger artifacts",
-       "target": "Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy \u2014 pulls are read-only and dated.",
+       "target": "Lives only on the Railway production volume (not web-viewable). Ask Bob for a copy — pulls are read-only and dated.",
        "is_link": false
       },
       {
@@ -1314,16 +1314,16 @@
      "id": "claim-metric-3",
      "step": 2,
      "title": "How we normalized it",
-     "body": "1x CAGR as stated; WINDOW derived only from a ledger filename (2021-2026, no exact dates) \u2014 return dimension will refuse on window",
-     "question": "Is this a fair way to read the claim? (This card is about our method, not a number \u2014 the numbers are on the cards above.)",
+     "body": "1x CAGR as stated; WINDOW derived only from a ledger filename (2021-2026, no exact dates) — return dimension will refuse on window",
+     "question": "Is this a fair way to read the claim? (This card is about our method, not a number — the numbers are on the cards above.)",
      "links": []
     },
     {
      "id": "claim-window",
      "step": 3,
      "title": "The time window of the claim",
-     "body": "The claim source states NO calendar window at all \u2014 neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
-     "question": "If you know the calendar window the backtest covered, state it here \u2014 this single input can unlock the blocked return comparison.",
+     "body": "The claim source states NO calendar window at all — neither a start nor an end date for the period the backtest covers. Without it, the return comparison refuses to run.",
+     "question": "If you know the calendar window the backtest covered, state it here — this single input can unlock the blocked return comparison.",
      "links": []
     },
     {
@@ -1346,7 +1346,7 @@
      "id": "realized-ledger",
      "step": 4,
      "title": "The realized (real trading) record we used",
-     "body": "Status: FOUND. production paper ledger (auto_swing_trade_log.csv). Verbatim: \u201crealized WR 56.7% (59W/45L of 104 ... 37 were later ruled fabricated 'phantom' stop-exits and VOIDED)\u201d",
+     "body": "Status: FOUND. production paper ledger (auto_swing_trade_log.csv). Verbatim: “realized WR 56.7% (59W/45L of 104 ... 37 were later ruled fabricated 'phantom' stop-exits and VOIDED)”",
      "question": "Is this the right record of real trades? Does a cleaner or more complete one exist anywhere?",
      "links": [
       {
@@ -1365,7 +1365,7 @@
      "id": "realized-numbers",
      "step": 5,
      "title": "The realized numbers",
-     "body": "Since-inception realized WR 56.7% (59W/45L, n=104) \u2014 of which 37 were later ruled fabricated phantom stop-exits and VOIDED by owner 2026-08-05; since strategy-tagging: raw 42.9%, phantom-excluded 76.9%; real-only P&L weekly -0.44%, monthly/YTD -0.88%",
+     "body": "Since-inception realized WR 56.7% (59W/45L, n=104) — of which 37 were later ruled fabricated phantom stop-exits and VOIDED by owner 2026-08-05; since strategy-tagging: raw 42.9%, phantom-excluded 76.9%; real-only P&L weekly -0.44%, monthly/YTD -0.88%",
      "question": "Do these realized figures match your understanding of what this strategy actually did?",
      "links": []
     },
@@ -1381,23 +1381,23 @@
      "id": "realized-flag-0",
      "step": 5,
      "title": "Known issue with the realized record #1",
-     "body": "37/104 round-trips VOIDED as fabricated phantom stop-exits (owner ruling 2026-08-05) \u2014 WR shown uses the pre-void population and is therefore itself unreliable; phantom-excluded since-tagging WR is 76.9%",
+     "body": "37/104 round-trips VOIDED as fabricated phantom stop-exits (owner ruling 2026-08-05) — WR shown uses the pre-void population and is therefore itself unreliable; phantom-excluded since-tagging WR is 76.9%",
      "question": "Is our reading of this issue right? Do you have context that changes it?",
      "links": []
     },
     {
      "id": "verdict-0",
      "step": 6,
-     "title": "What we computed \u2014 Return inflation",
-     "body": "REFUSED (invalid_params) Automated Swing Trading: side not normalizable to annualized return (claim: 1x CAGR as stated; WINDOW derived only from a ledger filename (2021-2026, no exact dates) \u2014 return dimension will refuse on window; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
+     "title": "What we computed — Return inflation",
+     "body": "REFUSED (invalid_params) Automated Swing Trading: side not normalizable to annualized return (claim: 1x CAGR as stated; WINDOW derived only from a ledger filename (2021-2026, no exact dates) — return dimension will refuse on window; realized: none). A refusal is a finding: this claim cannot be honestly ratioed against reality.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     },
     {
      "id": "verdict-1",
      "step": 6,
-     "title": "What we computed \u2014 Win-rate inflation",
-     "body": "1.63\u00d7 claimed 92.2% vs realized 56.7% over 104 closed trades.",
+     "title": "What we computed — Win-rate inflation",
+     "body": "1.63× claimed 92.2% vs realized 56.7% over 104 closed trades.",
      "question": "If this looks wrong, which input above would you change? (Dispute the inputs, not the arithmetic.)",
      "links": []
     }
