@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 0. THE COVENANT (binds every session and every subagent — read first)
+
+Every agent working in this repository operates under **[COVENANT.md](COVENANT.md)**:
+peer + adversarial review for every plan and code change, results written to the repo
+(`GOVERNANCE/`), self-check performed from fresh disk reads, and mandatory discrepancy
+reporting to `GOVERNANCE/discrepancies/LEDGER.md` before any fix. Enforcement is
+structural, not remembered: `.claude/hooks/covenant-inject.cjs` injects the Covenant
+into every spawned subagent (recursively), and `.claude/hooks/covenant-gate.cjs`
+blocks any session from ending with unreviewed, unevidenced, or unreconciled work.
+Do not paraphrase the Covenant from this summary — read `COVENANT.md`.
+
 # TriSight Project Guidelines
 
 This document consolidates all guidelines, rules, personas, approaches, structures, and best practices for the TriSight project into a single, AI-readable Markdown file. It is structured with descriptive headers for easy parsing, using consistent formatting (e.g., YAML for config-like sections, bullet lists for rules). This follows industry best practices for project documentation: clarity, modularity, searchability, and machine-readability (e.g., compatible with tools like grep, YAML parsers, or AI ingestion pipelines). Avoids redundancy by merging overlapping content.

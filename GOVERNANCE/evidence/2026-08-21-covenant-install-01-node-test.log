@@ -1,0 +1,66 @@
+✔ inject: prepends covenant to an Agent prompt and preserves the task (132.852125ms)
+✔ inject: also fires for tool name Task (older Claude Code versions) (132.162334ms)
+✔ inject: idempotent - a prompt already carrying the banner is untouched (193.678584ms)
+✔ inject: ignores non-agent tools (128.522125ms)
+✔ inject: fails open (no output, stderr note) when markers are missing (132.150916ms)
+✔ gate: clean tree - allows stop with no output (176.844292ms)
+✖ gate: governance-only changes do not trigger the gate (168.644833ms)
+✔ gate: no COVENANT.md at root - repo is not gated (137.855417ms)
+✔ gate: dirty work + CLEAN self-check + both reviews + empty ledger - allows (178.493209ms)
+✔ gate: honest BLOCKED verdict always allows exit (Article 7) (170.272666ms)
+✔ gate: dirty work with no records - blocks citing Article 4 (169.392208ms)
+✔ gate: CLEAN self-check but OPEN ledger entries - blocks (176.879125ms)
+✔ gate: DISCREPANT verdict - blocks demanding restart per Article 5 (166.635833ms)
+✔ gate: self-check pointing at a missing review record - blocks (173.967166ms)
+✔ gate: missing ADVERSARIAL review - blocks even with a PEER review (174.650208ms)
+✖ gate: stale self-check (work modified after it) - blocks (167.732375ms)
+✔ gate: stands down after 3 blocks and records its defeat as an OPEN ledger entry (484.962125ms)
+✔ gate: commits ahead of upstream without a self-check - blocks; with records - allows (430.452208ms)
+✔ gate: malformed stdin fails open (130.769166ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 17
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3708.76775
+
+✖ failing tests:
+
+test at .claude/hooks/covenant-hooks.test.cjs:130:1
+✖ gate: governance-only changes do not trigger the gate (168.644833ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '{"decision":"block","reason":"TRISIGHT COVENANT GATE (1/3): this session changed work files but the Covenant record is incomplete. You must fix the following before finishing (COVENANT.md at repo root):\\n1. No self-check record exists in GOVERNANCE/selfchecks/ (Article 4).\\nIf you genuinely cannot reach CLEAN, write a self-check with VERDICT: BLOCKED and leave the ledger intact - an honest BLOCKED exit is always permitted (Article 7)."}'
+  - ''
+  
+      at TestContext.<anonymous> (/private/tmp/claude-501/-Users-bobstewart-dev-trisight-trisight-trader--claude-worktrees-file-respected-every-call-2e6e1a/2f0f45c8-a62e-4e09-b262-f9b3bd359d31/scratchpad/engine/.claude/hooks/covenant-hooks.test.cjs:134:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '{"decision":"block","reason":"TRISIGHT COVENANT GATE (1/3): this session changed work files but the Covenant record is incomplete. You must fix the following before finishing (COVENANT.md at repo root):\\n1. No self-check record exists in GOVERNANCE/selfchecks/ (Article 4).\\nIf you genuinely cannot reach CLEAN, write a self-check with VERDICT: BLOCKED and leave the ledger intact - an honest BLOCKED exit is always permitted (Article 7)."}',
+    expected: '',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .claude/hooks/covenant-hooks.test.cjs:214:1
+✖ gate: stale self-check (work modified after it) - blocks (167.732375ms)
+  SyntaxError: Unexpected end of JSON input
+      at JSON.parse (<anonymous>)
+      at assertBlocked (/private/tmp/claude-501/-Users-bobstewart-dev-trisight-trisight-trader--claude-worktrees-file-respected-every-call-2e6e1a/2f0f45c8-a62e-4e09-b262-f9b3bd359d31/scratchpad/engine/.claude/hooks/covenant-hooks.test.cjs:165:20)
+      at TestContext.<anonymous> (/private/tmp/claude-501/-Users-bobstewart-dev-trisight-trisight-trader--claude-worktrees-file-respected-every-call-2e6e1a/2f0f45c8-a62e-4e09-b262-f9b3bd359d31/scratchpad/engine/.claude/hooks/covenant-hooks.test.cjs:222:3)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+EXIT=1

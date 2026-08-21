@@ -1,0 +1,40 @@
+✔ inject: prepends covenant to an Agent prompt and preserves the task (250.882166ms)
+✔ inject: also fires for tool name Task (older Claude Code versions) (214.956208ms)
+✔ inject: idempotent - a prompt already carrying the banner is untouched (320.252334ms)
+✔ inject: ignores non-agent tools (224.845459ms)
+✔ inject: fails open (no output, stderr note) when markers are missing (226.638208ms)
+✔ gate: clean tree - allows stop with no output (275.099166ms)
+✔ gate: governance-only changes do not trigger the gate (284.374208ms)
+✔ gate: no COVENANT.md at root - repo is not gated (125.30375ms)
+✔ gate: dirty work + CLEAN self-check + both reviews + empty ledger - allows (174.194834ms)
+✔ gate: honest BLOCKED verdict always allows exit (Article 7) (171.4075ms)
+✔ gate: dirty work with no records - blocks citing Article 4 (161.685542ms)
+✔ gate: CLEAN self-check but OPEN ledger entries - blocks (164.311ms)
+✔ gate: DISCREPANT verdict - blocks demanding restart per Article 5 (167.252917ms)
+✔ gate: self-check pointing at a missing review record - blocks (162.901292ms)
+✔ gate: missing ADVERSARIAL review - blocks even with a PEER review (171.284ms)
+✔ gate: stale self-check (work modified after it) - blocks (168.723959ms)
+✔ gate: stands down after 3 blocks and records its defeat as an OPEN ledger entry (465.710625ms)
+✔ gate: commits ahead of upstream without a self-check - blocks; with records - allows (450.502ms)
+✔ gate: malformed stdin fails open (177.010708ms)
+✔ gate: the SHIPPED LEDGER.md (with its fenced template) does not trip the OPEN counter (peer finding 1 / adv D4) (323.176708ms)
+✔ gate: fenced "VERDICT: BLOCKED" example cannot short-circuit a CLEAN record (adv F1) (186.35125ms)
+✔ gate: the LAST verdict line wins - an early unfenced BLOCKED does not bypass CLEAN-path checks (adv F1) (167.411291ms)
+✔ gate: BLOCKED without any OPEN ledger entry is refused - receipts required (adv D3) (170.116167ms)
+✔ gate: a review whose final verdict is CHANGES-REQUIRED cannot back a CLEAN exit (adv F3) (165.440334ms)
+✔ gate: a review record without a REVIEWER line does not count (adv F3) (165.071417ms)
+✔ gate: a verbatim template header line ("TYPE: PEER | ADVERSARIAL") does not parse as a type (peer finding 4) (165.517375ms)
+✔ gate: non-record files under GOVERNANCE/ are treated as work, not governance (adv D2) (167.241584ms)
+✔ gate: LEDGER.md replaced by a directory blocks instead of silently skipping the OPEN check (adv D5) (166.927167ms)
+✔ inject: COMMUNICATION.md is injected verbatim after the covenant when present (122.523584ms)
+✔ inject: idempotent with the communication standard present (179.42275ms)
+✔ inject: banner substring buried in the prompt does NOT suppress injection (adv F2) (120.598166ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6601.399958
+EXIT=0

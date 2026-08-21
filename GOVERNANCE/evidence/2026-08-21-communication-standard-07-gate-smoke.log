@@ -1,0 +1,2 @@
+SMOKE: gate on dirty tree with full record (must ALLOW)
+GATE-STDOUT-END EXIT=0

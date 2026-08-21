@@ -50,5 +50,38 @@
         "Bash(git push origin main --force)",
         "Bash(git reset --hard)"
       ]
+    },
+    "hooks": {
+      "PreToolUse": [
+        {
+          "matcher": "Agent|Task",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/covenant-inject.cjs\""
+            }
+          ]
+        }
+      ],
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/covenant-gate.cjs\""
+            }
+          ]
+        }
+      ],
+      "SubagentStop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/covenant-gate.cjs\""
+            }
+          ]
+        }
+      ]
     }
   }

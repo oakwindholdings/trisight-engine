@@ -1,0 +1,28 @@
+✔ inject: prepends covenant to an Agent prompt and preserves the task (133.807083ms)
+✔ inject: also fires for tool name Task (older Claude Code versions) (133.283584ms)
+✔ inject: idempotent - a prompt already carrying the banner is untouched (181.196417ms)
+✔ inject: ignores non-agent tools (131.741417ms)
+✔ inject: fails open (no output, stderr note) when markers are missing (126.762167ms)
+✔ gate: clean tree - allows stop with no output (175.53475ms)
+✔ gate: governance-only changes do not trigger the gate (184.025334ms)
+✔ gate: no COVENANT.md at root - repo is not gated (131.586083ms)
+✔ gate: dirty work + CLEAN self-check + both reviews + empty ledger - allows (170.64525ms)
+✔ gate: honest BLOCKED verdict always allows exit (Article 7) (169.543584ms)
+✔ gate: dirty work with no records - blocks citing Article 4 (177.586417ms)
+✔ gate: CLEAN self-check but OPEN ledger entries - blocks (182.81775ms)
+✔ gate: DISCREPANT verdict - blocks demanding restart per Article 5 (174.93175ms)
+✔ gate: self-check pointing at a missing review record - blocks (175.424666ms)
+✔ gate: missing ADVERSARIAL review - blocks even with a PEER review (176.533791ms)
+✔ gate: stale self-check (work modified after it) - blocks (173.641083ms)
+✔ gate: stands down after 3 blocks and records its defeat as an OPEN ledger entry (486.491416ms)
+✔ gate: commits ahead of upstream without a self-check - blocks; with records - allows (423.713833ms)
+✔ gate: malformed stdin fails open (128.272917ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3713.983666
+EXIT=0
