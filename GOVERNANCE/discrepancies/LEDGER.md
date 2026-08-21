@@ -77,3 +77,13 @@ EVIDENCE: GOVERNANCE/reviews/2026-08-21-covenant-install-adv.md
 - DISC-20260821-8: D2 closed (non-record files under GOVERNANCE/ are gated), D3 closed (BLOCKED
   requires an OPEN entry), D5 closed (unreadable ledger blocks), D1 documented as designed limit.
 - EVIDENCE for all: GOVERNANCE/evidence/2026-08-21-covenant-install-03-node-test-post-review.log
+
+### DISC-20260821-9
+STATUS: RESOLVED
+FOUND-BY: peer reviewer (2026-08-21-communication-standard-peer.md), F1 (MAJOR)
+DESCRIPTION: COMMUNICATION.md claimed verbatim transcription of the PR #3 comment but omitted the entire "### Examples" section (~67 lines) undisclosed. Claim not reproducible from source (Article 6).
+EVIDENCE: GOVERNANCE/reviews/2026-08-21-communication-standard-peer.md
+- DISC-20260821-9 resolution: Examples section restored; diffed byte-identical against GitHub
+  comment 5374326918 (evidence: 2026-08-21-communication-standard-06-node-test-post-restore.log
+  session commands). Remaining deltas vs source: disclosed provenance header, two disclosed typo
+  fixes, trailing-whitespace normalization (peer F2).

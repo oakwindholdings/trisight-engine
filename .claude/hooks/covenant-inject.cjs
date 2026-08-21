@@ -12,8 +12,9 @@
  * Canonical text: COVENANT.md at repo root, between the COVENANT:INJECT markers.
  *
  * Design constraints:
- *   - IDEMPOTENT: if the prompt already BEGINS with the full covenant text, emit
- *     nothing. (Never keyed on a substring - see note above buildInjectedPrompt.)
+ *   - IDEMPOTENT: if the prompt already BEGINS with the full injected preamble
+ *     (covenant + communication standard), emit nothing. (Never keyed on a
+ *     substring - see note above buildInjectedPrompt.)
  *   - FAIL-OPEN: any read/parse error exits 0 with no output; a broken hook must never
  *     block agent spawning. Degrades to "not injected", which the gate + PR review catch.
  *   - PERMISSION-NEUTRAL: emits updatedInput without a permissionDecision.
@@ -63,10 +64,25 @@ function extractCovenant(repoRoot) {
   return body.length > 0 ? body : null;
 }
 
+/** COMMUNICATION.md, verbatim. Null (covenant-only injection) if absent or empty. */
+function extractCommunication(repoRoot) {
+  try {
+    const raw = readFileSync(path.join(repoRoot, 'COMMUNICATION.md'), 'utf-8').trim();
+    return raw.length > 0 ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Everything injected ahead of the task: the Covenant, then the communication standard. */
+function buildPreamble(covenant, communication) {
+  return communication ? `${covenant}\n\n---\n\n${communication}` : covenant;
+}
+
 /** New prompt string, or null when no rewrite should happen. */
-function buildInjectedPrompt(prompt, covenant) {
-  if (prompt.trimStart().startsWith(covenant)) return null; // idempotent
-  return `${covenant}\n\n---\n\n${prompt}`;
+function buildInjectedPrompt(prompt, preamble) {
+  if (prompt.trimStart().startsWith(preamble)) return null; // idempotent
+  return `${preamble}\n\n---\n\n${prompt}`;
 }
 
 function readStdin() {
@@ -101,7 +117,8 @@ async function main() {
       return;
     }
 
-    const injected = buildInjectedPrompt(input.prompt, covenant);
+    const preamble = buildPreamble(covenant, extractCommunication(repoRoot));
+    const injected = buildInjectedPrompt(input.prompt, preamble);
     if (injected === null) return; // already present
 
     process.stdout.write(JSON.stringify({
@@ -117,7 +134,7 @@ async function main() {
   }
 }
 
-module.exports = { extractCovenant, buildInjectedPrompt, findRepoRoot };
+module.exports = { extractCovenant, extractCommunication, buildPreamble, buildInjectedPrompt, findRepoRoot };
 
 if (require.main === module) {
   main();

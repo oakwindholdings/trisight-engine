@@ -65,6 +65,9 @@ repository:
 **Every number quoted in prose must be greppable in an evidence file.** A missing
 evidence file is reported as `NOT RUN` — never a claim, never an estimate.
 
+All prose you write — reviews, ledger entries, evidence notes, reports — follows the
+communication standard in `COMMUNICATION.md`, which is injected below this Covenant.
+
 ### Article 4 — Self-check is performed from disk, not from memory
 
 Before declaring done — **while still the same agent** — you shift into self-check mode:
@@ -138,7 +141,7 @@ dependencies, no PAI, designed for stock Claude Code on Windows and macOS
 
 | Hook | Event | What it does |
 |---|---|---|
-| `.claude/hooks/covenant-inject.cjs` | PreToolUse, matcher `Agent\|Task` | Rewrites every subagent prompt to carry the inject block above. Idempotent. Recursive by construction (fires on subagents' own spawns). |
+| `.claude/hooks/covenant-inject.cjs` | PreToolUse, matcher `Agent\|Task` | Rewrites every subagent prompt to carry the inject block above, followed by `COMMUNICATION.md` verbatim when that file is present. Idempotent. Recursive by construction (fires on subagents' own spawns). |
 | `.claude/hooks/covenant-gate.cjs` | Stop + SubagentStop | If the session changed non-governance files (dirty tree or unpushed commits), blocks completion until: a self-check record exists, is not stale, points at complete APPROVED PEER and ADVERSARIAL review records, and the ledger has no `STATUS: OPEN` entries — or the self-check verdict is an honest `BLOCKED` backed by at least one OPEN ledger entry. The block reason re-enters the same agent's context — that is the "restart with improved context, same agent" mechanism. |
 
 ### Designed limits (stated so nobody discovers them the hard way)
@@ -151,6 +154,10 @@ dependencies, no PAI, designed for stock Claude Code on Windows and macOS
   stderr and stand aside. The gate degrades to "not enforced," which the ledger and PR
   review catch — it never degrades to "falsely green." (Exception: a LEDGER.md that
   exists but cannot be read blocks a CLEAN/BLOCKED exit rather than skipping the check.)
+- **Injected files are a trust boundary:** whatever `COVENANT.md`'s inject region and
+  `COMMUNICATION.md` contain reaches every agent's prompt verbatim. Editing either is
+  equivalent in authority to amending the Covenant: Dick-only, and any change is visible
+  in committed diffs and PR review.
 - **Content, not identity:** the gate verifies that records exist, are complete, are
   consistent, and are current. It cannot prove a review was truly written by a separate
   party, or that a self-check's claims are true — an agent determined to forge its own
@@ -175,3 +182,4 @@ dependencies, no PAI, designed for stock Claude Code on Windows and macOS
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-08-21 | Ratified by Dick O'Leary. Articles 1–7, injection + completion gate. |
+| 1.1.0 | 2026-08-21 | Communication standard (`COMMUNICATION.md`, Dick's PR #3 comment) injected with the Covenant; Article 3 binds all agent prose to it. |
