@@ -1,0 +1,4 @@
+SMOKE: covenant-gate on this repo's own dirty tree (must ALLOW: empty stdout, exit 0)
+GATE-STDOUT-END EXIT=0
+SMOKE2: gate must BLOCK if self-check is removed (control)
+{"decision":"block","reason":"TRISIGHT COVENANT GATE (1/3): this session changed work files but the Covenant record is incomplete. You must fix the following before finishing (COVENANT.md at repo root
