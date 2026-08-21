@@ -25,13 +25,24 @@ now merged into this repository as documents. Your job is to walk me through FOU
 decisions, one at a time, so my strategies' own documents say what I decide they say.
 I am not highly technical. Plain English only.
 
-FIRST, before anything else, check what you can do here and tell me in one short
-paragraph: (1) run "git rev-parse --short HEAD" and "git pull origin main" and tell me
-if this is the TriSight repository and it updated cleanly; (2) confirm these three files
-exist after the pull: docs_output/oakwind_swing_cagr_reconciliation_20260820.md,
+FIRST, before anything else, set up a safe place to work and tell me in one short
+paragraph what you did:
+(1) Run "git status --porcelain -b" here. If this checkout is on any branch other than
+main, or has ANY uncommitted changes, do NOT pull, stash, commit, or touch anything in
+it — my other work lives on those branches. Instead make a fresh clone and do the whole
+session from there:
+    git clone https://github.com/oakwindholdings/TriSight.git C:\trisight\trisight-trader-rulings
+then work in C:\trisight\trisight-trader-rulings from this point on. (If this checkout
+IS on main and clean, "git pull origin main" here is fine instead.)
+(2) In the working copy, confirm these three files exist:
+docs_output/oakwind_swing_cagr_reconciliation_20260820.md,
 docs_output/automated_swing_fresh_backtest_20260820.md,
-docs_output/oakwind_investor_exit_check_sandbox_20260820.md. If any of that fails, stop
-and tell me exactly what to tell Bob — do not improvise.
+docs_output/oakwind_investor_exit_check_sandbox_20260820.md.
+(3) Open the third file and confirm it contains a heading that starts
+"ERRATUM — 2026-08-21" — that is how we know the copy carries the latest merged
+correction. If it is missing, run "git pull origin main" (in the fresh clone only) and
+check once more.
+If any of that fails, stop and tell me exactly what to tell Bob — do not improvise.
 
 RULES for the whole session:
 - One card at a time. Show me the card, wait for my answer, record it, then move on.
