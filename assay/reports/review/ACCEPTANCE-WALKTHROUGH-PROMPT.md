@@ -88,28 +88,27 @@ strategy's current measured backtest figure, with 92.22% kept as the sealed hist
 quote it is.
 My answer: ACCEPT / DISPUTE / ADJUST.
 
-CARD 4 of 4 — Oakwind Investor: schedule the end-of-day exit check?
-Open docs_output/oakwind_investor_exit_check_sandbox_20260820.md. Show me the two-row
-result table and the "Two observations" section. Explain in three sentences: the exit
-check has been running only when someone runs it by hand — the paper ledger shows 14
-hand-run exit records between Aug 3 and Aug 18; when the study ran the same check in a
-sandbox on Aug 20, the two positions still open (ESLT and HON, both entered Aug 12)
-had both already hit their stop levels on the Aug 19 daily bar and would close at
-those recorded stop prices (paper losses of $3,746.55 and $3,769.98); the scheduled
-version of this same check is already built and wired into the daily engine, switched
-off (the "Oakwind Investor End-of-Day Exit Check (D31)" entry, set to run 15:55 ET
-daily — the repository's own note on that entry says turning it on is a settings
-change made for my ruling, not a code change).
+CARD 4 of 4 — Oakwind Investor: the end-of-day exit check is already running — keep it?
+Open docs_output/oakwind_investor_exit_check_sandbox_20260820.md. Show me the ERRATUM
+box at the top and the two-row result table below it. Explain in three sentences: the
+end-of-day exit check ("Oakwind Investor End-of-Day Exit Check (D31)") has been
+running by itself every trading day at 15:55 ET since July 30 — the on/off switch that
+counts is the one in my terminal's settings, and its stored record shows it switched
+on July 30; on Aug 20 at 15:55 ET it closed the two open positions (ESLT and HON, both
+entered Aug 12) at their recorded stop levels off the Aug 19 daily bar, for paper
+losses of $3,746.55 and $3,769.98; the study's sandbox run earlier that same day
+predicted exactly those two closes at exactly those prices, so the check and the
+study agree.
+Then, so I see the live switch with my own eyes: walk me to the admin "Job Schedules"
+panel in my TriSight terminal, have me find "Oakwind Investor End-of-Day Exit Check
+(D31)", and read its Enabled checkbox back to you. What I see there is what the
+engine obeys.
 The decision, three ways:
-  ACCEPT = switch the scheduled check ON. This happens on my own screen, not in code:
-  in my TriSight terminal, the admin "Job Schedules" panel lists "Oakwind Investor
-  End-of-Day Exit Check (D31)" with an "Enabled" checkbox — I tick it and click "Save
-  Schedule". Walk me there step by step, then have me re-open the panel and read the
-  checkbox back to confirm it saved. From the next trading day the check runs itself
-  at 15:55 ET and writes its result file daily; tell me the file name so I know what
-  to look for tomorrow, and remind me to check it. The settings panel is the live
-  control — what I see saved there is what the engine obeys.
-  DISPUTE = leave it off, keep running it by hand;
+  ACCEPT = keep it running as it is (daily, 15:55 ET). Nothing changes; my answer
+  puts the schedule on record as my standing ruling instead of an unratified setting.
+  DISPUTE = stop it: I untick the Enabled checkbox and click "Save Schedule" — walk
+  me through it, then have me re-open the panel and read the checkbox back to
+  confirm it saved.
   ADJUST: <my words> (for example a different time, or on-but-alert-me-first).
 My answer: ACCEPT / DISPUTE / ADJUST.
 
@@ -120,8 +119,9 @@ WHEN ALL FOUR CARDS ARE ANSWERED:
    change as a diff on screen, one at a time, and ask me to approve each one before
    saving anything; they go in one branch and pull request. Tell me the pull request
    address when it exists. Do not merge anything in this session — Bob and I handle
-   merges. Card 4, if I accepted it, was already done live on my screen in step-by-step
-   fashion above — record in the list exactly what I saw saved.
+   merges. Card 4 involves no file change on ACCEPT (the schedule already runs; my
+   answer is the ruling); on DISPUTE or ADJUST it was already handled live on my
+   screen above — record in the list exactly what I saw saved.
 3. If I DISPUTED or ADJUSTED anything, do not edit any file for that card — my words in
    the record are the outcome, and the study re-runs from them.
 ```
@@ -137,14 +137,18 @@ WHEN ALL FOUR CARDS ARE ANSWERED:
   live state in past rounds. This prompt never asks Dick to trust a stated number —
   the session must quote the merged file first, and records MISMATCH instead of
   proceeding if the repo disagrees with the prompt.
-- **Card 4 is the only behavior change**, and per the repo's own design note on the
-  scheduler entry ("the flip is a config change, not a PR", scheduler_config.py:116-117),
-  it executes as the Enabled checkbox in the terminal's admin Job Schedules panel —
-  the runtime authority is the settings database behind that panel, which OVERRIDES the
-  source-file default; a source-only PR could be a silent no-op, which is why the card
-  uses the panel and makes Dick read the saved state back. His click IS the recorded
-  ruling. The daemon-side wiring is real and verified (autopilot_daemon.py's
-  oakwind_investor_exit_check loop dispatches the runner when the schedule is enabled).
+- **Card 4's premise was corrected on 2026-08-21 before this prompt was ever sent.**
+  The runtime authority is the settings database behind the terminal's admin Job
+  Schedules panel, which OVERRIDES the source-file default (`enabled: False` in
+  scheduler_config.py is cosmetic). A read-only production query found the override
+  `{"enabled": true, "time_hhmm": 1555}` last written 2026-07-30T12:29:43Z — the check
+  has been running daily since July 30, and the daemon log shows the 2026-08-20
+  15:55:06 ET dispatch closing ESLT and HON exactly as the study's sandbox predicted.
+  The card therefore asks Dick to RATIFY (or stop/adjust) a schedule that is already
+  live — it does not ask him to enable anything. The merged sandbox document now
+  carries a dated erratum making the same correction (PR referenced in the estate
+  record). ACCEPT changes nothing on disk; DISPUTE/ADJUST act through the panel with
+  read-back verification.
 - **If Dick prefers paper/email:** each card's "The decision" paragraph + the three-way
   answer line works standalone; the repository quotes can be printed from the three
   merged documents.
